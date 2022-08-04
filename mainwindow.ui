@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <layout class="QVBoxLayout" name="verticalLayout_interactableArea" stretch="1,0,10">
+     <layout class="QVBoxLayout" name="vertical_layout_interactable_area" stretch="1,0,10">
       <property name="leftMargin">
        <number>5</number>
       </property>
@@ -30,7 +30,7 @@
        <number>5</number>
       </property>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_statusArea" stretch="1,2,2,1,3">
+       <layout class="QHBoxLayout" name="horizontal_layout_status_area" stretch="1,2,2,1,3">
         <property name="leftMargin">
          <number>5</number>
         </property>
@@ -71,7 +71,7 @@
            </font>
           </property>
           <property name="text">
-           <string>[UNKOWN] nm</string>
+           <string>[UNKOWN] mm</string>
           </property>
          </widget>
         </item>
@@ -302,7 +302,7 @@
                    </font>
                   </property>
                   <property name="title">
-                   <string>Manual Control</string>
+                   <string>Manual Control (mm)</string>
                   </property>
                   <layout class="QHBoxLayout" name="horizontalLayout_13" stretch="10,12,14,10,10,10,2,40,2">
                    <property name="spacing">
@@ -334,6 +334,9 @@
                     <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
                      <property name="decimals">
                       <number>4</number>
+                     </property>
+                     <property name="minimum">
+                      <double>-50000.000000000000000</double>
                      </property>
                      <property name="maximum">
                       <double>50000.000000000000000</double>
@@ -432,7 +435,7 @@
                            </font>
                           </property>
                           <property name="text">
-                           <string extracomment="Comment"/>
+                           <string extracomment="Comment">./data</string>
                           </property>
                           <property name="clearButtonEnabled">
                            <bool>false</bool>
@@ -467,6 +470,9 @@
                               <family>Consolas</family>
                              </font>
                             </property>
+                            <property name="text">
+                             <string>manual</string>
+                            </property>
                            </widget>
                           </item>
                           <item>
@@ -499,7 +505,7 @@
                 <item>
                  <widget class="QGroupBox" name="groupBox">
                   <property name="title">
-                   <string>Scanning Control</string>
+                   <string>Scanning Control (mm)</string>
                   </property>
                   <layout class="QHBoxLayout" name="horizontalLayout_16" stretch="10,12,10,12,10,12,2,40,2">
                    <property name="leftMargin">
@@ -529,6 +535,9 @@
                      <property name="decimals">
                       <number>4</number>
                      </property>
+                     <property name="minimum">
+                      <double>-9999.000000000000000</double>
+                     </property>
                      <property name="maximum">
                       <double>9999.000000000000000</double>
                      </property>
@@ -548,6 +557,9 @@
                     <widget class="QDoubleSpinBox" name="doubleSpinBox_8">
                      <property name="decimals">
                       <number>4</number>
+                     </property>
+                     <property name="minimum">
+                      <double>-9999.000000000000000</double>
                      </property>
                      <property name="maximum">
                       <double>9999.000000000000000</double>
@@ -571,6 +583,9 @@
                      </property>
                      <property name="decimals">
                       <number>4</number>
+                     </property>
+                     <property name="minimum">
+                      <double>-9999.000000000000000</double>
                      </property>
                      <property name="maximum">
                       <double>9999.000000000000000</double>
@@ -608,7 +623,16 @@
                       <item row="0" column="0">
                        <layout class="QGridLayout" name="gridLayout_10">
                         <item row="3" column="0" colspan="2">
-                         <widget class="QLineEdit" name="lineEdit_7"/>
+                         <widget class="QLineEdit" name="lineEdit_7">
+                          <property name="font">
+                           <font>
+                            <family>Consolas</family>
+                           </font>
+                          </property>
+                          <property name="text">
+                           <string>./data</string>
+                          </property>
+                         </widget>
                         </item>
                         <item row="2" column="0" colspan="2">
                          <layout class="QHBoxLayout" name="horizontalLayout_21">
@@ -637,6 +661,9 @@
                              <font>
                               <family>Consolas</family>
                              </font>
+                            </property>
+                            <property name="text">
+                             <string>automatic</string>
                             </property>
                            </widget>
                           </item>
@@ -685,7 +712,7 @@
                  </widget>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="">
+                 <layout class="QHBoxLayout" name="horizontalLayout_2">
                   <property name="sizeConstraint">
                    <enum>QLayout::SetDefaultConstraint</enum>
                   </property>
@@ -704,7 +731,7 @@
                  </layout>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="">
+                 <layout class="QHBoxLayout" name="horizontalLayout_5">
                   <property name="leftMargin">
                    <number>5</number>
                   </property>
