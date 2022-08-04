@@ -429,6 +429,12 @@
                         </item>
                         <item row="2" column="0" colspan="2">
                          <widget class="QLineEdit" name="lineEdit_9">
+                          <property name="minimumSize">
+                           <size>
+                            <width>250</width>
+                            <height>0</height>
+                           </size>
+                          </property>
                           <property name="font">
                            <font>
                             <family>Consolas</family>
@@ -465,6 +471,12 @@
                           </item>
                           <item>
                            <widget class="QLineEdit" name="lineEdit_10">
+                            <property name="minimumSize">
+                             <size>
+                              <width>127</width>
+                              <height>0</height>
+                             </size>
+                            </property>
                             <property name="font">
                              <font>
                               <family>Consolas</family>
@@ -624,6 +636,12 @@
                        <layout class="QGridLayout" name="gridLayout_10">
                         <item row="3" column="0" colspan="2">
                          <widget class="QLineEdit" name="lineEdit_7">
+                          <property name="minimumSize">
+                           <size>
+                            <width>250</width>
+                            <height>0</height>
+                           </size>
+                          </property>
                           <property name="font">
                            <font>
                             <family>Consolas</family>
@@ -657,6 +675,12 @@
                           </item>
                           <item>
                            <widget class="QLineEdit" name="lineEdit_14">
+                            <property name="minimumSize">
+                             <size>
+                              <width>127</width>
+                              <height>0</height>
+                             </size>
+                            </property>
                             <property name="font">
                              <font>
                               <family>Consolas</family>
