@@ -4,6 +4,7 @@
 **/.vs*
 **/.csv
 **/.txt
+**/dist/
 
 # Ultimate .gitignore #
 #######################
