@@ -1,3 +1,10 @@
+**/lextab.py
+**/yacctab.py
+**/__pycache__
+**/.vs*
+**/.csv
+**/.txt
+
 # Ultimate .gitignore #
 #######################
 
