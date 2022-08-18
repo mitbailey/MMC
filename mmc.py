@@ -10,7 +10,6 @@
 #
 
 # %% Set up paths
-
 import os
 import sys
 
@@ -25,7 +24,6 @@ elif __file__:
     appDir = os.path.dirname(__file__)
 
 # %% More Imports
-
 import configparser as confp
 from email.charset import QP
 from time import sleep
@@ -43,7 +41,7 @@ from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBo
                              QFormLayout, QHBoxLayout, QLabel, QListView, QMessageBox, QPushButton,
                              QSizePolicy, QSlider, QStyle, QToolButton, QVBoxLayout, QWidget, QLineEdit, QPlainTextEdit,
                              QTableWidget, QTableWidgetItem, QSplitter, QAbstractItemView, QStyledItemDelegate, QHeaderView, QFrame, QProgressBar, QCheckBox, QToolTip, QGridLayout,
-                             QLCDNumber, QAbstractSpinBox)
+                             QLCDNumber, QAbstractSpinBox, QStatusBar)
 from PyQt5.QtCore import QTimer
 from io import TextIOWrapper
 
@@ -66,6 +64,7 @@ from matplotlib.figure import Figure
 # %% Fonts
 digital_7_italic_22 = None
 digital_7_16 = None
+
 # %% Classes
 
 class MplCanvas(FigureCanvasQTAgg):
@@ -78,19 +77,6 @@ class MplCanvas(FigureCanvasQTAgg):
 
 # TODO: Change this to a per-device variable.
 MM_TO_IDX = 2184560.64
-# NM_TO_MM = 0
-
-# def dcos(deg):
-#     return m.degrees((m.cos(m.radians(deg))))
-
-# def nm_to_idx(pos_nm):
-#     order = 1
-#     zero_order_offset = 1
-#     L = 550
-#     grating_density = 0.0012
-#     dX = pos_nm
-#     a = ((2) * (1 / grating_density) * dcos(32) * ((dX + zero_order_offset)/(L)) * (10e6)) / (order)
-#     return a * MM_TO_IDX
 
 # Imports .ui file.
 class Scan(QThread):
@@ -110,11 +96,13 @@ class Ui(QMainWindow):
 
     current_position = -1
 
+    # Destructor
     def __del__(self):
         # del self.scan # workaround for cross referencing: delete scan externally
         del self.motor_ctrl
         del self.pa
 
+    # Constructor
     def __init__(self, application, uiresource = None):
 
         self.machine_conf_win: QDialog = None
@@ -130,6 +118,7 @@ class Ui(QMainWindow):
         self.grating_combo_lstr = ['1200', '2400', '* New Entry']
         self.current_grating_idx = 0
 
+        # Default grating equation values.
         self.arm_length = 56.53654 # mm
         self.diff_order = 1
         self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx]) # grooves/mm
@@ -137,6 +126,7 @@ class Ui(QMainWindow):
         self.incidence_ang = 32 # deg
         self.zero_ofst = 37.8461 # nm
 
+        # Replaces default grating equation values with the values found in the config.ini file.
         while os.path.exists(exeDir + '/config.ini'):
             config = confp.ConfigParser()
             config.read(exeDir + '/config.ini')
@@ -201,7 +191,7 @@ class Ui(QMainWindow):
                 break
                     
         
-
+        # Sets the conversion slope based on the found (or default) values.
         self.calculateConversionSlope()
 
         # pos_mm = ((arm_length_mm * order * grating_density_grv_mm)/(2 * (m.cos(m.radians(tan_ang_deg))) * (m.cos(m.radians(inc_ang_deg))) * 1e6)) * (INPUT_POSITION_NM - zero_offset_nm)
@@ -218,6 +208,7 @@ class Ui(QMainWindow):
 
         super(Ui, self).__init__()
         uic.loadUi(uiresource, self)
+
         if len(args) != 1:
             self.setWindowTitle("McPherson Monochromator Control (Debug Mode)")
         else:
@@ -225,13 +216,13 @@ class Ui(QMainWindow):
 
         self.is_conv_set = False # Use this flag to set conversion
 
-        #  Picoammeter init.
+        # Picoammeter initialization.
         if len(args) != 1:
             self.pa = pico.Picodummy(3)
         else:
             self.pa = pico.Picoammeter(3)
 
-        #  KST101 init.
+        # KST101 initialization.
         print("KST101 init begin.")
         if len(args) == 1:
             print("Trying...")
@@ -249,64 +240,50 @@ class Ui(QMainWindow):
             serials = tlkt.Thorlabs.KSTDummy._ListDevices()
             self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
 
+        # TODO: Move to zero-order?
         # Move to 1mm (0nm)
         # self.motor_ctrl.move_to(1 * MM_TO_IDX, True)
 
-        # GUI init.
-        self.scan_button = self.findChild(QPushButton, "begin_scan_button")
-        self.save_data_checkbox = self.findChild(QCheckBox, "save_data_checkbox")
-        self.auto_prefix_box = self.findChild(QLineEdit, "scancon_prefix_lineedit")
+        # GUI initialization, gets the UI elements from the .ui file.
+        self.scan_button = self.findChild(QPushButton, "begin_scan_button") # Scanning Control 'Begin Scan' Button
+        self.save_data_checkbox = self.findChild(QCheckBox, "save_data_checkbox") # Scanning Control 'Save Data' Checkbox
+        self.auto_prefix_box = self.findChild(QLineEdit, "scancon_prefix_lineedit") # Scanning Control 'Data file prefix:' Line Edit
         self.manual_prefix_box = self.findChild(QLineEdit, "mancon_prefix_lineedit")
         self.dir_box = self.findChild(QLineEdit, "save_dir_lineedit")
-        # self.auto_dir_box = self.findChild(QLineEdit, "lineEdit_7")
-        # self.manual_dir_box = self.findChild(QLineEdit, "lineEdit_9")
         self.start_spin = self.findChild(QDoubleSpinBox, "start_set_spinbox")
         self.stop_spin = self.findChild(QDoubleSpinBox, "end_set_spinbox")
         self.step_spin = self.findChild(QDoubleSpinBox, "step_set_spinbox")
-
-        # These UI elements moved to begin programmatically created within the status bar.
-        self.currpos_mm_disp = self.findChild(QLabel, "currpos_nm")
-        # self.currpos_lcd_disp: QLCDNumber = self.findChild(QLCDNumber, 'currpos_lcd')
-        # get the palette
-        palette = self.currpos_mm_disp.palette()
-
-        # foreground color
-        palette.setColor(palette.WindowText, QColor(255, 0, 0))
-        # background color
-        palette.setColor(palette.Background, QColor(0, 170, 255))
-        # "light" border
-        palette.setColor(palette.Light, QColor(80, 80, 255))
-        # "dark" border
-        palette.setColor(palette.Dark, QColor(0, 255, 0))
-
-        # set the palette
-        self.currpos_mm_disp.setPalette(palette)
-        # if digital_7_italic_22 is not None:
-        #     self.currpos_mm_disp.setFont(digital_7_italic_22)
-        # self.currpos_steps_disp = self.findChild(QLabel, "currpos_steps")
+        self.currpos_nm_disp = self.findChild(QLabel, "currpos_nm")
         self.scan_status = self.findChild(QLabel, "status_label")
-        # if digital_7_16 is not None:
-        #     self.scan_status.setFont(digital_7_16)
         self.scan_progress = self.findChild(QProgressBar, "progressbar")
-        
-
         save_config_btn: QPushButton = self.findChild(QPushButton, 'save_config_button')
-        save_config_btn.clicked.connect(self.showConfigWindow)
-
-
-        self.pos_spin: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox")
+        self.pos_spin: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox") # Manual Control 'Position:' Spin Box
         self.move_to_position_button: QPushButton = self.findChild(QPushButton, "move_pos_button")
         self.collect_data: QPushButton = self.findChild(QPushButton, "collect_data_button")
         self.plotFrame: QWidget = self.findChild(QWidget, "data_graph")
-        # self.mainPlotFrame: QWidget = self.findChild(QWidget, "mainGraph")
-        # self.plotBtnFrame: QWidget = self.findChild(QWidget, 'frame')
         self.xmin_in: QLineEdit = self.findChild(QLineEdit, "xmin_in")
         self.ymin_in: QLineEdit = self.findChild(QLineEdit, "ymin_in")
         self.xmax_in: QLineEdit = self.findChild(QLineEdit, "xmax_in")
         self.ymax_in: QLineEdit = self.findChild(QLineEdit, "ymax_in")
         self.plot_autorange: QCheckBox = self.findChild(QCheckBox, "autorange_checkbox")
         self.plot_clear_plots: QPushButton = self.findChild(QPushButton, "clear_plots_button")
+        
+        # Get the palette.
+        palette = self.currpos_nm_disp.palette()
 
+        # Foreground color.
+        palette.setColor(palette.WindowText, QColor(255, 0, 0))
+        # Background color.
+        palette.setColor(palette.Background, QColor(0, 170, 255))
+        # "light" border.
+        palette.setColor(palette.Light, QColor(80, 80, 255))
+        # "dark" border.
+        palette.setColor(palette.Dark, QColor(0, 255, 0))
+
+        # Set the palette.
+        self.currpos_nm_disp.setPalette(palette)
+
+        # Plot setup.
         self.xdata: list = [] # collection of xdata
         self.ydata: list = [] # collection of ydata
 
@@ -322,10 +299,19 @@ class Ui(QMainWindow):
 
         self.plot_clear_plots.clicked.connect(self.clearPlotFcn)
 
+        # Setting states of UI elements.
         self.manual_prefix_box.setText(self.manual_prefix)
         self.auto_prefix_box.setText(self.auto_prefix)
         self.dir_box.setText(self.manual_dir)
 
+        # Set the initial value of the Manual Control 'Position:' spin box.
+        # print(self.conversion_slope, '* (', self.manual_position, '+', self.zero_ofst, ')')
+        # print("Setting mancon pos spinbox to ", self.conversion_slope * (self.manual_position + self.zero_ofst))
+        # self.pos_spin.setValue(self.conversion_slope * (self.manual_position + self.zero_ofst))
+        self.pos_spin.setValue(0)
+
+        # Signal-to-slot connections.
+        save_config_btn.clicked.connect(self.showConfigWindow)
         self.scan_button.clicked.connect(self.scan_button_pressed)
         self.collect_data.clicked.connect(self.manual_collect_button_pressed)
         self.move_to_position_button.clicked.connect(self.move_to_position_button_pressed)
@@ -336,18 +322,53 @@ class Ui(QMainWindow):
         self.start_spin.valueChanged.connect(self.start_changed)
         self.stop_spin.valueChanged.connect(self.stop_changed)
         self.step_spin.valueChanged.connect(self.step_changed)
-        self.pos_spin.setValue(self.conversion_slope * (self.manual_position + self.zero_ofst))
-        
-        # self.pos_spin.setValue(0)
         self.pos_spin.valueChanged.connect(self.manual_pos_changed)
 
+        # Other stuff.
         self.scan = Scan(weakref.proxy(self))
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_position_displays)
         self.timer.start(100)
 
+        # Set up the status bar.
+        # self.grating_spinbox: QDoubleSpinBox = QDoubleSpinBox()
+        self.statusBar = QStatusBar()
+        # self.statusBar.setStyleSheet("QStatusBar{padding-right:50px;padding-left:50px;}")
+        self.setStatusBar(self.statusBar)
+        self.sb_grating_density: QLabel = QLabel()
+        self.sb_zero_offset: QLabel = QLabel()
+        self.sb_inc_ang: QLabel = QLabel()
+        self.sb_tan_ang: QLabel = QLabel()
+        self.sb_arm_len: QLabel = QLabel()
+        self.sb_diff_order: QLabel = QLabel()
+        self.sb_conv_slope: QLabel = QLabel()
+        self.statusBar.addPermanentWidget(self.sb_grating_density)
+        self.statusBar.addPermanentWidget(self.sb_zero_offset)
+        self.statusBar.addPermanentWidget(self.sb_inc_ang)
+        self.statusBar.addPermanentWidget(self.sb_tan_ang)
+        self.statusBar.addPermanentWidget(self.sb_arm_len)
+        self.statusBar.addPermanentWidget(self.sb_diff_order)
+        self.statusBar.addPermanentWidget(self.sb_conv_slope)
+        self.updateStatusBarGratingEquationValues()
+        # self.sb_grating_density.setText("  <i>G</i> " + str(self.grating_density) + " grooves/mm    ")
+        # self.sb_zero_offset.setText("  <i>&lambda;</i><sub>0</sub> " + str(self.zero_ofst) + " nm    ")
+        # self.sb_inc_ang.setText("  <i>&theta;</i><sub>inc</sub> " + str(self.incidence_ang) + " deg    ")
+        # self.sb_tan_ang.setText("  <i>&theta;</i><sub>tan</sub> " + str(self.tangent_ang) + " deg    ")
+        # self.sb_arm_len.setText("  <i>L</i> " + str(self.arm_length) + " mm    ")
+        # self.sb_diff_order.setText("  <i>m</i> " + str(self.diff_order) + "    ")
+
+        # Display the GUI.
         self.show()
+
+    def updateStatusBarGratingEquationValues(self):
+        self.sb_grating_density.setText("  <i>G</i> " + str(self.grating_density) + " grooves/mm    ")
+        self.sb_zero_offset.setText("  <i>&lambda;</i><sub>0</sub> " + str(self.zero_ofst) + " nm    ")
+        self.sb_inc_ang.setText("  <i>&theta;</i><sub>inc</sub> " + str(self.incidence_ang) + " deg    ")
+        self.sb_tan_ang.setText("  <i>&theta;</i><sub>tan</sub> " + str(self.tangent_ang) + " deg    ")
+        self.sb_arm_len.setText("  <i>L</i> " + str(self.arm_length) + " mm    ")
+        self.sb_diff_order.setText("  <i>m</i> " + str(self.diff_order) + "    ")
+        self.sb_conv_slope.setText("   %.06f slope    "%(self.conversion_slope))
 
     def clearPlotFcn(self):
         print('clear called')
@@ -375,21 +396,21 @@ class Ui(QMainWindow):
         return
 
     def scan_statusUpdate_slot(self, status):
-        self.scan_status.setText('"<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>"'%(status))
+        self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>'%(status))
 
     def scan_progress_slot(self, curr_percent):
         self.scan_progress.setValue(curr_percent)
 
     def scan_complete_slot(self):
         self.scan_button.setText('Begin Scan')
-        self.scan_status.setText('"<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>"')
+        self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
         self.scan_progress.reset()
 
     def update_position_displays(self):
         self.current_position = self.motor_ctrl.get_position()
         self.moving = self.motor_ctrl.is_moving()
         # print(self.current_position)
-        self.currpos_mm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / MM_TO_IDX) / self.conversion_slope) - self.zero_ofst))
+        self.currpos_nm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / MM_TO_IDX) / self.conversion_slope) - self.zero_ofst))
         # self.currpos_lcd_disp.display(((self.current_position / MM_TO_IDX) / self.conversion_slope) - self.zero_ofst)
         # self.currpos_steps_disp.setText('%d steps'%(self.current_position))
 
@@ -410,16 +431,12 @@ class Ui(QMainWindow):
         self.moving = True
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
-        print("Move to position button pressed, moving to %d mm"%(self.manual_position))
+        print("Move to position button pressed, moving to %d nm"%(self.manual_position))
         self.motor_ctrl.move_to(self.manual_position * MM_TO_IDX, False)
 
     def save_checkbox_toggled(self):
         print("Save checkbox toggled.")
         self.save_data = not self.save_data
-
-    # def prefix_changed(self):
-    #     print("Prefix changed to: %s"%(self.prefix_box.text()))
-    #     self.prefix = self.prefix_box.text()
 
     def manual_prefix_changed(self):
         print("Prefix changed to: %s"%(self.manual_prefix_box.text()))
@@ -523,15 +540,6 @@ class Ui(QMainWindow):
         self.grating_conf_win.close()    
 
     def newGratingItem(self, idx: int):
-        # if idx != len(self.grating_combo_lstr) - 1:
-        #     self.grating_density = float(self.grating_combo_lstr[idx])
-        #     self.current_grating_idx = idx
-        # else:
-        #     self.showGratingWindow()
-        # if idx == len(self.grating_combo_lstr) - 1:
-        #     self.grating_combo.setCurrentIndex(self.current_grating_idx)
-        # else:
-        #     self.current_grating_idx = self.grating_combo.currentIndex()
         slen = len(self.grating_combo_lstr) # old length
         if idx == slen - 1:
             self.showGratingWindow()
@@ -603,6 +611,8 @@ class Ui(QMainWindow):
 
         self.calculateConversionSlope()
 
+        self.updateStatusBarGratingEquationValues()
+
         self.machine_conf_win.close()
     
     def calculateConversionSlope(self):
@@ -637,11 +647,6 @@ class Scan(QThread):
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             sav_file = open(filename, 'w')
 
-        # self.statusUpdate.emit("MOVING")
-        
-        # self.motor_ctrl.move_to(self.startpos, True)
-        
-        # self.statusUpdate.emit("SAMPLING")
         print("SCAN QTHREAD")
         print("Start | Stop | Step")
         print(self.other.startpos, self.other.stoppos, self.other.steppos)
@@ -707,6 +712,8 @@ if __name__ == '__main__':
     # 3. The control GUI (mainwindow.ui), where the user has control over what the device(s) do.
     
     application = QApplication(sys.argv)
+
+    # Finding and setting of fonts.
     try:
         fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono italic).ttf')
         # fstr = QFontDatabase.applicationFontFamilies(fid)[0]
@@ -722,39 +729,36 @@ if __name__ == '__main__':
         print(e.what())
 
     # First, the loading screen.
+    # TODO: Set up some kind of loading screen to display.
 
     # Then, we load up the device selection UI.
+    # TODO: Display a device selection UI / connected devices status UI prior to booting the main window.
+
+    # Main GUI and child-window setup.
     ui_file_name = exeDir + '/ui/grating_input.ui'
     ui_file = QFile(ui_file_name)
     if not ui_file.open(QIODevice.ReadOnly):
         print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
         sys.exit(-1)
 
-    # Main GUI bootup.
     ui_file_name = exeDir + '/ui/' + "mainwindow_mk2.ui"
     ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
     if not ui_file.open(QIODevice.ReadOnly):
         print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
         sys.exit(-1)
 
-    # Initializes the GUI.
+    # Initializes the GUI / Main GUI bootup.
     mainWindow = Ui(application, ui_file)
-    
-    # Example: Creating a new instrument. Should be done in a UI callback of some sort.
-     # new_mono = instruments.Monochromator(241.0536, 32, 1)
-
-    # Example: Getting a UI element from the .ui file, setting LCDNumber value.
-     # lcd_milli = mainWindow.findChild(QtWidgets.QLCDNumber, "lcdNumber")
-     # lcd_nano = mainWindow.findChild(QtWidgets.QLCDNumber, "lcdNumber_2")
-     # lcd_milli.display(1)
-     # lcd_nano.display(2)
     
     # Wait for the Qt loop to exit before exiting.
     ret = application.exec_() # block until
-    print('mainwindow: %d'%(sys.getrefcount(mainWindow) - 1))
-    print('motor: %d'%(sys.getrefcount(mainWindow.motor_ctrl) - 1))
-    print('pa: %d'%(sys.getrefcount(mainWindow.pa) - 1))
 
+    # Displays reference counts for debugging purposes.
+    # print('mainwindow: %d'%(sys.getrefcount(mainWindow) - 1))
+    # print('motor: %d'%(sys.getrefcount(mainWindow.motor_ctrl) - 1))
+    # print('pa: %d'%(sys.getrefcount(mainWindow.pa) - 1))
+
+    # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
     grating_lstr = mainWindow.grating_combo_lstr[:-1]
     gratingDensityStr = ''
@@ -772,7 +776,7 @@ if __name__ == '__main__':
     with open(exeDir+'/config.ini', 'w') as confFile:
         save_config.write(confFile)
 
+    # Cleanup and exit.
     del mainWindow
     sys.exit(ret)
-
 # %%
