@@ -6,9 +6,9 @@ block_cipher = None
 
 a = Analysis(
     ['mmc.py'],
-    pathex=['./', './ui/', './fonts/'],
-    binaries=[('digital-7 (mono).ttf', 'fonts'), ('digital-7 (mono italic).ttf', 'fonts')],
-    datas=[('mainwindow_mk2.ui', 'ui'), ('grating_input.ui', 'ui')], # this line has been edited, and mainwindow ui resource has been added
+    pathex=['./', './ui'],
+    binaries=[('fonts', 'fonts')],
+    datas=[('ui', 'ui')], # this line has been edited, and mainwindow ui resource has been added
     # execute pyinstaller mmc.spec to compile exe directly 
     # if pyinstaller --onefile --windowed mmc.py is used, it is going to overwrite the spec file
     # and create a malfunctioning exe that does not include the ui file
