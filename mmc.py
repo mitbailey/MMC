@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBo
                              QFormLayout, QHBoxLayout, QLabel, QListView, QMessageBox, QPushButton,
                              QSizePolicy, QSlider, QStyle, QToolButton, QVBoxLayout, QWidget, QLineEdit, QPlainTextEdit,
                              QTableWidget, QTableWidgetItem, QSplitter, QAbstractItemView, QStyledItemDelegate, QHeaderView, QFrame, QProgressBar, QCheckBox, QToolTip, QGridLayout,
-                             QLCDNumber, QAbstractSpinBox, QStatusBar)
+                             QLCDNumber, QAbstractSpinBox, QStatusBar, QAction)
 from PyQt5.QtCore import QTimer
 from io import TextIOWrapper
 
@@ -76,9 +76,6 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes.set_ylabel('Current (pA)')
         super(MplCanvas, self).__init__(fig)
 
-# TODO: Change this to a per-device variable.
-MM_TO_IDX = 2184560.64
-
 # Imports .ui file.
 class Scan(QThread):
     pass
@@ -95,19 +92,10 @@ class Scan(QThread):
 #         self.show()
 
 class Ui(QMainWindow):
-    manual_prefix = 'manual'
-    auto_prefix = 'automatic'
-    manual_dir = './data'
-    auto_dir = './data'
-    startpos = 0
-    stoppos = 0
-    steppos = 0
-    save_data = False
-
-    manual_position = 0
-
-    current_position = -1
-
+    # manual_prefix = 'manual'
+    # auto_prefix = 'automatic'
+    # manual_dir = './data'
+    # auto_dir = './data'
     # Destructor
     def __del__(self):
         # del self.scan # workaround for cross referencing: delete scan externally
@@ -116,6 +104,16 @@ class Ui(QMainWindow):
 
     # Constructor
     def __init__(self, application, uiresource = None):
+        # TODO: Set this via the QMenu QAction Edit->Change Auto-log Directory
+        self.data_save_directory = os.path.expanduser('~/Documents')
+        self.data_save_directory += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
+        if not os.path.exists(self.data_save_directory):
+            os.makedirs(self.data_save_directory)
+
+        self.mes_sign = 1
+        self.autosave_data = False
+        self.pop_out_table = False
+        self.pop_out_plot = False
 
         self.machine_conf_win: QDialog = None
         self.grating_conf_win: QDialog = None
@@ -195,16 +193,18 @@ class Ui(QMainWindow):
         else:
             serials = tlkt.Thorlabs.KSTDummy._ListDevices()
             self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
+            self.motor_ctrl.set_stage('ZST25')
 
         # TODO: Move to zero-order?
         # Move to 1mm (0nm)
-        # self.motor_ctrl.move_to(1 * MM_TO_IDX, True)
+        # self.motor_ctrl.move_to(1 * self.motor_ctrl.mm_to_idx, True)
 
         # GUI initialization, gets the UI elements from the .ui file.
         self.scan_button = self.findChild(QPushButton, "begin_scan_button") # Scanning Control 'Begin Scan' Button
+        self.stop_scan_button = self.findChild(QPushButton, "stop_scan_button")
         self.save_data_checkbox = self.findChild(QCheckBox, "save_data_checkbox") # Scanning Control 'Save Data' Checkbox
-        self.auto_prefix_box = self.findChild(QLineEdit, "scancon_prefix_lineedit") # Scanning Control 'Data file prefix:' Line Edit
-        self.manual_prefix_box = self.findChild(QLineEdit, "mancon_prefix_lineedit")
+        # self.auto_prefix_box = self.findChild(QLineEdit, "scancon_prefix_lineedit") # Scanning Control 'Data file prefix:' Line Edit
+        # self.manual_prefix_box = self.findChild(QLineEdit, "mancon_prefix_lineedit")
         self.dir_box = self.findChild(QLineEdit, "save_dir_lineedit")
         self.start_spin = self.findChild(QDoubleSpinBox, "start_set_spinbox")
         self.stop_spin = self.findChild(QDoubleSpinBox, "end_set_spinbox")
@@ -223,6 +223,14 @@ class Ui(QMainWindow):
         self.ymax_in: QLineEdit = self.findChild(QLineEdit, "ymax_in")
         self.plot_autorange: QCheckBox = self.findChild(QCheckBox, "autorange_checkbox")
         self.plot_clear_plots: QPushButton = self.findChild(QPushButton, "clear_plots_button")
+
+        self.machine_conf_act: QAction = self.findChild(QAction, "machine_configuration")
+        self.invert_mes_act: QAction = self.findChild(QAction, "invert_mes")
+        self.autosave_data_act: QAction = self.findChild(QAction, "autosave_data")
+        self.autosave_dir_act: QAction = self.findChild(QAction, "autosave_dir_prompt")
+        self.preferences_act: QAction = self.findChild(QAction, "preferences")
+        self.pop_out_table_act: QAction = self.findChild(QAction, "pop_out_table")
+        self.pop_out_plot_act: QAction = self.findChild(QAction, "pop_out_plot")
         
         # Get the palette.
         palette = self.currpos_nm_disp.palette()
@@ -256,9 +264,9 @@ class Ui(QMainWindow):
         self.plot_clear_plots.clicked.connect(self.clearPlotFcn)
 
         # Setting states of UI elements.
-        self.manual_prefix_box.setText(self.manual_prefix)
-        self.auto_prefix_box.setText(self.auto_prefix)
-        self.dir_box.setText(self.manual_dir)
+        # self.manual_prefix_box.setText(self.manual_prefix)
+        # self.auto_prefix_box.setText(self.auto_prefix)
+        # self.dir_box.setText(self.save_dir)
 
         # Set the initial value of the Manual Control 'Position:' spin box.
         self.pos_spin.setValue(0)
@@ -266,16 +274,21 @@ class Ui(QMainWindow):
         # Signal-to-slot connections.
         save_config_btn.clicked.connect(self.showConfigWindow)
         self.scan_button.clicked.connect(self.scan_button_pressed)
+        self.stop_scan_button.clicked.connect(self.stop_scan_button_pressed)
         self.collect_data.clicked.connect(self.manual_collect_button_pressed)
         self.move_to_position_button.clicked.connect(self.move_to_position_button_pressed)
-        self.save_data_checkbox.stateChanged.connect(self.save_checkbox_toggled)
-        self.auto_prefix_box.editingFinished.connect(self.auto_prefix_changed)
-        self.manual_prefix_box.editingFinished.connect(self.manual_prefix_changed)
-        self.dir_box.editingFinished.connect(self.manual_dir_changed)
         self.start_spin.valueChanged.connect(self.start_changed)
         self.stop_spin.valueChanged.connect(self.stop_changed)
         self.step_spin.valueChanged.connect(self.step_changed)
         self.pos_spin.valueChanged.connect(self.manual_pos_changed)
+
+        self.machine_conf_act.triggered.connect(self.showConfigWindow)
+        self.invert_mes_act.toggled.connect(self.invert_mes_toggled)
+        self.autosave_data_act.toggled.connect(self.autosave_data_toggled)
+        self.autosave_dir_act.triggered.connect(self.autosave_dir_triggered)
+        self.preferences_act.triggered.connect(self.preferences_triggered)
+        self.pop_out_table_act.toggled.connect(self.pop_out_table_toggled)
+        self.pop_out_plot_act.toggled.connect(self.pop_out_plot_toggled)
 
         # Other stuff.
         self.scan = Scan(weakref.proxy(self))
@@ -303,8 +316,39 @@ class Ui(QMainWindow):
         self.statusBar.addPermanentWidget(self.sb_conv_slope)
         self.updateStatusBarGratingEquationValues()
 
+        self.manual_position = (self.pos_spin.value() + self.zero_ofst) * self.conversion_slope
+        self.startpos = (self.start_spin.value() + self.zero_ofst) * self.conversion_slope
+        self.stoppos = (self.stop_spin.value() + self.zero_ofst) * self.conversion_slope
+
         # Display the GUI.
         self.show()
+
+    def autosave_dir_triggered(self):
+        self.data_save_directory = QFileDialog.getExistingDirectory(self, 'Auto logging files location', self.data_save_directory, options=QFileDialog.ShowDirsOnly)
+
+    def preferences_triggered(self):
+        pass
+
+    def invert_mes_toggled(self, state):
+        if not self.scanRunning:
+            if state:
+                self.mes_sign = -1
+            else:
+                self.mes_sign = 1
+            # TODO: Invert the signs of all previously collected data sets.
+
+    def autosave_data_toggled(self, state):
+        if not self.scanRunning:
+            self.autosave_data = state
+        else:
+            self.autosave_data_act.setChecked(self.autosave_data)
+            
+    def pop_out_table_toggled(self, state):
+        self.pop_out_table = state
+
+    def pop_out_plot_toggled(self, state):
+        self.pop_out_plot = state
+
 
     def updateStatusBarGratingEquationValues(self):
         self.sb_grating_density.setText("  <i>G</i> " + str(self.grating_density) + " grooves/mm    ")
@@ -355,16 +399,19 @@ class Ui(QMainWindow):
         self.current_position = self.motor_ctrl.get_position()
         self.moving = self.motor_ctrl.is_moving()
         # print(self.current_position)
-        self.currpos_nm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / MM_TO_IDX) / self.conversion_slope) - self.zero_ofst))
+        self.currpos_nm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.motor_ctrl.mm_to_idx) / self.conversion_slope) - self.zero_ofst))
 
     def scan_button_pressed(self):
         print("Scan button pressed!")
         if not self.scanRunning:
             self.scan.start()
-            self.scan_button.setText('Stop Scan')
-        else:
+            self.scan_button.setDisabled(True)
+            self.stop_scan_button.setDisabled(False)
+
+    def stop_scan_button_pressed(self):
+        print("Stop scan button pressed!")
+        if self.scanRunning:
             self.scanRunning = False
-            self.scan_button.setText('Begin Scan')
 
     def manual_collect_button_pressed(self):
         print("Manual collect button pressed!")
@@ -375,27 +422,27 @@ class Ui(QMainWindow):
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
-        self.motor_ctrl.move_to(self.manual_position * MM_TO_IDX, False)
+        self.motor_ctrl.move_to(self.manual_position * self.motor_ctrl.mm_to_idx, False)
 
-    def save_checkbox_toggled(self):
-        print("Save checkbox toggled.")
-        self.save_data = not self.save_data
+    # def save_checkbox_toggled(self):
+    #     print("Save checkbox toggled.")
+    #     self.save_data = not self.save_data
 
-    def manual_prefix_changed(self):
-        print("Prefix changed to: %s"%(self.manual_prefix_box.text()))
-        self.manual_prefix = self.manual_prefix_box.text()
+    # def manual_prefix_changed(self):
+    #     print("Prefix changed to: %s"%(self.manual_prefix_box.text()))
+    #     self.manual_prefix = self.manual_prefix_box.text()
 
-    def auto_prefix_changed(self):
-        print("Prefix changed to: %s"%(self.auto_prefix_box.text()))
-        self.auto_prefix = self.auto_prefix_box.text()
+    # def auto_prefix_changed(self):
+    #     print("Prefix changed to: %s"%(self.auto_prefix_box.text()))
+    #     self.auto_prefix = self.auto_prefix_box.text()
 
-    def manual_dir_changed(self):
-        print("Prefix changed to: %s"%(self.manual_dir_box.text()))
-        self.manual_dir = self.manual_dir_box.text()
+    # def manual_dir_changed(self):
+    #     print("Prefix changed to: %s"%(self.manual_dir_box.text()))
+    #     self.manual_dir = self.manual_dir_box.text()
 
-    def auto_dir_changed(self):
-        print("Prefix changed to: %s"%(self.auto_dir_box.text()))
-        self.auto_dir = self.auto_dir_box.text()
+    # def auto_dir_changed(self):
+    #     print("Prefix changed to: %s"%(self.auto_dir_box.text()))
+    #     self.auto_dir = self.auto_dir_box.text()
 
     def start_changed(self):
         print("Start changed to: %s mm"%(self.start_spin.value()))
@@ -417,21 +464,9 @@ class Ui(QMainWindow):
         self.manual_position = (self.pos_spin.value() + self.zero_ofst) * self.conversion_slope
 
     def take_data(self):
-
-        tnow = dt.datetime.now()
-
-        filename = self.manual_dir + '/' + self.manual_prefix + '_' + tnow.strftime('%Y%m%d%H%M%S') + "_data.csv"
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        self.sav_file = open(filename, 'w')
-        
-        self.sav_file.write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
-        self.sav_file.write('# Steps/mm: %f\n'%(MM_TO_IDX))
-        self.sav_file.write('# Position (step),Current(A),Timestamp,Error Code\n')
-        pos = self.motor_ctrl.get_position()
-        self.current_position = pos
-        self.sav_file.write(self.pa.sample_data())
-
-        self.sav_file.close()
+        # TODO: Garbo function, edit for proper functionality
+        # TODO: otherwise, good. <pat in the back>
+       pass
 
     def showGratingWindow(self):
         if self.grating_conf_win is None: 
@@ -556,6 +591,11 @@ class Ui(QMainWindow):
     def calculateConversionSlope(self):
         self.conversion_slope = ((self.arm_length * self.diff_order * self.grating_density)/(2 * (m.cos(m.radians(self.tangent_ang))) * (m.cos(m.radians(self.incidence_ang))) * 1e6))
 
+# QThread which will be run by the loading UI to initialize communication with devices. Will need to save important data. This functionality currently handled by the MainWindow UI.
+# TODO: Complete.
+class Boot(QThread):
+    pass
+
 class Scan(QThread):
     statusUpdate = pyqtSignal(str)
     progress = pyqtSignal(int)
@@ -574,14 +614,14 @@ class Scan(QThread):
 
     def run(self):
         print(self.other)
-        print("Save to file? " + str(self.other.save_data))
+        print("Save to file? " + str(self.other.autosave_data))
 
         self.statusUpdate.emit("PREPARING")
         sav_file = None
-        if (self.other.save_data):
+        if (self.other.autosave_data):
             tnow = dt.datetime.now()
             
-            filename = self.other.auto_dir + '/' + self.other.auto_prefix + '_' + tnow.strftime('%Y%m%d%H%M%S') + "_data.csv"
+            filename = self.other.data_save_directory + tnow.strftime('%Y%m%d%H%M%S') + "_data.csv"
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             sav_file = open(filename, 'w')
 
@@ -605,7 +645,7 @@ class Scan(QThread):
             if not self.other.scanRunning:
                 break
             self.statusUpdate.emit("MOVING")
-            self.other.motor_ctrl.move_to(dpos * MM_TO_IDX, True)
+            self.other.motor_ctrl.move_to(dpos * self.other.motor_ctrl.mm_to_idx, True)
             pos = self.other.motor_ctrl.get_position()
             self.statusUpdate.emit("SAMPLING")
             buf = self.other.pa.sample_data()
@@ -622,23 +662,26 @@ class Scan(QThread):
             except Exception:
                 continue
             # print(mes, err)
-            self.other.xdata[pidx].append((((pos / MM_TO_IDX) / self.other.conversion_slope)) - self.other.zero_ofst)
-            self.other.ydata[pidx].append(-mes * 1e12)
+            self.other.xdata[pidx].append((((pos / self.other.motor_ctrl.mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
+            self.other.ydata[pidx].append(self.other.mes_sign * mes * 1e12)
             # print(self.other.xdata[pidx], self.other.ydata[pidx])
             self.other.updatePlot()
             if sav_file is not None:
                 if idx == 0:
                     sav_file.write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
-                    sav_file.write('# Steps/mm: %f\n'%(MM_TO_IDX))
-                    sav_file.write('# Position (step),Mean Current(A),Status/Error Code\n')
+                    sav_file.write('# Steps/mm: %f\n'%(self.other.motor_ctrl.mm_to_idx))
+                    sav_file.write('# mm/nm: %e; lambda_0 (nm): %e\n'%(self.other.conversion_slope, self.other.zero_ofst))
+                    sav_file.write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
                 # process buf
                 # 1. split by \n
-                buf = '%d,%e,%d\n'%(pos, -mes, err)
+                buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.motor_ctrl.mm_to_idx) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
                 sav_file.write(buf)
 
         if (sav_file is not None):
             sav_file.close()
         self.other.scanRunning = False
+        self.other.scan_button.setDisabled(False)
+        self.other.stop_scan_button.setDisabled(True)
         self.complete.emit()
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
 
@@ -687,7 +730,7 @@ if __name__ == '__main__':
         print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
         sys.exit(-1)
 
-    ui_file_name = exeDir + '/ui/' + "mainwindow_mk2.ui"
+    ui_file_name = exeDir + '/ui/mainwindow_mk2.ui'
     ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
     if not ui_file.open(QIODevice.ReadOnly):
         print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
