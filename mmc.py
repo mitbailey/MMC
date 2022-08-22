@@ -40,7 +40,7 @@ from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBox, QDialog, QFileDialog,
                              QFormLayout, QHBoxLayout, QLabel, QListView, QMessageBox, QPushButton,
                              QSizePolicy, QSlider, QStyle, QToolButton, QVBoxLayout, QWidget, QLineEdit, QPlainTextEdit,
-                             QTableWidget, QTableWidgetItem, QSplitter, QAbstractItemView, QStyledItemDelegate, QHeaderView, QFrame, QProgressBar, QCheckBox, QToolTip, QGridLayout,
+                             QTableWidget, QTableWidgetItem, QSplitter, QAbstractItemView, QStyledItemDelegate, QHeaderView, QFrame, QProgressBar, QCheckBox, QToolTip, QGridLayout, QSpinBox,
                              QLCDNumber, QAbstractSpinBox, QStatusBar, QAction)
 from PyQt5.QtCore import QTimer
 from io import TextIOWrapper
@@ -109,6 +109,8 @@ class Ui(QMainWindow):
         self.data_save_directory += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
         if not os.path.exists(self.data_save_directory):
             os.makedirs(self.data_save_directory)
+
+        self.num_scans = 0
 
         self.mes_sign = 1
         self.autosave_data = False
@@ -231,6 +233,7 @@ class Ui(QMainWindow):
         self.preferences_act: QAction = self.findChild(QAction, "preferences")
         self.pop_out_table_act: QAction = self.findChild(QAction, "pop_out_table")
         self.pop_out_plot_act: QAction = self.findChild(QAction, "pop_out_plot")
+        self.oneshot_samples_spinbox: QSpinBox = self.findChild(QSpinBox, "samples_set_spinbox")
         
         # Get the palette.
         palette = self.currpos_nm_disp.palette()
@@ -248,8 +251,11 @@ class Ui(QMainWindow):
         self.currpos_nm_disp.setPalette(palette)
 
         # Plot setup.
-        self.xdata: list = [] # collection of xdata
-        self.ydata: list = [] # collection of ydata
+        self.xdata: dict = {} # collection of xdata
+        self.ydata: dict = {} # collection of ydata
+
+        self.manual_xdata: list = []
+        self.manual_ydata: list = []
 
         self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
         # self.plotCanvas.axes.plot([], [])
@@ -292,6 +298,7 @@ class Ui(QMainWindow):
 
         # Other stuff.
         self.scan = Scan(weakref.proxy(self))
+        self.one_shot = OneShot(weakref.proxy(self))
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_position_displays)
@@ -367,8 +374,8 @@ class Ui(QMainWindow):
             self.plotCanvas.axes.set_ylabel('Photo Current (pA)')
             self.plotCanvas.axes.grid()
             self.plotCanvas.draw()
-            self.xdata = []
-            self.ydata = []
+            self.xdata = {}
+            self.ydata = {}
         return
 
     def updatePlot(self):
@@ -376,7 +383,9 @@ class Ui(QMainWindow):
         self.plotCanvas.axes.cla()
         self.plotCanvas.axes.set_xlabel('Location (nm)')
         self.plotCanvas.axes.set_ylabel('Photo Current (pA)')
-        for idx in range(len(self.xdata)):
+        keys = list(self.xdata.keys())
+        keys.sort()
+        for idx in keys:
             if len(self.xdata[idx]) == len(self.ydata[idx]):
                 self.plotCanvas.axes.plot(self.xdata[idx], self.ydata[idx], label = 'Scan %d'%(idx + 1))
         self.plotCanvas.axes.legend()
@@ -415,34 +424,16 @@ class Ui(QMainWindow):
 
     def manual_collect_button_pressed(self):
         print("Manual collect button pressed!")
-        self.take_data()
+        self.collect_data.setDisabled(True)
+        self.one_shot.start()
 
     def move_to_position_button_pressed(self):
         self.moving = True
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
-        self.motor_ctrl.move_to(self.manual_position * self.motor_ctrl.mm_to_idx, False)
-
-    # def save_checkbox_toggled(self):
-    #     print("Save checkbox toggled.")
-    #     self.save_data = not self.save_data
-
-    # def manual_prefix_changed(self):
-    #     print("Prefix changed to: %s"%(self.manual_prefix_box.text()))
-    #     self.manual_prefix = self.manual_prefix_box.text()
-
-    # def auto_prefix_changed(self):
-    #     print("Prefix changed to: %s"%(self.auto_prefix_box.text()))
-    #     self.auto_prefix = self.auto_prefix_box.text()
-
-    # def manual_dir_changed(self):
-    #     print("Prefix changed to: %s"%(self.manual_dir_box.text()))
-    #     self.manual_dir = self.manual_dir_box.text()
-
-    # def auto_dir_changed(self):
-    #     print("Prefix changed to: %s"%(self.auto_dir_box.text()))
-    #     self.auto_dir = self.auto_dir_box.text()
+        pos = int((self.pos_spin.value() + self.zero_ofst) * self.conversion_slope * self.motor_ctrl.mm_to_idx)
+        self.motor_ctrl.move_to(pos, False)
 
     def start_changed(self):
         print("Start changed to: %s mm"%(self.start_spin.value()))
@@ -466,7 +457,10 @@ class Ui(QMainWindow):
     def take_data(self):
         # TODO: Garbo function, edit for proper functionality
         # TODO: otherwise, good. <pat in the back>
-       pass
+
+        pass
+
+
 
     def showGratingWindow(self):
         if self.grating_conf_win is None: 
@@ -596,6 +590,37 @@ class Ui(QMainWindow):
 class Boot(QThread):
     pass
 
+class OneShot(QThread):
+    statusUpdate = pyqtSignal(str)
+    complete = pyqtSignal()
+
+    def __init__(self, parent: QMainWindow):
+        super(OneShot, self).__init__()
+        self.parent: Ui = parent
+        # TODO: disable begin scan button on run
+        self.statusUpdate.connect(self.parent.scan_statusUpdate_slot)
+
+    def run(self):
+        self.parent.scan_button.setDisabled(True)
+        # collect data
+        for _ in range(self.parent.oneshot_samples_spinbox.value()):
+            pos = ((self.parent.motor_ctrl.get_position() / self.parent.motor_ctrl.mm_to_idx) / self.parent.conversion_slope) - self.parent.zero_ofst
+            buf = self.parent.pa.sample_data()
+            words = buf.split(',') # split at comma
+            if len(words) != 3:
+                continue
+            try:
+                mes = float(words[0][:-1]) # skip the A (unit suffix)
+                err = int(float(words[2])) # skip timestamp
+            except Exception:
+                continue
+            self.parent.manual_xdata.append(pos)
+            self.parent.manual_ydata.append(self.parent.mes_sign * mes * 1e12)
+            print(pos, self.parent.mes_sign * mes * 1e12)
+        self.complete.emit()
+        self.parent.collect_data.setDisabled(False)
+        self.parent.scan_button.setDisabled(False)
+
 class Scan(QThread):
     statusUpdate = pyqtSignal(str)
     progress = pyqtSignal(int)
@@ -628,6 +653,9 @@ class Scan(QThread):
         print("SCAN QTHREAD")
         print("Start | Stop | Step")
         print(self.other.startpos, self.other.stoppos, self.other.steppos)
+        self.other.startpos = (self.other.start_spin.value() + self.other.zero_ofst) * self.other.conversion_slope
+        self.other.stoppos = (self.other.stop_spin.value() + self.other.zero_ofst) * self.other.conversion_slope
+        self.other.steppos = (self.other.step_spin.value()) * self.other.conversion_slope
         if self.other.steppos == 0 or self.other.startpos == self.other.stoppos:
             self.complete.emit()
             return
@@ -635,11 +663,11 @@ class Scan(QThread):
         # self.other.pa.set_samples(3)
         nidx = len(scanrange)
         if len(self.other.xdata) != len(self.other.ydata):
-            self.other.xdata = []
-            self.other.ydata = []
-        pidx = len(self.other.xdata)
-        self.other.xdata.append([])
-        self.other.ydata.append([])
+            self.other.xdata = {}
+            self.other.ydata = {}
+        pidx = self.other.num_scans
+        self.other.xdata[pidx] = []
+        self.other.ydata[pidx] = []
         self.other.scanRunning = True
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
@@ -679,6 +707,7 @@ class Scan(QThread):
 
         if (sav_file is not None):
             sav_file.close()
+        self.other.num_scans += 1
         self.other.scanRunning = False
         self.other.scan_button.setDisabled(False)
         self.other.stop_scan_button.setDisabled(True)
