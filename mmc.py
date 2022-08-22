@@ -60,6 +60,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
+from utilities.config import load_config, save_config
 
 # %% Fonts
 digital_7_italic_22 = None
@@ -81,6 +82,17 @@ MM_TO_IDX = 2184560.64
 # Imports .ui file.
 class Scan(QThread):
     pass
+
+# TODO: Figure out a loading screen.
+# class LoadUi(QWidget):
+#     def __init__(self, application, uiresource = None):
+#         self.application: QApplication = application
+#         args = self.application.arguments()
+
+#         super(LoadUi, self).__init__()
+#         uic.loadUi(uiresource, self)
+
+#         self.show()
 
 class Ui(QMainWindow):
     manual_prefix = 'manual'
@@ -127,74 +139,18 @@ class Ui(QMainWindow):
         self.zero_ofst = 37.8461 # nm
 
         # Replaces default grating equation values with the values found in the config.ini file.
-        while os.path.exists(exeDir + '/config.ini'):
-            config = confp.ConfigParser()
-            config.read(exeDir + '/config.ini')
-            print(config)
-            error = False
+        load_dict = load_config(appDir)
+        self.grating_combo_lstr = load_dict["gratingDensities"]
+        self.current_grating_idx = load_dict["gratingDensityIndex"]
+        self.diff_order = load_dict["diffractionOrder"]
+        self.zero_ofst = load_dict["zeroOffset"]
+        self.incidence_ang = load_dict["incidenceAngle"]
+        self.tangent_ang = load_dict["tangentAngle"]
+        self.arm_length = load_dict["armLength"]
+        self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
 
-            if len(config.sections()) and 'INSTRUMENT' in config.sections():
-                gratingDensityStr = config['INSTRUMENT']['gratingDensities']
-                gratingDensityList = gratingDensityStr.split(',')
-                for d in gratingDensityList:
-                    try:
-                        _ = float(d)
-                    except Exception:
-                        print('Error getting grating densities')
-                        # show a window here or something
-                        error = True
-                        break
-                if error:
-                    break
-                self.grating_combo_lstr = gratingDensityList + ['* New Entry']
-                try:
-                    idx = int(config['INSTRUMENT']['gratingDensityIndex'])
-                except Exception as e:
-                    print('Error getting grating index, %s'%(e.what()))
-                    idx = 0
-                if idx >= len(self.grating_combo_lstr) - 1:
-                    print('Invalid initial grating index')
-                    idx = 0
-                self.current_grating_idx = idx
-                self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
-                try:
-                    self.diff_order = int(config['INSTRUMENT']['diffractionOrder'])
-                except Exception as e:
-                    print('Invalid diffraction order, %s'%(e.what()))
-                if self.diff_order < 1:
-                    print('Diffraction order can not be zero or negative')
-                    self.diff_order = 1
-                try:
-                    self.incidence_ang = float(config['INSTRUMENT']['incidenceAngle'])
-                except Exception as e:
-                    print('Invalid incidence angle, %s'%(e.what()))
-                if not -90 < self.incidence_ang < 90:
-                    print('Invalid incidence angle %f'%(self.incidence_ang))
-                    self.incidence_ang = 0
-                
-                try:
-                    self.tangent_ang = float(config['INSTRUMENT']['tangentAngle'])
-                except Exception as e:
-                    print('Invalid tangent angle, %s'%(e.what()))
-                if not -90 < self.tangent_ang < 90:
-                    print('Invalid tangent angle %f'%(self.tangent_ang))
-                    self.tangent_ang = 0
-
-                try:
-                    self.arm_length = float(config['INSTRUMENT']['armLength'])
-                except Exception as e:
-                    print('Invalid arm length, %s'%(e.what()))
-                if not 0 < self.arm_length < 1e6: # 1 km
-                    print('Invalid arm length %f'%(self.arm_length))
-                    self.arm_length = 100
-
-                break
-                    
-        
         # Sets the conversion slope based on the found (or default) values.
         self.calculateConversionSlope()
-
-        # pos_mm = ((arm_length_mm * order * grating_density_grv_mm)/(2 * (m.cos(m.radians(tan_ang_deg))) * (m.cos(m.radians(inc_ang_deg))) * 1e6)) * (INPUT_POSITION_NM - zero_offset_nm)
 
         print('\n\nConversion constant: %f\n'%(self.conversion_slope))
 
@@ -305,9 +261,6 @@ class Ui(QMainWindow):
         self.dir_box.setText(self.manual_dir)
 
         # Set the initial value of the Manual Control 'Position:' spin box.
-        # print(self.conversion_slope, '* (', self.manual_position, '+', self.zero_ofst, ')')
-        # print("Setting mancon pos spinbox to ", self.conversion_slope * (self.manual_position + self.zero_ofst))
-        # self.pos_spin.setValue(self.conversion_slope * (self.manual_position + self.zero_ofst))
         self.pos_spin.setValue(0)
 
         # Signal-to-slot connections.
@@ -332,9 +285,7 @@ class Ui(QMainWindow):
         self.timer.start(100)
 
         # Set up the status bar.
-        # self.grating_spinbox: QDoubleSpinBox = QDoubleSpinBox()
         self.statusBar = QStatusBar()
-        # self.statusBar.setStyleSheet("QStatusBar{padding-right:50px;padding-left:50px;}")
         self.setStatusBar(self.statusBar)
         self.sb_grating_density: QLabel = QLabel()
         self.sb_zero_offset: QLabel = QLabel()
@@ -351,12 +302,6 @@ class Ui(QMainWindow):
         self.statusBar.addPermanentWidget(self.sb_diff_order)
         self.statusBar.addPermanentWidget(self.sb_conv_slope)
         self.updateStatusBarGratingEquationValues()
-        # self.sb_grating_density.setText("  <i>G</i> " + str(self.grating_density) + " grooves/mm    ")
-        # self.sb_zero_offset.setText("  <i>&lambda;</i><sub>0</sub> " + str(self.zero_ofst) + " nm    ")
-        # self.sb_inc_ang.setText("  <i>&theta;</i><sub>inc</sub> " + str(self.incidence_ang) + " deg    ")
-        # self.sb_tan_ang.setText("  <i>&theta;</i><sub>tan</sub> " + str(self.tangent_ang) + " deg    ")
-        # self.sb_arm_len.setText("  <i>L</i> " + str(self.arm_length) + " mm    ")
-        # self.sb_diff_order.setText("  <i>m</i> " + str(self.diff_order) + "    ")
 
         # Display the GUI.
         self.show()
@@ -411,8 +356,6 @@ class Ui(QMainWindow):
         self.moving = self.motor_ctrl.is_moving()
         # print(self.current_position)
         self.currpos_nm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / MM_TO_IDX) / self.conversion_slope) - self.zero_ofst))
-        # self.currpos_lcd_disp.display(((self.current_position / MM_TO_IDX) / self.conversion_slope) - self.zero_ofst)
-        # self.currpos_steps_disp.setText('%d steps'%(self.current_position))
 
     def scan_button_pressed(self):
         print("Scan button pressed!")
@@ -561,15 +504,12 @@ class Ui(QMainWindow):
             uic.loadUi(ui_file, self.machine_conf_win)
 
             self.machine_conf_win.setWindowTitle('Monochromator Configuration')
-            # self.machine_conf_win.setWindowFlags(self.machine_conf_win.windowFlags().setFlag(WindowContextHelpButtonHint, False))
 
             self.grating_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, 'grating_combo_2')
             self.grating_combo.addItems(self.grating_combo_lstr)
             print(self.current_grating_idx)
             self.grating_combo.setCurrentIndex(self.current_grating_idx)
             self.grating_combo.activated.connect(self.newGratingItem)
-            # self.grating_density_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'grating_density_in')
-            # self.grating_density_in.setValue(self.grating_density)
             
             self.zero_ofst_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'zero_offset_in')
             self.zero_ofst_in.setValue(self.zero_ofst)
@@ -606,8 +546,6 @@ class Ui(QMainWindow):
         self.incidence_ang = self.incidence_ang_in.value()
         self.tangent_ang = self.tangent_ang_in.value()
         self.arm_length = self.arm_length_in.value()
-
-        # self.conversion_slope = 2 / self.grating_density * 1e3 * np.cos(np.pi * self.incidence_ang / 180) * np.cos(np.pi * self.tangent_ang / 180) / self.arm_length * MM_TO_IDX / self.diff_order
 
         self.calculateConversionSlope()
 
@@ -730,6 +668,14 @@ if __name__ == '__main__':
 
     # First, the loading screen.
     # TODO: Set up some kind of loading screen to display.
+    # lui_file_name = exeDir + '/ui/' + "load.ui"
+    # lui_file = QFile(lui_file_name) # workaround to load UI file with pyinstaller
+    # if not lui_file.open(QIODevice.ReadOnly):
+    #     print(f"Cannot open {lui_file_name}: {lui_file.errorString()}")
+    #     sys.exit(-1)
+
+    # loadWindow = LoadUi(application, lui_file)
+    # ret = application.exec_()
 
     # Then, we load up the device selection UI.
     # TODO: Display a device selection UI / connected devices status UI prior to booting the main window.
@@ -753,28 +699,8 @@ if __name__ == '__main__':
     # Wait for the Qt loop to exit before exiting.
     ret = application.exec_() # block until
 
-    # Displays reference counts for debugging purposes.
-    # print('mainwindow: %d'%(sys.getrefcount(mainWindow) - 1))
-    # print('motor: %d'%(sys.getrefcount(mainWindow.motor_ctrl) - 1))
-    # print('pa: %d'%(sys.getrefcount(mainWindow.pa) - 1))
-
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
-    save_config = confp.ConfigParser()
-    grating_lstr = mainWindow.grating_combo_lstr[:-1]
-    gratingDensityStr = ''
-    for obj in grating_lstr:
-        gratingDensityStr += obj + ','
-    gratingDensityStr = gratingDensityStr.rstrip(',')
-    save_config['INSTRUMENT'] = {'gratingDensities': gratingDensityStr,
-                                 'gratingDensityIndex': str(mainWindow.current_grating_idx),
-                                 'diffractionOrder': str(mainWindow.diff_order),
-                                 'zeroOffset': str(mainWindow.zero_ofst),
-                                 'incidenceAngle': str(mainWindow.incidence_ang),
-                                 'tangentAngle': str(mainWindow.tangent_ang),
-                                 'armLength': str(mainWindow.arm_length)}
-    
-    with open(exeDir+'/config.ini', 'w') as confFile:
-        save_config.write(confFile)
+    save_config(appDir, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length)    
 
     # Cleanup and exit.
     del mainWindow
