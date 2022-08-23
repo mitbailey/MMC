@@ -234,6 +234,7 @@ class Ui(QMainWindow):
         self.pop_out_table_act: QAction = self.findChild(QAction, "pop_out_table")
         self.pop_out_plot_act: QAction = self.findChild(QAction, "pop_out_plot")
         self.oneshot_samples_spinbox: QSpinBox = self.findChild(QSpinBox, "samples_set_spinbox")
+        self.table: QTableWidget = self.findChild(QTableWidget, "table")
         
         # Get the palette.
         palette = self.currpos_nm_disp.palette()
@@ -327,8 +328,46 @@ class Ui(QMainWindow):
         self.startpos = (self.start_spin.value() + self.zero_ofst) * self.conversion_slope
         self.stoppos = (self.stop_spin.value() + self.zero_ofst) * self.conversion_slope
 
+        # Set up the data table.
+        self.table.setColumnCount(6)
+        self.scan_number = 0
+        self.table_has_manual_entry = False
+        self.table_manual_row = 0
+        self.table_manual_points = 0
+        # Scan Number, Scan Type (Auto, Manual), Number of Data Points (e.g., pressed scan 50x), Starting wavelength, Stop wavelength (auto-only), step wavelength (auto-only)
+        self.table.setHorizontalHeaderLabels(['#', 'Scan Type', 'Data Points', 'Start', 'Stop', 'Step'])
+
         # Display the GUI.
         self.show()
+
+    def table_log(self, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
+        self.scan_number += 1
+
+        if scan_type == 'Automatic':
+            row_pos = 0
+            if self.table_has_manual_entry:
+                row_pos = 1
+            self.table.insertRow(row_pos)
+            self.table.setItem(row_pos, 0, QTableWidgetItem(str(self.scan_number)))
+            self.table.setItem(row_pos, 1, QTableWidgetItem(scan_type))
+            self.table.setItem(row_pos, 2, QTableWidgetItem(str(data_points)))
+            self.table.setItem(row_pos, 3, QTableWidgetItem(str(start)))
+            self.table.setItem(row_pos, 4, QTableWidgetItem(str(stop)))
+            self.table.setItem(row_pos, 5, QTableWidgetItem(str(step)))
+        elif scan_type == 'Manual':
+            if self.table_has_manual_entry:
+                self.table_manual_points += 1
+                print("TABLE MANUAL POINTS: " + str(self.table_manual_points))
+                self.table.setItem(self.table_manual_row, 2, QTableWidgetItem(str(self.table_manual_points)))
+            else:
+                self.table_has_manual_entry = True
+                self.table.insertRow(0)
+                self.table.setItem(0, 0, QTableWidgetItem(str(self.scan_number)))
+                self.table.setItem(0, 1, QTableWidgetItem(scan_type))
+                self.table.setItem(0, 2, QTableWidgetItem(str(data_points)))
+                self.table.setItem(0, 3, QTableWidgetItem(str(start)))
+                self.table.setItem(0, 4, QTableWidgetItem(str(stop)))
+                self.table.setItem(0, 5, QTableWidgetItem(str(step)))
 
     def autosave_dir_triggered(self):
         self.data_save_directory = QFileDialog.getExistingDirectory(self, 'Auto logging files location', self.data_save_directory, options=QFileDialog.ShowDirsOnly)
@@ -617,6 +656,10 @@ class OneShot(QThread):
             self.parent.manual_xdata.append(pos)
             self.parent.manual_ydata.append(self.parent.mes_sign * mes * 1e12)
             print(pos, self.parent.mes_sign * mes * 1e12)
+
+            # Add to data table.
+            self.parent.table_log('Manual', pos)
+
         self.complete.emit()
         self.parent.collect_data.setDisabled(False)
         self.parent.scan_button.setDisabled(False)
@@ -711,6 +754,7 @@ class Scan(QThread):
         self.other.scanRunning = False
         self.other.scan_button.setDisabled(False)
         self.other.stop_scan_button.setDisabled(True)
+        self.other.table_log('Automatic', self.other.startpos, self.other.stoppos, self.other.steppos, nidx+1)
         self.complete.emit()
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
 
