@@ -329,6 +329,8 @@ class Ui(QMainWindow):
         self.stoppos = (self.stop_spin.value() + self.zero_ofst) * self.conversion_slope
 
         # Set up the data table.
+        self.auto_data_dict = {} # {Scan ID, CSV Data String} dictionary for automatic scan data.
+        self.man_data_str = '' # CSV String to append manual data to.
         self.table.setColumnCount(6)
         self.scan_number = 0
         self.table_has_manual_entry = False
@@ -340,7 +342,7 @@ class Ui(QMainWindow):
         # Display the GUI.
         self.show()
 
-    def table_log(self, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
+    def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
         self.scan_number += 1
 
         if scan_type == 'Automatic':
@@ -354,11 +356,19 @@ class Ui(QMainWindow):
             self.table.setItem(row_pos, 3, QTableWidgetItem(str(start)))
             self.table.setItem(row_pos, 4, QTableWidgetItem(str(stop)))
             self.table.setItem(row_pos, 5, QTableWidgetItem(str(step)))
+
+            # Add or update data entry.
+            self.auto_data_dict.update({self.scan_number: data})
+
         elif scan_type == 'Manual':
             if self.table_has_manual_entry:
                 self.table_manual_points += 1
                 print("TABLE MANUAL POINTS: " + str(self.table_manual_points))
                 self.table.setItem(self.table_manual_row, 2, QTableWidgetItem(str(self.table_manual_points)))
+
+                # Append to manual data CSV string.
+                self.man_data_str += data
+
             else:
                 self.table_has_manual_entry = True
                 self.table.insertRow(0)
@@ -368,6 +378,9 @@ class Ui(QMainWindow):
                 self.table.setItem(0, 3, QTableWidgetItem(str(start)))
                 self.table.setItem(0, 4, QTableWidgetItem(str(stop)))
                 self.table.setItem(0, 5, QTableWidgetItem(str(step)))
+
+                # Set manual data CSV string.
+                self.man_data_str = data
 
     def autosave_dir_triggered(self):
         self.data_save_directory = QFileDialog.getExistingDirectory(self, 'Auto logging files location', self.data_save_directory, options=QFileDialog.ShowDirsOnly)
@@ -658,7 +671,7 @@ class OneShot(QThread):
             print(pos, self.parent.mes_sign * mes * 1e12)
 
             # Add to data table.
-            self.parent.table_log('Manual', pos)
+            self.parent.table_log(buf, 'Manual', pos)
 
         self.complete.emit()
         self.parent.collect_data.setDisabled(False)
