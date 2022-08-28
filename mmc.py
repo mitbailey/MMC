@@ -104,7 +104,7 @@ class Ui(QMainWindow):
 
     # Constructor
     def __init__(self, application, uiresource = None):
-        # TODO: Set this via the QMenu QAction Edit->Change Auto-log Directory
+        # Set this via the QMenu QAction Edit->Change Auto-log Directory
         self.data_save_directory = os.path.expanduser('~/Documents')
         self.data_save_directory += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
         if not os.path.exists(self.data_save_directory):
@@ -113,7 +113,7 @@ class Ui(QMainWindow):
         self.num_scans = 0
 
         self.mes_sign = 1
-        self.autosave_data = False
+        self.autosave_data_bool = False
         self.pop_out_table = False
         self.pop_out_plot = False
 
@@ -140,6 +140,9 @@ class Ui(QMainWindow):
 
         # Replaces default grating equation values with the values found in the config.ini file.
         load_dict = load_config(appDir)
+        self.mes_sign = load_dict['measurementSign']
+        self.autosave_data_bool = load_dict['autosaveData']
+        self.data_save_directory = load_dict['dataSaveDirectory']
         self.grating_combo_lstr = load_dict["gratingDensities"]
         self.current_grating_idx = load_dict["gratingDensityIndex"]
         self.diff_order = load_dict["diffractionOrder"]
@@ -339,6 +342,20 @@ class Ui(QMainWindow):
         # Scan Number, Scan Type (Auto, Manual), Number of Data Points (e.g., pressed scan 50x), Starting wavelength, Stop wavelength (auto-only), step wavelength (auto-only)
         self.table.setHorizontalHeaderLabels(['#', 'Scan Type', 'Data Points', 'Start', 'Stop', 'Step'])
 
+        # Make sure the menu bar QAction states agree with reality.
+        print('mes_sign: ', self.mes_sign)
+        print('autosave_data: ', self.autosave_data_bool)
+
+        if self.mes_sign == -1:
+            self.invert_mes_act.setChecked(True)
+        else:
+            self.invert_mes_act.setChecked(False)
+
+        if self.autosave_data_bool:
+            self.autosave_data_act.setChecked(True)
+        else:
+            self.autosave_data_act.setChecked(False)
+
         # Display the GUI.
         self.show()
 
@@ -401,9 +418,9 @@ class Ui(QMainWindow):
 
     def autosave_data_toggled(self, state):
         if not self.scanRunning:
-            self.autosave_data = state
+            self.autosave_data_bool = state
         else:
-            self.autosave_data_act.setChecked(self.autosave_data)
+            self.autosave_data_act.setChecked(self.autosave_data_bool)
             
     def pop_out_table_toggled(self, state):
         self.pop_out_table = state
@@ -698,11 +715,11 @@ class Scan(QThread):
 
     def run(self):
         print(self.other)
-        print("Save to file? " + str(self.other.autosave_data))
+        print("Save to file? " + str(self.other.autosave_data_bool))
 
         self.statusUpdate.emit("PREPARING")
         sav_file = None
-        if (self.other.autosave_data):
+        if (self.other.autosave_data_bool):
             tnow = dt.datetime.now()
             
             filename = self.other.data_save_directory + tnow.strftime('%Y%m%d%H%M%S') + "_data.csv"
@@ -832,7 +849,11 @@ if __name__ == '__main__':
     ret = application.exec_() # block until
 
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
-    save_config(appDir, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length)    
+    # TODO: Save the following:
+    # mainWindow.mes_sign
+    # .autosave_data
+    # .data_save_directory
+    save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length)    
 
     # Cleanup and exit.
     del mainWindow
