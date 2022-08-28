@@ -160,7 +160,7 @@ class Ui(QMainWindow):
         self.manual_position = 0 # 0 nm
         self.startpos = 0
         self.stoppos = 0
-        self.steppos = 0
+        self.steppos = 0.1
 
         self.application: QApplication = application
         args = self.application.arguments()
