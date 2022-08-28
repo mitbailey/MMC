@@ -359,6 +359,7 @@ class Ui(QMainWindow):
 
             # Add or update data entry.
             self.auto_data_dict.update({self.scan_number: data})
+            print(self.auto_data_dict)
 
         elif scan_type == 'Manual':
             if self.table_has_manual_entry:
@@ -368,6 +369,7 @@ class Ui(QMainWindow):
 
                 # Append to manual data CSV string.
                 self.man_data_str += data
+                print(self.man_data_str)
 
             else:
                 self.table_has_manual_entry = True
@@ -381,6 +383,7 @@ class Ui(QMainWindow):
 
                 # Set manual data CSV string.
                 self.man_data_str = data
+                print(self.man_data_str)
 
     def autosave_dir_triggered(self):
         self.data_save_directory = QFileDialog.getExistingDirectory(self, 'Auto logging files location', self.data_save_directory, options=QFileDialog.ShowDirsOnly)

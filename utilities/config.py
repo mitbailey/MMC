@@ -5,6 +5,15 @@ import pathlib
 import os
 
 def load_config(path: str | pathlib.Path) -> dict:
+    if not os.path.exists(path + '/config.ini'):
+        print("No config.ini file found, creating one...")
+        temp_gratings = ['1200', '2400', '* New Entry']
+        if save_config(path, temp_gratings, 1, 1, 37.8461, 32.0, 0.0, 56.54):
+            print("Successfully created default configuration file.")
+        else:
+            print("Failed to create default configuration file.")
+            raise RuntimeError("Failed to create default configuration file.")
+
     while os.path.exists(path + '/config.ini'):
             config = confp.ConfigParser()
             config.read(path + '/config.ini')
