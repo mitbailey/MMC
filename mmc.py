@@ -116,6 +116,7 @@ class Ui(QMainWindow):
         self.autosave_data_bool = False
         self.pop_out_table = False
         self.pop_out_plot = False
+        self.moving = False
 
         self.machine_conf_win: QDialog = None
         self.grating_conf_win: QDialog = None
@@ -342,6 +343,8 @@ class Ui(QMainWindow):
         # Scan Number, Scan Type (Auto, Manual), Number of Data Points (e.g., pressed scan 50x), Starting wavelength, Stop wavelength (auto-only), step wavelength (auto-only)
         self.table.setHorizontalHeaderLabels(['#', 'Scan Type', 'Data Points', 'Start', 'Stop', 'Step'])
 
+        self.stop_scan_button.setDisabled(True)
+
         # Make sure the menu bar QAction states agree with reality.
         print('mes_sign: ', self.mes_sign)
         print('autosave_data: ', self.autosave_data_bool)
@@ -478,14 +481,28 @@ class Ui(QMainWindow):
 
     def update_position_displays(self):
         self.current_position = self.motor_ctrl.get_position()
-        self.moving = self.motor_ctrl.is_moving()
+
+        move_status = self.motor_ctrl.is_moving()
+        if not move_status and self.moving:
+            self.move_to_position_button.setDisabled(False)
+            self.collect_data.setDisabled(False)
+            self.scan_button.setDisabled(False)
+            self.stop_scan_button.setDisabled(True)
+
+        self.moving = move_status
+
+        # if not self.moving:
+            # self.move_to_position_button.setEnabled(not self.moving)
         # print(self.current_position)
         self.currpos_nm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.motor_ctrl.mm_to_idx) / self.conversion_slope) - self.zero_ofst))
 
     def scan_button_pressed(self):
+        # self.moving = True
         print("Scan button pressed!")
         if not self.scanRunning:
             self.scan.start()
+            self.move_to_position_button.setDisabled(True)
+            self.collect_data.setDisabled(True)
             self.scan_button.setDisabled(True)
             self.stop_scan_button.setDisabled(False)
 
@@ -501,6 +518,12 @@ class Ui(QMainWindow):
 
     def move_to_position_button_pressed(self):
         self.moving = True
+
+        self.move_to_position_button.setDisabled(True)
+        self.collect_data.setDisabled(True)
+        self.scan_button.setDisabled(True)
+        self.stop_scan_button.setDisabled(True)
+
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
@@ -694,6 +717,7 @@ class OneShot(QThread):
             self.parent.table_log(buf, 'Manual', pos)
 
         self.complete.emit()
+        self.parent.move_to_position_button.setDisabled(False)
         self.parent.collect_data.setDisabled(False)
         self.parent.scan_button.setDisabled(False)
 
@@ -733,11 +757,19 @@ class Scan(QThread):
         self.other.stoppos = (self.other.stop_spin.value() + self.other.zero_ofst) * self.other.conversion_slope
         self.other.steppos = (self.other.step_spin.value()) * self.other.conversion_slope
         if self.other.steppos == 0 or self.other.startpos == self.other.stoppos:
+            if (sav_file is not None):
+                sav_file.close()
+            self.other.scanRunning = False
+            self.other.move_to_position_button.setDisabled(False)
+            self.other.collect_data.setDisabled(False)
+            self.other.scan_button.setDisabled(False)
+            self.other.stop_scan_button.setDisabled(True)
             self.complete.emit()
             return
         scanrange = np.arange(self.other.startpos, self.other.stoppos + self.other.steppos, self.other.steppos)
         # self.other.pa.set_samples(3)
         nidx = len(scanrange)
+        # if nidx > 0:
         if len(self.other.xdata) != len(self.other.ydata):
             self.other.xdata = {}
             self.other.ydata = {}
@@ -785,6 +817,8 @@ class Scan(QThread):
             sav_file.close()
         self.other.num_scans += 1
         self.other.scanRunning = False
+        self.other.move_to_position_button.setDisabled(False)
+        self.other.collect_data.setDisabled(False)
         self.other.scan_button.setDisabled(False)
         self.other.stop_scan_button.setDisabled(True)
         self.other.table_log('Automatic', self.other.startpos, self.other.stoppos, self.other.steppos, nidx+1)
