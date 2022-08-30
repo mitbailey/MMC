@@ -362,6 +362,9 @@ class Ui(QMainWindow):
         # Display the GUI.
         self.show()
 
+    def manual_home(self):
+        self.motor_ctrl.home()
+
     def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
         self.scan_number += 1
 
