@@ -461,6 +461,35 @@
              </spacer>
             </item>
             <item>
+             <widget class="QPushButton" name="home_button">
+              <property name="font">
+               <font>
+                <family>Segoe UI Semibold</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Home</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QFrame" name="frame_3">
+              <property name="minimumSize">
+               <size>
+                <width>25</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="save_config_button">
               <property name="font">
                <font>

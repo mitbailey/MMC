@@ -239,6 +239,7 @@ class Ui(QMainWindow):
         self.pop_out_plot_act: QAction = self.findChild(QAction, "pop_out_plot")
         self.oneshot_samples_spinbox: QSpinBox = self.findChild(QSpinBox, "samples_set_spinbox")
         self.table: QTableWidget = self.findChild(QTableWidget, "table")
+        self.home_button: QPushButton = self.findChild(QPushButton, "home_button")
         
         # Get the palette.
         palette = self.currpos_nm_disp.palette()
@@ -300,6 +301,8 @@ class Ui(QMainWindow):
         self.preferences_act.triggered.connect(self.preferences_triggered)
         self.pop_out_table_act.toggled.connect(self.pop_out_table_toggled)
         self.pop_out_plot_act.toggled.connect(self.pop_out_plot_toggled)
+
+        self.home_button.clicked.connect(self.manual_home)
 
         # Other stuff.
         self.scan = Scan(weakref.proxy(self))
@@ -363,6 +366,7 @@ class Ui(QMainWindow):
         self.show()
 
     def manual_home(self):
+        # TODO: Disable buttons, etc, during homing. Also change the System Status readout.
         self.motor_ctrl.home()
 
     def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
