@@ -201,6 +201,12 @@ class Ui(QMainWindow):
             self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
             self.motor_ctrl.set_stage('ZST25')
 
+        self.homing_started = False
+        if not isinstance(self.motor_ctrl, tlkt.Thorlabs.KSTDummy): # home only on the real device
+            self.homing_started = True
+            self.disable_movement_sensitive_buttons(True)
+            self.scan_statusUpdate_slot("HOMING")
+
         # TODO: Move to zero-order?
         # Move to 1mm (0nm)
         # self.motor_ctrl.move_to(1 * self.motor_ctrl.mm_to_idx, True)
@@ -365,8 +371,17 @@ class Ui(QMainWindow):
         # Display the GUI.
         self.show()
 
+    def disable_movement_sensitive_buttons(self, disable: bool):
+        self.move_to_position_button.setDisabled(disable)
+        self.collect_data.setDisabled(disable)
+        self.scan_button.setDisabled(disable)
+        self.stop_scan_button.setDisabled(disable)
+
     def manual_home(self):
         # TODO: Disable buttons, etc, during homing. Also change the System Status readout.
+        self.scan_statusUpdate_slot("HOMING")
+        self.homing_started = True
+        self.disable_movement_sensitive_buttons(True)
         self.motor_ctrl.home()
 
     def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
@@ -488,7 +503,13 @@ class Ui(QMainWindow):
 
     def update_position_displays(self):
         self.current_position = self.motor_ctrl.get_position()
-
+        if self.homing_started: # set this to True at __init__ because we are homing, and disable everything. same goes for 'Home' button
+            home_status = self.motor_ctrl.is_homing() # explore possibility of replacing this with is_homed()
+            if not home_status:
+                # enable stuff here
+                self.scan_statusUpdate_slot("IDLE")
+                self.disable_movement_sensitive_buttons(False)
+                pass
         move_status = self.motor_ctrl.is_moving()
         if not move_status and self.moving:
             self.move_to_position_button.setDisabled(False)
@@ -526,10 +547,12 @@ class Ui(QMainWindow):
     def move_to_position_button_pressed(self):
         self.moving = True
 
-        self.move_to_position_button.setDisabled(True)
-        self.collect_data.setDisabled(True)
-        self.scan_button.setDisabled(True)
-        self.stop_scan_button.setDisabled(True)
+        self.disable_movement_sensitive_buttons(True)
+
+        # self.move_to_position_button.setDisabled(True)
+        # self.collect_data.setDisabled(True)
+        # self.scan_button.setDisabled(True)
+        # self.stop_scan_button.setDisabled(True)
 
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
