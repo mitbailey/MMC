@@ -11,8 +11,7 @@ from time import sleep
 import math as m
 import threading
 
-# from _thorlabs_kst_wrap_basic import *
-from drivers import _thorlabs_kst_wrap_basic
+from ._thorlabs_kst_wrap_basic import *
 
 def __funcname__():
     import inspect
@@ -186,6 +185,9 @@ class Thorlabs: # Wrapper class for TLI methods
         """
         # TLI List method
         open_devices = [] # List of opened devices
+
+        avail_stages = {}
+        avail_stages['ZST25'] = 2184560.64
         @staticmethod
         def _ListDevices() -> list:
             """List all available KST101 devices (including opened devices).
@@ -225,6 +227,7 @@ class Thorlabs: # Wrapper class for TLI methods
             self.moving = False
             self.homed = False
             self.homing = False
+            self._mm_to_idx = 0 # this will cause errors unless a stage is set
             self.keep_polling = True
             self.poll_interval = pollingIntervalMs * 0.001
             self.mutex = threading.Lock()
@@ -371,8 +374,13 @@ class Thorlabs: # Wrapper class for TLI methods
         def set_stage(self, stype: str):
             if stype not in KST_Stages:
                 raise RuntimeError('%s not a valid stage type'%(stype))
+            self._mm_to_idx = Thorlabs.KST101.avail_stages[stype]
             ret = TLI_KST.SetStageType(self.serial, KST_Stages.index(stype))
             return ret
+
+        @property
+        def mm_to_idx(self):
+            return self._mm_to_idx
 
         def wait_for(self, mtype: str, mid: str) -> bool:
             if mtype not in KST_MessageType.keys():
@@ -662,6 +670,9 @@ class Thorlabs: # Wrapper class for TLI methods
         """
         # TLI List method
         open_devices = [] # List of opened devices
+
+        avail_stages = {}
+        avail_stages['ZST25'] = 2184560.64
         @staticmethod
         def _ListDevices() -> list:
             """List all available KST101 devices (including opened devices).
@@ -699,6 +710,7 @@ class Thorlabs: # Wrapper class for TLI methods
             self.moving = False
             self.homed = False
             self.homing = False
+            self._mm_to_idx = 0
             self.keep_polling = True
             self.poll_interval = pollingIntervalMs * 0.001
             self.mutex = threading.Lock()
@@ -818,7 +830,12 @@ class Thorlabs: # Wrapper class for TLI methods
         # API calls; possible examples.
 
         def set_stage(self, stype: str):
+            self._mm_to_idx = Thorlabs.KST101.avail_stages[stype]
             return True
+
+        @property
+        def mm_to_idx(self):
+            return self._mm_to_idx
 
         def wait_for(self, mtype: str, mid: str) -> bool:
             return True

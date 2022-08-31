@@ -1,6 +1,10 @@
 # McPherson Monochromator Controller
 
 ## Usage
+### via Executable
+See the appropriate [releases page](https://github.com/mitbailey/MMC/releases) for details.  
+
+### via Source Code
 Boot in normal mode, attempting connections and failing if devices not found:  
 `python mmc.py`   
    
@@ -12,3 +16,7 @@ Boot in debug mode, no real connections to hardware will be attempted:
 1. Required packages: Thorlabs Kinesis (installed in C:\Program Files..), NiceLib, CFFI
 2. To build the CFFI symbol table: `python _build_kst.py`
 3. Mid level wrapper: `python _thorlabs_kst_wrap_basic.py`
+
+## Compatible Hardware
+- KST101 (Motor Controller)  
+- KM6485 (Picoammeter)  

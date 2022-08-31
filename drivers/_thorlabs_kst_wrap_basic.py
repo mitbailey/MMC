@@ -9,7 +9,7 @@ from time import sleep
 import math as m
 import threading
 # import _thorlabs_kst_lib
-from drivers import _thorlabs_kst_lib
+from . import _thorlabs_kst_lib
 
 def dcos(deg):
     return m.degrees((m.cos(m.radians(32))))
