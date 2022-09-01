@@ -35,8 +35,8 @@ class DataTableWidget(QTableWidget):
     def __init__(self, parent):
         super(DataTableWidget, self).__init__(parent)
         self.parent = parent
-        self.recordedData = dict()
-        self.manualData: TableRowRaw = {'id': -1, 'name': '', 'x': np.array([], dtype=float), 'y': np.array([], dtype=float), 'plotted': False, 'plot_cb': CustomQCheckBox(-1, self)}
+        self.recordedData = dict(int, TableRowRaw)
+        self.manualData: TableRowRaw = {'id': -1, 'name': 'Manual Scan', 'x': np.array([], dtype=float), 'y': np.array([], dtype=float), 'plotted': False, 'plot_cb': CustomQCheckBox(-1, self)}
         self.manualData['plot_cb'].setDisabled(True)
         self.manualData['plot_cb'].stateChanged.connect(self.plotCheckboxCb)
         self.hasManualData = False
@@ -181,6 +181,25 @@ class DataTableWidget(QTableWidget):
     def deleteItem(self, row: int):
         if row < 0:
             return
+        try:
+            scanId = self.rowMap.index(row)
+        except ValueError:
+            print('Row %d invalid, len(rows) = %d?'%(row, len(self.rowMap)))
+        if scanId in self.recordedData.keys():
+            del self.recordedData[scanId]
+            del self.rowMap[row]
+        elif scanId == -1: # for manual
+            self.rowMap = None # just rebuild...
+            self.hasManualData = False
+            self.hadManualData = False
+            self.manualData['plotted'] = False
+            self.manualData['name'] = 'Manual Scan'
+            self.manualData['x'] = np.zeros([], dtype = float)     
+            self.manualData['y'] = np.zeros([], dtype = float)     
+            self.manualData['plot_cb'].setDisabled(True)
+            self.manualData['plot_cb'].setCheckState(Qt.Unchecked)
+        self.updateTableDisplay()
+        self.updatePlots()
         pass
 
     def keyPressEvent(self, event):
