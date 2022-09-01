@@ -234,9 +234,12 @@ class Thorlabs: # Wrapper class for TLI methods
             self.cond = threading.Condition(self.mutex)
             self.poll_thread = threading.Thread(target = Thorlabs.KST101.poll_status, args=[weakref.proxy(self)])
             self.poll_thread.start()
-            retval = self.home(False) # TODO: Remove blocking while homing in INIT
-            if retval != 0 and retval != 39:
-                raise RuntimeError('Motor %s: Could not home, error %s'%(self.serial, err_codes[retval]))
+            
+            # TODO: Remove blocking while homing in INIT
+            # retval = self.home(False) 
+            
+            # if retval != 0 and retval != 39:
+            #     raise RuntimeError('Motor %s: Could not home, error %s'%(self.serial, err_codes[retval]))
 
         # SCC Methods
         def _Open(self, pollingIntervalMs: int = 100) -> bool:

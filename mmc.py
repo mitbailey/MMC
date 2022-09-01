@@ -111,12 +111,15 @@ class Ui(QMainWindow):
             os.makedirs(self.data_save_directory)
 
         self.num_scans = 0
+        self.previous_position = -9999
+        self.immobile_count = 0
 
         self.mes_sign = 1
         self.autosave_data_bool = False
         self.pop_out_table = False
         self.pop_out_plot = False
         self.moving = False
+        self.scanRunning = False
 
         self.machine_conf_win: QDialog = None
         self.grating_conf_win: QDialog = None
@@ -201,11 +204,7 @@ class Ui(QMainWindow):
             self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
             self.motor_ctrl.set_stage('ZST25')
 
-        self.homing_started = False
-        if not isinstance(self.motor_ctrl, tlkt.Thorlabs.KSTDummy): # home only on the real device
-            self.homing_started = True
-            self.disable_movement_sensitive_buttons(True)
-            self.scan_statusUpdate_slot("HOMING")
+
 
         # TODO: Move to zero-order?
         # Move to 1mm (0nm)
@@ -247,6 +246,13 @@ class Ui(QMainWindow):
         self.table: QTableWidget = self.findChild(QTableWidget, "table")
         self.home_button: QPushButton = self.findChild(QPushButton, "home_button")
         
+        self.homing_started = False
+        if not isinstance(self.motor_ctrl, tlkt.Thorlabs.KSTDummy): # home only on the real device
+            self.homing_started = True
+            self.disable_movement_sensitive_buttons(True)
+            self.scan_statusUpdate_slot("HOMING")
+            self.motor_ctrl.home()
+
         # Get the palette.
         palette = self.currpos_nm_disp.palette()
 
@@ -271,7 +277,6 @@ class Ui(QMainWindow):
 
         self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
         # self.plotCanvas.axes.plot([], [])
-        self.scanRunning = False
         self.clearPlotFcn()
         toolbar = NavigationToolbar(self.plotCanvas, self)
         layout = QtWidgets.QVBoxLayout()
@@ -352,7 +357,7 @@ class Ui(QMainWindow):
         # Scan Number, Scan Type (Auto, Manual), Number of Data Points (e.g., pressed scan 50x), Starting wavelength, Stop wavelength (auto-only), step wavelength (auto-only)
         self.table.setHorizontalHeaderLabels(['#', 'Scan Type', 'Data Points', 'Start', 'Stop', 'Step'])
 
-        self.stop_scan_button.setDisabled(True)
+        # self.stop_scan_button.setDisabled(True)
 
         # Make sure the menu bar QAction states agree with reality.
         print('mes_sign: ', self.mes_sign)
@@ -372,10 +377,25 @@ class Ui(QMainWindow):
         self.show()
 
     def disable_movement_sensitive_buttons(self, disable: bool):
-        self.move_to_position_button.setDisabled(disable)
-        self.collect_data.setDisabled(disable)
-        self.scan_button.setDisabled(disable)
-        self.stop_scan_button.setDisabled(disable)
+        if self.move_to_position_button is not None:
+            self.move_to_position_button.setDisabled(disable)
+        if self.collect_data is not None:
+            self.collect_data.setDisabled(disable)
+        if self.scan_button is not None:
+            self.scan_button.setDisabled(disable)
+
+        # if self.stop_scan_button is not None:
+            # self.stop_scan_button.setDisabled(disable)
+
+        # The stop scan button should always be set based on if a scan is running.
+        if self.scanRunning:
+            # Always have the Stop Scan button available when a scan is running.
+            self.stop_scan_button.setDisabled(False)
+        else:
+            self.stop_scan_button.setDisabled(True)
+
+        if self.home_button is not None:
+            self.home_button.setDisabled(disable)
 
     def manual_home(self):
         # TODO: Disable buttons, etc, during homing. Also change the System Status readout.
@@ -497,27 +517,47 @@ class Ui(QMainWindow):
         self.scan_progress.setValue(curr_percent)
 
     def scan_complete_slot(self):
+        self.scanRunning = False
+        self.disable_movement_sensitive_buttons(False)
         self.scan_button.setText('Begin Scan')
         self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
         self.scan_progress.reset()
 
     def update_position_displays(self):
         self.current_position = self.motor_ctrl.get_position()
+        
         if self.homing_started: # set this to True at __init__ because we are homing, and disable everything. same goes for 'Home' button
             home_status = self.motor_ctrl.is_homing() # explore possibility of replacing this with is_homed()
+            print("home_status", home_status)
+
+            if home_status:
+                # Detect if the device is saying its homing, but its not actually moving.
+                if self.current_position == self.previous_position:
+                    self.immobile_count += 1
+                if self.immobile_count >= 3:
+                    self.motor_ctrl.home()
+                    self.immobile_count = 0
+
             if not home_status:
                 # enable stuff here
+                print(home_status)
+                self.immobile_count = 0
                 self.scan_statusUpdate_slot("IDLE")
                 self.disable_movement_sensitive_buttons(False)
+                self.homing_started = False
                 pass
         move_status = self.motor_ctrl.is_moving()
-        if not move_status and self.moving:
-            self.move_to_position_button.setDisabled(False)
-            self.collect_data.setDisabled(False)
-            self.scan_button.setDisabled(False)
-            self.stop_scan_button.setDisabled(True)
+        
+        if not move_status and self.moving and not self.scanRunning:
+            print("setDisabled 1")
+            # self.move_to_position_button.setDisabled(False)
+            # self.collect_data.setDisabled(False)
+            # self.scan_button.setDisabled(False)
+            # self.stop_scan_button.setDisabled(True)
+            self.disable_movement_sensitive_buttons(False)
 
         self.moving = move_status
+        self.previous_position = self.current_position
 
         # if not self.moving:
             # self.move_to_position_button.setEnabled(not self.moving)
@@ -528,11 +568,14 @@ class Ui(QMainWindow):
         # self.moving = True
         print("Scan button pressed!")
         if not self.scanRunning:
+            self.scanRunning = True
+            self.disable_movement_sensitive_buttons(True)
             self.scan.start()
-            self.move_to_position_button.setDisabled(True)
-            self.collect_data.setDisabled(True)
-            self.scan_button.setDisabled(True)
-            self.stop_scan_button.setDisabled(False)
+            print("setDisabled 2")
+            # self.move_to_position_button.setDisabled(True)
+            # self.collect_data.setDisabled(True)
+            # self.scan_button.setDisabled(True)
+            # self.stop_scan_button.setDisabled(False)
 
     def stop_scan_button_pressed(self):
         print("Stop scan button pressed!")
@@ -541,7 +584,7 @@ class Ui(QMainWindow):
 
     def manual_collect_button_pressed(self):
         print("Manual collect button pressed!")
-        self.collect_data.setDisabled(True)
+        # self.collect_data.setDisabled(True)
         self.one_shot.start()
 
     def move_to_position_button_pressed(self):
@@ -726,7 +769,8 @@ class OneShot(QThread):
         self.statusUpdate.connect(self.parent.scan_statusUpdate_slot)
 
     def run(self):
-        self.parent.scan_button.setDisabled(True)
+        # self.parent.scan_button.setDisabled(True)
+        self.parent.disable_movement_sensitive_buttons(True)
         # collect data
         for _ in range(self.parent.oneshot_samples_spinbox.value()):
             pos = ((self.parent.motor_ctrl.get_position() / self.parent.motor_ctrl.mm_to_idx) / self.parent.conversion_slope) - self.parent.zero_ofst
@@ -746,10 +790,11 @@ class OneShot(QThread):
             # Add to data table.
             self.parent.table_log(buf, 'Manual', pos)
 
+        self.parent.disable_movement_sensitive_buttons(False)
         self.complete.emit()
-        self.parent.move_to_position_button.setDisabled(False)
-        self.parent.collect_data.setDisabled(False)
-        self.parent.scan_button.setDisabled(False)
+        # self.parent.move_to_position_button.setDisabled(False)
+        # self.parent.collect_data.setDisabled(False)
+        # self.parent.scan_button.setDisabled(False)
 
 class Scan(QThread):
     statusUpdate = pyqtSignal(str)
@@ -768,6 +813,8 @@ class Scan(QThread):
         self.wait()
 
     def run(self):
+        self.other.disable_movement_sensitive_buttons(True)
+
         print(self.other)
         print("Save to file? " + str(self.other.autosave_data_bool))
 
@@ -789,11 +836,6 @@ class Scan(QThread):
         if self.other.steppos == 0 or self.other.startpos == self.other.stoppos:
             if (sav_file is not None):
                 sav_file.close()
-            self.other.scanRunning = False
-            self.other.move_to_position_button.setDisabled(False)
-            self.other.collect_data.setDisabled(False)
-            self.other.scan_button.setDisabled(False)
-            self.other.stop_scan_button.setDisabled(True)
             self.complete.emit()
             return
         scanrange = np.arange(self.other.startpos, self.other.stoppos + self.other.steppos, self.other.steppos)
@@ -806,7 +848,6 @@ class Scan(QThread):
         pidx = self.other.num_scans
         self.other.xdata[pidx] = []
         self.other.ydata[pidx] = []
-        self.other.scanRunning = True
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
                 break
@@ -846,11 +887,10 @@ class Scan(QThread):
         if (sav_file is not None):
             sav_file.close()
         self.other.num_scans += 1
-        self.other.scanRunning = False
-        self.other.move_to_position_button.setDisabled(False)
-        self.other.collect_data.setDisabled(False)
-        self.other.scan_button.setDisabled(False)
-        self.other.stop_scan_button.setDisabled(True)
+        # self.other.move_to_position_button.setDisabled(False)
+        # self.other.collect_data.setDisabled(False)
+        # self.other.scan_button.setDisabled(False)
+        # self.other.stop_scan_button.setDisabled(True)
         self.other.table_log('Automatic', self.other.startpos, self.other.stoppos, self.other.steppos, nidx+1)
         self.complete.emit()
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
