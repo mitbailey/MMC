@@ -173,9 +173,9 @@ class Ui(QMainWindow):
         uic.loadUi(uiresource, self)
 
         if len(args) != 1:
-            self.setWindowTitle("McPherson Monochromator Control (Debug Mode)")
+            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.2")
         else:
-            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode)")
+            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.2")
 
         self.is_conv_set = False # Use this flag to set conversion
 
@@ -528,7 +528,7 @@ class Ui(QMainWindow):
         
         if self.homing_started: # set this to True at __init__ because we are homing, and disable everything. same goes for 'Home' button
             home_status = self.motor_ctrl.is_homing() # explore possibility of replacing this with is_homed()
-            print("home_status", home_status)
+            # print("home_status", home_status)
 
             if home_status:
                 # Detect if the device is saying its homing, but its not actually moving.
@@ -848,6 +848,14 @@ class Scan(QThread):
         pidx = self.other.num_scans
         self.other.xdata[pidx] = []
         self.other.ydata[pidx] = []
+
+        # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
+        self.statusUpdate.emit("ZEROING")
+        prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.motor_ctrl.mm_to_idx)
+        self.other.motor_ctrl.move_to(prep_pos, True)
+        self.statusUpdate.emit("HOLDING")
+        sleep(1)
+
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
                 break
