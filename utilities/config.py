@@ -5,7 +5,19 @@ import pathlib
 import os
 import datetime as dt
 
-def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, data_save_directory: str, grating_combo_lstr: list(str), current_grating_idx: int, diff_order: int, zero_ofst: float, inc_ang: float, tan_ang: float, arm_len: float) -> bool:
+def reset_config(path: str | pathlib.Path):
+    print("Resetting configuration file...")
+    
+    temp_gratings = ['1200', '2400', '* New Entry']
+    data_save_dir = os.path.expanduser('~/Documents')
+    data_save_dir += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
+    if not os.path.exists(data_save_dir):
+        os.makedirs(data_save_dir)
+
+    os.remove(path + '/config.ini')
+    save_config(path, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0)
+
+def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, data_save_directory: str, grating_combo_lstr: list(str), current_grating_idx: int, diff_order: int, zero_ofst: float, inc_ang: float, tan_ang: float, arm_len: float, max_pos: float, min_pos: float) -> bool:
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
     grating_lstr = grating_combo_lstr[:-1]
@@ -27,7 +39,9 @@ def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, da
                                  'zeroOffset': str(zero_ofst),
                                  'incidenceAngle': str(inc_ang),
                                  'tangentAngle': str(tan_ang),
-                                 'armLength': str(arm_len)}
+                                 'armLength': str(arm_len),
+                                 'maxPosition': str(max_pos),
+                                 'minPosition': str(min_pos)}
     
     with open(path + '/config.ini', 'w') as confFile:
         save_config.write(confFile)
@@ -41,7 +55,7 @@ def load_config(path: str | pathlib.Path) -> dict:
         if not os.path.exists(data_save_dir):
             os.makedirs(data_save_dir)
 
-        save_config(path, 1, True, data_save_dir, temp_gratings, 1, 1, 37.8461, 32.0, 0.0, 56.54)
+        save_config(path, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0)
 
     while os.path.exists(path + '/config.ini'):
         config = confp.ConfigParser()
@@ -111,6 +125,9 @@ def load_config(path: str | pathlib.Path) -> dict:
                 print('Invalid arm length %f'%(arm_len))
                 arm_len = 100
 
+            max_pos = float(config['INSTRUMENT']['maxPosition'])
+            min_pos = float(config['INSTRUMENT']['minPosition'])
+
             try:
                 mes_sign = int(config['INTERFACE']['measurementSign'])
             except Exception as e:
@@ -145,7 +162,9 @@ def load_config(path: str | pathlib.Path) -> dict:
         "zeroOffset": zero_ofst,
         "incidenceAngle": inc_ang,
         "tangentAngle": tan_ang,
-        "armLength": arm_len
+        "armLength": arm_len,
+        "maxPosition": max_pos,
+        "minPosition": min_pos
     }
 
     print(ret_dict)

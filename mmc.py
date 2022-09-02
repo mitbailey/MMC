@@ -60,7 +60,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
-from utilities.config import load_config, save_config
+from utilities.config import load_config, save_config, reset_config
 import webbrowser
 
 # %% Fonts
@@ -126,6 +126,8 @@ class Ui(QMainWindow):
         self.grating_conf_win: QDialog = None
         self.grating_density_in: QDoubleSpinBox = None
         self.diff_order_in: QDoubleSpinBox = None
+        self.max_pos_in: QDoubleSpinBox = None
+        self.min_pos_in: QDoubleSpinBox = None
         self.zero_ofst_in: QDoubleSpinBox = None
         self.arm_length_in: QDoubleSpinBox = None
         self.incidence_ang_in: QDoubleSpinBox = None
@@ -138,13 +140,24 @@ class Ui(QMainWindow):
         # Default grating equation values.
         self.arm_length = 56.53654 # mm
         self.diff_order = 1
+        self.max_pos = 600.0
+        self.min_pos = -40.0
         self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx]) # grooves/mm
         self.tangent_ang = 0 # deg
         self.incidence_ang = 32 # deg
         self.zero_ofst = 37.8461 # nm
 
         # Replaces default grating equation values with the values found in the config.ini file.
-        load_dict = load_config(appDir)
+        try:
+            load_dict = load_config(appDir)
+        except Exception as e:
+            print("The following exception occurred while attempting to load configuration file: %s"%(e))
+            try:
+                reset_config(appDir)
+                load_dict = load_config(appDir)
+            except Exception as e2:
+                print("Configuration file recovery failed (exception: %s). Unable to load configuration file. Exiting."%(e2))
+                exit(43)
         self.mes_sign = load_dict['measurementSign']
         self.autosave_data_bool = load_dict['autosaveData']
         self.data_save_directory = load_dict['dataSaveDirectory']
@@ -155,6 +168,8 @@ class Ui(QMainWindow):
         self.incidence_ang = load_dict["incidenceAngle"]
         self.tangent_ang = load_dict["tangentAngle"]
         self.arm_length = load_dict["armLength"]
+        self.max_pos = load_dict["maxPosition"]
+        self.min_pos = load_dict["minPosition"]
         self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
 
         # Sets the conversion slope based on the found (or default) values.
@@ -741,6 +756,12 @@ class Ui(QMainWindow):
             self.diff_order_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'diff_order_in')
             self.diff_order_in.setValue(self.diff_order)
 
+            self.max_pos_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'max_pos_sbox')
+            self.max_pos_in.setValue(self.max_pos)
+
+            self.min_pos_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'min_pos_sbox')
+            self.min_pos_in.setValue(self.min_pos)
+
             self.machine_conf_btn = self.machine_conf_win.findChild(QPushButton, 'update_conf_btn')
             self.machine_conf_btn.clicked.connect(self.applyMachineConf)
         
@@ -757,6 +778,8 @@ class Ui(QMainWindow):
         self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
         print(self.grating_density)
         self.diff_order = int(self.diff_order_in.value())
+        self.max_pos = self.max_pos_in.value()
+        self.min_pos = self.min_pos_in.value()
         self.zero_ofst = self.zero_ofst_in.value()
         self.incidence_ang = self.incidence_ang_in.value()
         self.tangent_ang = self.tangent_ang_in.value()
@@ -983,7 +1006,7 @@ if __name__ == '__main__':
     # mainWindow.mes_sign
     # .autosave_data
     # .data_save_directory
-    save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length)    
+    save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length, mainWindow.max_pos, mainWindow.min_pos)    
 
     # Cleanup and exit.
     del mainWindow
