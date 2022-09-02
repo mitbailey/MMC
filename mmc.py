@@ -77,7 +77,6 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes.set_ylabel('Current (pA)')
         super(MplCanvas, self).__init__(fig)
 
-# Imports .ui file.
 class Scan(QThread):
     pass
 
@@ -93,10 +92,6 @@ class Scan(QThread):
 #         self.show()
 
 class Ui(QMainWindow):
-    # manual_prefix = 'manual'
-    # auto_prefix = 'automatic'
-    # manual_dir = './data'
-    # auto_dir = './data'
     # Destructor
     def __del__(self):
         # del self.scan # workaround for cross referencing: delete scan externally
@@ -201,6 +196,7 @@ class Ui(QMainWindow):
         else:
             self.pa = pico.Picoammeter(3)
 
+        # TODO: Generalize to any compatible machines.
         # KST101 initialization.
         print("KST101 init begin.")
         if len(args) == 1:
@@ -219,12 +215,6 @@ class Ui(QMainWindow):
             serials = tlkt.Thorlabs.KSTDummy._ListDevices()
             self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
             self.motor_ctrl.set_stage('ZST25')
-
-
-
-        # TODO: Move to zero-order?
-        # Move to 1mm (0nm)
-        # self.motor_ctrl.move_to(1 * self.motor_ctrl.mm_to_idx, True)
 
         # GUI initialization, gets the UI elements from the .ui file.
         self.scan_button = self.findChild(QPushButton, "begin_scan_button") # Scanning Control 'Begin Scan' Button
@@ -306,11 +296,6 @@ class Ui(QMainWindow):
 
         self.plot_clear_plots.clicked.connect(self.clearPlotFcn)
 
-        # Setting states of UI elements.
-        # self.manual_prefix_box.setText(self.manual_prefix)
-        # self.auto_prefix_box.setText(self.auto_prefix)
-        # self.dir_box.setText(self.save_dir)
-
         # Set the initial value of the Manual Control 'Position:' spin box.
         self.pos_spin.setValue(0)
 
@@ -337,7 +322,6 @@ class Ui(QMainWindow):
         self.about_source_act.triggered.connect(self.open_source_hyperlink)
 
         self.home_button.clicked.connect(self.manual_home)
-
 
         # Other stuff.
         self.scan = Scan(weakref.proxy(self))
@@ -381,8 +365,6 @@ class Ui(QMainWindow):
         # Scan Number, Scan Type (Auto, Manual), Number of Data Points (e.g., pressed scan 50x), Starting wavelength, Stop wavelength (auto-only), step wavelength (auto-only)
         self.table.setHorizontalHeaderLabels(['#', 'Scan Type', 'Data Points', 'Start', 'Stop', 'Step'])
 
-        # self.stop_scan_button.setDisabled(True)
-
         # Make sure the menu bar QAction states agree with reality.
         print('mes_sign: ', self.mes_sign)
         print('autosave_data: ', self.autosave_data_bool)
@@ -417,9 +399,6 @@ class Ui(QMainWindow):
         if self.scan_button is not None:
             self.scan_button.setDisabled(disable)
 
-        # if self.stop_scan_button is not None:
-            # self.stop_scan_button.setDisabled(disable)
-
         # The stop scan button should always be set based on if a scan is running.
         if self.scanRunning:
             # Always have the Stop Scan button available when a scan is running.
@@ -431,7 +410,6 @@ class Ui(QMainWindow):
             self.home_button.setDisabled(disable)
 
     def manual_home(self):
-        # TODO: Disable buttons, etc, during homing. Also change the System Status readout.
         self.scan_statusUpdate_slot("HOMING")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
@@ -583,18 +561,11 @@ class Ui(QMainWindow):
         
         if not move_status and self.moving and not self.scanRunning:
             print("setDisabled 1")
-            # self.move_to_position_button.setDisabled(False)
-            # self.collect_data.setDisabled(False)
-            # self.scan_button.setDisabled(False)
-            # self.stop_scan_button.setDisabled(True)
             self.disable_movement_sensitive_buttons(False)
 
         self.moving = move_status
         self.previous_position = self.current_position
 
-        # if not self.moving:
-            # self.move_to_position_button.setEnabled(not self.moving)
-        # print(self.current_position)
         self.currpos_nm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.motor_ctrl.mm_to_idx) / self.conversion_slope) - self.zero_ofst))
 
     def scan_button_pressed(self):
@@ -605,10 +576,6 @@ class Ui(QMainWindow):
             self.disable_movement_sensitive_buttons(True)
             self.scan.start()
             print("setDisabled 2")
-            # self.move_to_position_button.setDisabled(True)
-            # self.collect_data.setDisabled(True)
-            # self.scan_button.setDisabled(True)
-            # self.stop_scan_button.setDisabled(False)
 
     def stop_scan_button_pressed(self):
         print("Stop scan button pressed!")
@@ -617,18 +584,12 @@ class Ui(QMainWindow):
 
     def manual_collect_button_pressed(self):
         print("Manual collect button pressed!")
-        # self.collect_data.setDisabled(True)
         self.one_shot.start()
 
     def move_to_position_button_pressed(self):
         self.moving = True
 
         self.disable_movement_sensitive_buttons(True)
-
-        # self.move_to_position_button.setDisabled(True)
-        # self.collect_data.setDisabled(True)
-        # self.scan_button.setDisabled(True)
-        # self.stop_scan_button.setDisabled(True)
 
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
@@ -810,7 +771,6 @@ class OneShot(QThread):
         self.statusUpdate.connect(self.parent.scan_statusUpdate_slot)
 
     def run(self):
-        # self.parent.scan_button.setDisabled(True)
         self.parent.disable_movement_sensitive_buttons(True)
         # collect data
         for _ in range(self.parent.oneshot_samples_spinbox.value()):
@@ -833,9 +793,6 @@ class OneShot(QThread):
 
         self.parent.disable_movement_sensitive_buttons(False)
         self.complete.emit()
-        # self.parent.move_to_position_button.setDisabled(False)
-        # self.parent.collect_data.setDisabled(False)
-        # self.parent.scan_button.setDisabled(False)
 
 class Scan(QThread):
     statusUpdate = pyqtSignal(str)
@@ -936,10 +893,6 @@ class Scan(QThread):
         if (sav_file is not None):
             sav_file.close()
         self.other.num_scans += 1
-        # self.other.move_to_position_button.setDisabled(False)
-        # self.other.collect_data.setDisabled(False)
-        # self.other.scan_button.setDisabled(False)
-        # self.other.stop_scan_button.setDisabled(True)
         self.other.table_log('Automatic', self.other.startpos, self.other.stoppos, self.other.steppos, nidx+1)
         self.complete.emit()
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
