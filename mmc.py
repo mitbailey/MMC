@@ -61,6 +61,7 @@ from PyQt5 import QtCore, QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from utilities.config import load_config, save_config
+import webbrowser
 
 # %% Fonts
 digital_7_italic_22 = None
@@ -242,6 +243,10 @@ class Ui(QMainWindow):
         self.preferences_act: QAction = self.findChild(QAction, "preferences")
         self.pop_out_table_act: QAction = self.findChild(QAction, "pop_out_table")
         self.pop_out_plot_act: QAction = self.findChild(QAction, "pop_out_plot")
+        self.about_source_act: QAction = self.findChild(QAction, "actionSource_Code")
+        self.about_licensing_act: QAction = self.findChild(QAction, "actionLicensing")
+        self.about_manual_act: QAction = self.findChild(QAction, "actionManual_2")
+        
         self.oneshot_samples_spinbox: QSpinBox = self.findChild(QSpinBox, "samples_set_spinbox")
         self.table: QTableWidget = self.findChild(QTableWidget, "table")
         self.home_button: QPushButton = self.findChild(QPushButton, "home_button")
@@ -312,8 +317,12 @@ class Ui(QMainWindow):
         self.preferences_act.triggered.connect(self.preferences_triggered)
         self.pop_out_table_act.toggled.connect(self.pop_out_table_toggled)
         self.pop_out_plot_act.toggled.connect(self.pop_out_plot_toggled)
+        self.about_licensing_act.triggered.connect(self.open_licensing_hyperlink)
+        self.about_manual_act.triggered.connect(self.open_manual_hyperlink)
+        self.about_source_act.triggered.connect(self.open_source_hyperlink)
 
         self.home_button.clicked.connect(self.manual_home)
+
 
         # Other stuff.
         self.scan = Scan(weakref.proxy(self))
@@ -375,6 +384,15 @@ class Ui(QMainWindow):
 
         # Display the GUI.
         self.show()
+
+    def open_manual_hyperlink(self):
+        webbrowser.open('https://github.com/mitbailey/MMC')
+
+    def open_source_hyperlink(self):
+        webbrowser.open('https://github.com/mitbailey/MMC')
+
+    def open_licensing_hyperlink(self):
+        webbrowser.open('https://github.com/mitbailey/MMC')
 
     def disable_movement_sensitive_buttons(self, disable: bool):
         if self.move_to_position_button is not None:
