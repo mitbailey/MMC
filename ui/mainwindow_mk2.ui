@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1223</width>
-    <height>600</height>
+    <width>1101</width>
+    <height>686</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -22,7 +22,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_6">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,1">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,0,3">
       <property name="leftMargin">
        <number>5</number>
       </property>
@@ -51,6 +51,12 @@
         </property>
         <item>
          <widget class="QGroupBox" name="mancon_groupbox">
+          <property name="maximumSize">
+           <size>
+            <width>595</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Segoe UI Semibold</family>
@@ -149,26 +155,15 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QLabel" name="label_3">
+                <widget class="QPushButton" name="home_button">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI Semibold</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
-                  <string>Samples:</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QSpinBox" name="samples_set_spinbox">
-                 <property name="minimum">
-                  <number>1</number>
-                 </property>
-                 <property name="maximum">
-                  <number>99</number>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="collect_data_button">
-                 <property name="text">
-                  <string>Collect Data</string>
+                  <string>Home</string>
                  </property>
                 </widget>
                </item>
@@ -181,6 +176,12 @@
         </item>
         <item>
          <widget class="QGroupBox" name="scancon_groupbox">
+          <property name="maximumSize">
+           <size>
+            <width>595</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Segoe UI Semibold</family>
@@ -328,16 +329,16 @@
                   <number>4</number>
                  </property>
                  <property name="minimum">
-                  <double>0.0001</double>
+                  <double>0.000100000000000</double>
                  </property>
                  <property name="maximum">
                   <double>500000.000000000000000</double>
                  </property>
                  <property name="singleStep">
-                  <double>0.01</double>
+                  <double>0.010000000000000</double>
                  </property>
                  <property name="value">
-                    <double>0.1</double>
+                  <double>0.100000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -417,7 +418,7 @@
          </widget>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0">
+         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0,0">
           <property name="leftMargin">
            <number>5</number>
           </property>
@@ -514,35 +515,6 @@
                </size>
               </property>
              </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="home_button">
-              <property name="font">
-               <font>
-                <family>Segoe UI Semibold</family>
-                <pointsize>12</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Home</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QFrame" name="frame_3">
-              <property name="minimumSize">
-               <size>
-                <width>25</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
-             </widget>
             </item>
             <item>
              <widget class="QPushButton" name="save_config_button">
@@ -731,6 +703,22 @@
          </widget>
         </item>
         <item>
+         <widget class="QFrame" name="frame_3">
+          <property name="minimumSize">
+           <size>
+            <width>25</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="label_2">
           <property name="font">
            <font>
@@ -751,6 +739,12 @@
         </item>
         <item>
          <widget class="QLabel" name="status_label">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Digital-7 Mono</family>
@@ -764,6 +758,19 @@
            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
           </property>
          </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_7">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>
@@ -811,7 +818,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1223</width>
+     <width>1101</width>
      <height>21</height>
     </rect>
    </property>

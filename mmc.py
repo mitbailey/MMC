@@ -232,7 +232,7 @@ class Ui(QMainWindow):
         save_config_btn: QPushButton = self.findChild(QPushButton, 'save_config_button')
         self.pos_spin: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox") # Manual Control 'Position:' Spin Box
         self.move_to_position_button: QPushButton = self.findChild(QPushButton, "move_pos_button")
-        self.collect_data: QPushButton = self.findChild(QPushButton, "collect_data_button")
+        # self.collect_data: QPushButton = self.findChild(QPushButton, "collect_data_button")
         self.plotFrame: QWidget = self.findChild(QWidget, "data_graph")
         self.xmin_in: QLineEdit = self.findChild(QLineEdit, "xmin_in")
         self.ymin_in: QLineEdit = self.findChild(QLineEdit, "ymin_in")
@@ -252,7 +252,7 @@ class Ui(QMainWindow):
         self.about_licensing_act: QAction = self.findChild(QAction, "actionLicensing")
         self.about_manual_act: QAction = self.findChild(QAction, "actionManual_2")
         
-        self.oneshot_samples_spinbox: QSpinBox = self.findChild(QSpinBox, "samples_set_spinbox")
+        # self.oneshot_samples_spinbox: QSpinBox = self.findChild(QSpinBox, "samples_set_spinbox")
         self.table: QTableWidget = self.findChild(QTableWidget, "table")
         self.home_button: QPushButton = self.findChild(QPushButton, "home_button")
         
@@ -303,7 +303,7 @@ class Ui(QMainWindow):
         save_config_btn.clicked.connect(self.showConfigWindow)
         self.scan_button.clicked.connect(self.scan_button_pressed)
         self.stop_scan_button.clicked.connect(self.stop_scan_button_pressed)
-        self.collect_data.clicked.connect(self.manual_collect_button_pressed)
+        # self.collect_data.clicked.connect(self.manual_collect_button_pressed)
         self.move_to_position_button.clicked.connect(self.move_to_position_button_pressed)
         self.start_spin.valueChanged.connect(self.start_changed)
         self.stop_spin.valueChanged.connect(self.stop_changed)
@@ -325,7 +325,7 @@ class Ui(QMainWindow):
 
         # Other stuff.
         self.scan = Scan(weakref.proxy(self))
-        self.one_shot = OneShot(weakref.proxy(self))
+        # self.one_shot = OneShot(weakref.proxy(self))
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_position_displays)
@@ -379,6 +379,8 @@ class Ui(QMainWindow):
         else:
             self.autosave_data_act.setChecked(False)
 
+        self.updateMovementLimits()
+
         # Display the GUI.
         self.show()
 
@@ -394,8 +396,8 @@ class Ui(QMainWindow):
     def disable_movement_sensitive_buttons(self, disable: bool):
         if self.move_to_position_button is not None:
             self.move_to_position_button.setDisabled(disable)
-        if self.collect_data is not None:
-            self.collect_data.setDisabled(disable)
+        # if self.collect_data is not None:
+            # self.collect_data.setDisabled(disable)
         if self.scan_button is not None:
             self.scan_button.setDisabled(disable)
 
@@ -582,9 +584,9 @@ class Ui(QMainWindow):
         if self.scanRunning:
             self.scanRunning = False
 
-    def manual_collect_button_pressed(self):
-        print("Manual collect button pressed!")
-        self.one_shot.start()
+    # def manual_collect_button_pressed(self):
+    #     print("Manual collect button pressed!")
+    #     self.one_shot.start()
 
     def move_to_position_button_pressed(self):
         self.moving = True
@@ -615,14 +617,6 @@ class Ui(QMainWindow):
     def manual_pos_changed(self):
         print("Manual position changed to: %s mm"%(self.pos_spin.value()))
         self.manual_position = (self.pos_spin.value() + self.zero_ofst) * self.conversion_slope
-
-    def take_data(self):
-        # TODO: Garbo function, edit for proper functionality
-        # TODO: otherwise, good. <pat in the back>
-
-        pass
-
-
 
     def showGratingWindow(self):
         if self.grating_conf_win is None: 
@@ -731,6 +725,16 @@ class Ui(QMainWindow):
         if self.current_grating_idx != self.grating_combo.currentIndex():
             self.grating_combo.setCurrentIndex(self.current_grating_idx)
 
+    def updateMovementLimits(self):
+        self.pos_spin.setMaximum(self.max_pos)
+        self.pos_spin.setMinimum(self.min_pos)
+
+        self.start_spin.setMaximum(self.max_pos)
+        self.start_spin.setMinimum(self.min_pos)
+
+        self.stop_spin.setMaximum(self.max_pos)
+        self.stop_spin.setMinimum(self.min_pos)
+
     def applyMachineConf(self):
         print('Apply config called')
         idx = self.grating_combo.currentIndex()
@@ -741,6 +745,9 @@ class Ui(QMainWindow):
         self.diff_order = int(self.diff_order_in.value())
         self.max_pos = self.max_pos_in.value()
         self.min_pos = self.min_pos_in.value()
+
+        self.updateMovementLimits()
+
         self.zero_ofst = self.zero_ofst_in.value()
         self.incidence_ang = self.incidence_ang_in.value()
         self.tangent_ang = self.tangent_ang_in.value()
@@ -760,39 +767,39 @@ class Ui(QMainWindow):
 class Boot(QThread):
     pass
 
-class OneShot(QThread):
-    statusUpdate = pyqtSignal(str)
-    complete = pyqtSignal()
+# class OneShot(QThread):
+#     statusUpdate = pyqtSignal(str)
+#     complete = pyqtSignal()
 
-    def __init__(self, parent: QMainWindow):
-        super(OneShot, self).__init__()
-        self.parent: Ui = parent
-        # TODO: disable begin scan button on run
-        self.statusUpdate.connect(self.parent.scan_statusUpdate_slot)
+#     def __init__(self, parent: QMainWindow):
+#         super(OneShot, self).__init__()
+#         self.parent: Ui = parent
+#         # TODO: disable begin scan button on run
+#         self.statusUpdate.connect(self.parent.scan_statusUpdate_slot)
 
-    def run(self):
-        self.parent.disable_movement_sensitive_buttons(True)
-        # collect data
-        for _ in range(self.parent.oneshot_samples_spinbox.value()):
-            pos = ((self.parent.motor_ctrl.get_position() / self.parent.motor_ctrl.mm_to_idx) / self.parent.conversion_slope) - self.parent.zero_ofst
-            buf = self.parent.pa.sample_data()
-            words = buf.split(',') # split at comma
-            if len(words) != 3:
-                continue
-            try:
-                mes = float(words[0][:-1]) # skip the A (unit suffix)
-                err = int(float(words[2])) # skip timestamp
-            except Exception:
-                continue
-            self.parent.manual_xdata.append(pos)
-            self.parent.manual_ydata.append(self.parent.mes_sign * mes * 1e12)
-            print(pos, self.parent.mes_sign * mes * 1e12)
+#     def run(self):
+#         self.parent.disable_movement_sensitive_buttons(True)
+#         # collect data
+#         for _ in range(self.parent.oneshot_samples_spinbox.value()):
+#             pos = ((self.parent.motor_ctrl.get_position() / self.parent.motor_ctrl.mm_to_idx) / self.parent.conversion_slope) - self.parent.zero_ofst
+#             buf = self.parent.pa.sample_data()
+#             words = buf.split(',') # split at comma
+#             if len(words) != 3:
+#                 continue
+#             try:
+#                 mes = float(words[0][:-1]) # skip the A (unit suffix)
+#                 err = int(float(words[2])) # skip timestamp
+#             except Exception:
+#                 continue
+#             self.parent.manual_xdata.append(pos)
+#             self.parent.manual_ydata.append(self.parent.mes_sign * mes * 1e12)
+#             print(pos, self.parent.mes_sign * mes * 1e12)
 
-            # Add to data table.
-            self.parent.table_log(buf, 'Manual', pos)
+#             # Add to data table.
+#             self.parent.table_log(buf, 'Manual', pos)
 
-        self.parent.disable_movement_sensitive_buttons(False)
-        self.complete.emit()
+#         self.parent.disable_movement_sensitive_buttons(False)
+#         self.complete.emit()
 
 class Scan(QThread):
     statusUpdate = pyqtSignal(str)
