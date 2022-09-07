@@ -52,7 +52,7 @@ class DataTableWidget(QTableWidget):
         # self.hadManualData = False
         self.selectedItem = None
         self.newItem = False
-        self.scanId = 0
+        self._scanId = 0
         self.rowMap = None
         self.existent_rows = []
         self.existent_rows.append(0)
@@ -72,8 +72,8 @@ class DataTableWidget(QTableWidget):
         self.insertData(np.random.random(10), np.random.random(10), False)
 
     def insertData(self, xdata: np.ndarray | None, ydata: np.ndarray | None, btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
-        scanId = self.scanId
-        self.scanId += 1
+        scanId = self._scanId
+        self._scanId += 1
         if xdata is None:
             xdata = np.array([], dtype = float)
         if ydata is None:
@@ -88,8 +88,8 @@ class DataTableWidget(QTableWidget):
         return (scanId)
     
     @property
-    def currentScanId(self):
-        return self.scanId
+    def scanId(self):
+        return self._scanId
 
     def insertDataAt(self, scanId: int, xdata: np.ndarray | float, ydata: np.ndarray | float) -> int:
         if scanId not in self.recordedData.keys():

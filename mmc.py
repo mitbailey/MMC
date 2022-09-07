@@ -77,7 +77,30 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes = fig.add_subplot(111)
         self.axes.set_xlabel('Position (nm)')
         self.axes.set_ylabel('Current (pA)')
+        self.lines = dict()
+        self.colors = ['b', 'r', 'k', 'c', 'g', 'm', 'tab:orange']
         super(MplCanvas, self).__init__(fig)
+
+    def updatePlots(self, data):
+        print('Update called')
+        self.axes.cla()
+        self.axes.set_xlabel('Location (nm)')
+        self.axes.set_ylabel('Photo Current (pA)')
+        for row in data:
+            c = self.colors[row[-1] % len(self.colors)]
+            self.lines[row[-1]] = self.axes.plot(row[0], row[1], label=row[2], color = c)
+        self.axes.legend()
+        self.axes.grid()
+        self.draw()
+        return
+
+    def appendPlot(self, idx, xdata, ydata):
+        if idx not in self.lines.keys():
+            c = self.colors[idx % len(self.colors)]
+            self.lines[idx] = self.axes.plot(xdata, ydata, label = 'Scan #%d'%(idx), color = c)
+        else:
+            self.lines[idx].set_data(xdata, ydata)
+        self.draw()
 
 class Scan(QThread):
     pass
@@ -528,16 +551,7 @@ class Ui(QMainWindow):
     def updatePlots(self, data: list):
         if self.plotCanvas is None:
             return
-        color_list = ['b', 'r', 'k', 'c', 'g', 'm', 'tab:orange']
-        self.plotCanvas.axes.cla()
-        self.plotCanvas.axes.set_xlabel('Location (nm)')
-        self.plotCanvas.axes.set_ylabel('Photo Current (pA)')
-        for row in data:
-            self.plotCanvas.axes.plot(row[0], row[1], label = row[2], color = color_list[row[3] % len(color_list)])
-        self.plotCanvas.axes.legend()
-        self.plotCanvas.axes.grid()
-        self.plotCanvas.draw()
-        return
+        self.plotCanvas.updatePlots(data)
 
     def scan_statusUpdate_slot(self, status):
         self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>'%(status))
@@ -882,6 +896,7 @@ class Scan(QThread):
 
         self._xdata = []
         self._ydata = []
+        self._scan_id = self.other.table.scanId
 
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
@@ -906,6 +921,7 @@ class Scan(QThread):
             # print(mes, err
             self._xdata.append((((pos / self.other.motor_ctrl.mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
             self._ydata.append(self.other.mes_sign * mes * 1e12)
+            self.other.plotCanvas.appendPlot(self.scanId, self.xdata, self.ydata)
             # print(self.other.xdata[pidx], self.other.ydata[pidx])
             # self.other.updatePlot()
             if sav_file is not None:
@@ -933,6 +949,10 @@ class Scan(QThread):
     @property
     def ydata(self):
         return np.array(self._ydata, dtype=float)
+
+    @property
+    def scanId(self):
+        return self._scan_id
 
 
 # Main function.
