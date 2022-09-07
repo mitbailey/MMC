@@ -62,6 +62,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationTool
 from matplotlib.figure import Figure
 from utilities.config import load_config, save_config, reset_config
 import webbrowser
+from utilities.datatable import DataTableWidget
+# import datatable
 
 # %% Fonts
 digital_7_italic_22 = None
@@ -105,6 +107,8 @@ class Ui(QMainWindow):
         self.data_save_directory += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
         if not os.path.exists(self.data_save_directory):
             os.makedirs(self.data_save_directory)
+
+        self.plotCanvas = None
 
         self.num_scans = 0
         self.previous_position = -9999
@@ -253,7 +257,14 @@ class Ui(QMainWindow):
         self.about_manual_act: QAction = self.findChild(QAction, "actionManual_2")
         
         # self.oneshot_samples_spinbox: QSpinBox = self.findChild(QSpinBox, "samples_set_spinbox")
-        self.table: QTableWidget = self.findChild(QTableWidget, "table")
+        # self.table: QTableWidget = self.findChild(QTableWidget, "table")
+        # self.table: DataTableWidget = self.findChild(DataTableWidget, "table")
+        table_frame: QFrame = self.findChild(QFrame, "table_frame")
+        # self.table = DataTableWidget(weakref.proxy(self))
+        self.table = DataTableWidget(self)
+        VLayout = QVBoxLayout()
+        VLayout.addWidget(self.table)
+        table_frame.setLayout(VLayout)
         self.home_button: QPushButton = self.findChild(QPushButton, "home_button")
         
         self.homing_started = False
@@ -354,17 +365,6 @@ class Ui(QMainWindow):
         self.startpos = (self.start_spin.value() + self.zero_ofst) * self.conversion_slope
         self.stoppos = (self.stop_spin.value() + self.zero_ofst) * self.conversion_slope
 
-        # Set up the data table.
-        self.auto_data_dict = {} # {Scan ID, CSV Data String} dictionary for automatic scan data.
-        self.man_data_str = '' # CSV String to append manual data to.
-        self.table.setColumnCount(6)
-        self.scan_number = 0
-        self.table_has_manual_entry = False
-        self.table_manual_row = 0
-        self.table_manual_points = 0
-        # Scan Number, Scan Type (Auto, Manual), Number of Data Points (e.g., pressed scan 50x), Starting wavelength, Stop wavelength (auto-only), step wavelength (auto-only)
-        self.table.setHorizontalHeaderLabels(['#', 'Scan Type', 'Data Points', 'Start', 'Stop', 'Step'])
-
         # Make sure the menu bar QAction states agree with reality.
         print('mes_sign: ', self.mes_sign)
         print('autosave_data: ', self.autosave_data_bool)
@@ -380,6 +380,8 @@ class Ui(QMainWindow):
             self.autosave_data_act.setChecked(False)
 
         self.updateMovementLimits()
+
+        self.table.updatePlots()
 
         # Display the GUI.
         self.show()
@@ -523,6 +525,20 @@ class Ui(QMainWindow):
         self.plotCanvas.draw()
         return
 
+    def updatePlots(self, data: list):
+        if self.plotCanvas is None:
+            return
+        color_list = ['b', 'r', 'k', 'c', 'g', 'm', 'tab:orange']
+        self.plotCanvas.axes.cla()
+        self.plotCanvas.axes.set_xlabel('Location (nm)')
+        self.plotCanvas.axes.set_ylabel('Photo Current (pA)')
+        for row in data:
+            self.plotCanvas.axes.plot(row[0], row[1], label = row[2], color = color_list[row[3] % len(color_list)])
+        self.plotCanvas.axes.legend()
+        self.plotCanvas.axes.grid()
+        self.plotCanvas.draw()
+        return
+
     def scan_statusUpdate_slot(self, status):
         self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>'%(status))
 
@@ -535,6 +551,8 @@ class Ui(QMainWindow):
         self.scan_button.setText('Begin Scan')
         self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
         self.scan_progress.reset()
+        self.table.insertData(self.scan.xdata, self.scan.ydata, btn_disabled=False)
+        self.table.updateTableDisplay()
 
     def update_position_displays(self):
         self.current_position = self.motor_ctrl.get_position()
@@ -813,6 +831,7 @@ class Scan(QThread):
         self.progress.connect(self.other.scan_progress_slot)
         self.complete.connect(self.other.scan_complete_slot)
         print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
+        self._last_scan = -1
 
     def __del__(self):
         self.wait()
@@ -861,6 +880,9 @@ class Scan(QThread):
         self.statusUpdate.emit("HOLDING")
         sleep(1)
 
+        self._xdata = []
+        self._ydata = []
+
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
                 break
@@ -881,11 +903,11 @@ class Scan(QThread):
                 err = int(float(words[2])) # skip timestamp
             except Exception:
                 continue
-            # print(mes, err)
-            self.other.xdata[pidx].append((((pos / self.other.motor_ctrl.mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
-            self.other.ydata[pidx].append(self.other.mes_sign * mes * 1e12)
+            # print(mes, err
+            self._xdata.append((((pos / self.other.motor_ctrl.mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
+            self._ydata.append(self.other.mes_sign * mes * 1e12)
             # print(self.other.xdata[pidx], self.other.ydata[pidx])
-            self.other.updatePlot()
+            # self.other.updatePlot()
             if sav_file is not None:
                 if idx == 0:
                     sav_file.write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
@@ -900,9 +922,18 @@ class Scan(QThread):
         if (sav_file is not None):
             sav_file.close()
         self.other.num_scans += 1
-        self.other.table_log('Automatic', self.other.startpos, self.other.stoppos, self.other.steppos, nidx+1)
+        # self.other.table_log('Automatic', self.other.startpos, self.other.stoppos, self.other.steppos, nidx+1)
         self.complete.emit()
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
+    
+    @property
+    def xdata(self):
+        return np.array(self._xdata, dtype=float)
+    
+    @property
+    def ydata(self):
+        return np.array(self._ydata, dtype=float)
+
 
 # Main function.
 if __name__ == '__main__':
