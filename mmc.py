@@ -32,7 +32,7 @@ from PyQt5 import uic
 from PyQt5.Qt import QTextOption
 from PyQt5.QtCore import (pyqtSignal, pyqtSlot, Q_ARG, QAbstractItemModel,
                           QFileInfo, qFuzzyCompare, QMetaObject, QModelIndex, QObject, Qt,
-                          QThread, QTime, QUrl, QSize, QEvent, QCoreApplication, QFile, QIODevice)
+                          QThread, QTime, QUrl, QSize, QEvent, QCoreApplication, QFile, QIODevice, QMutex, QWaitCondition)
 from PyQt5.QtGui import QColor, qGray, QImage, QPainter, QPalette, QIcon, QKeyEvent, QMouseEvent, QFontDatabase, QFont
 from PyQt5.QtMultimedia import (QAbstractVideoBuffer, QMediaContent,
                                 QMediaMetaData, QMediaPlayer, QMediaPlaylist, QVideoFrame, QVideoProbe)
@@ -88,7 +88,7 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes.set_ylabel('Photo Current (pA)')
         for row in data:
             c = self.colors[row[-1] % len(self.colors)]
-            self.lines[row[-1]] = self.axes.plot(row[0], row[1], label=row[2], color = c)
+            self.lines[row[-1]], = self.axes.plot(row[0], row[1], label=row[2], color = c)
         self.axes.legend()
         self.axes.grid()
         self.draw()
@@ -97,7 +97,7 @@ class MplCanvas(FigureCanvasQTAgg):
     def appendPlot(self, idx, xdata, ydata):
         if idx not in self.lines.keys():
             c = self.colors[idx % len(self.colors)]
-            self.lines[idx] = self.axes.plot(xdata, ydata, label = 'Scan #%d'%(idx), color = c)
+            self.lines[idx], = self.axes.plot(xdata, ydata, label = 'Scan #%d'%(idx), color = c)
         else:
             self.lines[idx].set_data(xdata, ydata)
         self.draw()
@@ -565,7 +565,19 @@ class Ui(QMainWindow):
         self.scan_button.setText('Begin Scan')
         self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
         self.scan_progress.reset()
-        self.table.insertData(self.scan.xdata, self.scan.ydata, btn_disabled=False)
+        # self.table.insertData(self.scan.xdata, self.scan.ydata, btn_disabled=False)
+        # self.table.updateTableDisplay()
+
+    def scan_data_begin_slot(self, scan_idx: int):
+        n_scan_idx = self.table.insertData(None, None)
+        if n_scan_idx != scan_idx:
+            print('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
+
+    def scan_data_update_slot(self, scan_idx: int, xdata: float, ydata: float):
+        self.table.insertDataAt(scan_idx, xdata, ydata)
+
+    def scan_data_complete_slot(self, scan_idx: int):
+        self.table.enablePlotBtn(scan_idx)
         self.table.updateTableDisplay()
 
     def update_position_displays(self):
@@ -838,12 +850,19 @@ class Scan(QThread):
     progress = pyqtSignal(int)
     complete = pyqtSignal()
 
+    dataBegin = pyqtSignal(int) # scan index, redundant
+    dataUpdate = pyqtSignal(int, float, float) # scan index, xdata, ydata (to be appended into index)
+    dataComplete = pyqtSignal(int) # scan index, redundant
+
     def __init__(self, parent: QMainWindow):
         super(Scan, self).__init__()
         self.other: Ui = parent
         self.statusUpdate.connect(self.other.scan_statusUpdate_slot)
         self.progress.connect(self.other.scan_progress_slot)
         self.complete.connect(self.other.scan_complete_slot)
+        self.dataBegin.connect(self.other.scan_data_begin_slot)
+        self.dataUpdate.connect(self.other.scan_data_update_slot)
+        self.dataComplete.connect(self.other.scan_data_complete_slot)
         print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
 
@@ -879,13 +898,7 @@ class Scan(QThread):
         scanrange = np.arange(self.other.startpos, self.other.stoppos + self.other.steppos, self.other.steppos)
         # self.other.pa.set_samples(3)
         nidx = len(scanrange)
-        # if nidx > 0:
-        if len(self.other.xdata) != len(self.other.ydata):
-            self.other.xdata = {}
-            self.other.ydata = {}
-        pidx = self.other.num_scans
-        self.other.xdata[pidx] = []
-        self.other.ydata[pidx] = []
+        # if nidx > 0
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
         self.statusUpdate.emit("ZEROING")
@@ -897,7 +910,9 @@ class Scan(QThread):
         self._xdata = []
         self._ydata = []
         self._scan_id = self.other.table.scanId
-
+        self.dataBegin.emit(self.scanId) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
+        while self.scanId == self.other.table.scanId: # spin until that happens
+            continue
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
                 break
@@ -921,7 +936,7 @@ class Scan(QThread):
             # print(mes, err
             self._xdata.append((((pos / self.other.motor_ctrl.mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
             self._ydata.append(self.other.mes_sign * mes * 1e12)
-            self.other.plotCanvas.appendPlot(self.scanId, self.xdata, self.ydata)
+            self.dataUpdate.emit(self.scanId, self._xdata[-1], self._ydata[-1])
             # print(self.other.xdata[pidx], self.other.ydata[pidx])
             # self.other.updatePlot()
             if sav_file is not None:
@@ -940,6 +955,7 @@ class Scan(QThread):
         self.other.num_scans += 1
         # self.other.table_log('Automatic', self.other.startpos, self.other.stoppos, self.other.steppos, nidx+1)
         self.complete.emit()
+        self.dataComplete.emit()
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
     
     @property
