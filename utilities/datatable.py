@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt
 import numpy as np
 from typing import TypedDict
 import weakref
+import datetime as dt
 
 class CustomQLineEdit(QLineEdit):
     def __init__(self, id, contents, parent = None):
@@ -35,8 +36,6 @@ class TableRowRaw(TypedDict):
 class DataTableWidget(QTableWidget):
     def __init__(self, parent):
         super(DataTableWidget, self).__init__(parent)
-
-        print("\n\nGIGANTO-PRINT\n\n")
         self.parent = weakref.proxy(parent)
         self.insertColumn(0)
         self.insertColumn(1)
@@ -44,16 +43,13 @@ class DataTableWidget(QTableWidget):
         self.insertColumn(3)
         self.insertColumn(4)
         self.insertRow(0)
-        self.recordedData = dict()#[int, TableRowRaw]
-        # self.manualData: TableRowRaw = {'id': -1, 'name': 'Manual Scan', 'x': np.array([], dtype=float), 'y': np.array([], dtype=float), 'plotted': False, 'plot_cb': CustomQCheckBox(-1, self)}
-        # self.manualData['plot_cb'].setDisabled(True)
-        # self.manualData['plot_cb'].stateChanged.connect(self.plotCheckboxCb)
-        # self.hasManualData = False
-        # self.hadManualData = False
+        self.recordedData = dict()
+        self.recordedMetaData = dict()
         self.selectedItem = None
         self.newItem = False
         self._scanId = 0
         self.rowMap = None
+        self._internal_insert_exec = False
         self.existent_rows = []
         self.existent_rows.append(0)
         self.setHorizontalHeaderLabels(['Name', 'Start', 'Stop', 'Step', 'Plot'])
@@ -66,14 +62,16 @@ class DataTableWidget(QTableWidget):
         # self.setEditTriggers(QTableWidget.NoEditTriggers)
         self.clicked.connect(self.tableSelectAction)
 
-        self.insertData(np.random.random(10), np.random.random(10), False)
-        self.insertData(np.random.random(10), np.random.random(10), False)
-        self.insertData(np.random.random(10), np.random.random(10), False)
-        self.insertData(np.random.random(10), np.random.random(10), False)
+        self.insertData(np.random.random(10), np.random.random(10), dict(), btn_disabled=False)
+        self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
+        self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
+        self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
 
-    def insertData(self, xdata: np.ndarray | None, ydata: np.ndarray | None, btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
+    def insertData(self, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         scanId = self._scanId
         self._scanId += 1
+        if not self._internal_insert_exec:
+            self.recordedMetaData[scanId] = metadata
         if xdata is None:
             xdata = np.array([], dtype = float)
         if ydata is None:
@@ -93,7 +91,10 @@ class DataTableWidget(QTableWidget):
 
     def insertDataAt(self, scanId: int, xdata: np.ndarray | float, ydata: np.ndarray | float) -> int:
         if scanId not in self.recordedData.keys():
-            return self.insertData(xdata, ydata)
+            self._internal_insert_exec = True
+            ret = self.insertData(xdata, ydata, dict())
+            self._internal_insert_exec = False
+            return ret
         else:
             if isinstance(xdata, float):
                 xdata = np.array([xdata], dtype=float)
@@ -108,7 +109,16 @@ class DataTableWidget(QTableWidget):
         if scanId not in self.recordedData.keys():
             return
         self.recordedData[scanId]['plotted'] = True # plot by default if plot button is disabled
+        self.recordedData[scanId]['plot_cb'].setChecked(True) # it is checked at this point
         self.recordedData[scanId]['plot_cb'].setDisabled(False)
+        # update just this row in the table
+        if self.rowMap is None or scanId not in self.rowMap:
+            self.updateTableDisplay(scanId)
+        if scanId in self.rowMap:
+            del self.rowMap[self.rowMap.index(scanId)]
+            self.updateTableDisplay(scanId)
+
+
     
     # def insertManualData(self, xdata: np.ndarray, ydata: np.ndarray):
     #     self.manualData[2] = np.concatenate((self.manualData[2], xdata))
@@ -165,7 +175,8 @@ class DataTableWidget(QTableWidget):
                 xmin = 0
                 try:
                     xmin = round(self.recordedData[scan_idx]['x'].min(), 4)
-                except Exception:
+                except Exception as e:
+                    print("Exception!", e)
                     pass
                 
                 xmax = 0
@@ -173,7 +184,7 @@ class DataTableWidget(QTableWidget):
                     xmax = round(self.recordedData[scan_idx]['x'].max(), 4)
                 except Exception:
                     pass
-
+                print("xmin, xmax: ", xmin, xmax)
                 self.setItem(row_idx, 1, QTableWidgetItem(str(xmin)))
                 self.setItem(row_idx, 2, QTableWidgetItem(str(xmax)))
                 # self.setItem(row_idx, 4, QTableWidgetItem(text))
@@ -216,11 +227,33 @@ class DataTableWidget(QTableWidget):
         print(self.recordedData[scanId]['plotted'])
         self.updatePlots()
 
-    def saveDataCb(self):
-        pass
+    def saveDataCb(self) -> tuple: # just return the data and the metadata, let main handle the saving
+        if self.selectedItem is None:
+            return (None, None)
+        row = self.selectedItem.row()
+        if row >= len(self.rowMap):
+            return (None, None)
+        scanIdx = self.rowMap[row]
+        if scanIdx in self.recordedData:
+            data = self.recordedData[scanIdx]
+        else:
+            data = None
+        if scanIdx in self.recordedMetaData:
+            metadata = self.recordedMetaData[scanIdx]
+        else:
+            metadata = None
+        if data is None:
+            return (None, None)
+        else:
+            return (data, metadata)
 
     def delDataCb(self):
-        pass
+        if self.selectedItem is None:
+            return
+        row = self.selectedItem.row()
+        if row >= len(self.rowMap):
+            return
+        # spawn confirmation window here
 
     def deleteItem(self, row: int):
         if row < 0:
@@ -231,17 +264,9 @@ class DataTableWidget(QTableWidget):
             print('Row %d invalid, len(rows) = %d?'%(row, len(self.rowMap)))
         if scanId in self.recordedData.keys():
             del self.recordedData[scanId]
+            if scanId in self.recordedMetaData:
+                del self.recordedMetaData[scanId]
             del self.rowMap[row]
-        # elif scanId == -1: # for manual
-        #     self.rowMap = None # just rebuild...
-            # self.hasManualData = False
-            # self.hadManualData = False
-            # self.manualData['plotted'] = False
-            # self.manualData['name'] = 'Manual Scan'
-            # self.manualData['x'] = np.zeros([], dtype = float)     
-            # self.manualData['y'] = np.zeros([], dtype = float)     
-            # self.manualData['plot_cb'].setDisabled(True)
-            # self.manualData['plot_cb'].setCheckState(Qt.Unchecked)
         self.updateTableDisplay()
         self.updatePlots()
         pass

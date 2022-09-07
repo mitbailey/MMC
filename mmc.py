@@ -252,6 +252,8 @@ class Ui(QMainWindow):
         self.dir_box = self.findChild(QLineEdit, "save_dir_lineedit")
         self.start_spin = self.findChild(QDoubleSpinBox, "start_set_spinbox")
         self.stop_spin = self.findChild(QDoubleSpinBox, "end_set_spinbox")
+        if isinstance(self.pa, pico.Picodummy):
+            self.stop_spin.setValue(0.2)
         self.step_spin = self.findChild(QDoubleSpinBox, "step_set_spinbox")
         self.currpos_nm_disp = self.findChild(QLabel, "currpos_nm")
         self.scan_status = self.findChild(QLabel, "status_label")
@@ -278,6 +280,11 @@ class Ui(QMainWindow):
         self.about_source_act: QAction = self.findChild(QAction, "actionSource_Code")
         self.about_licensing_act: QAction = self.findChild(QAction, "actionLicensing")
         self.about_manual_act: QAction = self.findChild(QAction, "actionManual_2")
+
+        self.save_data_btn: QPushButton = self.findChild(QPushButton, 'save_data_button')
+        self.save_data_btn.clicked.connect(self.save_data_cb)
+        self.delete_data_btn: QPushButton = self.findChild(QPushButton, 'delete_data_button')
+        self.delete_data_btn.clicked.connect(self.delete_data_cb)
         
         # self.oneshot_samples_spinbox: QSpinBox = self.findChild(QSpinBox, "samples_set_spinbox")
         # self.table: QTableWidget = self.findChild(QTableWidget, "table")
@@ -408,6 +415,54 @@ class Ui(QMainWindow):
 
         # Display the GUI.
         self.show()
+
+    def save_data_cb(self):
+        if self.table is None:
+            return
+        data, metadata = self.table.saveDataCb()
+        print(data, metadata)
+        if data is None:
+            return
+        if metadata is not None:
+            try:
+                tstamp = metadata['tstamp']
+                scan_id = metadata['scan_id']
+            except Exception:
+                tstamp = dt.datetime.now()
+                scan_id = 100
+        savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/%s_%d.csv'%(tstamp.strftime('%Y%m%d%H%M%S'), scan_id), filter='*.csv')
+        fileInfo = QFileInfo(savFileName)
+        try:
+            ofile = open(fileInfo.absoluteFilePath(), 'w', encoding='utf-8')
+        except Exception:
+            print('Could not open file %s'%(fileInfo.fileName()))
+            return
+        ofile.write('# %s\n'%(tstamp.strftime('%Y-%m-%d %H:%M:%S')))
+        try:
+            ofile.write('# Steps/mm: %f\n'%(metadata['mm_to_idx']))
+        except Exception:
+            pass
+        try:
+            ofile.write('# mm/nm: %e; '%(metadata['mm_per_nm']))
+        except Exception:
+            pass
+        try:
+            ofile.write('lambda_0 (nm): %.4f\n'%(metadata['zero_ofst']))
+        except Exception:
+            pass
+        ofile.write('# Position (nm),Mean Current(A)\n')
+        xdata = data['x']
+        ydata = data['y']
+        for i in range(len(xdata)):
+            try:
+                ofile.write('%e, %e\n'%(xdata[i], ydata[i]))
+            except Exception:
+                continue
+        ofile.close()
+
+    def delete_data_cb(self):
+        # self.table.delDataCb()
+        return
 
     def open_manual_hyperlink(self):
         webbrowser.open('https://github.com/mitbailey/MMC')
@@ -565,11 +620,9 @@ class Ui(QMainWindow):
         self.scan_button.setText('Begin Scan')
         self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
         self.scan_progress.reset()
-        # self.table.insertData(self.scan.xdata, self.scan.ydata, btn_disabled=False)
-        # self.table.updateTableDisplay()
 
-    def scan_data_begin_slot(self, scan_idx: int):
-        n_scan_idx = self.table.insertData(None, None)
+    def scan_data_begin_slot(self, scan_idx: int, metadata: dict):
+        n_scan_idx = self.table.insertData(None, None, metadata)
         if n_scan_idx != scan_idx:
             print('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
 
@@ -850,7 +903,7 @@ class Scan(QThread):
     progress = pyqtSignal(int)
     complete = pyqtSignal()
 
-    dataBegin = pyqtSignal(int) # scan index, redundant
+    dataBegin = pyqtSignal(int, dict) # scan index, redundant
     dataUpdate = pyqtSignal(int, float, float) # scan index, xdata, ydata (to be appended into index)
     dataComplete = pyqtSignal(int) # scan index, redundant
 
@@ -910,7 +963,8 @@ class Scan(QThread):
         self._xdata = []
         self._ydata = []
         self._scan_id = self.other.table.scanId
-        self.dataBegin.emit(self.scanId) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
+        metadata = {'tstamp': tnow, 'mm_to_idx': self.other.motor_ctrl.mm_to_idx, 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+        self.dataBegin.emit(self.scanId, metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
         while self.scanId == self.other.table.scanId: # spin until that happens
             continue
         for idx, dpos in enumerate(scanrange):
@@ -955,7 +1009,7 @@ class Scan(QThread):
         self.other.num_scans += 1
         # self.other.table_log('Automatic', self.other.startpos, self.other.stoppos, self.other.steppos, nidx+1)
         self.complete.emit()
-        self.dataComplete.emit()
+        self.dataComplete.emit(self.scanId)
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
     
     @property
