@@ -51,7 +51,7 @@ class DataTableWidget(QTableWidget):
         self.rowMap = None
         self._internal_insert_exec = False
         self.num_rows = 1
-        self.del_confirm_win: QDialog = None
+        self.__del_confirm_win: QDialog = None
         self.setHorizontalHeaderLabels(['Name', 'Start', 'Stop', 'Step', 'Plot'])
         # self.resizeColumnsToContents()
         # self.resizeRowsToContents()
@@ -60,7 +60,7 @@ class DataTableWidget(QTableWidget):
         # self.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         # self.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.clicked.connect(self.tableSelectAction)
+        self.clicked.connect(self.__tableSelectAction)
 
         # self.insertData(np.random.random(10), np.random.random(10), dict(), btn_disabled=False)
         # self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
@@ -80,7 +80,7 @@ class DataTableWidget(QTableWidget):
         # [scanId, '', xdata, ydata, True, CustomQCheckBox(scanId, self)] # scanID, title, xdata, ydata, plotted, plot_checkbox
         self.recordedData[scanId]['plot_cb'].setChecked(True)
         self.recordedData[scanId]['plot_cb'].setDisabled(btn_disabled)
-        self.recordedData[scanId]['plot_cb'].stateChanged.connect(self.plotCheckboxCb) # connect callback
+        self.recordedData[scanId]['plot_cb'].stateChanged.connect(self.__plotCheckboxCb) # connect callback
 
         self.updateTableDisplay(scanId, name_editable)
         return (scanId)
@@ -172,7 +172,7 @@ class DataTableWidget(QTableWidget):
                 text = 'Scan #%d'%(scan_idx + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx)
                 if name_editable:
                     textEditor = CustomQLineEdit(scan_idx, text)
-                    textEditor.editingFinished.connect(self.nameUpdated)
+                    textEditor.editingFinished.connect(self.__nameUpdated)
                     self.setCellWidget(row_idx, 0, textEditor)
                 else:
                     self.setItem(row_idx, 0, QTableWidgetItem(text))
@@ -210,7 +210,7 @@ class DataTableWidget(QTableWidget):
                 data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx])
         self.parent.updatePlots(data) # updatePlots in Ui(QMainWindow)
 
-    def nameUpdated(self):
+    def __nameUpdated(self):
         src: CustomQLineEdit = self.sender()
         text = src.text()
         text = text.lstrip().rstrip()
@@ -218,7 +218,7 @@ class DataTableWidget(QTableWidget):
         self.recordedData[src.id]['name'] = text
         self.updatePlots()
 
-    def plotCheckboxCb(self, state: Qt.CheckState):
+    def __plotCheckboxCb(self, state: Qt.CheckState):
         src: CustomQCheckBox = self.sender()
         state = src.checkState()
         # if src.id == -1: # manual data checkbox was changed
@@ -265,11 +265,11 @@ class DataTableWidget(QTableWidget):
             return
         if scanIdx not in self.recordedData.keys():
             print('%d is not in recorded data! :O ... '%(scanIdx), self.recordedData.keys())
-            self._deleteRow(row)
+            self.__deleteRow(row)
             return
         self.__delete_item_confirm = False
         # spawn confirmation window here
-        self.showDelConfirmWin(row, scanIdx)
+        self.__showDelConfirmWin(row, scanIdx)
         if self.__delete_item_confirm: # actually delete?
             print('\n\nGOING TO DELETE %d... '%(scanIdx), end = '')
             try:
@@ -280,11 +280,12 @@ class DataTableWidget(QTableWidget):
                 del self.recordedMetaData[scanIdx]
             except Exception:
                 pass
-            self._deleteRow(row)
+            self.__deleteRow(row)
             print('DONE\n')
         self.__delete_item_confirm = False
+        self.updatePlots()
 
-    def _deleteRow(self, row: int):
+    def __deleteRow(self, row: int):
         self.selectedItem = None
         self.num_rows -= 1
         self.removeRow(row)
@@ -293,12 +294,12 @@ class DataTableWidget(QTableWidget):
             self.num_rows = 1
             self.insertRow(0)
 
-    def showDelConfirmWin(self, row: int, scan_id: int):
-        if self.del_confirm_win is None:
-            self.del_confirm_win = QDialog(self)
+    def __showDelConfirmWin(self, row: int, scan_id: int):
+        if self.__del_confirm_win is None:
+            self.__del_confirm_win = QDialog(self)
 
-            self.del_confirm_win.setWindowTitle('Delete Row %d?'%(row))
-            self.del_confirm_win.setMinimumSize(320, 160)
+            self.__del_confirm_win.setWindowTitle('Delete Row %d?'%(row))
+            self.__del_confirm_win.setMinimumSize(320, 160)
 
             self._del_prompt_label = QLabel('')
             ok_button = QPushButton('Agree')
@@ -317,7 +318,7 @@ class DataTableWidget(QTableWidget):
             hlayout.addStretch(1)
             hlayout.addWidget(cancel_button)
             layout.addLayout(hlayout)
-            self.del_confirm_win.setLayout(layout)
+            self.__del_confirm_win.setLayout(layout)
 
         try:
             scan_start = self.recordedData[scan_id]['x'].min()
@@ -335,19 +336,19 @@ class DataTableWidget(QTableWidget):
             num_pts = 0
         text = 'Scan #%d: %.4f nm to %.4f nm (%d points)'%(scan_id, scan_start, scan_end, num_pts)
         self._del_prompt_label.setText(text)
-        self.del_confirm_win.exec() # blocks
+        self.__del_confirm_win.exec() # blocks
 
     def __signalAgree(self):
         self.__delete_item_confirm = True
-        if self.del_confirm_win is not None:
-            self.del_confirm_win.close()
+        if self.__del_confirm_win is not None:
+            self.__del_confirm_win.close()
     
     def __signalCancel(self):
         self.__delete_item_confirm = False
-        if self.del_confirm_win is not None:
-            self.del_confirm_win.close()
+        if self.__del_confirm_win is not None:
+            self.__del_confirm_win.close()
 
-    def deleteItem(self, row: int):
+    def __deleteItem(self, row: int):
         if row < 0:
             return
         try:
@@ -369,11 +370,11 @@ class DataTableWidget(QTableWidget):
             # delete data
             row = self.selectedItem.row()
             print('Delete:', row)
-            self.deleteItem(row)
+            self.__deleteItem(row)
         else:
             super(DataTableWidget, self).keyPressEvent(event) # propagate elsewhere
 
-    def tableSelectAction(self, item: QTableWidgetItem):
+    def __tableSelectAction(self, item: QTableWidgetItem):
         self.selectedItem = item
         print(item.row(), item.column())
         
