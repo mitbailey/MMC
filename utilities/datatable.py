@@ -1,6 +1,7 @@
 from __future__ import annotations
 from PyQt5.QtWidgets import QTableWidget, QStyledItemDelegate, QHeaderView, QAbstractItemView, QCheckBox, QPushButton, QLineEdit, QTableWidgetItem, QDialog, QHBoxLayout, QVBoxLayout, QLabel
 from PyQt5.QtCore import Qt, QItemSelection
+from PyQt5.QtGui import QFont
 import numpy as np
 from typing import TypedDict
 import weakref
@@ -320,8 +321,10 @@ class DataTableWidget(QTableWidget):
             self._del_prompt_label = QLabel('')
             ok_button = QPushButton('Agree')
             ok_button.clicked.connect(self.__signalAgree)
+            ok_button.setFont(QFont('Segoe UI', 14))
             cancel_button = QPushButton('Cancel')
             cancel_button.clicked.connect(self.__signalCancel)
+            cancel_button.setFont(QFont('Segoe UI', 14))
 
             layout = QVBoxLayout()
             hlayout = QHBoxLayout()
@@ -359,8 +362,9 @@ class DataTableWidget(QTableWidget):
             num_pts = len(self.recordedData[scan_id]['x'] )
         except Exception:
             num_pts = 0
-        text = '%s #%d: %.4f nm to %.4f nm (%d points)'%(name, scan_id + 1, scan_start, scan_end, num_pts)
+        text = 'Confirm for deletion:\n%s #%d: %.4f nm to %.4f nm (%d points)'%(name, scan_id + 1, scan_start, scan_end, num_pts)
         self._del_prompt_label.setText(text)
+        self._del_prompt_label.setFont(QFont('Segoe UI', 12))
         self.__del_confirm_win.exec() # blocks
 
     def __signalAgree(self):
