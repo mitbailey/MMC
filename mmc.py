@@ -58,7 +58,7 @@ matplotlib.use('Qt5Agg')
 
 from PyQt5 import QtCore, QtWidgets
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 from utilities.config import load_config, save_config, reset_config
 import webbrowser
@@ -70,16 +70,43 @@ digital_7_italic_22 = None
 digital_7_16 = None
 
 # %% Classes
+class NavigationToolbar(NavigationToolbar2QT):
+    def edit_parameters(self):
+        print("before")
+        super(NavigationToolbar, self).edit_parameters()
+        print("after")
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi, tight_layout = True)
+        self.parent = weakref.proxy(parent)
         self.axes = fig.add_subplot(111)
         self.axes.set_xlabel('Position (nm)')
         self.axes.set_ylabel('Current (pA)')
+        self.axes.grid()
         self.lines = dict()
         self.colors = ['b', 'r', 'k', 'c', 'g', 'm', 'tab:orange']
+        self._tableClearCb = None
         super(MplCanvas, self).__init__(fig)
+
+    def getToolbar(self, parent) -> NavigationToolbar:
+        self.toolbar = NavigationToolbar(self, parent)
+        return self.toolbar
+
+    def setTableClearCb(self, fcn):
+        self._tableClearCb = fcn
+
+    def clearPlotFcn(self):
+        print('clear called')
+        if not self.parent.scanRunning:
+            self.axes.cla()
+            self.axes.set_xlabel('Location (nm)')
+            self.axes.set_ylabel('Photo Current (pA)')
+            self.axes.grid()
+            self.draw()
+            if self._tableClearCb is not None:
+                self._tableClearCb()
+        return
 
     def updatePlots(self, data):
         print('Update called')
@@ -319,23 +346,18 @@ class Ui(QMainWindow):
         # Set the palette.
         self.currpos_nm_disp.setPalette(palette)
 
-        # Plot setup.
-        self.xdata: dict = {} # collection of xdata
-        self.ydata: dict = {} # collection of ydata
-
-        self.manual_xdata: list = []
-        self.manual_ydata: list = []
-
         self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
         # self.plotCanvas.axes.plot([], [])
-        self.clearPlotFcn()
-        toolbar = NavigationToolbar(self.plotCanvas, self)
+        self.plotCanvas.clearPlotFcn()
+        self.plotCanvas.setTableClearCb(self.table.plotsClearedCb)
+        # toolbar = NavigationToolbar(self.plotCanvas, self)
+        toolbar = self.plotCanvas.getToolbar(self)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(toolbar)
         layout.addWidget(self.plotCanvas)
         self.plotFrame.setLayout(layout)
 
-        self.plot_clear_plots.clicked.connect(self.clearPlotFcn)
+        self.plot_clear_plots.clicked.connect(self.plotCanvas.clearPlotFcn)
 
         # Set the initial value of the Manual Control 'Position:' spin box.
         self.pos_spin.setValue(0)
@@ -575,33 +597,6 @@ class Ui(QMainWindow):
         self.sb_arm_len.setText("  <i>L</i> " + str(self.arm_length) + " mm    ")
         self.sb_diff_order.setText("  <i>m</i> " + str(self.diff_order) + "    ")
         self.sb_conv_slope.setText("   %.06f slope    "%(self.conversion_slope))
-
-    def clearPlotFcn(self):
-        print('clear called')
-        if not self.scanRunning:
-            self.plotCanvas.axes.cla()
-            self.plotCanvas.axes.set_xlabel('Location (nm)')
-            self.plotCanvas.axes.set_ylabel('Photo Current (pA)')
-            self.plotCanvas.axes.grid()
-            self.plotCanvas.draw()
-            self.xdata = {}
-            self.ydata = {}
-        return
-
-    def updatePlot(self):
-        print('Update called')
-        self.plotCanvas.axes.cla()
-        self.plotCanvas.axes.set_xlabel('Location (nm)')
-        self.plotCanvas.axes.set_ylabel('Photo Current (pA)')
-        keys = list(self.xdata.keys())
-        keys.sort()
-        for idx in keys:
-            if len(self.xdata[idx]) == len(self.ydata[idx]):
-                self.plotCanvas.axes.plot(self.xdata[idx], self.ydata[idx], label = 'Scan %d'%(idx + 1))
-        self.plotCanvas.axes.legend()
-        self.plotCanvas.axes.grid()
-        self.plotCanvas.draw()
-        return
 
     def updatePlots(self, data: list):
         if self.plotCanvas is None:

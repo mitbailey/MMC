@@ -118,6 +118,11 @@ class DataTableWidget(QTableWidget):
             del self.rowMap[self.rowMap.index(scanId)]
             self.updateTableDisplay(scanId)
 
+    def plotsClearedCb(self):
+        for scanId in self.recordedData.keys():
+            self.recordedData[scanId]['plotted'] = False
+            self.recordedData[scanId]['plot_cb'].setChecked(False)
+
 
     
     # def insertManualData(self, xdata: np.ndarray, ydata: np.ndarray):
