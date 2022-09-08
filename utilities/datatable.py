@@ -1,6 +1,6 @@
 from __future__ import annotations
 from PyQt5.QtWidgets import QTableWidget, QStyledItemDelegate, QHeaderView, QAbstractItemView, QCheckBox, QPushButton, QLineEdit, QTableWidgetItem, QDialog, QHBoxLayout, QVBoxLayout, QLabel
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QItemSelection
 import numpy as np
 from typing import TypedDict
 import weakref
@@ -60,7 +60,7 @@ class DataTableWidget(QTableWidget):
         # self.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         # self.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.clicked.connect(self.__tableSelectAction)
+        self.selectionModel().selectionChanged.connect(self.__tableSelectAction)
 
         # self.insertData(np.random.random(10), np.random.random(10), dict(), btn_disabled=False)
         # self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
@@ -238,7 +238,7 @@ class DataTableWidget(QTableWidget):
     def saveDataCb(self) -> tuple: # just return the data and the metadata, let main handle the saving
         if self.selectedItem is None:
             return (None, None)
-        row = self.selectedItem.row()
+        row = self.selectedItem
         if row >= len(self.rowMap):
             return (None, None)
         scanIdx = self.rowMap[row]
@@ -259,7 +259,7 @@ class DataTableWidget(QTableWidget):
         print('Delete called')
         if self.selectedItem is None:
             return
-        row = self.selectedItem.row()
+        row = self.selectedItem
         if row >= len(self.rowMap):
             print('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
             return
@@ -373,13 +373,33 @@ class DataTableWidget(QTableWidget):
         key = event.key()
         if key == Qt.Key_Delete and self.selectedItem is not None:
             # delete data
-            row = self.selectedItem.row()
+            row = self.selectedItem
             print('Delete:', row)
             self.__deleteItem(row)
         else:
             super(DataTableWidget, self).keyPressEvent(event) # propagate elsewhere
 
-    def __tableSelectAction(self, item: QTableWidgetItem):
-        self.selectedItem = item
-        print(item.row(), item.column())
+    def __tableSelectAction(self, selected: QItemSelection, deselected: QItemSelection):
+        selset = []
+        deselset = []
+
+        print('Deselected Cell Location(s):', end='')
+        for ix in deselected.indexes():
+            print('({0}, {1}) '.format(ix.row(), ix.column()), end='')
+            deselset.append(ix.row())
+        print('')
+
+        print('Deselected Cell Location(s):', end='')
+        for ix in selected.indexes():
+            print('({0}, {1}) '.format(ix.row(), ix.column()), end='')
+            selset.append(ix.row())
+        print('')
+        
+        selset = list(set(selset))
+        deselset = list(set(deselset))
+
+        if len(selset) == 1:
+            self.selectedItem = selset[0]
+        else:
+            self.selectedItem = None
         
