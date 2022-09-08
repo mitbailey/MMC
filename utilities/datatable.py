@@ -55,7 +55,7 @@ class DataTableWidget(QTableWidget):
         self.setHorizontalHeaderLabels(['Name', 'Start', 'Stop', 'Step', 'Plot'])
         # self.resizeColumnsToContents()
         # self.resizeRowsToContents()
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.horizontalHeader().setStretchLastSection(False)
         # self.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -252,6 +252,8 @@ class DataTableWidget(QTableWidget):
             metadata = None
         if data is None:
             return (None, None)
+        elif not data['plot_cb'].isEnabled():
+            return (None, None)
         else:
             return (data, metadata)
 
@@ -272,6 +274,12 @@ class DataTableWidget(QTableWidget):
             print('%d is not in recorded data! :O ... '%(scanIdx), self.recordedData.keys())
             self.__deleteRow(row)
             return
+        try:
+            plotCb: CustomQCheckBox = self.recordedData[scanIdx]['plot_cb']
+            if not plotCb.isEnabled():
+                return
+        except Exception:
+            print('Could not recover plotCb for %d! :O ... '%(scanIdx, self.recordedData.keys()))
         self.__delete_item_confirm = False
         # spawn confirmation window here
         self.__showDelConfirmWin(row, scanIdx)
@@ -325,6 +333,15 @@ class DataTableWidget(QTableWidget):
             layout.addLayout(hlayout)
             self.__del_confirm_win.setLayout(layout)
 
+        name = ''
+        try:
+            name = self.recordedData[scan_id]['name']
+        except Exception:
+            name = ''
+
+        if name == '':
+            name = 'Scan'
+
         try:
             scan_start = self.recordedData[scan_id]['x'].min()
         except Exception:
@@ -339,7 +356,7 @@ class DataTableWidget(QTableWidget):
             num_pts = len(self.recordedData[scan_id]['x'] )
         except Exception:
             num_pts = 0
-        text = 'Scan #%d: %.4f nm to %.4f nm (%d points)'%(scan_id, scan_start, scan_end, num_pts)
+        text = '%s #%d: %.4f nm to %.4f nm (%d points)'%(name, scan_id + 1, scan_start, scan_end, num_pts)
         self._del_prompt_label.setText(text)
         self.__del_confirm_win.exec() # blocks
 
