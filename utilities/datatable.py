@@ -1,5 +1,5 @@
 from __future__ import annotations
-from PyQt5.QtWidgets import QTableWidget, QStyledItemDelegate, QHeaderView, QAbstractItemView, QCheckBox, QPushButton, QLineEdit, QTableWidgetItem
+from PyQt5.QtWidgets import QTableWidget, QStyledItemDelegate, QHeaderView, QAbstractItemView, QCheckBox, QPushButton, QLineEdit, QTableWidgetItem, QDialog, QHBoxLayout, QVBoxLayout, QLabel
 from PyQt5.QtCore import Qt
 import numpy as np
 from typing import TypedDict
@@ -50,8 +50,8 @@ class DataTableWidget(QTableWidget):
         self._scanId = 0
         self.rowMap = None
         self._internal_insert_exec = False
-        self.existent_rows = []
-        self.existent_rows.append(0)
+        self.num_rows = 1
+        self.del_confirm_win: QDialog = None
         self.setHorizontalHeaderLabels(['Name', 'Start', 'Stop', 'Step', 'Plot'])
         # self.resizeColumnsToContents()
         # self.resizeRowsToContents()
@@ -62,10 +62,10 @@ class DataTableWidget(QTableWidget):
         # self.setEditTriggers(QTableWidget.NoEditTriggers)
         self.clicked.connect(self.tableSelectAction)
 
-        self.insertData(np.random.random(10), np.random.random(10), dict(), btn_disabled=False)
-        self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
-        self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
-        self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
+        # self.insertData(np.random.random(10), np.random.random(10), dict(), btn_disabled=False)
+        # self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
+        # self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
+        # self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
 
     def insertData(self, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         scanId = self._scanId
@@ -157,13 +157,17 @@ class DataTableWidget(QTableWidget):
             self.rowMap += namedIds
             self.rowMap += unnamedIds
             print("Row Map:", self.rowMap)
-            for row_idx, scan_idx in enumerate(self.rowMap):
-                if row_idx not in self.existent_rows:
-                    self.existent_rows.append(row_idx)
-                    self.insertRow(row_idx)
-                    print("Adding new row for row_idx %d."%(row_idx))
 
-                print("In the loop:", row_idx, scan_idx)
+            if len(self.rowMap) > self.num_rows:
+                print('Allocating rows:', len(self.rowMap), self.num_rows)
+                for ii in range(self.num_rows, len(self.rowMap)):
+                    self.insertRow(ii)
+                    print("Adding new row for row_idx %d."%(ii))
+                    self.num_rows += 1
+                print('After allocation:', self.num_rows, len(self.rowMap))
+            
+            for row_idx, scan_idx in enumerate(self.rowMap):
+                # print("In the loop:", row_idx, scan_idx)
 
                 text = 'Scan #%d'%(scan_idx + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx)
                 if name_editable:
@@ -176,7 +180,6 @@ class DataTableWidget(QTableWidget):
                 try:
                     xmin = round(self.recordedData[scan_idx]['x'].min(), 4)
                 except Exception as e:
-                    print("Exception!", e)
                     pass
                 
                 xmax = 0
@@ -184,7 +187,6 @@ class DataTableWidget(QTableWidget):
                     xmax = round(self.recordedData[scan_idx]['x'].max(), 4)
                 except Exception:
                     pass
-                print("xmin, xmax: ", xmin, xmax)
                 self.setItem(row_idx, 1, QTableWidgetItem(str(xmin)))
                 self.setItem(row_idx, 2, QTableWidgetItem(str(xmax)))
                 # self.setItem(row_idx, 4, QTableWidgetItem(text))
@@ -212,6 +214,7 @@ class DataTableWidget(QTableWidget):
         src: CustomQLineEdit = self.sender()
         text = src.text()
         text = text.lstrip().rstrip()
+        text = text.split('#')[0].rstrip()
         self.recordedData[src.id]['name'] = text
         self.updatePlots()
 
@@ -248,12 +251,101 @@ class DataTableWidget(QTableWidget):
             return (data, metadata)
 
     def delDataCb(self):
+        print('Delete called')
         if self.selectedItem is None:
             return
         row = self.selectedItem.row()
         if row >= len(self.rowMap):
+            print('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
             return
+        try:
+            scanIdx = self.rowMap[row]
+        except Exception:
+            print('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
+            return
+        if scanIdx not in self.recordedData.keys():
+            print('%d is not in recorded data! :O ... '%(scanIdx), self.recordedData.keys())
+            self._deleteRow(row)
+            return
+        self.__delete_item_confirm = False
         # spawn confirmation window here
+        self.showDelConfirmWin(row, scanIdx)
+        if self.__delete_item_confirm: # actually delete?
+            print('\n\nGOING TO DELETE %d... '%(scanIdx), end = '')
+            try:
+                del self.recordedData[scanIdx]
+            except Exception:
+                pass
+            try:
+                del self.recordedMetaData[scanIdx]
+            except Exception:
+                pass
+            self._deleteRow(row)
+            print('DONE\n')
+        self.__delete_item_confirm = False
+
+    def _deleteRow(self, row: int):
+        self.selectedItem = None
+        self.num_rows -= 1
+        self.removeRow(row)
+        del self.rowMap[row]
+        if self.num_rows == 0:
+            self.num_rows = 1
+            self.insertRow(0)
+
+    def showDelConfirmWin(self, row: int, scan_id: int):
+        if self.del_confirm_win is None:
+            self.del_confirm_win = QDialog(self)
+
+            self.del_confirm_win.setWindowTitle('Delete Row %d?'%(row))
+            self.del_confirm_win.setMinimumSize(320, 160)
+
+            self._del_prompt_label = QLabel('')
+            ok_button = QPushButton('Agree')
+            ok_button.clicked.connect(self.__signalAgree)
+            cancel_button = QPushButton('Cancel')
+            cancel_button.clicked.connect(self.__signalCancel)
+
+            layout = QVBoxLayout()
+            hlayout = QHBoxLayout()
+            hlayout.addStretch(1)
+            hlayout.addWidget(self._del_prompt_label)
+            hlayout.addStretch(1)
+            layout.addLayout(hlayout)
+            hlayout = QHBoxLayout()
+            hlayout.addWidget(ok_button)
+            hlayout.addStretch(1)
+            hlayout.addWidget(cancel_button)
+            layout.addLayout(hlayout)
+            self.del_confirm_win.setLayout(layout)
+
+        try:
+            scan_start = self.recordedData[scan_id]['x'].min()
+        except Exception:
+            scan_start = 0
+        
+        try:
+            scan_end = self.recordedData[scan_id]['x'].max()
+        except Exception:
+            scan_end = 0
+
+        try:
+            num_pts = len(self.recordedData[scan_id]['x'] )
+        except Exception:
+            num_pts = 0
+        text = 'Scan #%d: %.4f nm to %.4f nm (%d points)'%(scan_id, scan_start, scan_end, num_pts)
+        self._del_prompt_label.setText(text)
+        self.del_confirm_win.exec() # blocks
+
+    def __signalAgree(self):
+        self.__delete_item_confirm = True
+        if self.del_confirm_win is not None:
+            self.del_confirm_win.close()
+    
+    def __signalCancel(self):
+        self.__delete_item_confirm = False
+        if self.del_confirm_win is not None:
+            self.del_confirm_win.close()
 
     def deleteItem(self, row: int):
         if row < 0:

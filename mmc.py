@@ -461,7 +461,7 @@ class Ui(QMainWindow):
         ofile.close()
 
     def delete_data_cb(self):
-        # self.table.delDataCb()
+        self.table.delDataCb()
         return
 
     def open_manual_hyperlink(self):
@@ -930,8 +930,8 @@ class Scan(QThread):
 
         self.statusUpdate.emit("PREPARING")
         sav_file = None
+        tnow = dt.datetime.now()
         if (self.other.autosave_data_bool):
-            tnow = dt.datetime.now()
             
             filename = self.other.data_save_directory + tnow.strftime('%Y%m%d%H%M%S') + "_data.csv"
             os.makedirs(os.path.dirname(filename), exist_ok=True)
