@@ -152,6 +152,15 @@ class Ui(QMainWindow):
 
     # Constructor
     def __init__(self, application, uiresource = None):
+        # Handles the initial showing of the UI.
+        self.application: QApplication = application
+        args = self.application.arguments()
+        super(Ui, self).__init__()
+        uic.loadUi(uiresource, self)
+
+        self.loading_win = None
+        self.showLoadingWindow()
+
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
         self.data_save_directory = os.path.expanduser('~/Documents')
         self.data_save_directory += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
@@ -231,11 +240,14 @@ class Ui(QMainWindow):
         self.stoppos = 0
         self.steppos = 0.1
 
-        self.application: QApplication = application
-        args = self.application.arguments()
+        # self.application: QApplication = application
+        # args = self.application.arguments()
 
-        super(Ui, self).__init__()
-        uic.loadUi(uiresource, self)
+        # super(Ui, self).__init__()
+        # uic.loadUi(uiresource, self)
+
+        # # Display the GUI.
+        # self.show()
 
         if len(args) != 1:
             self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.2")
@@ -435,7 +447,8 @@ class Ui(QMainWindow):
 
         self.table.updatePlots()
 
-        # Display the GUI.
+        # TODO: Only close if we successfully detected devices. Otherwise, open a device management prompt.
+        self.loading_win.close()
         self.show()
 
     def save_data_cb(self):
@@ -768,6 +781,23 @@ class Ui(QMainWindow):
             else: # new entry has not been added
                 self.grating_combo.setCurrentIndex(self.current_grating_idx)
 
+    # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
+    def showLoadingWindow(self):
+        if self.loading_win is None:
+            self.loading_win = QDialog(self)
+            self.loading_win.setWindowTitle('Device Manager')
+            self.loading_win.setMinimumSize(520, 360)
+
+            self.prompt_label = QLabel('Detecting devices, please be patient...')
+            self.prompt_label.setFont(QFont('Segoe UI', 12))
+
+            layout = QVBoxLayout()
+            hlayout = QHBoxLayout()
+            hlayout.addWidget(self.prompt_label)
+            layout.addLayout(hlayout)
+            self.loading_win.setLayout(layout)
+
+            self.loading_win.show()
 
     def showConfigWindow(self):
         if self.machine_conf_win is None:
