@@ -105,7 +105,10 @@ class DataTableWidget(QTableWidget):
             self.updateTableDisplay(scanId, name_editable=False)
         return scanId
 
-    def enablePlotBtn(self, scanId: int):
+    def markInsertFinished(self, scanId: int):
+        self.__enablePlotBtn(scanId)
+
+    def __enablePlotBtn(self, scanId: int):
         if scanId not in self.recordedData.keys():
             return
         self.recordedData[scanId]['plotted'] = True # plot by default if plot button is disabled

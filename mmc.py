@@ -625,7 +625,7 @@ class Ui(QMainWindow):
         self.table.insertDataAt(scan_idx, xdata, ydata)
 
     def scan_data_complete_slot(self, scan_idx: int):
-        self.table.enablePlotBtn(scan_idx)
+        self.table.markInsertFinished(scan_idx)
         self.table.updateTableDisplay()
 
     def update_position_displays(self):
