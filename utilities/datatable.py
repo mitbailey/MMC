@@ -1,5 +1,5 @@
 from __future__ import annotations
-from PyQt5.QtWidgets import QTableWidget, QStyledItemDelegate, QHeaderView, QAbstractItemView, QCheckBox, QPushButton, QLineEdit, QTableWidgetItem, QDialog, QHBoxLayout, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QTableWidget, QStyledItemDelegate, QHeaderView, QAbstractItemView, QCheckBox, QPushButton, QLineEdit, QTableWidgetItem, QDialog, QHBoxLayout, QVBoxLayout, QLabel, QStyle
 from PyQt5.QtCore import Qt, QItemSelection
 from PyQt5.QtGui import QFont
 import numpy as np
@@ -313,10 +313,14 @@ class DataTableWidget(QTableWidget):
 
     def __showDelConfirmWin(self, row: int, scan_id: int):
         if self.__del_confirm_win is None:
-            self.__del_confirm_win = QDialog(self)
+            self.__del_confirm_win = QDialog(self, Qt.WindowSystemMenuHint | Qt.WindowTitleHint)
 
-            self.__del_confirm_win.setWindowTitle('Delete Row %d?'%(row))
+            self.__del_confirm_win.setWindowTitle('Confirm Deletion of row %d'%(row))
             self.__del_confirm_win.setMinimumSize(320, 160)
+
+            pixmapi = getattr(QStyle, 'SP_MessageBoxWarning')
+            icon = self.style().standardIcon(pixmapi)
+            self.__del_confirm_win.setWindowIcon(icon)
 
             self._del_prompt_label = QLabel('')
             ok_button = QPushButton('Agree')
