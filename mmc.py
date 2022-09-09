@@ -284,7 +284,13 @@ class Ui(QMainWindow):
 
         # GUI initialization, gets the UI elements from the .ui file.
         self.scan_button = self.findChild(QPushButton, "begin_scan_button") # Scanning Control 'Begin Scan' Button
-        self.stop_scan_button = self.findChild(QPushButton, "stop_scan_button")
+        pixmapi = getattr(QStyle, 'SP_ArrowForward')
+        icon = self.style().standardIcon(pixmapi)
+        self.scan_button.setIcon(icon)
+        self.stop_scan_button: QPushButton = self.findChild(QPushButton, "stop_scan_button")
+        pixmapi = getattr(QStyle, 'SP_BrowserStop')
+        icon = self.style().standardIcon(pixmapi)
+        self.stop_scan_button.setIcon(icon)
         self.save_data_checkbox = self.findChild(QCheckBox, "save_data_checkbox") # Scanning Control 'Save Data' Checkbox
         # self.auto_prefix_box = self.findChild(QLineEdit, "scancon_prefix_lineedit") # Scanning Control 'Data file prefix:' Line Edit
         # self.manual_prefix_box = self.findChild(QLineEdit, "mancon_prefix_lineedit")
