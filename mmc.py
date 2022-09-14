@@ -250,9 +250,9 @@ class Ui(QMainWindow):
         # self.show()
 
         if len(args) != 1:
-            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.2")
+            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.3")
         else:
-            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.2")
+            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.3")
 
         self.is_conv_set = False # Use this flag to set conversion
 
