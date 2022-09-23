@@ -63,6 +63,10 @@ from matplotlib.figure import Figure
 from utilities.config import load_config, save_config, reset_config
 import webbrowser
 from utilities.datatable import DataTableWidget
+
+from middleware import MotionController
+from middleware import DataSampler
+from middleware import ColorWheel
 # import datatable
 
 # %% Fonts
@@ -257,30 +261,32 @@ class Ui(QMainWindow):
         self.is_conv_set = False # Use this flag to set conversion
 
         # Picoammeter initialization.
-        if len(args) != 1:
-            self.pa = pico.Picodummy(3)
-        else:
-            self.pa = pico.Picoammeter(3)
+        self.pa = DataSampler(len(args))
+        # if len(args) != 1:
+        #     self.pa = pico.Picodummy(3)
+        # else:
+        #     self.pa = pico.Picoammeter(3)
 
         # TODO: Generalize to any compatible machines.
         # KST101 initialization.
         print("KST101 init begin.")
-        if len(args) == 1:
-            print("Trying...")
-            serials = tlkt.Thorlabs.ListDevicesAny()
-            print(serials)
-            if len(serials) == 0:
-                print("No KST101 controller found.")
-                raise RuntimeError('No KST101 controller found')
-            self.motor_ctrl = tlkt.Thorlabs.KST101(serials[0])
-            if (self.motor_ctrl._CheckConnection() == False):
-                print("Connection with motor controller failed.")
-                raise RuntimeError('Connection with motor controller failed.')
-            self.motor_ctrl.set_stage('ZST25')
-        else:
-            serials = tlkt.Thorlabs.KSTDummy._ListDevices()
-            self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
-            self.motor_ctrl.set_stage('ZST25')
+        self.motor_ctrl = MotionController(len(args))
+        # if len(args) == 1:
+        #     print("Trying...")
+        #     serials = tlkt.Thorlabs.ListDevicesAny()
+        #     print(serials)
+        #     if len(serials) == 0:
+        #         print("No KST101 controller found.")
+        #         raise RuntimeError('No KST101 controller found')
+        #     self.motor_ctrl = tlkt.Thorlabs.KST101(serials[0])
+        #     if (self.motor_ctrl._CheckConnection() == False):
+        #         print("Connection with motor controller failed.")
+        #         raise RuntimeError('Connection with motor controller failed.')
+        #     self.motor_ctrl.set_stage('ZST25')
+        # else:
+        #     serials = tlkt.Thorlabs.KSTDummy._ListDevices()
+        #     self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
+        #     self.motor_ctrl.set_stage('ZST25')
 
         # GUI initialization, gets the UI elements from the .ui file.
         self.scan_button = self.findChild(QPushButton, "begin_scan_button") # Scanning Control 'Begin Scan' Button
@@ -350,26 +356,17 @@ class Ui(QMainWindow):
             self.scan_statusUpdate_slot("HOMING")
             self.motor_ctrl.home()
 
-        # Get the palette.
+        # Get and set the palette.
         palette = self.currpos_nm_disp.palette()
-
-        # Foreground color.
         palette.setColor(palette.WindowText, QColor(255, 0, 0))
-        # Background color.
         palette.setColor(palette.Background, QColor(0, 170, 255))
-        # "light" border.
         palette.setColor(palette.Light, QColor(80, 80, 255))
-        # "dark" border.
         palette.setColor(palette.Dark, QColor(0, 255, 0))
-
-        # Set the palette.
         self.currpos_nm_disp.setPalette(palette)
 
         self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
-        # self.plotCanvas.axes.plot([], [])
         self.plotCanvas.clearPlotFcn()
         self.plotCanvas.setTableClearCb(self.table.plotsClearedCb)
-        # toolbar = NavigationToolbar(self.plotCanvas, self)
         toolbar = self.plotCanvas.getToolbar(self)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(toolbar)
@@ -407,7 +404,6 @@ class Ui(QMainWindow):
 
         # Other stuff.
         self.scan = Scan(weakref.proxy(self))
-        # self.one_shot = OneShot(weakref.proxy(self))
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_position_displays)
@@ -437,8 +433,8 @@ class Ui(QMainWindow):
         self.stoppos = (self.stop_spin.value() + self.zero_ofst) * self.conversion_slope
 
         # Make sure the menu bar QAction states agree with reality.
-        print('mes_sign: ', self.mes_sign)
-        print('autosave_data: ', self.autosave_data_bool)
+        # print('mes_sign: ', self.mes_sign)
+        # print('autosave_data: ', self.autosave_data_bool)
 
         if self.mes_sign == -1:
             self.invert_mes_act.setChecked(True)
@@ -518,8 +514,6 @@ class Ui(QMainWindow):
     def disable_movement_sensitive_buttons(self, disable: bool):
         if self.move_to_position_button is not None:
             self.move_to_position_button.setDisabled(disable)
-        # if self.collect_data is not None:
-            # self.collect_data.setDisabled(disable)
         if self.scan_button is not None:
             self.scan_button.setDisabled(disable)
 
@@ -695,10 +689,6 @@ class Ui(QMainWindow):
         print("Stop scan button pressed!")
         if self.scanRunning:
             self.scanRunning = False
-
-    # def manual_collect_button_pressed(self):
-    #     print("Manual collect button pressed!")
-    #     self.one_shot.start()
 
     def move_to_position_button_pressed(self):
         self.moving = True
@@ -892,43 +882,8 @@ class Ui(QMainWindow):
         self.conversion_slope = ((self.arm_length * self.diff_order * self.grating_density)/(2 * (m.cos(m.radians(self.tangent_ang))) * (m.cos(m.radians(self.incidence_ang))) * 1e6))
 
 # QThread which will be run by the loading UI to initialize communication with devices. Will need to save important data. This functionality currently handled by the MainWindow UI.
-# TODO: Complete.
 class Boot(QThread):
     pass
-
-# class OneShot(QThread):
-#     statusUpdate = pyqtSignal(str)
-#     complete = pyqtSignal()
-
-#     def __init__(self, parent: QMainWindow):
-#         super(OneShot, self).__init__()
-#         self.parent: Ui = parent
-#         # TODO: disable begin scan button on run
-#         self.statusUpdate.connect(self.parent.scan_statusUpdate_slot)
-
-#     def run(self):
-#         self.parent.disable_movement_sensitive_buttons(True)
-#         # collect data
-#         for _ in range(self.parent.oneshot_samples_spinbox.value()):
-#             pos = ((self.parent.motor_ctrl.get_position() / self.parent.motor_ctrl.mm_to_idx) / self.parent.conversion_slope) - self.parent.zero_ofst
-#             buf = self.parent.pa.sample_data()
-#             words = buf.split(',') # split at comma
-#             if len(words) != 3:
-#                 continue
-#             try:
-#                 mes = float(words[0][:-1]) # skip the A (unit suffix)
-#                 err = int(float(words[2])) # skip timestamp
-#             except Exception:
-#                 continue
-#             self.parent.manual_xdata.append(pos)
-#             self.parent.manual_ydata.append(self.parent.mes_sign * mes * 1e12)
-#             print(pos, self.parent.mes_sign * mes * 1e12)
-
-#             # Add to data table.
-#             self.parent.table_log(buf, 'Manual', pos)
-
-#         self.parent.disable_movement_sensitive_buttons(False)
-#         self.complete.emit()
 
 class Scan(QThread):
     statusUpdate = pyqtSignal(str)
@@ -1011,7 +966,6 @@ class Scan(QThread):
             self.progress.emit(round((idx + 1) * 100 / nidx))
             # process buf
             words = buf.split(',') # split at comma
-            # print(words)
             if len(words) != 3:
                 continue
             try:
@@ -1019,12 +973,10 @@ class Scan(QThread):
                 err = int(float(words[2])) # skip timestamp
             except Exception:
                 continue
-            # print(mes, err
             self._xdata.append((((pos / self.other.motor_ctrl.mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
             self._ydata.append(self.other.mes_sign * mes * 1e12)
             self.dataUpdate.emit(self.scanId, self._xdata[-1], self._ydata[-1])
-            # print(self.other.xdata[pidx], self.other.ydata[pidx])
-            # self.other.updatePlot()
+
             if sav_file is not None:
                 if idx == 0:
                     sav_file.write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
@@ -1039,7 +991,7 @@ class Scan(QThread):
         if (sav_file is not None):
             sav_file.close()
         self.other.num_scans += 1
-        # self.other.table_log('Automatic', self.other.startpos, self.other.stoppos, self.other.steppos, nidx+1)
+
         self.complete.emit()
         self.dataComplete.emit(self.scanId)
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
@@ -1081,20 +1033,6 @@ if __name__ == '__main__':
     except Exception as e:
         print(e.what())
 
-    # First, the loading screen.
-    # TODO: Set up some kind of loading screen to display.
-    # lui_file_name = exeDir + '/ui/' + "load.ui"
-    # lui_file = QFile(lui_file_name) # workaround to load UI file with pyinstaller
-    # if not lui_file.open(QIODevice.ReadOnly):
-    #     print(f"Cannot open {lui_file_name}: {lui_file.errorString()}")
-    #     sys.exit(-1)
-
-    # loadWindow = LoadUi(application, lui_file)
-    # ret = application.exec_()
-
-    # Then, we load up the device selection UI.
-    # TODO: Display a device selection UI / connected devices status UI prior to booting the main window.
-
     # Main GUI and child-window setup.
     ui_file_name = exeDir + '/ui/grating_input.ui'
     ui_file = QFile(ui_file_name)
@@ -1115,10 +1053,6 @@ if __name__ == '__main__':
     ret = application.exec_() # block until
 
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
-    # TODO: Save the following:
-    # mainWindow.mes_sign
-    # .autosave_data
-    # .data_save_directory
     save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length, mainWindow.max_pos, mainWindow.min_pos)    
 
     # Cleanup and exit.
