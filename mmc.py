@@ -9,7 +9,7 @@
 # 
 #
 
-# %% Set up paths
+# %% OS and SYS Imports
 import os
 import sys
 
@@ -23,11 +23,7 @@ if getattr(sys, 'frozen', False):
 elif __file__:
     appDir = os.path.dirname(__file__)
 
-# %% More Imports
-import configparser as confp
-from email.charset import QP
-from time import sleep
-import weakref
+# %% PyQt Imports
 from PyQt5 import uic
 from PyQt5.Qt import QTextOption
 from PyQt5.QtCore import (pyqtSignal, pyqtSlot, Q_ARG, QAbstractItemModel,
@@ -43,23 +39,24 @@ from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBo
                              QTableWidget, QTableWidgetItem, QSplitter, QAbstractItemView, QStyledItemDelegate, QHeaderView, QFrame, QProgressBar, QCheckBox, QToolTip, QGridLayout, QSpinBox,
                              QLCDNumber, QAbstractSpinBox, QStatusBar, QAction)
 from PyQt5.QtCore import QTimer
-from io import TextIOWrapper
+from PyQt5 import QtCore, QtWidgets
 
-# import _thorlabs_kst_advanced as tlkt
-from drivers import _thorlabs_kst_advanced as tlkt
-import picoammeter as pico
+#%% More Standard Imports
+import configparser as confp
+from email.charset import QP
+from time import sleep
+import weakref
+from io import TextIOWrapper
 import math as m
-import os
 import numpy as np
 import datetime as dt
 
 import matplotlib
 matplotlib.use('Qt5Agg')
-
-from PyQt5 import QtCore, QtWidgets
-
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
+
+# %% Custom Imports
 from utilities.config import load_config, save_config, reset_config
 import webbrowser
 from utilities.datatable import DataTableWidget
@@ -67,7 +64,6 @@ from utilities.datatable import DataTableWidget
 from middleware import MotionController
 from middleware import DataSampler
 from middleware import ColorWheel
-# import datatable
 
 # %% Fonts
 digital_7_italic_22 = None
@@ -135,17 +131,6 @@ class MplCanvas(FigureCanvasQTAgg):
 
 class Scan(QThread):
     pass
-
-# TODO: Figure out a loading screen.
-# class LoadUi(QWidget):
-#     def __init__(self, application, uiresource = None):
-#         self.application: QApplication = application
-#         args = self.application.arguments()
-
-#         super(LoadUi, self).__init__()
-#         uic.loadUi(uiresource, self)
-
-#         self.show()
 
 class Ui(QMainWindow):
     # Destructor
@@ -262,31 +247,11 @@ class Ui(QMainWindow):
 
         # Picoammeter initialization.
         self.pa = DataSampler(len(args))
-        # if len(args) != 1:
-        #     self.pa = pico.Picodummy(3)
-        # else:
-        #     self.pa = pico.Picoammeter(3)
 
-        # TODO: Generalize to any compatible machines.
-        # KST101 initialization.
-        print("KST101 init begin.")
+        # Generalized to any compatible machines.
+        # Motion controller initialization.
+        print("Motion controller init begin.")
         self.motor_ctrl = MotionController(len(args))
-        # if len(args) == 1:
-        #     print("Trying...")
-        #     serials = tlkt.Thorlabs.ListDevicesAny()
-        #     print(serials)
-        #     if len(serials) == 0:
-        #         print("No KST101 controller found.")
-        #         raise RuntimeError('No KST101 controller found')
-        #     self.motor_ctrl = tlkt.Thorlabs.KST101(serials[0])
-        #     if (self.motor_ctrl._CheckConnection() == False):
-        #         print("Connection with motor controller failed.")
-        #         raise RuntimeError('Connection with motor controller failed.')
-        #     self.motor_ctrl.set_stage('ZST25')
-        # else:
-        #     serials = tlkt.Thorlabs.KSTDummy._ListDevices()
-        #     self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
-        #     self.motor_ctrl.set_stage('ZST25')
 
         # GUI initialization, gets the UI elements from the .ui file.
         self.scan_button = self.findChild(QPushButton, "begin_scan_button") # Scanning Control 'Begin Scan' Button
@@ -299,13 +264,13 @@ class Ui(QMainWindow):
         self.stop_scan_button.setIcon(icon)
         self.stop_scan_button.setEnabled(False)
         self.save_data_checkbox = self.findChild(QCheckBox, "save_data_checkbox") # Scanning Control 'Save Data' Checkbox
-        # self.auto_prefix_box = self.findChild(QLineEdit, "scancon_prefix_lineedit") # Scanning Control 'Data file prefix:' Line Edit
-        # self.manual_prefix_box = self.findChild(QLineEdit, "mancon_prefix_lineedit")
         self.dir_box = self.findChild(QLineEdit, "save_dir_lineedit")
         self.start_spin = self.findChild(QDoubleSpinBox, "start_set_spinbox")
         self.stop_spin = self.findChild(QDoubleSpinBox, "end_set_spinbox")
-        if isinstance(self.pa, pico.Picodummy):
+
+        if self.pa.is_dummy():
             self.stop_spin.setValue(0.2)
+
         self.step_spin = self.findChild(QDoubleSpinBox, "step_set_spinbox")
         self.currpos_nm_disp = self.findChild(QLabel, "currpos_nm")
         self.scan_status = self.findChild(QLabel, "status_label")
@@ -313,7 +278,6 @@ class Ui(QMainWindow):
         save_config_btn: QPushButton = self.findChild(QPushButton, 'save_config_button')
         self.pos_spin: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox") # Manual Control 'Position:' Spin Box
         self.move_to_position_button: QPushButton = self.findChild(QPushButton, "move_pos_button")
-        # self.collect_data: QPushButton = self.findChild(QPushButton, "collect_data_button")
         self.plotFrame: QWidget = self.findChild(QWidget, "data_graph")
         self.xmin_in: QLineEdit = self.findChild(QLineEdit, "xmin_in")
         self.ymin_in: QLineEdit = self.findChild(QLineEdit, "ymin_in")
@@ -338,11 +302,7 @@ class Ui(QMainWindow):
         self.delete_data_btn: QPushButton = self.findChild(QPushButton, 'delete_data_button')
         self.delete_data_btn.clicked.connect(self.delete_data_cb)
         
-        # self.oneshot_samples_spinbox: QSpinBox = self.findChild(QSpinBox, "samples_set_spinbox")
-        # self.table: QTableWidget = self.findChild(QTableWidget, "table")
-        # self.table: DataTableWidget = self.findChild(DataTableWidget, "table")
         table_frame: QFrame = self.findChild(QFrame, "table_frame")
-        # self.table = DataTableWidget(weakref.proxy(self))
         self.table = DataTableWidget(self)
         VLayout = QVBoxLayout()
         VLayout.addWidget(self.table)
@@ -350,7 +310,7 @@ class Ui(QMainWindow):
         self.home_button: QPushButton = self.findChild(QPushButton, "home_button")
         
         self.homing_started = False
-        if not isinstance(self.motor_ctrl, tlkt.Thorlabs.KSTDummy): # home only on the real device
+        if not self.motor_ctrl.is_dummy():
             self.homing_started = True
             self.disable_movement_sensitive_buttons(True)
             self.scan_statusUpdate_slot("HOMING")

@@ -1,7 +1,7 @@
 #
 # @file middleware.py
 # @author Mit Bailey (mitbailey@outlook.com)
-# @brief Provides a layer of abstraction between the MMC GUI and the underlying hardware devices.
+# @brief Provides a layer of abstraction between the MMC GUI and the underlying hardware device drivers.
 # @version See Git tags for version information.
 # @date 2022.09.23
 # 
@@ -9,6 +9,7 @@
 # 
 #
 
+# %% OS and SYS Imports
 import os
 import sys
 
@@ -22,29 +23,23 @@ if getattr(sys, 'frozen', False):
 elif __file__:
     appDir = os.path.dirname(__file__)
 
-# %% More Imports
+# %% More Standard Imports
 import configparser as confp
 from email.charset import QP
 from time import sleep
-import weakref
 from io import TextIOWrapper
-
-# import _thorlabs_kst_advanced as tlkt
-from drivers import _thorlabs_kst_advanced as tlkt
-import picoammeter as pico
 import math as m
-import os
 import numpy as np
 import datetime as dt
 
 import matplotlib
 matplotlib.use('Qt5Agg')
-
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
-from utilities.config import load_config, save_config, reset_config
-import webbrowser
-from utilities.datatable import DataTableWidget
+
+# %% Custom Imports
+from drivers import _thorlabs_kst_advanced as tlkt
+from drivers import picoammeter as pico
 
 # Motion Controller Types
 # 0 - KST101
@@ -52,11 +47,13 @@ from utilities.datatable import DataTableWidget
 # Data Sampler Types
 # 0 - Picoammeter, Keithley
 
+#%% MotionController
 # Genericizes the type of motor controller.
 class MotionController:
     def __init__(self, n_args):
         self.controller_type = 0
         self.mm_to_idx = 0
+        self._is_dummy = False
 
         # Initializes our motor_ctrl stuff depending on what hardware we're using.
         if self.controller_type == 0:
@@ -76,8 +73,14 @@ class MotionController:
                 serials = tlkt.Thorlabs.KSTDummy._ListDevices()
                 self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
                 self.motor_ctrl.set_stage('ZST25')
+                self._is_dummy = True
+        elif self.controller_type == 1: # Example for adding future controller hardware.
+            print("Controller type 1 does not exist yet.")
 
         self.mm_to_idx = self.motor_ctrl.mm_to_idx
+
+    def is_dummy(self):
+        return self.is_dummy
 
     def home(self):
         return self.motor_ctrl.home()
@@ -96,24 +99,32 @@ class MotionController:
 
     pass
 
+#%% DataSampler
 # Genericizes the type of data sampler.
 class DataSampler:
     def __init__(self, n_args):
         self.sampler_type = 0
         self.pa = None
+        self._is_dummy = False
 
         if self.sampler_type == 0:
             if n_args != 1:
                 self.pa = pico.Picodummy(3)
+                self._is_dummy = True
             else:
                 self.pa = pico.Picoammeter(3)
+        elif self.sampler_type == 1: # Example for adding future controller hardware.
+            print("Sampler type 1 does not exist yet.")
 
     # Only function used in mmc.py (.pa.sample_data())
     def sample_data(self):
         return self.pa.sample_data()
 
+    def is_dummy(self):
+        return self._is_dummy
+
     pass
 
-# TBD
+#%% ColorWheel
 class ColorWheel:
     pass

@@ -20,3 +20,9 @@ Boot in debug mode, no real connections to hardware will be attempted:
 ## Compatible Hardware
 - KST101 (Motor Controller)  
 - KM6485 (Picoammeter)  
+
+## Hierarchy
+GUI <-> Middleware <-> Drivers <-> Hardware
+- The GUI calls Middleware functions and is the layer the user directly interacts with. The GUI simply knows that it exists above some Monochromator with some type of Motion Controller and Sampling device.
+- The middleware allows the GUI to be agnostic to specific hardware and hardware implementations, providing the GUI layer with consistent functions to interface with across all forms of Motion Control and Sampling. The Middleware determines which drivers must be used.
+- The drivers interact directly with the Motion Controller and Sampler and are specific to their model / type.
