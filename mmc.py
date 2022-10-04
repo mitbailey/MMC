@@ -50,6 +50,7 @@ from io import TextIOWrapper
 import math as m
 import numpy as np
 import datetime as dt
+import serial.tools.list_ports
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -131,8 +132,10 @@ class Scan(QThread):
 
 # The main MMC program and GUI class.
 class MMC_Main(QMainWindow):
-    sampler_status_signal = pyqtSignal(str)
-    mtn_ctrl_status_signal = pyqtSignal(str)
+    device_manager_ready_signal = pyqtSignal()
+    devices_auto_connected_signal = pyqtSignal(bool, bool, bool)
+    # sampler_status_signal = pyqtSignal(str)
+    # mtn_ctrl_status_signal = pyqtSignal(str)
     # color_wheel_status_signal = pyqtSignal(str)
 
     # Destructor
@@ -148,33 +151,97 @@ class MMC_Main(QMainWindow):
         self._startup_args = self.application.arguments()
         super(MMC_Main, self).__init__()
         uic.loadUi(uiresource, self)
-        self.sampler_status_signal.connect(self.sampler_status_slot)
-        self.mtn_ctrl_status_signal.connect(self.mtn_ctrl_status_slot)
+        self.device_manager_ready_signal.connect(self.device_manager_ready_slot)
+        self.devices_auto_connected_signal.connect(self.devices_auto_connected_slot)
+        # self.sampler_status_signal.connect(self.sampler_status_slot)
+        # self.mtn_ctrl_status_signal.connect(self.mtn_ctrl_status_slot)
 
-        self.loading_win = None
-        self.showLoadingWindow()
+        self.main_gui_booted = False
+        self.dev_man_win = None
+        self.show_window_device_manager()
+
+    def autoconnect_devices(self):
+        print("autoconnect_devices")
 
         # Motion Controller and Sampler initialization.
         # Note that, for now, the Keithley 6485 and KST101 are the defaults.
-        device_detection_failed = False
+        sampler_connected = True
+        mtn_ctrl_connected = True
+        color_wheel_connected = True
+
         self.sampler = None
         self.mtn_ctrl = None
         try:
             self.sampler = DataSampler(len(self._startup_args))
         except Exception as e:
             print("Failed to find sampler.")
-            device_detection_failed = True
-            pass
+            self.sampler = None
+            sampler_connected = False
+        if self.sampler is None:
+            sampler_connected = False
+
         try:
             self.mtn_ctrl = MotionController(len(self._startup_args))
         except Exception as e:
             print("Failed to find motion controller.")
-            device_detection_failed = True
+            self.mtn_ctrl = None
+            mtn_ctrl_connected = False
             pass
+        if self.mtn_ctrl is None:
+            mtn_ctrl_connected = False
+
+        try:
+            self.color_wheel = ColorWheel(len(self._startup_args))
+        except Exception as e:
+            print("Failed to find color wheel.")
+            self.color_wheel = None
+            color_wheel_connected = False
+            pass
+
+        if self.color_wheel is None:
+            color_wheel_connected = False
+
+        # TODO: Emit a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
         
-        self.main_gui_booted = False
-        if not device_detection_failed:
-            self._boot_main_gui()
+
+        self.devices_auto_connected_signal.emit(sampler_connected, mtn_ctrl_connected, color_wheel_connected)
+
+    # Signaled once the device manager GUI has been set up. Simply calls autoconnect.
+    def device_manager_ready_slot(self):
+        print("device_manager_ready_slot")
+        self.autoconnect_devices()
+
+    # If things are connected, boot main GUI.
+    # If somethings wrong, enable advanced dev man functions.
+    def devices_auto_connected_slot(self, sampler, mtn_ctrl, color_wheel):
+
+        print("devices_auto_connected_slot")
+
+        if (sampler and mtn_ctrl):
+            self.dev_man_win.close()
+            self._show_main_gui()
+            return
+        
+        # If we are here, then we have not automatically connected to all required devices. We must now enable the device manager.
+
+        self.enable_device_manager(True)
+
+    def enable_device_manager(self, enable):
+        if enable:
+            self.device_timer = QTimer()
+            self.device_timer.timeout.connect(self.devman_list_devices)
+            self.device_timer.start(1000)
+            self.dm_prompt_label.setText('Unable to automatically connect. Please select devices from the list below.')
+            pass
+        else:   
+            pass         
+
+    def devman_list_devices(self):
+        print("Timer test!")
+        ports = serial.tools.list_ports.comports()
+
+        for port, desc, hwid in sorted(ports):
+            print("{}: {} [{}]".format(port, desc, hwid))
 
     def sampler_status_slot(self):
         pass
@@ -182,7 +249,7 @@ class MMC_Main(QMainWindow):
     def mtn_ctrl_status_slot(self):
         pass
 
-    def _boot_main_gui(self):
+    def _show_main_gui(self):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
         self.data_save_directory = os.path.expanduser('~/Documents')
         self.data_save_directory += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
@@ -355,7 +422,7 @@ class MMC_Main(QMainWindow):
         self.pos_spin.setValue(0)
 
         # Signal-to-slot connections.
-        save_config_btn.clicked.connect(self.showConfigWindow)
+        save_config_btn.clicked.connect(self.show_window_machine_config)
         self.scan_button.clicked.connect(self.scan_button_pressed)
         self.stop_scan_button.clicked.connect(self.stop_scan_button_pressed)
         # self.collect_data.clicked.connect(self.manual_collect_button_pressed)
@@ -365,7 +432,7 @@ class MMC_Main(QMainWindow):
         self.step_spin.valueChanged.connect(self.step_changed)
         self.pos_spin.valueChanged.connect(self.manual_pos_changed)
 
-        self.machine_conf_act.triggered.connect(self.showConfigWindow)
+        self.machine_conf_act.triggered.connect(self.show_window_machine_config)
         self.invert_mes_act.toggled.connect(self.invert_mes_toggled)
         self.autosave_data_act.toggled.connect(self.autosave_data_toggled)
         self.autosave_dir_act.triggered.connect(self.autosave_dir_triggered)
@@ -423,7 +490,7 @@ class MMC_Main(QMainWindow):
         self.table.updatePlots()
 
         # TODO: Only close if we successfully detected devices. Otherwise, open a device management prompt.
-        self.loading_win.close()
+        self.dev_man_win.close()
         self.main_gui_booted = True
         self.show()
 
@@ -688,7 +755,7 @@ class MMC_Main(QMainWindow):
         print("Manual position changed to: %s mm"%(self.pos_spin.value()))
         self.manual_position = (self.pos_spin.value() + self.zero_ofst) * self.conversion_slope
 
-    def showGratingWindow(self):
+    def show_window_grating_config(self):
         if self.grating_conf_win is None: 
             self.grating_conf_win = QDialog(self)
 
@@ -740,34 +807,41 @@ class MMC_Main(QMainWindow):
     def newGratingItem(self, idx: int):
         slen = len(self.grating_combo_lstr) # old length
         if idx == slen - 1:
-            self.showGratingWindow()
+            self.show_window_grating_config()
             if len(self.grating_combo_lstr) != slen: # new length is different, new entry has been added
                 self.current_grating_idx = self.grating_combo.setCurrentIndex(idx)
             else: # new entry has not been added
                 self.grating_combo.setCurrentIndex(self.current_grating_idx)
 
     # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
-    def showLoadingWindow(self):
-        # TODO: Display device detection / selection UI for when the devices were not detected on startup. Also, add a button that, when pressed, calls self._boot_main_gui()
+    def show_window_device_manager(self):
+        # TODO: Display device detection / selection UI for when the devices were not detected on startup. Also, add a button that, when pressed, calls self._show_main_gui()
+        
+        if self.dev_man_win is None:
+            self.dev_man_win = QDialog(self)
 
-        if self.loading_win is None:
-            self.loading_win = QDialog(self)
+            self.dev_man_win.setWindowTitle('Device Manager')
+            self.dev_man_win.setMinimumSize(520, 360)
 
-            self.loading_win.setWindowTitle('Device Manager')
-            self.loading_win.setMinimumSize(520, 360)
-
-            self.prompt_label: QLabel = QLabel('If you are seeing this then the program has failed to find the proper hardware. Please ensure the devices are connected properly.')
-            self.prompt_label.setFont(QFont('Segoe UI', 12))
-            self.prompt_label.setWordWrap(True)
+            self.dm_prompt_label: QLabel = QLabel('Searching for devices automagically, please wait...')
+            self.dm_prompt_label.setFont(QFont('Segoe UI', 12))
+            self.dm_prompt_label.setWordWrap(True)
+            self.dm_list_label: QLabel = QLabel('DEVICE LIST:\n')
+            self.dm_list_label.setFont(QFont('Segoe UI', 12))
+            self.dm_list_label.setWordWrap(True)
 
             layout = QVBoxLayout()
-            layout.addWidget(self.prompt_label)
+            layout.addWidget(self.dm_prompt_label)
+            layout.addWidget(self.dm_list_label)
             layout.addStretch(1)
-            self.loading_win.setLayout(layout)
+            self.dev_man_win.setLayout(layout)
 
-            self.loading_win.show()
+            self.dev_man_win.show()
 
-    def showConfigWindow(self):
+        print("post show")
+        self.device_manager_ready_signal.emit()
+
+    def show_window_machine_config(self):
         if self.machine_conf_win is None:
             ui_file_name = exeDir + '/ui/grating_input.ui'
             ui_file = QFile(ui_file_name)
