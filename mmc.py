@@ -88,14 +88,14 @@ class MplCanvas(FigureCanvasQTAgg):
         self._tableClearCb = None
         super(MplCanvas, self).__init__(fig)
 
-    def getToolbar(self, parent) -> NavigationToolbar:
+    def get_toolbar(self, parent) -> NavigationToolbar:
         self.toolbar = NavigationToolbar(self, parent)
         return self.toolbar
 
-    def setTableClearCb(self, fcn):
+    def set_table_clear_cb(self, fcn):
         self._tableClearCb = fcn
 
-    def clearPlotFcn(self):
+    def clear_plot_fcn(self):
         if not self.parent.scanRunning:
             self.axes.cla()
             self.axes.set_xlabel('Location (nm)')
@@ -106,7 +106,7 @@ class MplCanvas(FigureCanvasQTAgg):
                 self._tableClearCb()
         return
 
-    def updatePlots(self, data):
+    def update_plots(self, data):
         self.axes.cla()
         self.axes.set_xlabel('Location (nm)')
         self.axes.set_ylabel('Photo Current (pA)')
@@ -118,7 +118,7 @@ class MplCanvas(FigureCanvasQTAgg):
         self.draw()
         return
 
-    def appendPlot(self, idx, xdata, ydata):
+    def append_plot(self, idx, xdata, ydata):
         if idx not in self.lines.keys():
             c = self.colors[idx % len(self.colors)]
             self.lines[idx], = self.axes.plot(xdata, ydata, label = 'Scan #%d'%(idx), color = c)
@@ -132,11 +132,16 @@ class Scan(QThread):
 
 # The main MMC program and GUI class.
 class MMC_Main(QMainWindow):
-    device_manager_ready_signal = pyqtSignal()
-    devices_auto_connected_signal = pyqtSignal(bool, bool, bool)
-    # sampler_status_signal = pyqtSignal(str)
-    # mtn_ctrl_status_signal = pyqtSignal(str)
-    # color_wheel_status_signal = pyqtSignal(str)
+    # STARTUP PROCEDURE
+    # 
+    # MMC_Main.__init__() --> show_window_device_manager() >>> emits device_manager_ready_signal
+    # --> autoconnect_devices() >>> emits devices_auto_connected_signal
+    # --> devices_auto_connected()
+    # IF devices connected --> _show_main_gui()
+    # ELSE allow user to interact w/ device manager
+
+    SIGNAL_device_manager_ready = pyqtSignal()
+    SIGNAL_devices_auto_connected = pyqtSignal(bool, bool, bool)
 
     EXIT_CODE_FINISHED = 0
     EXIT_CODE_REBOOT = 1
@@ -153,15 +158,56 @@ class MMC_Main(QMainWindow):
         self._startup_args = self.application.arguments()
         super(MMC_Main, self).__init__()
         uic.loadUi(uiresource, self)
-        self.device_manager_ready_signal.connect(self.autoconnect_devices)
-        self.devices_auto_connected_signal.connect(self.devices_auto_connected_slot)
+        self.SIGNAL_device_manager_ready.connect(self.autoconnect_devices)
+        self.SIGNAL_devices_auto_connected.connect(self.devices_auto_connected)
 
         self.main_gui_booted = False
         self.dev_man_win = None
         self.show_window_device_manager()
 
+    # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
+    def show_window_device_manager(self):
+        if self.dev_man_win is None:
+            ui_file_name = exeDir + '/ui/device_manager.ui'
+            ui_file = QFile(ui_file_name)
+            if not ui_file.open(QIODevice.ReadOnly):
+                print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+                raise RuntimeError('Could not load grating input UI file')
+
+            self.dev_man_win = QDialog(self) # pass parent window
+            uic.loadUi(ui_file, self.dev_man_win)
+
+            self.dev_man_win.setWindowTitle('Device Manager')
+
+            self.dm_prompt_label: QLabel = self.dev_man_win.findChild(QLabel, "explanation_label")
+
+            self.dm_list_label: QLabel = self.dev_man_win.findChild(QLabel, "devices_label")
+
+            self.dm_sampler_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "samp_combo")
+            self.dm_sampler_combo.addItem("<SELECT>")
+
+            self.dm_mtn_ctrl_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "mtn_combo")
+            self.dm_mtn_ctrl_combo.addItem("<SELECT>")
+
+            self.dm_color_wheel_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "wheel_combo")
+            self.dm_color_wheel_combo.addItem("<SELECT>")
+
+            self.dm_accept_button: QPushButton = self.dev_man_win.findChild(QPushButton, "acc_button")
+            self.dm_accept_button.clicked.connect(self.manually_connect_devices)
+            self.dm_accept_button.setDisabled(True)
+            self.dm_retry_button: QPushButton = self.dev_man_win.findChild(QPushButton, "ret_button")
+            self.dm_retry_button.clicked.connect(self.autoconnect_devices)
+
+            self.dev_man_win.show()
+
+        self.application.processEvents()
+        self.SIGNAL_device_manager_ready.emit()
+
     def autoconnect_devices(self):
-        print("autoconnect_devices")
+        # TODO: Take into account the ports chosen in device manager. If none have been, use defaults.
+
+        self.dm_list_label.setText("Attempting to autoconnect...")
+        self.application.processEvents()
 
         # Motion Controller and Sampler initialization.
         # Note that, for now, the Keithley 6485 and KST101 are the defaults.
@@ -203,62 +249,21 @@ class MMC_Main(QMainWindow):
 
         # Emits a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
         
-        self.devices_auto_connected_signal.emit(sampler_connected, mtn_ctrl_connected, color_wheel_connected)
-
-    # TODO: Take into account the ports selected in the device manager and attempt a connection to those.
-    def manually_connect_devices(self):
-        pass
+        self.SIGNAL_devices_auto_connected.emit(sampler_connected, mtn_ctrl_connected, color_wheel_connected)
 
     # If things are connected, boot main GUI.
     # If somethings wrong, enable advanced dev man functions.
-    def devices_auto_connected_slot(self, sampler, mtn_ctrl, color_wheel):
-
-        print("devices_auto_connected_slot")
-
+    def devices_auto_connected(self, sampler, mtn_ctrl, color_wheel):
         if (sampler and mtn_ctrl):
             self.dev_man_win.close()
             self._show_main_gui()
             return
         
         # If we are here, then we have not automatically connected to all required devices. We must now enable the device manager.
-
-    #     self.enable_device_manager(True)
-
-    # def enable_device_manager(self, enable):
         self.device_timer = QTimer()
         self.device_timer.timeout.connect(self.devman_list_devices)
         self.device_timer.start(1000)
-        self.dm_prompt_label.setText('The software was unable to automatically connect to the devices. Please ensure all devices are connected properly and press "Retry Auto-Connect" or select devices below.\nNOTE: At this time, only the "Retry Auto-Connect" button is functional.\n\nSupported Devices:\nSamplers\n- Keithley Model 6485 Picoammeter\n\nMotion Controllers\n- ThorLabs KST101\n\nColor Wheels\n  N/A\n\n')     
-
-    def devman_list_devices(self):
-        ports = serial.tools.list_ports.comports()
-
-        dev_list = ''
-        for port, desc, hwid in sorted(ports):
-            dev_list += "PORT: %s\n"%(port)
-            dev_list += "DESC: %s\n"%(desc)
-            dev_list += "HWID: %s\n\n"%(hwid)
-            print(dev_list)
-
-        if (self.dm_list_label.text() != "~DEVICE LIST~\n" + dev_list):
-            self.dm_sampler_combo.clear()
-            self.dm_sampler_combo.addItem("<SELECT>")
-            self.dm_sampler_combo.setCurrentIndex(0)
-
-            self.dm_mtn_ctrl_combo.clear()
-            self.dm_mtn_ctrl_combo.addItem("<SELECT>")
-            self.dm_mtn_ctrl_combo.setCurrentIndex(0)
-
-            self.dm_color_wheel_combo.clear()
-            self.dm_color_wheel_combo.addItem("<SELECT>")
-            self.dm_color_wheel_combo.setCurrentIndex(0)
-
-            for port, desc, hwid in sorted(ports):
-                self.dm_sampler_combo.addItem(port)
-                self.dm_mtn_ctrl_combo.addItem(port)
-                self.dm_color_wheel_combo.addItem(port)
-
-            self.dm_list_label.setText("~DEVICE LIST~\n" + dev_list)
+        self.dm_prompt_label.setText('The software was unable to automatically connect to the devices. Please ensure all devices are connected properly and press "Retry Auto-Connect" or select devices below.\nNOTE: At this time, only the "Retry Auto-Connect" button is functional.\n\nSupported Devices:\nSamplers\n- Keithley Model 6485 Picoammeter\n\nMotion Controllers\n- ThorLabs KST101\n\nColor Wheels\n  N/A\n\n')   
 
     def _show_main_gui(self):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
@@ -331,7 +336,7 @@ class MMC_Main(QMainWindow):
         self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
 
         # Sets the conversion slope based on the found (or default) values.
-        self.calculateConversionSlope()
+        self.calculate_conversion_slope()
 
         print('\n\nConversion constant: %f\n'%(self.conversion_slope))
 
@@ -368,7 +373,7 @@ class MMC_Main(QMainWindow):
         self.step_spin = self.findChild(QDoubleSpinBox, "step_set_spinbox")
         self.currpos_nm_disp = self.findChild(QLabel, "currpos_nm")
         self.scan_status = self.findChild(QLabel, "status_label")
-        self.scan_progress = self.findChild(QProgressBar, "progressbar")
+        self.scan_progressbar = self.findChild(QProgressBar, "progressbar")
         save_config_btn: QPushButton = self.findChild(QPushButton, 'save_config_button')
         self.pos_spin: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox") # Manual Control 'Position:' Spin Box
         self.move_to_position_button: QPushButton = self.findChild(QPushButton, "move_pos_button")
@@ -407,7 +412,7 @@ class MMC_Main(QMainWindow):
         if not self.mtn_ctrl.is_dummy():
             self.homing_started = True
             self.disable_movement_sensitive_buttons(True)
-            self.scan_statusUpdate_slot("HOMING")
+            self.scan_status_update("HOMING")
             self.mtn_ctrl.home()
 
         # Get and set the palette.
@@ -419,15 +424,15 @@ class MMC_Main(QMainWindow):
         self.currpos_nm_disp.setPalette(palette)
 
         self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
-        self.plotCanvas.clearPlotFcn()
-        self.plotCanvas.setTableClearCb(self.table.plotsClearedCb)
-        toolbar = self.plotCanvas.getToolbar(self)
+        self.plotCanvas.clear_plot_fcn()
+        self.plotCanvas.set_table_clear_cb(self.table.plotsClearedCb)
+        toolbar = self.plotCanvas.get_toolbar(self)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(toolbar)
         layout.addWidget(self.plotCanvas)
         self.plotFrame.setLayout(layout)
 
-        self.plot_clear_plots.clicked.connect(self.plotCanvas.clearPlotFcn)
+        self.plot_clear_plots.clicked.connect(self.plotCanvas.clear_plot_fcn)
 
         # Set the initial value of the Manual Control 'Position:' spin box.
         self.pos_spin.setValue(0)
@@ -480,7 +485,7 @@ class MMC_Main(QMainWindow):
         self.statusBar.addPermanentWidget(self.sb_arm_len)
         self.statusBar.addPermanentWidget(self.sb_diff_order)
         self.statusBar.addPermanentWidget(self.sb_conv_slope)
-        self.updateStatusBarGratingEquationValues()
+        self.update_status_bar_grating_equation_values()
 
         self.manual_position = (self.pos_spin.value() + self.zero_ofst) * self.conversion_slope
         self.startpos = (self.start_spin.value() + self.zero_ofst) * self.conversion_slope
@@ -496,14 +501,48 @@ class MMC_Main(QMainWindow):
         else:
             self.autosave_data_act.setChecked(False)
 
-        self.updateMovementLimits()
+        self.update_movement_limits()
 
         self.table.updatePlots()
 
         # TODO: Only close if we successfully detected devices. Otherwise, open a device management prompt.
         self.dev_man_win.close()
         self.main_gui_booted = True
-        self.show()
+        self.show()  
+
+    # TODO: Take into account the ports selected in the device manager and attempt a connection to those.
+    def manually_connect_devices(self):
+        pass
+
+    def devman_list_devices(self):
+        ports = serial.tools.list_ports.comports()
+
+        dev_list = ''
+        for port, desc, hwid in sorted(ports):
+            dev_list += "PORT: %s\n"%(port)
+            dev_list += "DESC: %s\n"%(desc)
+            dev_list += "HWID: %s\n\n"%(hwid)
+            print(dev_list)
+
+        if (self.dm_list_label.text() != "~DEVICE LIST~\n" + dev_list):
+            self.dm_sampler_combo.clear()
+            self.dm_sampler_combo.addItem("<SELECT>")
+            self.dm_sampler_combo.setCurrentIndex(0)
+
+            self.dm_mtn_ctrl_combo.clear()
+            self.dm_mtn_ctrl_combo.addItem("<SELECT>")
+            self.dm_mtn_ctrl_combo.setCurrentIndex(0)
+
+            self.dm_color_wheel_combo.clear()
+            self.dm_color_wheel_combo.addItem("<SELECT>")
+            self.dm_color_wheel_combo.setCurrentIndex(0)
+
+            for port, desc, hwid in sorted(ports):
+                self.dm_sampler_combo.addItem(port)
+                self.dm_mtn_ctrl_combo.addItem(port)
+                self.dm_color_wheel_combo.addItem(port)
+
+            self.dm_list_label.setText("~DEVICE LIST~\n" + dev_list)
 
     def save_data_cb(self):
         if self.table is None:
@@ -579,7 +618,7 @@ class MMC_Main(QMainWindow):
             self.home_button.setDisabled(disable)
 
     def manual_home(self):
-        self.scan_statusUpdate_slot("HOMING")
+        self.scan_status_update("HOMING")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
         self.mtn_ctrl.home()
@@ -630,6 +669,7 @@ class MMC_Main(QMainWindow):
     def autosave_dir_triggered(self):
         self.data_save_directory = QFileDialog.getExistingDirectory(self, 'Auto logging files location', self.data_save_directory, options=QFileDialog.ShowDirsOnly)
 
+    # TODO: Delete?
     def preferences_triggered(self):
         pass
 
@@ -654,7 +694,7 @@ class MMC_Main(QMainWindow):
         self.pop_out_plot = state
 
 
-    def updateStatusBarGratingEquationValues(self):
+    def update_status_bar_grating_equation_values(self):
         self.sb_grating_density.setText("  <i>G</i> " + str(self.grating_density) + " grooves/mm    ")
         self.sb_zero_offset.setText("  <i>&lambda;</i><sub>0</sub> " + str(self.zero_ofst) + " nm    ")
         self.sb_inc_ang.setText("  <i>&theta;</i><sub>inc</sub> " + str(self.incidence_ang) + " deg    ")
@@ -663,33 +703,33 @@ class MMC_Main(QMainWindow):
         self.sb_diff_order.setText("  <i>m</i> " + str(self.diff_order) + "    ")
         self.sb_conv_slope.setText("   %.06f slope    "%(self.conversion_slope))
 
-    def updatePlots(self, data: list):
+    def update_plots(self, data: list):
         if self.plotCanvas is None:
             return
-        self.plotCanvas.updatePlots(data)
+        self.plotCanvas.update_plots(data)
 
-    def scan_statusUpdate_slot(self, status):
+    def scan_status_update(self, status):
         self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>'%(status))
 
-    def scan_progress_slot(self, curr_percent):
-        self.scan_progress.setValue(curr_percent)
+    def scan_progress(self, curr_percent):
+        self.scan_progressbar.setValue(curr_percent)
 
-    def scan_complete_slot(self):
+    def scan_complete(self):
         self.scanRunning = False
         self.disable_movement_sensitive_buttons(False)
         self.scan_button.setText('Begin Scan')
         self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
-        self.scan_progress.reset()
+        self.scan_progressbar.reset()
 
-    def scan_data_begin_slot(self, scan_idx: int, metadata: dict):
+    def scan_data_begin(self, scan_idx: int, metadata: dict):
         n_scan_idx = self.table.insertData(None, None, metadata)
         if n_scan_idx != scan_idx:
             print('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
 
-    def scan_data_update_slot(self, scan_idx: int, xdata: float, ydata: float):
+    def scan_data_update(self, scan_idx: int, xdata: float, ydata: float):
         self.table.insertDataAt(scan_idx, xdata, ydata)
 
-    def scan_data_complete_slot(self, scan_idx: int):
+    def scan_data_complete(self, scan_idx: int):
         self.table.markInsertFinished(scan_idx)
         self.table.updateTableDisplay()
 
@@ -711,7 +751,7 @@ class MMC_Main(QMainWindow):
                 # enable stuff here
                 print(home_status)
                 self.immobile_count = 0
-                self.scan_statusUpdate_slot("IDLE")
+                self.scan_status_update("IDLE")
                 self.disable_movement_sensitive_buttons(False)
                 self.homing_started = False
                 pass
@@ -781,7 +821,7 @@ class MMC_Main(QMainWindow):
             self.grating_spinbox.setDecimals(4)
 
             apply_button = QPushButton('Add Entry')
-            apply_button.clicked.connect(self.applyGratingInput)
+            apply_button.clicked.connect(self.apply_grating_input)
 
             layout = QVBoxLayout()
             layout.addWidget(self.grating_spinbox)
@@ -799,7 +839,7 @@ class MMC_Main(QMainWindow):
         self.grating_spinbox.selectAll()
         self.grating_conf_win.exec()
 
-    def applyGratingInput(self):
+    def apply_grating_input(self):
         val = self.grating_spinbox.value()
         exists = False
         for v in self.grating_combo_lstr[:-1]:
@@ -815,7 +855,7 @@ class MMC_Main(QMainWindow):
             self.grating_combo.setCurrentIndex(self.grating_combo.count() - 2)
         self.grating_conf_win.close()    
 
-    def newGratingItem(self, idx: int):
+    def new_grating_item(self, idx: int):
         slen = len(self.grating_combo_lstr) # old length
         if idx == slen - 1:
             self.show_window_grating_config()
@@ -824,114 +864,11 @@ class MMC_Main(QMainWindow):
             else: # new entry has not been added
                 self.grating_combo.setCurrentIndex(self.current_grating_idx)
 
-    # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
-    def show_window_device_manager(self):
-        if self.dev_man_win is None:
-            ui_file_name = exeDir + '/ui/device_manager.ui'
-            ui_file = QFile(ui_file_name)
-            if not ui_file.open(QIODevice.ReadOnly):
-                print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
-                raise RuntimeError('Could not load grating input UI file')
-
-            self.dev_man_win = QDialog(self) # pass parent window
-            uic.loadUi(ui_file, self.dev_man_win)
-
-        # TODO: Add a "FINALIZE" button, which is only unhidden once VALID selections are made, which launches the main GUI.
-        # TODO: Add a "Rety Auto-connection" which essentially reboots the program.
-        
-        # if self.dev_man_win is None:
-            # self.dev_man_win = QDialog(self)
-
-            self.dev_man_win.setWindowTitle('Device Manager')
-            # self.dev_man_win.setMinimumSize(550, 800)
-
-            self.dm_prompt_label: QLabel = self.dev_man_win.findChild(QLabel, "explanation_label")
-            # self.dm_prompt_label: QLabel = QLabel('Searching for devices automagically, please wait...')
-            # self.dm_prompt_label.setFont(QFont('Segoe UI', 12))
-            # self.dm_prompt_label.setWordWrap(True)
-
-            self.dm_list_label: QLabel = self.dev_man_win.findChild(QLabel, "devices_label")
-            # self.dm_list_label: QLabel = QLabel('DEVICE LIST:\n')
-            # self.dm_list_label.setFont(QFont('Courier New', 12))
-            # self.dm_list_label.setWordWrap(True)
-
-            # self.dm_sampler_label: QLabel = QLabel('Sampler:\n')
-            # self.dm_sampler_label.setFont(QFont('Segoe UI', 12))
-            # self.dm_sampler_label.setWordWrap(True)
-
-            # self.dm_mtn_ctrl_label: QLabel = QLabel('Motion Controller:\n')
-            # self.dm_mtn_ctrl_label.setFont(QFont('Segoe UI', 12))
-            # self.dm_mtn_ctrl_label.setWordWrap(True)
-
-            # self.dm_color_wheel_label: QLabel = QLabel('Color Wheel:\n')
-            # self.dm_color_wheel_label.setFont(QFont('Segoe UI', 12))
-            # self.dm_color_wheel_label.setWordWrap(True)
-
-            self.dm_sampler_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "samp_combo")
-            # self.dm_sampler_combo: QComboBox = QComboBox()
-            self.dm_sampler_combo.addItem("<SELECT>")
-
-            self.dm_mtn_ctrl_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "mtn_combo")
-            # self.dm_mtn_ctrl_combo: QComboBox = QComboBox()
-            self.dm_mtn_ctrl_combo.addItem("<SELECT>")
-
-            self.dm_color_wheel_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "wheel_combo")
-            # self.dm_color_wheel_combo: QComboBox = QComboBox()
-            self.dm_color_wheel_combo.addItem("<SELECT>")
-
-            # layout = QVBoxLayout()
-            # layout.addWidget(self.dm_prompt_label)
-            # layout.addStretch(0)
-
-            # layout2 = QHBoxLayout()
-            # layout2.addWidget(self.dm_sampler_label, stretch=1)
-            # layout2.addWidget(self.dm_sampler_combo, stretch=1)
-            # layout.addLayout(layout2)
-            # layout.addStretch(0)
-
-            # layout3 = QHBoxLayout()
-            # layout3.addWidget(self.dm_mtn_ctrl_label, stretch=1)
-            # layout3.addWidget(self.dm_mtn_ctrl_combo, stretch=1)
-            # layout.addLayout(layout3)
-            # layout.addStretch(0)
-
-            # layout4 = QHBoxLayout()
-            # layout4.addWidget(self.dm_color_wheel_label, stretch=1)
-            # layout4.addWidget(self.dm_color_wheel_combo, stretch=1)
-            # layout.addLayout(layout4)
-            # layout.addStretch(0)
-
-            self.dm_accept_button: QPushButton = self.dev_man_win.findChild(QPushButton, "acc_button")
-            self.dm_accept_button.clicked.connect(self.manually_connect_devices)
-            self.dm_accept_button.setDisabled(True)
-            self.dm_retry_button: QPushButton = self.dev_man_win.findChild(QPushButton, "ret_button")
-            self.dm_retry_button.clicked.connect(self.dm_retry_button_slot)
-            # dm_spacer1: QFrame = QFrame()
-            # dm_spacer2: QFrame = QFrame()
-            # layout5 = QHBoxLayout()
-            # layout5.addWidget(dm_spacer1, stretch=2)
-            # layout5.addWidget(self.dm_accept_button, stretch=1)
-            # layout5.addWidget(self.dm_retry_button, stretch=1)
-            # layout5.addWidget(dm_spacer2, stretch=2)
-            # layout.addLayout(layout5)
-            # layout.addStretch(0)
-
-            # layout.addWidget(self.dm_list_label)
-            # layout.addStretch(1)
-
-            # self.dev_man_win.setLayout(layout)
-
-            self.dev_man_win.show()
-
-        print("post show")
-        self.application.processEvents()
-        self.device_manager_ready_signal.emit()
-
-    def dm_retry_button_slot(self):
-        # self.application.exit(MMC_Main.EXIT_CODE_REBOOT)
-        self.dm_list_label.setText("Attempting to autoconnect...")
-        self.application.processEvents()
-        self.autoconnect_devices()
+    # def dm_retry_button(self):
+    #     # self.application.exit(MMC_Main.EXIT_CODE_REBOOT)
+    #     self.dm_list_label.setText("Attempting to autoconnect...")
+    #     self.application.processEvents()
+    #     self.autoconnect_devices()
 
     def show_window_machine_config(self):
         if self.machine_conf_win is None:
@@ -950,7 +887,7 @@ class MMC_Main(QMainWindow):
             self.grating_combo.addItems(self.grating_combo_lstr)
             print(self.current_grating_idx)
             self.grating_combo.setCurrentIndex(self.current_grating_idx)
-            self.grating_combo.activated.connect(self.newGratingItem)
+            self.grating_combo.activated.connect(self.new_grating_item)
             
             self.zero_ofst_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'zero_offset_in')
             self.zero_ofst_in.setValue(self.zero_ofst)
@@ -974,14 +911,14 @@ class MMC_Main(QMainWindow):
             self.min_pos_in.setValue(self.min_pos)
 
             self.machine_conf_btn = self.machine_conf_win.findChild(QPushButton, 'update_conf_btn')
-            self.machine_conf_btn.clicked.connect(self.applyMachineConf)
+            self.machine_conf_btn.clicked.connect(self.apply_machine_conf)
         
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         print('Exec done', self.current_grating_idx, self.grating_combo.currentIndex())
         if self.current_grating_idx != self.grating_combo.currentIndex():
             self.grating_combo.setCurrentIndex(self.current_grating_idx)
 
-    def updateMovementLimits(self):
+    def update_movement_limits(self):
         self.pos_spin.setMaximum(self.max_pos)
         self.pos_spin.setMinimum(self.min_pos)
 
@@ -991,7 +928,7 @@ class MMC_Main(QMainWindow):
         self.stop_spin.setMaximum(self.max_pos)
         self.stop_spin.setMinimum(self.min_pos)
 
-    def applyMachineConf(self):
+    def apply_machine_conf(self):
         print('Apply config called')
         idx = self.grating_combo.currentIndex()
         if idx < len(self.grating_combo_lstr) - 1:
@@ -1002,20 +939,20 @@ class MMC_Main(QMainWindow):
         self.max_pos = self.max_pos_in.value()
         self.min_pos = self.min_pos_in.value()
 
-        self.updateMovementLimits()
+        self.update_movement_limits()
 
         self.zero_ofst = self.zero_ofst_in.value()
         self.incidence_ang = self.incidence_ang_in.value()
         self.tangent_ang = self.tangent_ang_in.value()
         self.arm_length = self.arm_length_in.value()
 
-        self.calculateConversionSlope()
+        self.calculate_conversion_slope()
 
-        self.updateStatusBarGratingEquationValues()
+        self.update_status_bar_grating_equation_values()
 
         self.machine_conf_win.close()
     
-    def calculateConversionSlope(self):
+    def calculate_conversion_slope(self):
         self.conversion_slope = ((self.arm_length * self.diff_order * self.grating_density)/(2 * (m.cos(m.radians(self.tangent_ang))) * (m.cos(m.radians(self.incidence_ang))) * 1e6))
 
 # TODO: QThread which will be run by the loading UI to initialize communication with devices. Will need to save important data. This functionality currently handled by the MainWindow UI.
@@ -1023,23 +960,23 @@ class Boot(QThread):
     pass
 
 class Scan(QThread):
-    statusUpdate = pyqtSignal(str)
-    progress = pyqtSignal(int)
-    complete = pyqtSignal()
+    SIGNAL_status_update = pyqtSignal(str)
+    SIGNAL_progress = pyqtSignal(int)
+    SIGNAL_complete = pyqtSignal()
 
-    dataBegin = pyqtSignal(int, dict) # scan index, redundant
-    dataUpdate = pyqtSignal(int, float, float) # scan index, xdata, ydata (to be appended into index)
-    dataComplete = pyqtSignal(int) # scan index, redundant
+    SIGNAL_data_begin = pyqtSignal(int, dict) # scan index, redundant
+    SIGNAL_data_update = pyqtSignal(int, float, float) # scan index, xdata, ydata (to be appended into index)
+    SIGNAL_data_complete = pyqtSignal(int) # scan index, redundant
 
     def __init__(self, parent: QMainWindow):
         super(Scan, self).__init__()
         self.other: MMC_Main = parent
-        self.statusUpdate.connect(self.other.scan_statusUpdate_slot)
-        self.progress.connect(self.other.scan_progress_slot)
-        self.complete.connect(self.other.scan_complete_slot)
-        self.dataBegin.connect(self.other.scan_data_begin_slot)
-        self.dataUpdate.connect(self.other.scan_data_update_slot)
-        self.dataComplete.connect(self.other.scan_data_complete_slot)
+        self.SIGNAL_status_update.connect(self.other.scan_status_update)
+        self.SIGNAL_progress.connect(self.other.scan_progress)
+        self.SIGNAL_complete.connect(self.other.scan_complete)
+        self.SIGNAL_data_begin.connect(self.other.scan_data_begin)
+        self.SIGNAL_data_update.connect(self.other.scan_data_update)
+        self.SIGNAL_data_complete.connect(self.other.scan_data_complete)
         print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
 
@@ -1052,7 +989,7 @@ class Scan(QThread):
         print(self.other)
         print("Save to file? " + str(self.other.autosave_data_bool))
 
-        self.statusUpdate.emit("PREPARING")
+        self.SIGNAL_status_update.emit("PREPARING")
         sav_file = None
         tnow = dt.datetime.now()
         if (self.other.autosave_data_bool):
@@ -1070,35 +1007,35 @@ class Scan(QThread):
         if self.other.steppos == 0 or self.other.startpos == self.other.stoppos:
             if (sav_file is not None):
                 sav_file.close()
-            self.complete.emit()
+            self.SIGNAL_complete.emit()
             return
         scanrange = np.arange(self.other.startpos, self.other.stoppos + self.other.steppos, self.other.steppos)
         nidx = len(scanrange)
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
-        self.statusUpdate.emit("ZEROING")
+        self.SIGNAL_status_update.emit("ZEROING")
         prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.mtn_ctrl.mm_to_idx)
         self.other.mtn_ctrl.move_to(prep_pos, True)
-        self.statusUpdate.emit("HOLDING")
+        self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
 
         self._xdata = []
         self._ydata = []
         self._scan_id = self.other.table.scanId
         metadata = {'tstamp': tnow, 'mm_to_idx': self.other.mtn_ctrl.mm_to_idx, 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
-        self.dataBegin.emit(self.scanId, metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
+        self.SIGNAL_data_begin.emit(self.scanId, metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
         while self.scanId == self.other.table.scanId: # spin until that happens
             continue
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
                 break
-            self.statusUpdate.emit("MOVING")
+            self.SIGNAL_status_update.emit("MOVING")
             self.other.mtn_ctrl.move_to(dpos * self.other.mtn_ctrl.mm_to_idx, True)
             pos = self.other.mtn_ctrl.get_position()
-            self.statusUpdate.emit("SAMPLING")
+            self.SIGNAL_status_update.emit("SAMPLING")
             buf = self.other.sampler.sample_data()
             print(buf)
-            self.progress.emit(round((idx + 1) * 100 / nidx))
+            self.SIGNAL_progress.emit(round((idx + 1) * 100 / nidx))
             # process buf
             words = buf.split(',') # split at comma
             if len(words) != 3:
@@ -1127,8 +1064,8 @@ class Scan(QThread):
             sav_file.close()
         self.other.num_scans += 1
 
-        self.complete.emit()
-        self.dataComplete.emit(self.scanId)
+        self.SIGNAL_complete.emit()
+        self.SIGNAL_data_complete.emit(self.scanId)
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
     
     @property

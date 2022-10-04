@@ -217,7 +217,7 @@ class DataTableWidget(QTableWidget):
             if self.recordedData[scan_idx]['plotted']:
                 text = 'Scan #%d'%(scan_idx + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx + 1)
                 data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx])
-        self.parent.updatePlots(data) # updatePlots in Ui(QMainWindow)
+        self.parent.update_plots(data) # updatePlots in Ui(QMainWindow)
 
     def __nameUpdated(self):
         src: CustomQLineEdit = self.sender()
