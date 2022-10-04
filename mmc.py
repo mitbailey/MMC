@@ -201,9 +201,8 @@ class MMC_Main(QMainWindow):
         if self.color_wheel is None:
             color_wheel_connected = False
 
-        # TODO: Emit a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
+        # Emits a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
         
-
         self.devices_auto_connected_signal.emit(sampler_connected, mtn_ctrl_connected, color_wheel_connected)
 
     # Signaled once the device manager GUI has been set up. Simply calls autoconnect.
@@ -237,17 +236,34 @@ class MMC_Main(QMainWindow):
             pass         
 
     def devman_list_devices(self):
-        print("Timer test!")
         ports = serial.tools.list_ports.comports()
 
+        dev_list = ''
         for port, desc, hwid in sorted(ports):
-            print("{}: {} [{}]".format(port, desc, hwid))
+            dev_list += "PORT: %s\n"%(port)
+            dev_list += "DESC: %s\n"%(desc)
+            dev_list += "HWID: %s\n\n"%(hwid)
+            print(dev_list)
 
-    def sampler_status_slot(self):
-        pass
+        if (self.dm_list_label.text() != "~DEVICE LIST~\n" + dev_list):
+            self.dm_sampler_combo.clear()
+            self.dm_sampler_combo.addItem("<SELECT>")
+            self.dm_sampler_combo.setCurrentIndex(0)
 
-    def mtn_ctrl_status_slot(self):
-        pass
+            self.dm_mtn_ctrl_combo.clear()
+            self.dm_mtn_ctrl_combo.addItem("<SELECT>")
+            self.dm_mtn_ctrl_combo.setCurrentIndex(0)
+
+            self.dm_color_wheel_combo.clear()
+            self.dm_color_wheel_combo.addItem("<SELECT>")
+            self.dm_color_wheel_combo.setCurrentIndex(0)
+
+            for port, desc, hwid in sorted(ports):
+                self.dm_sampler_combo.addItem(port)
+                self.dm_mtn_ctrl_combo.addItem(port)
+                self.dm_color_wheel_combo.addItem(port)
+
+            self.dm_list_label.setText("~DEVICE LIST~\n" + dev_list)
 
     def _show_main_gui(self):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
@@ -815,25 +831,68 @@ class MMC_Main(QMainWindow):
 
     # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
     def show_window_device_manager(self):
-        # TODO: Display device detection / selection UI for when the devices were not detected on startup. Also, add a button that, when pressed, calls self._show_main_gui()
+
+        # TODO: Add a "FINALIZE" button, which is only unhidden once VALID selections are made, which launches the main GUI.
+        # TODO: Add a "Rety Auto-connection" which essentially reboots the program.
         
         if self.dev_man_win is None:
             self.dev_man_win = QDialog(self)
 
             self.dev_man_win.setWindowTitle('Device Manager')
-            self.dev_man_win.setMinimumSize(520, 360)
+            self.dev_man_win.setMinimumSize(550, 800)
 
             self.dm_prompt_label: QLabel = QLabel('Searching for devices automagically, please wait...')
             self.dm_prompt_label.setFont(QFont('Segoe UI', 12))
             self.dm_prompt_label.setWordWrap(True)
+
             self.dm_list_label: QLabel = QLabel('DEVICE LIST:\n')
-            self.dm_list_label.setFont(QFont('Segoe UI', 12))
+            self.dm_list_label.setFont(QFont('Courier New', 12))
             self.dm_list_label.setWordWrap(True)
+
+            self.dm_sampler_label: QLabel = QLabel('Sampler:\n')
+            self.dm_sampler_label.setFont(QFont('Segoe UI', 12))
+            self.dm_sampler_label.setWordWrap(True)
+
+            self.dm_mtn_ctrl_label: QLabel = QLabel('Motion Controller:\n')
+            self.dm_mtn_ctrl_label.setFont(QFont('Segoe UI', 12))
+            self.dm_mtn_ctrl_label.setWordWrap(True)
+
+            self.dm_color_wheel_label: QLabel = QLabel('Color Wheel:\n')
+            self.dm_color_wheel_label.setFont(QFont('Segoe UI', 12))
+            self.dm_color_wheel_label.setWordWrap(True)
+
+            self.dm_sampler_combo: QComboBox = QComboBox()
+            self.dm_sampler_combo.addItem("<SELECT>")
+            self.dm_mtn_ctrl_combo: QComboBox = QComboBox()
+            self.dm_mtn_ctrl_combo.addItem("<SELECT>")
+            self.dm_color_wheel_combo: QComboBox = QComboBox()
+            self.dm_color_wheel_combo.addItem("<SELECT>")
 
             layout = QVBoxLayout()
             layout.addWidget(self.dm_prompt_label)
+            layout.addStretch(0)
+
+            layout2 = QHBoxLayout()
+            layout2.addWidget(self.dm_sampler_label, stretch=1)
+            layout2.addWidget(self.dm_sampler_combo, stretch=1)
+            layout.addLayout(layout2)
+            layout.addStretch(0)
+
+            layout3 = QHBoxLayout()
+            layout3.addWidget(self.dm_mtn_ctrl_label, stretch=1)
+            layout3.addWidget(self.dm_mtn_ctrl_combo, stretch=1)
+            layout.addLayout(layout3)
+            layout.addStretch(0)
+
+            layout4 = QHBoxLayout()
+            layout4.addWidget(self.dm_color_wheel_label, stretch=1)
+            layout4.addWidget(self.dm_color_wheel_combo, stretch=1)
+            layout.addLayout(layout4)
+            layout.addStretch(0)
+
             layout.addWidget(self.dm_list_label)
             layout.addStretch(1)
+
             self.dev_man_win.setLayout(layout)
 
             self.dev_man_win.show()
