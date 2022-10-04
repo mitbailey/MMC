@@ -54,19 +54,10 @@ class DataTableWidget(QTableWidget):
         self.num_rows = 1
         self.__del_confirm_win: QDialog = None
         self.setHorizontalHeaderLabels(['Name', 'Start', 'Stop', 'Step', 'Plot'])
-        # self.resizeColumnsToContents()
-        # self.resizeRowsToContents()
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.horizontalHeader().setStretchLastSection(False)
-        # self.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        # self.setEditTriggers(QTableWidget.NoEditTriggers)
         self.selectionModel().selectionChanged.connect(self.__tableSelectAction)
-
-        # self.insertData(np.random.random(10), np.random.random(10), dict(), btn_disabled=False)
-        # self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
-        # self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
-        # self.insertData(np.random.random(10), np.random.random(10), dict(),btn_disabled=False)
 
     def insertData(self, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         scanId = self._scanId
@@ -78,7 +69,6 @@ class DataTableWidget(QTableWidget):
         if ydata is None:
             ydata = np.array([], dtype = float)
         self.recordedData[scanId] = {'id': scanId, 'name': '', 'x': xdata, 'y': ydata, 'plotted': True, 'plot_cb': CustomQCheckBox(scanId)}
-        # [scanId, '', xdata, ydata, True, CustomQCheckBox(scanId, self)] # scanID, title, xdata, ydata, plotted, plot_checkbox
         self.recordedData[scanId]['plot_cb'].setChecked(True)
         self.recordedData[scanId]['plot_cb'].setDisabled(btn_disabled)
         self.recordedData[scanId]['plot_cb'].stateChanged.connect(self.__plotCheckboxCb) # connect callback
@@ -127,15 +117,6 @@ class DataTableWidget(QTableWidget):
             self.recordedData[scanId]['plotted'] = False
             self.recordedData[scanId]['plot_cb'].setChecked(False)
 
-
-    
-    # def insertManualData(self, xdata: np.ndarray, ydata: np.ndarray):
-    #     self.manualData[2] = np.concatenate((self.manualData[2], xdata))
-    #     self.manualData[3] = np.concatenate((self.manualData[3], ydata))
-    #     self.hasManualData = True
-    #     self.updateTableDisplay(-1)
-    #     pass
-
     def updateTableDisplay(self, scanId: int = None, name_editable: bool = True):
         if scanId is not None and isinstance(scanId, int):
             if self.rowMap is None or scanId not in self.rowMap:
@@ -143,18 +124,8 @@ class DataTableWidget(QTableWidget):
             else:
                 # update this row only
                 pass
-        # if not self.hadManualData and self.hasManualData: # manual data has been added
-        #     self.hadManualData = True
-        #     if self.rowMap is None:
-        #         self.rowMap = [-1]
-        #     else:
-        #         self.rowMap = [-1] + self.rowMap # append scanId -1 to the top
+
         if self.newItem or self.rowMap is None:
-            # add it to the table or this is the first time things are happening
-            # if self.hasManualData:
-            #     self.hadManualData = True
-            #     self.rowMap = [-1] # add that to the top
-            # else:
             self.rowMap = []
             namedIds = []
             unnamedIds = []
@@ -176,8 +147,6 @@ class DataTableWidget(QTableWidget):
                 print('After allocation:', self.num_rows, len(self.rowMap))
             
             for row_idx, scan_idx in enumerate(self.rowMap):
-                # print("In the loop:", row_idx, scan_idx)
-
                 text = 'Scan #%d'%(scan_idx + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx)
                 if name_editable:
                     textEditor = CustomQLineEdit(scan_idx, text)
@@ -198,7 +167,6 @@ class DataTableWidget(QTableWidget):
                     pass
                 self.setItem(row_idx, 1, QTableWidgetItem(str(xmin)))
                 self.setItem(row_idx, 2, QTableWidgetItem(str(xmax)))
-                # self.setItem(row_idx, 4, QTableWidgetItem(text))
                 try:
                     self.setItem(row_idx, 3, QTableWidgetItem(str(round(np.diff(self.recordedData[scan_idx]['x'])[0], 4))))
                 except Exception:
@@ -211,8 +179,6 @@ class DataTableWidget(QTableWidget):
 
     def updatePlots(self):
         data = []
-        # if self.hasManualData:
-        #     data.append(self.manualData['x'], self.manualData['y'], self.manualData['name'])
         for scan_idx in self.recordedData.keys():
             if self.recordedData[scan_idx]['plotted']:
                 text = 'Scan #%d'%(scan_idx + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx + 1)
@@ -230,9 +196,6 @@ class DataTableWidget(QTableWidget):
     def __plotCheckboxCb(self, state: Qt.CheckState):
         src: CustomQCheckBox = self.sender()
         state = src.checkState()
-        # if src.id == -1: # manual data checkbox was changed
-            # self.manualData['plotted'] = state == Qt.Checked
-        # else:
         scanId = src.id
         print(state, scanId)
         self.recordedData[scanId]['plotted'] = state == Qt.Checked

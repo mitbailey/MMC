@@ -204,7 +204,7 @@ class MMC_Main(QMainWindow):
         self.SIGNAL_device_manager_ready.emit()
 
     def autoconnect_devices(self):
-        # TODO: Take into account the ports chosen in device manager. If none have been, use defaults.
+        # Does not take into account the ports chosen in device manager. Simply tries to connect to devices as if there is no user.
 
         self.dm_list_label.setText("Attempting to autoconnect...")
         self.application.processEvents()
@@ -512,6 +512,7 @@ class MMC_Main(QMainWindow):
 
     # TODO: Take into account the ports selected in the device manager and attempt a connection to those.
     def manually_connect_devices(self):
+        print("")
         pass
 
     def devman_list_devices(self):
