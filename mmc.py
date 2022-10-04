@@ -138,9 +138,11 @@ class MMC_Main(QMainWindow):
     # mtn_ctrl_status_signal = pyqtSignal(str)
     # color_wheel_status_signal = pyqtSignal(str)
 
+    EXIT_CODE_FINISHED = 0
+    EXIT_CODE_REBOOT = 1
+
     # Destructor
     def __del__(self):
-        # del self.scan # workaround for cross referencing: delete scan externally
         del self.mtn_ctrl
         del self.sampler
 
@@ -151,10 +153,8 @@ class MMC_Main(QMainWindow):
         self._startup_args = self.application.arguments()
         super(MMC_Main, self).__init__()
         uic.loadUi(uiresource, self)
-        self.device_manager_ready_signal.connect(self.device_manager_ready_slot)
+        self.device_manager_ready_signal.connect(self.autoconnect_devices)
         self.devices_auto_connected_signal.connect(self.devices_auto_connected_slot)
-        # self.sampler_status_signal.connect(self.sampler_status_slot)
-        # self.mtn_ctrl_status_signal.connect(self.mtn_ctrl_status_slot)
 
         self.main_gui_booted = False
         self.dev_man_win = None
@@ -205,10 +205,9 @@ class MMC_Main(QMainWindow):
         
         self.devices_auto_connected_signal.emit(sampler_connected, mtn_ctrl_connected, color_wheel_connected)
 
-    # Signaled once the device manager GUI has been set up. Simply calls autoconnect.
-    def device_manager_ready_slot(self):
-        print("device_manager_ready_slot")
-        self.autoconnect_devices()
+    # TODO: Take into account the ports selected in the device manager and attempt a connection to those.
+    def manually_connect_devices(self):
+        pass
 
     # If things are connected, boot main GUI.
     # If somethings wrong, enable advanced dev man functions.
@@ -223,17 +222,13 @@ class MMC_Main(QMainWindow):
         
         # If we are here, then we have not automatically connected to all required devices. We must now enable the device manager.
 
-        self.enable_device_manager(True)
+    #     self.enable_device_manager(True)
 
-    def enable_device_manager(self, enable):
-        if enable:
-            self.device_timer = QTimer()
-            self.device_timer.timeout.connect(self.devman_list_devices)
-            self.device_timer.start(1000)
-            self.dm_prompt_label.setText('Unable to automatically connect. Please select devices from the list below.')
-            pass
-        else:   
-            pass         
+    # def enable_device_manager(self, enable):
+        self.device_timer = QTimer()
+        self.device_timer.timeout.connect(self.devman_list_devices)
+        self.device_timer.start(1000)
+        self.dm_prompt_label.setText('The software was unable to automatically connect to the devices. Please ensure all devices are connected properly and press "Retry Auto-Connect" or select devices below.\nNOTE: At this time, only the "Retry Auto-Connect" button is functional.\n\nSupported Devices:\nSamplers\n- Keithley Model 6485 Picoammeter\n\nMotion Controllers\n- ThorLabs KST101\n\nColor Wheels\n  N/A\n\n')     
 
     def devman_list_devices(self):
         ports = serial.tools.list_ports.comports()
@@ -831,74 +826,112 @@ class MMC_Main(QMainWindow):
 
     # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
     def show_window_device_manager(self):
+        if self.dev_man_win is None:
+            ui_file_name = exeDir + '/ui/device_manager.ui'
+            ui_file = QFile(ui_file_name)
+            if not ui_file.open(QIODevice.ReadOnly):
+                print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+                raise RuntimeError('Could not load grating input UI file')
+
+            self.dev_man_win = QDialog(self) # pass parent window
+            uic.loadUi(ui_file, self.dev_man_win)
 
         # TODO: Add a "FINALIZE" button, which is only unhidden once VALID selections are made, which launches the main GUI.
         # TODO: Add a "Rety Auto-connection" which essentially reboots the program.
         
-        if self.dev_man_win is None:
-            self.dev_man_win = QDialog(self)
+        # if self.dev_man_win is None:
+            # self.dev_man_win = QDialog(self)
 
             self.dev_man_win.setWindowTitle('Device Manager')
-            self.dev_man_win.setMinimumSize(550, 800)
+            # self.dev_man_win.setMinimumSize(550, 800)
 
-            self.dm_prompt_label: QLabel = QLabel('Searching for devices automagically, please wait...')
-            self.dm_prompt_label.setFont(QFont('Segoe UI', 12))
-            self.dm_prompt_label.setWordWrap(True)
+            self.dm_prompt_label: QLabel = self.dev_man_win.findChild(QLabel, "explanation_label")
+            # self.dm_prompt_label: QLabel = QLabel('Searching for devices automagically, please wait...')
+            # self.dm_prompt_label.setFont(QFont('Segoe UI', 12))
+            # self.dm_prompt_label.setWordWrap(True)
 
-            self.dm_list_label: QLabel = QLabel('DEVICE LIST:\n')
-            self.dm_list_label.setFont(QFont('Courier New', 12))
-            self.dm_list_label.setWordWrap(True)
+            self.dm_list_label: QLabel = self.dev_man_win.findChild(QLabel, "devices_label")
+            # self.dm_list_label: QLabel = QLabel('DEVICE LIST:\n')
+            # self.dm_list_label.setFont(QFont('Courier New', 12))
+            # self.dm_list_label.setWordWrap(True)
 
-            self.dm_sampler_label: QLabel = QLabel('Sampler:\n')
-            self.dm_sampler_label.setFont(QFont('Segoe UI', 12))
-            self.dm_sampler_label.setWordWrap(True)
+            # self.dm_sampler_label: QLabel = QLabel('Sampler:\n')
+            # self.dm_sampler_label.setFont(QFont('Segoe UI', 12))
+            # self.dm_sampler_label.setWordWrap(True)
 
-            self.dm_mtn_ctrl_label: QLabel = QLabel('Motion Controller:\n')
-            self.dm_mtn_ctrl_label.setFont(QFont('Segoe UI', 12))
-            self.dm_mtn_ctrl_label.setWordWrap(True)
+            # self.dm_mtn_ctrl_label: QLabel = QLabel('Motion Controller:\n')
+            # self.dm_mtn_ctrl_label.setFont(QFont('Segoe UI', 12))
+            # self.dm_mtn_ctrl_label.setWordWrap(True)
 
-            self.dm_color_wheel_label: QLabel = QLabel('Color Wheel:\n')
-            self.dm_color_wheel_label.setFont(QFont('Segoe UI', 12))
-            self.dm_color_wheel_label.setWordWrap(True)
+            # self.dm_color_wheel_label: QLabel = QLabel('Color Wheel:\n')
+            # self.dm_color_wheel_label.setFont(QFont('Segoe UI', 12))
+            # self.dm_color_wheel_label.setWordWrap(True)
 
-            self.dm_sampler_combo: QComboBox = QComboBox()
+            self.dm_sampler_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "samp_combo")
+            # self.dm_sampler_combo: QComboBox = QComboBox()
             self.dm_sampler_combo.addItem("<SELECT>")
-            self.dm_mtn_ctrl_combo: QComboBox = QComboBox()
+
+            self.dm_mtn_ctrl_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "mtn_combo")
+            # self.dm_mtn_ctrl_combo: QComboBox = QComboBox()
             self.dm_mtn_ctrl_combo.addItem("<SELECT>")
-            self.dm_color_wheel_combo: QComboBox = QComboBox()
+
+            self.dm_color_wheel_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "wheel_combo")
+            # self.dm_color_wheel_combo: QComboBox = QComboBox()
             self.dm_color_wheel_combo.addItem("<SELECT>")
 
-            layout = QVBoxLayout()
-            layout.addWidget(self.dm_prompt_label)
-            layout.addStretch(0)
+            # layout = QVBoxLayout()
+            # layout.addWidget(self.dm_prompt_label)
+            # layout.addStretch(0)
 
-            layout2 = QHBoxLayout()
-            layout2.addWidget(self.dm_sampler_label, stretch=1)
-            layout2.addWidget(self.dm_sampler_combo, stretch=1)
-            layout.addLayout(layout2)
-            layout.addStretch(0)
+            # layout2 = QHBoxLayout()
+            # layout2.addWidget(self.dm_sampler_label, stretch=1)
+            # layout2.addWidget(self.dm_sampler_combo, stretch=1)
+            # layout.addLayout(layout2)
+            # layout.addStretch(0)
 
-            layout3 = QHBoxLayout()
-            layout3.addWidget(self.dm_mtn_ctrl_label, stretch=1)
-            layout3.addWidget(self.dm_mtn_ctrl_combo, stretch=1)
-            layout.addLayout(layout3)
-            layout.addStretch(0)
+            # layout3 = QHBoxLayout()
+            # layout3.addWidget(self.dm_mtn_ctrl_label, stretch=1)
+            # layout3.addWidget(self.dm_mtn_ctrl_combo, stretch=1)
+            # layout.addLayout(layout3)
+            # layout.addStretch(0)
 
-            layout4 = QHBoxLayout()
-            layout4.addWidget(self.dm_color_wheel_label, stretch=1)
-            layout4.addWidget(self.dm_color_wheel_combo, stretch=1)
-            layout.addLayout(layout4)
-            layout.addStretch(0)
+            # layout4 = QHBoxLayout()
+            # layout4.addWidget(self.dm_color_wheel_label, stretch=1)
+            # layout4.addWidget(self.dm_color_wheel_combo, stretch=1)
+            # layout.addLayout(layout4)
+            # layout.addStretch(0)
 
-            layout.addWidget(self.dm_list_label)
-            layout.addStretch(1)
+            self.dm_accept_button: QPushButton = self.dev_man_win.findChild(QPushButton, "acc_button")
+            self.dm_accept_button.clicked.connect(self.manually_connect_devices)
+            self.dm_accept_button.setDisabled(True)
+            self.dm_retry_button: QPushButton = self.dev_man_win.findChild(QPushButton, "ret_button")
+            self.dm_retry_button.clicked.connect(self.dm_retry_button_slot)
+            # dm_spacer1: QFrame = QFrame()
+            # dm_spacer2: QFrame = QFrame()
+            # layout5 = QHBoxLayout()
+            # layout5.addWidget(dm_spacer1, stretch=2)
+            # layout5.addWidget(self.dm_accept_button, stretch=1)
+            # layout5.addWidget(self.dm_retry_button, stretch=1)
+            # layout5.addWidget(dm_spacer2, stretch=2)
+            # layout.addLayout(layout5)
+            # layout.addStretch(0)
 
-            self.dev_man_win.setLayout(layout)
+            # layout.addWidget(self.dm_list_label)
+            # layout.addStretch(1)
+
+            # self.dev_man_win.setLayout(layout)
 
             self.dev_man_win.show()
 
         print("post show")
+        self.application.processEvents()
         self.device_manager_ready_signal.emit()
+
+    def dm_retry_button_slot(self):
+        # self.application.exit(MMC_Main.EXIT_CODE_REBOOT)
+        self.dm_list_label.setText("Attempting to autoconnect...")
+        self.application.processEvents()
+        self.autoconnect_devices()
 
     def show_window_machine_config(self):
         if self.machine_conf_win is None:
@@ -1142,23 +1175,35 @@ if __name__ == '__main__':
         print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
         sys.exit(-1)
 
+    ui_file_name = exeDir + '/ui/device_manager.ui'
+    ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
+    if not ui_file.open(QIODevice.ReadOnly):
+        print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+        sys.exit(-1)
+
     ui_file_name = exeDir + '/ui/mainwindow_mk2.ui'
     ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
     if not ui_file.open(QIODevice.ReadOnly):
         print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
         sys.exit(-1)
 
-    # Initializes the GUI / Main GUI bootup.
-    mainWindow = MMC_Main(application, ui_file)
-    
-    # Wait for the Qt loop to exit before exiting.
-    ret = application.exec_() # block until
+    exit_code = MMC_Main.EXIT_CODE_REBOOT
+    while exit_code == MMC_Main.EXIT_CODE_REBOOT:
+        exit_code = MMC_Main.EXIT_CODE_FINISHED
 
-    # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
-    if mainWindow.main_gui_booted:
-        save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length, mainWindow.max_pos, mainWindow.min_pos)    
+        # Initializes the GUI / Main GUI bootup.
+        mainWindow = MMC_Main(application, ui_file)
+        
+        # Wait for the Qt loop to exit before exiting.
+        exit_code = application.exec_() # block until
 
-    # Cleanup and exit.
-    del mainWindow
-    sys.exit(ret)
+        # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
+        if mainWindow.main_gui_booted:
+            save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length, mainWindow.max_pos, mainWindow.min_pos)    
+
+        # Cleanup.
+        del mainWindow
+
+    # Exit.
+    sys.exit(exit_code)
 # %%
