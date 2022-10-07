@@ -221,9 +221,15 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="ret_button">
+             <widget class="QCheckBox" name="dum_checkbox">
+              <property name="font">
+               <font>
+                <family>Segoe UI</family>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
               <property name="text">
-               <string>Retry Auto-Connect</string>
+               <string>Dummy Mode</string>
               </property>
              </widget>
             </item>

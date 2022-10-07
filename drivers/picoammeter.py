@@ -33,7 +33,7 @@ def serial_ports():
     return result
 
 class Picoammeter:
-    def __init__(self, samples: int):
+    def __init__(self, samples: int, man_port: str = None):
         if samples < 2:
             samples = 2
         if samples > 20:
@@ -43,6 +43,10 @@ class Picoammeter:
         self.found = False
         self.port = -1
         for port in serial_ports():
+            if man_port is not None:
+                if port != man_port:
+                    continue
+
             s = serial.Serial(port, 9600, timeout=1)
             print('Beginning search for Keithley Model 6485...')
             print('Trying port %s.'%(port))

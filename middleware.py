@@ -50,14 +50,19 @@ from drivers import picoammeter as pico
 #%% MotionController
 # Genericizes the type of motor controller.
 class MotionController:
-    def __init__(self, n_args):
+    def __init__(self, dummy: bool = False):
         self.controller_type = 0
         self.mm_to_idx = 0
         self._is_dummy = False
 
         # Initializes our motor_ctrl stuff depending on what hardware we're using.
         if self.controller_type == 0:
-            if n_args == 1:
+            if dummy:
+                serials = tlkt.Thorlabs.KSTDummy._ListDevices()
+                self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
+                self.motor_ctrl.set_stage('ZST25')
+                self._is_dummy = True
+            else:
                 print("Trying...")
                 serials = tlkt.Thorlabs.ListDevicesAny()
                 print(serials)
@@ -69,11 +74,7 @@ class MotionController:
                     print("Connection with motor controller failed.")
                     raise RuntimeError('Connection with motor controller failed.')
                 self.motor_ctrl.set_stage('ZST25')
-            else:
-                serials = tlkt.Thorlabs.KSTDummy._ListDevices()
-                self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
-                self.motor_ctrl.set_stage('ZST25')
-                self._is_dummy = True
+
         elif self.controller_type == 1: # Example for adding future controller hardware.
             print("Controller type 1 does not exist yet.")
 
@@ -102,17 +103,20 @@ class MotionController:
 #%% DataSampler
 # Genericizes the type of data sampler.
 class DataSampler:
-    def __init__(self, n_args):
+    def __init__(self, dummy: bool = False, man_port: str = None):
         self.sampler_type = 0
         self.pa = None
         self._is_dummy = False
 
         if self.sampler_type == 0:
-            if n_args != 1:
+            if dummy:
                 self.pa = pico.Picodummy(3)
                 self._is_dummy = True
             else:
-                self.pa = pico.Picoammeter(3)
+                if man_port is not None:
+                    self.pa = pico.Picoammeter(3, man_port)
+                else:
+                    self.pa = pico.Picoammeter(3)
         elif self.sampler_type == 1: # Example for adding future controller hardware.
             print("Sampler type 1 does not exist yet.")
 

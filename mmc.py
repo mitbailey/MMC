@@ -141,7 +141,7 @@ class MMC_Main(QMainWindow):
     # ELSE allow user to interact w/ device manager
 
     SIGNAL_device_manager_ready = pyqtSignal()
-    SIGNAL_devices_auto_connected = pyqtSignal(bool, bool, bool)
+    SIGNAL_devices_connection_check = pyqtSignal(bool, bool, bool, bool)
 
     EXIT_CODE_FINISHED = 0
     EXIT_CODE_REBOOT = 1
@@ -158,9 +158,15 @@ class MMC_Main(QMainWindow):
         self._startup_args = self.application.arguments()
         super(MMC_Main, self).__init__()
         uic.loadUi(uiresource, self)
-        self.SIGNAL_device_manager_ready.connect(self.autoconnect_devices)
-        self.SIGNAL_devices_auto_connected.connect(self.devices_auto_connected)
+        self.SIGNAL_device_manager_ready.connect(self.connect_devices)
+        self.SIGNAL_devices_connection_check.connect(self.devices_connection_check)
 
+        # if len(self._startup_args) != 1:
+        #     self.dummy = False
+        # else:
+        #     self.dummy = True
+
+        self.dev_man_win_enabled = False
         self.main_gui_booted = False
         self.dev_man_win = None
         self.show_window_device_manager()
@@ -184,30 +190,37 @@ class MMC_Main(QMainWindow):
             self.dm_list_label: QLabel = self.dev_man_win.findChild(QLabel, "devices_label")
 
             self.dm_sampler_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "samp_combo")
-            self.dm_sampler_combo.addItem("<SELECT>")
+            self.dm_sampler_combo.addItem("Auto-Connect")
 
             self.dm_mtn_ctrl_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "mtn_combo")
-            self.dm_mtn_ctrl_combo.addItem("<SELECT>")
+            self.dm_mtn_ctrl_combo.addItem("Auto-Connect")
 
             self.dm_color_wheel_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "wheel_combo")
-            self.dm_color_wheel_combo.addItem("<SELECT>")
+            self.dm_color_wheel_combo.addItem("Auto-Connect")
 
             self.dm_accept_button: QPushButton = self.dev_man_win.findChild(QPushButton, "acc_button")
-            self.dm_accept_button.clicked.connect(self.manually_connect_devices)
-            self.dm_accept_button.setDisabled(True)
-            self.dm_retry_button: QPushButton = self.dev_man_win.findChild(QPushButton, "ret_button")
-            self.dm_retry_button.clicked.connect(self.autoconnect_devices)
+            self.dm_accept_button.clicked.connect(self.connect_devices)
+            # self.dm_accept_button.setDisabled(True)
+            self.dm_dummy_checkbox: QCheckBox = self.dev_man_win.findChild(QCheckBox, "dum_checkbox")
+            self.dm_dummy_checkbox.setChecked(len(self._startup_args) == 2)
 
             self.dev_man_win.show()
 
         self.application.processEvents()
         self.SIGNAL_device_manager_ready.emit()
 
-    def autoconnect_devices(self):
-        # Does not take into account the ports chosen in device manager. Simply tries to connect to devices as if there is no user.
+    # def dummy_connect_devices(self):
+    #     self.dummy = True
+    #     self.connect_devices()
 
-        self.dm_list_label.setText("Attempting to autoconnect...")
+    def connect_devices(self):
+        print("connect_devices")
+
+        self.dm_prompt_label.setText("Attempting to connect...")
         self.application.processEvents()
+
+        dummy = self.dm_dummy_checkbox.isChecked()
+        print("Dummy Mode: " + str(dummy))
 
         # Motion Controller and Sampler initialization.
         # Note that, for now, the Keithley 6485 and KST101 are the defaults.
@@ -218,7 +231,12 @@ class MMC_Main(QMainWindow):
         self.sampler = None
         self.mtn_ctrl = None
         try:
-            self.sampler = DataSampler(len(self._startup_args))
+            if self.dm_sampler_combo.currentIndex() != 0:
+                print("Using manual port: %s"%(self.dm_sampler_combo.currentText().split(' ')[0]))
+                self.sampler = DataSampler(dummy, self.dm_sampler_combo.currentText().split(' ')[0])
+            else:
+                self.sampler = DataSampler(dummy)
+
         except Exception as e:
             print("Failed to find sampler.")
             self.sampler = None
@@ -227,7 +245,12 @@ class MMC_Main(QMainWindow):
             sampler_connected = False
 
         try:
-            self.mtn_ctrl = MotionController(len(self._startup_args))
+            if self.dm_mtn_ctrl_combo.currentIndex() != 0:
+                print("Using manual port: %s"%(self.dm_mtn_ctrl_combo.currentText().split(' ')[0]))
+                self.mtn_ctrl = MotionController(dummy, self.dm_mtn_ctrl_combo.currentText().split(' ')[0])
+            else:
+                self.mtn_ctrl = MotionController(dummy)
+
         except Exception as e:
             print("Failed to find motion controller.")
             self.mtn_ctrl = None
@@ -237,7 +260,12 @@ class MMC_Main(QMainWindow):
             mtn_ctrl_connected = False
 
         try:
-            self.color_wheel = ColorWheel(len(self._startup_args))
+            if self.dm_color_wheel_combo.currentIndex() != 0:
+                print("Using manual port: %s"%(self.dm_color_wheel_combo.currentText().split(' ')[0]))
+                self.color_wheel = ColorWheel(dummy, self.dm_color_wheel_combo.currentText().split(' ')[0])
+            else:
+                self.color_wheel = ColorWheel(dummy)
+
         except Exception as e:
             print("Failed to find color wheel.")
             self.color_wheel = None
@@ -249,23 +277,27 @@ class MMC_Main(QMainWindow):
 
         # Emits a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
         
-        self.SIGNAL_devices_auto_connected.emit(sampler_connected, mtn_ctrl_connected, color_wheel_connected)
+        self.SIGNAL_devices_connection_check.emit(dummy, sampler_connected, mtn_ctrl_connected, color_wheel_connected)
 
     # If things are connected, boot main GUI.
     # If somethings wrong, enable advanced dev man functions.
-    def devices_auto_connected(self, sampler, mtn_ctrl, color_wheel):
+    def devices_connection_check(self, dummy: bool, sampler: bool, mtn_ctrl: bool, color_wheel: bool):
         if (sampler and mtn_ctrl):
+            if self.device_timer is not None:
+                self.device_timer.stop()
             self.dev_man_win.close()
-            self._show_main_gui()
+            self._show_main_gui(dummy)
             return
         
         # If we are here, then we have not automatically connected to all required devices. We must now enable the device manager.
-        self.device_timer = QTimer()
-        self.device_timer.timeout.connect(self.devman_list_devices)
-        self.device_timer.start(1000)
+        if not self.dev_man_win_enabled:
+            self.dev_man_win_enabled = True
+            self.device_timer = QTimer()
+            self.device_timer.timeout.connect(self.devman_list_devices)
+            self.device_timer.start(1000)
         self.dm_prompt_label.setText('The software was unable to automatically connect to the devices. Please ensure all devices are connected properly and press "Retry Auto-Connect" or select devices below.\nNOTE: At this time, only the "Retry Auto-Connect" button is functional.\n\nSupported Devices:\nSamplers\n- Keithley Model 6485 Picoammeter\n\nMotion Controllers\n- ThorLabs KST101\n\nColor Wheels\n  N/A\n\n')   
 
-    def _show_main_gui(self):
+    def _show_main_gui(self, dummy: bool):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
         self.data_save_directory = os.path.expanduser('~/Documents')
         self.data_save_directory += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
@@ -345,10 +377,10 @@ class MMC_Main(QMainWindow):
         self.stoppos = 0
         self.steppos = 0.1
 
-        if len(self._startup_args) != 1:
-            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.3")
+        if dummy:
+            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.4")
         else:
-            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.3")
+            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.4")
 
         self.is_conv_set = False # Use this flag to set conversion
 
@@ -510,11 +542,6 @@ class MMC_Main(QMainWindow):
         self.main_gui_booted = True
         self.show()  
 
-    # TODO: Take into account the ports selected in the device manager and attempt a connection to those.
-    def manually_connect_devices(self):
-        print("")
-        pass
-
     def devman_list_devices(self):
         ports = serial.tools.list_ports.comports()
 
@@ -527,21 +554,21 @@ class MMC_Main(QMainWindow):
 
         if (self.dm_list_label.text() != "~DEVICE LIST~\n" + dev_list):
             self.dm_sampler_combo.clear()
-            self.dm_sampler_combo.addItem("<SELECT>")
+            self.dm_sampler_combo.addItem("Auto-Connect")
             self.dm_sampler_combo.setCurrentIndex(0)
 
             self.dm_mtn_ctrl_combo.clear()
-            self.dm_mtn_ctrl_combo.addItem("<SELECT>")
+            self.dm_mtn_ctrl_combo.addItem("Auto-Connect")
             self.dm_mtn_ctrl_combo.setCurrentIndex(0)
 
             self.dm_color_wheel_combo.clear()
-            self.dm_color_wheel_combo.addItem("<SELECT>")
+            self.dm_color_wheel_combo.addItem("Auto-Connect")
             self.dm_color_wheel_combo.setCurrentIndex(0)
 
             for port, desc, hwid in sorted(ports):
-                self.dm_sampler_combo.addItem(port)
-                self.dm_mtn_ctrl_combo.addItem(port)
-                self.dm_color_wheel_combo.addItem(port)
+                self.dm_sampler_combo.addItem('%s (%s): %s'%(port, hwid, desc))
+                self.dm_mtn_ctrl_combo.addItem('%s (%s): %s'%(port, hwid, desc))
+                self.dm_color_wheel_combo.addItem('%s (%s): %s'%(port, hwid, desc))
 
             self.dm_list_label.setText("~DEVICE LIST~\n" + dev_list)
 
