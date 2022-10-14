@@ -41,6 +41,8 @@ from matplotlib.figure import Figure
 from drivers import _thorlabs_kst_advanced as tlkt
 from drivers import picoammeter as pico
 
+from utilities import ports_finder
+
 # Motion Controller Types
 # 0 - KST101
 
@@ -50,7 +52,7 @@ from drivers import picoammeter as pico
 #%% MotionController
 # Genericizes the type of motor controller.
 class MotionController:
-    def __init__(self, dummy: bool = False):
+    def __init__(self, dummy: bool = False, man_port: str = None):
         self.controller_type = 0
         self.mm_to_idx = 0
         self._is_dummy = False

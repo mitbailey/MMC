@@ -50,7 +50,8 @@ from io import TextIOWrapper
 import math as m
 import numpy as np
 import datetime as dt
-import serial.tools.list_ports
+# import serial.tools.list_ports
+from utilities import ports_finder
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -62,7 +63,7 @@ from utilities.config import load_config, save_config, reset_config
 import webbrowser
 from utilities.datatable import DataTableWidget
 
-from middleware import MotionController
+from middleware import MotionController#, list_all_devices
 from middleware import DataSampler
 from middleware import ColorWheel
 
@@ -173,6 +174,7 @@ class MMC_Main(QMainWindow):
 
     # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
     def show_window_device_manager(self):
+        self.device_timer = None
         if self.dev_man_win is None:
             ui_file_name = exeDir + '/ui/device_manager.ui'
             ui_file = QFile(ui_file_name)
@@ -295,7 +297,7 @@ class MMC_Main(QMainWindow):
             self.device_timer = QTimer()
             self.device_timer.timeout.connect(self.devman_list_devices)
             self.device_timer.start(1000)
-        self.dm_prompt_label.setText('The software was unable to automatically connect to the devices. Please ensure all devices are connected properly and press "Retry Auto-Connect" or select devices below.\nNOTE: At this time, only the "Retry Auto-Connect" button is functional.\n\nSupported Devices:\nSamplers\n- Keithley Model 6485 Picoammeter\n\nMotion Controllers\n- ThorLabs KST101\n\nColor Wheels\n  N/A\n\n')   
+        self.dm_prompt_label.setText('The software was unable to automatically connect to the devices. Please ensure all devices are connected properly and press "Retry Auto-Connect" or select devices below.\n\nSupported Devices:\nSamplers\n- Keithley Model 6485 Picoammeter\n\nMotion Controllers\n- ThorLabs KST101\n\nColor Wheels\n  N/A\n\n')   
 
     def _show_main_gui(self, dummy: bool):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
@@ -543,16 +545,24 @@ class MMC_Main(QMainWindow):
         self.show()  
 
     def devman_list_devices(self):
-        ports = serial.tools.list_ports.comports()
+        dev_list = ports_finder.find_all_ports()
 
-        dev_list = ''
-        for port, desc, hwid in sorted(ports):
-            dev_list += "PORT: %s\n"%(port)
-            dev_list += "DESC: %s\n"%(desc)
-            dev_list += "HWID: %s\n\n"%(hwid)
-            print(dev_list)
+        dev_list_str = ''
+        for dev in dev_list:
+            dev_list_str += '%s\n'%(dev)
 
-        if (self.dm_list_label.text() != "~DEVICE LIST~\n" + dev_list):
+        # dev_list = []
+        # for port in ports:
+        #     dev_list += '%s\n'%(port)
+        # print(dev_list)
+
+        # for port, desc, hwid in sorted(ports):
+        #     dev_list += "PORT: %s\n"%(port)
+        #     dev_list += "DESC: %s\n"%(desc)
+        #     dev_list += "HWID: %s\n\n"%(hwid)
+        #     print(dev_list)
+
+        if (self.dm_list_label.text() != "~DEVICE LIST~\n" + dev_list_str):
             self.dm_sampler_combo.clear()
             self.dm_sampler_combo.addItem("Auto-Connect")
             self.dm_sampler_combo.setCurrentIndex(0)
@@ -565,12 +575,17 @@ class MMC_Main(QMainWindow):
             self.dm_color_wheel_combo.addItem("Auto-Connect")
             self.dm_color_wheel_combo.setCurrentIndex(0)
 
-            for port, desc, hwid in sorted(ports):
-                self.dm_sampler_combo.addItem('%s (%s): %s'%(port, hwid, desc))
-                self.dm_mtn_ctrl_combo.addItem('%s (%s): %s'%(port, hwid, desc))
-                self.dm_color_wheel_combo.addItem('%s (%s): %s'%(port, hwid, desc))
+            for dev in dev_list:
+                self.dm_sampler_combo.addItem('%s'%(dev))
+                self.dm_mtn_ctrl_combo.addItem('%s'%(dev))
+                self.dm_color_wheel_combo.addItem('%s'%(dev))
 
-            self.dm_list_label.setText("~DEVICE LIST~\n" + dev_list)
+            # for port, desc, hwid in sorted(ports):
+            #     self.dm_sampler_combo.addItem('%s (%s): %s'%(port, hwid, desc))
+            #     self.dm_mtn_ctrl_combo.addItem('%s (%s): %s'%(port, hwid, desc))
+            #     self.dm_color_wheel_combo.addItem('%s (%s): %s'%(port, hwid, desc))
+
+            self.dm_list_label.setText("~DEVICE LIST~\n" + dev_list_str)
 
     def save_data_cb(self):
         if self.table is None:
