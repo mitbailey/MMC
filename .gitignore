@@ -23,6 +23,7 @@
 **/*.fls
 **/*.log
 **/*.synctex.gz
+**/*.toc
 
 # Compiled source #
 ###################
