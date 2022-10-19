@@ -71,6 +71,8 @@ from middleware import ColorWheel
 digital_7_italic_22 = None
 digital_7_16 = None
 
+#TODO: Add networking capability, ie allow the program to be controlled from incoming commands via a pypeernet network.
+
 # %% Classes
 class NavigationToolbar(NavigationToolbar2QT):
     def edit_parameters(self):
@@ -210,10 +212,6 @@ class MMC_Main(QMainWindow):
 
         self.application.processEvents()
         self.SIGNAL_device_manager_ready.emit()
-
-    # def dummy_connect_devices(self):
-    #     self.dummy = True
-    #     self.connect_devices()
 
     def connect_devices(self):
         print("connect_devices")
@@ -539,7 +537,6 @@ class MMC_Main(QMainWindow):
 
         self.table.updatePlots()
 
-        # TODO: Only close if we successfully detected devices. Otherwise, open a device management prompt.
         self.dev_man_win.close()
         self.main_gui_booted = True
         self.show()  
