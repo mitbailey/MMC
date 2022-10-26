@@ -63,9 +63,11 @@ from utilities.config import load_config, save_config, reset_config
 import webbrowser
 from utilities.datatable import DataTableWidget
 
-from middleware import MotionController#, list_all_devices
-from middleware import DataSampler
-from middleware import ColorWheel
+# from middleware import MotionController#, list_all_devices
+# from middleware import DataSampler
+# from middleware import ColorWheel
+
+from iface_netcomms import IfaceNetComm
 
 # %% Fonts
 digital_7_italic_22 = None
@@ -176,6 +178,7 @@ class MMC_Main(QMainWindow):
 
     # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
     def show_window_device_manager(self):
+        self.net = None
         self.device_timer = None
         if self.dev_man_win is None:
             ui_file_name = exeDir + '/ui/device_manager.ui'
@@ -215,6 +218,12 @@ class MMC_Main(QMainWindow):
 
     def connect_devices(self):
         print("connect_devices")
+
+        # TODO: Finalize network initialization.
+        if self.net == None:
+            self.net = IfaceNetComm()
+        else:
+            self.net.check_connection()
 
         self.dm_prompt_label.setText("Attempting to connect...")
         self.application.processEvents()
@@ -282,6 +291,8 @@ class MMC_Main(QMainWindow):
     # If things are connected, boot main GUI.
     # If somethings wrong, enable advanced dev man functions.
     def devices_connection_check(self, dummy: bool, sampler: bool, mtn_ctrl: bool, color_wheel: bool):
+        print("devices_connection_check")
+
         if (sampler and mtn_ctrl):
             if self.device_timer is not None:
                 self.device_timer.stop()
@@ -542,11 +553,17 @@ class MMC_Main(QMainWindow):
         self.show()  
 
     def devman_list_devices(self):
-        dev_list = ports_finder.find_all_ports()
+        print("devman_list_devices")
+        # dev_list = ports_finder.find_all_ports()
+        self.net.transmit('PORT')
+        dev_list_str = self.net.get_data('find_all_ports')
+        dev_list = dev_list_str.split('\n')
 
-        dev_list_str = ''
-        for dev in dev_list:
-            dev_list_str += '%s\n'%(dev)
+        # dev_list_str = ''
+        # for dev in dev_list:
+        #     dev_list_str += '%s\n'%(dev)
+        print("DEVICE LIST:")
+        print(dev_list_str)
 
         # dev_list = []
         # for port in ports:
