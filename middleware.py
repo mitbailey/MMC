@@ -95,7 +95,9 @@ class MotionController:
         return self.motor_ctrl.home()
 
     def get_position(self):
-        return self.motor_ctrl.get_position()
+        val = self.motor_ctrl.get_position()
+        print('val ', val)
+        return val
 
     def is_homing(self):
         return self.motor_ctrl.is_homing()
@@ -104,6 +106,7 @@ class MotionController:
         return self.motor_ctrl.is_moving()
 
     def move_to(self, position, block):
+        print('position', position)
         return self.motor_ctrl.move_to(position, block)
 
     pass

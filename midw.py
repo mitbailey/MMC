@@ -20,7 +20,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, sighandler)
 
     while net._done == False:
-        print("Loop.")
+        # print("Loop.")
         time.sleep(1)
         if done:
             net._done = True

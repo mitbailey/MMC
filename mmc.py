@@ -153,8 +153,9 @@ class MMC_Main(QMainWindow):
 
     # Destructor
     def __del__(self):
-        del self.mtn_ctrl
-        del self.sampler
+        pass
+        # del self.mtn_ctrl
+        # del self.sampler
 
     # Constructor
     def __init__(self, application, uiresource = None):
@@ -179,6 +180,11 @@ class MMC_Main(QMainWindow):
     # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
     def show_window_device_manager(self):
         self.net = None
+        
+        # Network initialization.
+        # We first begin attempting middleware network connection here. This encompassing function is only called once, and doesn't check the net status at all. devman_list_devices() is, however, setup on a timer. That function will check to ensure we are connected. 
+        self.net = IfaceNetComm()
+
         self.device_timer = None
         if self.dev_man_win is None:
             ui_file_name = exeDir + '/ui/device_manager.ui'
@@ -206,6 +212,7 @@ class MMC_Main(QMainWindow):
             self.dm_color_wheel_combo.addItem("Auto-Connect")
 
             self.dm_accept_button: QPushButton = self.dev_man_win.findChild(QPushButton, "acc_button")
+            self.dm_accept_button.setEnabled(False)
             self.dm_accept_button.clicked.connect(self.connect_devices)
             # self.dm_accept_button.setDisabled(True)
             self.dm_dummy_checkbox: QCheckBox = self.dev_man_win.findChild(QCheckBox, "dum_checkbox")
@@ -219,11 +226,16 @@ class MMC_Main(QMainWindow):
     def connect_devices(self):
         print("connect_devices")
 
-        # TODO: Finalize network initialization.
+        # self.mtn_ctrl = None
+        # self.sampler = None
+
+        mtnc_status = False
+        dats_status = False
+        clrw_status = False
+
+        # Network initialization.
         if self.net == None:
             self.net = IfaceNetComm()
-        else:
-            self.net.check_connection()
 
         self.dm_prompt_label.setText("Attempting to connect...")
         self.application.processEvents()
@@ -231,69 +243,47 @@ class MMC_Main(QMainWindow):
         dummy = self.dm_dummy_checkbox.isChecked()
         print("Dummy Mode: " + str(dummy))
 
+        # One last chance to connect.
+        if self.net == None or self.net.online() == False:
+            print("Network offline, returning from connect_devices")
+            self.SIGNAL_devices_connection_check.emit(dummy, mtnc_status, dats_status, clrw_status)
+            return
+
         # Motion Controller and Sampler initialization.
         # Note that, for now, the Keithley 6485 and KST101 are the defaults.
-        sampler_connected = True
-        mtn_ctrl_connected = True
-        color_wheel_connected = True
+        # sampler_connected = True
+        # mtn_ctrl_connected = True
+        # color_wheel_connected = True
 
-        self.sampler = None
-        self.mtn_ctrl = None
-        try:
-            if self.dm_sampler_combo.currentIndex() != 0:
-                print("Using manual port: %s"%(self.dm_sampler_combo.currentText().split(' ')[0]))
-                self.sampler = DataSampler(dummy, self.dm_sampler_combo.currentText().split(' ')[0])
-            else:
-                self.sampler = DataSampler(dummy)
+        color_wheel_connected = False
 
-        except Exception as e:
-            print("Failed to find sampler.")
-            self.sampler = None
-            sampler_connected = False
-        if self.sampler is None:
-            sampler_connected = False
+        if dummy:
+            # If even one of these gets through the Middleware will set all components to dummy mode.
+            self.net.transmit('INIT DEVS DUMM \n\n\n')
+            mtnc_status, wouldblock = self.net.get_status('mtnc', True)
+            dats_status, wouldblock = self.net.get_status('dats', True)
+            clrw_status, wouldblock = self.net.get_status('clrw', True)
 
-        try:
-            if self.dm_mtn_ctrl_combo.currentIndex() != 0:
-                print("Using manual port: %s"%(self.dm_mtn_ctrl_combo.currentText().split(' ')[0]))
-                self.mtn_ctrl = MotionController(dummy, self.dm_mtn_ctrl_combo.currentText().split(' ')[0])
-            else:
-                self.mtn_ctrl = MotionController(dummy)
+        else:
+            self.net.transmit('INIT DEVS REAL \n' + self.dm_mtn_ctrl_combo.currentText().split(' ')[0] + '\n' + self.dm_sampler_combo.currentText().split(' ')[0] + '\n' + self.dm_color_wheel_combo.currentText().split(' ')[0])
+            mtnc_status, wouldblock = self.net.get_status('mtnc', True)
+            dats_status, wouldblock = self.net.get_status('dats', True)
+            clrw_status, wouldblock = self.net.get_status('clrw', True)
 
-        except Exception as e:
-            print("Failed to find motion controller.")
-            self.mtn_ctrl = None
-            mtn_ctrl_connected = False
-            pass
-        if self.mtn_ctrl is None:
-            mtn_ctrl_connected = False
-
-        try:
-            if self.dm_color_wheel_combo.currentIndex() != 0:
-                print("Using manual port: %s"%(self.dm_color_wheel_combo.currentText().split(' ')[0]))
-                self.color_wheel = ColorWheel(dummy, self.dm_color_wheel_combo.currentText().split(' ')[0])
-            else:
-                self.color_wheel = ColorWheel(dummy)
-
-        except Exception as e:
-            print("Failed to find color wheel.")
-            self.color_wheel = None
-            color_wheel_connected = False
-            pass
-
-        if self.color_wheel is None:
-            color_wheel_connected = False
+        # mtn_ctrl_connected = mtnc_status
+        # sampler_connected = dats_status
+        # color_wheel_connected = clrw_status
 
         # Emits a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
         
-        self.SIGNAL_devices_connection_check.emit(dummy, sampler_connected, mtn_ctrl_connected, color_wheel_connected)
+        self.SIGNAL_devices_connection_check.emit(dummy, mtnc_status, dats_status, clrw_status)
 
     # If things are connected, boot main GUI.
     # If somethings wrong, enable advanced dev man functions.
-    def devices_connection_check(self, dummy: bool, sampler: bool, mtn_ctrl: bool, color_wheel: bool):
+    def devices_connection_check(self, dummy: bool, mtn_ctrl_status: bool, sampler_status: bool, color_wheel_status: bool):
         print("devices_connection_check")
 
-        if (sampler and mtn_ctrl):
+        if (sampler_status and mtn_ctrl_status):
             if self.device_timer is not None:
                 self.device_timer.stop()
             self.dev_man_win.close()
@@ -309,6 +299,12 @@ class MMC_Main(QMainWindow):
         self.dm_prompt_label.setText('The software was unable to automatically connect to the devices. Please ensure all devices are connected properly and press "Retry Auto-Connect" or select devices below.\n\nSupported Devices:\nSamplers\n- Keithley Model 6485 Picoammeter\n\nMotion Controllers\n- ThorLabs KST101\n\nColor Wheels\n  N/A\n\n')   
 
     def _show_main_gui(self, dummy: bool):
+        print("_show_main_gui")
+        self.net.transmit('MM_TO_IDX')
+        print('Waiting for MM_TO_IDX...')
+        self.MM_TO_IDX, wouldblock = self.net.get_value('mm_to_idx', True)
+        print('Got:', self.MM_TO_IDX)
+
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
         self.data_save_directory = os.path.expanduser('~/Documents')
         self.data_save_directory += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
@@ -410,8 +406,14 @@ class MMC_Main(QMainWindow):
         self.start_spin = self.findChild(QDoubleSpinBox, "start_set_spinbox")
         self.stop_spin = self.findChild(QDoubleSpinBox, "end_set_spinbox")
 
-        if self.sampler.is_dummy():
-            self.stop_spin.setValue(0.2)
+        # self.net.transmit('DUMM')
+        # retval, wouldblock = self.net.get_data('is_dummy', True)
+
+        # if retval:
+        #     self.stop_spin.setValue(0.2)
+
+        # if self.sampler.is_dummy():
+        #     self.stop_spin.setValue(0.2)
 
         self.step_spin = self.findChild(QDoubleSpinBox, "step_set_spinbox")
         self.currpos_nm_disp = self.findChild(QLabel, "currpos_nm")
@@ -452,11 +454,19 @@ class MMC_Main(QMainWindow):
         self.home_button: QPushButton = self.findChild(QPushButton, "home_button")
         
         self.homing_started = False
-        if not self.mtn_ctrl.is_dummy():
+
+        self.net.transmit('DUMM')
+        if not self.net.get_data('is_dummy', True):
             self.homing_started = True
             self.disable_movement_sensitive_buttons(True)
             self.scan_status_update("HOMING")
-            self.mtn_ctrl.home()
+            self.net.transmit('HOME')
+
+        # if not self.mtn_ctrl.is_dummy():
+        #     self.homing_started = True
+        #     self.disable_movement_sensitive_buttons(True)
+        #     self.scan_status_update("HOMING")
+        #     self.mtn_ctrl.home()
 
         # Get and set the palette.
         palette = self.currpos_nm_disp.palette()
@@ -554,9 +564,15 @@ class MMC_Main(QMainWindow):
 
     def devman_list_devices(self):
         print("devman_list_devices")
+
+        self.dm_accept_button.setEnabled(self.net.online())
+
         # dev_list = ports_finder.find_all_ports()
+        if not self.net.online():
+            # Disallows the ability to do any communication without being properly connected.
+            return
         self.net.transmit('PORT')
-        dev_list_str = self.net.get_data('find_all_ports')
+        dev_list_str = self.net.get_data('find_all_ports', False)
         dev_list = dev_list_str.split('\n')
 
         # dev_list_str = ''
@@ -678,7 +694,8 @@ class MMC_Main(QMainWindow):
         self.scan_status_update("HOMING")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
-        self.mtn_ctrl.home()
+        # self.mtn_ctrl.home()
+        self.net.transmit('HOME')
 
     def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
         self.scan_number += 1
@@ -791,17 +808,24 @@ class MMC_Main(QMainWindow):
         self.table.updateTableDisplay()
 
     def update_position_displays(self):
-        self.current_position = self.mtn_ctrl.get_position()
+
+
+        self.net.transmit('POSN')
+        self.current_position = int(self.net.get_data('get_position'))
+        # self.current_position = self.mtn_ctrl.get_position()
         
         if self.homing_started: # set this to True at __init__ because we are homing, and disable everything. same goes for 'Home' button
-            home_status = self.mtn_ctrl.is_homing() # explore possibility of replacing this with is_homed()
+            self.net.transmit('HOMG')
+            home_status = self.net.get_data('is_homing', True)
+            # home_status = self.mtn_ctrl.is_homing() # explore possibility of replacing this with is_homed()
 
             if home_status:
                 # Detect if the device is saying its homing, but its not actually moving.
                 if self.current_position == self.previous_position:
                     self.immobile_count += 1
                 if self.immobile_count >= 3:
-                    self.mtn_ctrl.home()
+                    self.net.transmit('HOME')
+                    # self.mtn_ctrl.home()
                     self.immobile_count = 0
 
             if not home_status:
@@ -812,7 +836,9 @@ class MMC_Main(QMainWindow):
                 self.disable_movement_sensitive_buttons(False)
                 self.homing_started = False
                 pass
-        move_status = self.mtn_ctrl.is_moving()
+        self.net.transmit('MOVG')
+        move_status = self.net.get_data('is_moving', True)
+        # move_status = self.mtn_ctrl.is_moving()
         
         if not move_status and self.moving and not self.scanRunning:
             self.disable_movement_sensitive_buttons(False)
@@ -820,7 +846,7 @@ class MMC_Main(QMainWindow):
         self.moving = move_status
         self.previous_position = self.current_position
 
-        self.currpos_nm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.mtn_ctrl.mm_to_idx) / self.conversion_slope) - self.zero_ofst))
+        self.currpos_nm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.MM_TO_IDX) / self.conversion_slope) - self.zero_ofst))
 
     def scan_button_pressed(self):
         # self.moving = True
@@ -841,8 +867,10 @@ class MMC_Main(QMainWindow):
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
-        pos = int((self.pos_spin.value() + self.zero_ofst) * self.conversion_slope * self.mtn_ctrl.mm_to_idx)
-        self.mtn_ctrl.move_to(pos, False)
+        print('mm_to_idx', self.MM_TO_IDX)
+        pos = int((self.pos_spin.value() + self.zero_ofst) * self.conversion_slope * self.MM_TO_IDX)
+        self.net.transmit('MOVE ' + str(pos) + ' ' + 'NONBLOCKING')
+        # self.mtn_ctrl.move_to(pos, False)
 
     def start_changed(self):
         print("Start changed to: %s mm"%(self.start_spin.value()))
@@ -1071,15 +1099,20 @@ class Scan(QThread):
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
         self.SIGNAL_status_update.emit("ZEROING")
-        prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.mtn_ctrl.mm_to_idx)
-        self.other.mtn_ctrl.move_to(prep_pos, True)
+        prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.MM_TO_IDX)
+        
+        # self.other.mtn_ctrl.move_to(prep_pos, True)
+
+        self.other.net.transmit('MOVE ' + str(prep_pos) + ' ' + 'BLOCKING')
+        self.other.net.get_data('move_complete', True)
+
         self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
 
         self._xdata = []
         self._ydata = []
         self._scan_id = self.other.table.scanId
-        metadata = {'tstamp': tnow, 'mm_to_idx': self.other.mtn_ctrl.mm_to_idx, 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+        metadata = {'tstamp': tnow, 'mm_to_idx': self.other.MM_TO_IDX, 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
         self.SIGNAL_data_begin.emit(self.scanId, metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
         while self.scanId == self.other.table.scanId: # spin until that happens
             continue
@@ -1087,10 +1120,23 @@ class Scan(QThread):
             if not self.other.scanRunning:
                 break
             self.SIGNAL_status_update.emit("MOVING")
-            self.other.mtn_ctrl.move_to(dpos * self.other.mtn_ctrl.mm_to_idx, True)
-            pos = self.other.mtn_ctrl.get_position()
+
+            # self.other.mtn_ctrl.move_to(dpos * self.other.MM_TO_IDX, True)
+            # pos = self.other.mtn_ctrl.get_position()
+
+            self.other.net.transmit('MOVE ' + str(dpos * self.other.MM_TO_IDX) + ' ' + 'BLOCKING')
+            self.other.net.get_data('move_complete', True)
+
+            self.other.net.transmit('POSN')
+            pos = self.other.net.get_data('get_position', True)
+            
             self.SIGNAL_status_update.emit("SAMPLING")
-            buf = self.other.sampler.sample_data()
+
+            # buf = self.other.sampler.sample_data()
+
+            self.other.net.transmit('SAMP')
+            buf, wouldblock = self.other.net.get_value('sample_data')
+
             print(buf)
             self.SIGNAL_progress.emit(round((idx + 1) * 100 / nidx))
             # process buf
@@ -1102,19 +1148,19 @@ class Scan(QThread):
                 err = int(float(words[2])) # skip timestamp
             except Exception:
                 continue
-            self._xdata.append((((pos / self.other.mtn_ctrl.mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
+            self._xdata.append((((pos / self.other.MM_TO_IDX) / self.other.conversion_slope)) - self.other.zero_ofst)
             self._ydata.append(self.other.mes_sign * mes * 1e12)
             self.dataUpdate.emit(self.scanId, self._xdata[-1], self._ydata[-1])
 
             if sav_file is not None:
                 if idx == 0:
                     sav_file.write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
-                    sav_file.write('# Steps/mm: %f\n'%(self.other.mtn_ctrl.mm_to_idx))
+                    sav_file.write('# Steps/mm: %f\n'%(self.other.MM_TO_IDX))
                     sav_file.write('# mm/nm: %e; lambda_0 (nm): %e\n'%(self.other.conversion_slope, self.other.zero_ofst))
                     sav_file.write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
                 # process buf
                 # 1. split by \n
-                buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.mtn_ctrl.mm_to_idx) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
+                buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.MM_TO_IDX) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
                 sav_file.write(buf)
 
         if (sav_file is not None):
@@ -1144,7 +1190,7 @@ if __name__ == '__main__':
     # 1. Initialization loading screen, where devices are being searched for and the current status and tasks are displayed. If none are found, display an error and an exit button.
     # 2. The device selection display, where devices can be selected and their settings can be changed prior to entering the control program.
     # 3. The control GUI (mainwindow.ui), where the user has control over what the device(s) do.
-    
+
     application = QApplication(sys.argv)
 
     # Finding and setting of fonts.
@@ -1196,7 +1242,9 @@ if __name__ == '__main__':
             save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length, mainWindow.max_pos, mainWindow.min_pos)    
 
         # Cleanup.
+        mainWindow.net._done = True
         del mainWindow
+
 
     # Exit.
     sys.exit(exit_code)
