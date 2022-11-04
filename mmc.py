@@ -63,6 +63,7 @@ from utilities.config import load_config, save_config, reset_config
 import webbrowser
 from utilities.datatable import DataTableWidget
 
+from middleware import Supported
 from middleware import MotionController#, list_all_devices
 from middleware import DataSampler
 
@@ -190,17 +191,33 @@ class MMC_Main(QMainWindow):
 
             self.dm_list_label: QLabel = self.dev_man_win.findChild(QLabel, "devices_label")
 
+            self.dm_sampler_layouts = []
+            self.dm_sampler_layouts.append(self.dev_man_win.findChild(QHBoxLayout, "sampler_combo_sublayout"))
+
+            self.dm_mtn_ctrl_layouts = []
+            self.dm_mtn_ctrl_layouts.append(self.dev_man_win.findChild(QHBoxLayout, "mtn_ctrl_combo_sublayout"))
+
             self.dm_sampler_combos = []
             # self.dm_sampler_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "samp_combo")
             # self.dm_sampler_combo.addItem("Auto-Connect")
             self.dm_sampler_combos.append(self.dev_man_win.findChild(QComboBox, "samp_combo"))
             self.dm_sampler_combos[0].addItem("Auto-Connect")
+            self.dm_sampler_model_combos = []
+            self.dm_sampler_model_combos.append(self.dev_man_win.findChild(QComboBox, "samp_model_combo"))
+            # self.dm_sampler_model_combos[0].addItem('<SELECT>')
+            for device in Supported.DataSamplers.Devices:
+                self.dm_sampler_model_combos[0].addItem(device)
 
             self.dm_mtn_ctrl_combos = []
             # self.dm_mtn_ctrl_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "mtn_combo")
             # self.dm_mtn_ctrl_combo.addItem("Auto-Connect")
             self.dm_mtn_ctrl_combos.append(self.dev_man_win.findChild(QComboBox, "mtn_combo"))
             self.dm_mtn_ctrl_combos[0].addItem("Auto-Connect")
+            self.dm_mtn_ctrl_model_combos = []
+            self.dm_mtn_ctrl_model_combos.append(self.dev_man_win.findChild(QComboBox, "mtn_model_combo"))
+            # self.dm_mtn_ctrl_model_combos[0].addItem('<SELECT>')
+            for device in Supported.MotionControllers.Devices:
+                self.dm_mtn_ctrl_model_combos[0].addItem(device)
 
             self.dm_accept_button: QPushButton = self.dev_man_win.findChild(QPushButton, "acc_button")
             self.dm_accept_button.clicked.connect(self.connect_devices)
@@ -229,27 +246,56 @@ class MMC_Main(QMainWindow):
             self.num_samplers = self.dm_num_samplers_spin.value()
             for widget in self.dm_sampler_combos:
                 widget.setParent(None)
+            for widget in self.dm_sampler_model_combos:
+                widget.setParent(None)
+            for layout in self.dm_sampler_layouts:
+                self.sampler_combo_layout.removeItem(layout)
             for i in range(self.num_samplers):
-                combo = QComboBox()
-                combo.addItem("Auto-Connect")
-                combo.set
+                s_combo = QComboBox()
+                s_combo.addItem("Auto-Connect")
                 for dev in self.dev_list:
-                    combo.addItem('%s'%(dev))
-                self.sampler_combo_layout.addWidget(combo)
-                self.dm_sampler_combos.append(combo)
+                    s_combo.addItem('%s'%(dev))
+                m_combo = QComboBox()
+                # m_combo.addItem('<SELECT>')
+                for device in Supported.DataSamplers.Devices:
+                    m_combo.addItem(device)
+                layout = QHBoxLayout()
+                layout.addWidget(s_combo)
+                layout.addStretch(4)
+                layout.addWidget(m_combo)
+                layout.addStretch(1)
+                self.sampler_combo_layout.addLayout(layout)
+                self.dm_sampler_combos.append(s_combo)
+                self.dm_sampler_model_combos.append(m_combo)
+                self.dm_sampler_layouts.append(layout)
 
     def update_num_motion_controllers_ui(self):
         if self.num_motion_controllers != self.dm_num_motion_controllers_spin.value():
             self.num_motion_controllers = self.dm_num_motion_controllers_spin.value()
             for widget in self.dm_mtn_ctrl_combos:
                 widget.setParent(None)
+            for widget in self.dm_mtn_ctrl_model_combos:
+                widget.setParent(None)
+            for layout in self.dm_mtn_ctrl_layouts:
+                self.mtn_ctrl_combo_layout.removeItem(layout)
             for i in range(self.num_motion_controllers):
-                combo = QComboBox()
-                combo.addItem("Auto-Connect")
+                s_combo = QComboBox()
+                s_combo.addItem("Auto-Connect")
                 for dev in self.dev_list:
-                    combo.addItem('%s'%(dev))
-                self.mtn_ctrl_combo_layout.addWidget(combo)
-                self.dm_mtn_ctrl_combos.append(combo)
+                    s_combo.addItem('%s'%(dev))
+                m_combo = QComboBox()
+                # m_combo.addItem('<SELECT>')
+                for device in Supported.MotionControllers.Devices:
+                    m_combo.addItem(device)
+                layout = QHBoxLayout()
+                layout.addWidget(s_combo)
+                layout.addStretch(4)
+                layout.addWidget(m_combo)
+                layout.addStretch(1)
+                self.mtn_ctrl_combo_layout.addLayout(layout)
+                self.dm_mtn_ctrl_combos.append(s_combo)
+                self.dm_mtn_ctrl_model_combos.append(m_combo)
+                self.dm_mtn_ctrl_layouts.append(layout)
 
     def connect_devices(self):
         print("connect_devices")
@@ -272,11 +318,13 @@ class MMC_Main(QMainWindow):
             try:
                 if self.dm_sampler_combos[i].currentIndex() != 0:
                     print("Using manual port: %s"%(self.dm_sampler_combos[i].currentText().split(' ')[0]))
-                    self.sampler = DataSampler(dummy, self.dm_sampler_combos[i].currentText().split(' ')[0])
+                    self.samplers[i] = DataSampler(dummy, self.dm_sampler_model_combos[i].currentText(), self.dm_sampler_combos[i].currentText().split(' ')[0])
                 else:
-                    self.sampler = DataSampler(dummy)
+                    # Auto-Connect
+                    self.samplers[i] = DataSampler(dummy, Supported.DataSamplers.Devices[0])
 
             except Exception as e:
+                print(e)
                 print("Failed to find sampler.")
                 self.samplers[i] = None
                 samplers_connected[i] = False
@@ -288,9 +336,10 @@ class MMC_Main(QMainWindow):
             try:
                 if self.dm_mtn_ctrl_combos[i].currentIndex() != 0:
                     print("Using manual port: %s"%(self.dm_mtn_ctrl_combos[i].currentText().split(' ')[0]))
-                    self.mtn_ctrl = MotionController(dummy, self.dm_mtn_ctrl_combos[i].currentText().split(' ')[0])
+                    self.mtn_ctrls[i] = MotionController(dummy, self.dm_mtn_ctrl_model_combos[i].currentText(), self.dm_mtn_ctrl_combos[i].currentText().split(' ')[0])
                 else:
-                    self.mtn_ctrl = MotionController(dummy)
+                    # Auto-Connect
+                    self.mtn_ctrls[i] = MotionController(dummy, Supported.MotionControllers.Devices[0])
 
             except Exception as e:
                 print("Failed to find motion controller.")
@@ -332,7 +381,7 @@ class MMC_Main(QMainWindow):
             self.device_timer = QTimer()
             self.device_timer.timeout.connect(self.devman_list_devices)
             self.device_timer.start(1000)
-        self.dm_prompt_label.setText('The software was unable to automatically connect to the devices. Please ensure all devices are connected properly and press "Retry Auto-Connect" or select devices below.\n\nSupported Devices:\nSamplers\n- Keithley Model 6485 Picoammeter\n\nMotion Controllers\n- ThorLabs KST101\n\n')   
+        self.dm_prompt_label.setText('Auto-connect failed.')   
 
     def _show_main_gui(self, dummy: bool):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory

@@ -51,20 +51,26 @@ from utilities import ports_finder
 
 # TODO: Need to implement external triggers when certain actions occur. Should also consider adding a trigger-only faux 'device.'
 
+class Supported:
+    class MotionControllers:
+        Devices = ['KST101', '789A-4', '792']
+    
+    class DataSamplers:
+        Devices = ['KEITHLEY 6485']
+
 #%% MotionController
 # Genericizes the type of motor controller.
 class MotionController:
-    KST101 = 0
-    EXAMPLE_DEV = 1
-
-    def __init__(self, dummy: bool = False, man_port: str = None):
+    def __init__(self, dummy: bool, dev_model: str, man_port: str = None):
         # TODO: Come up with a proper way of setting the sampler_type, ie as an argument.
-        self.controller_type = MotionController.KST101
+        self.model = dev_model
         self.mm_to_idx = 0
         self._is_dummy = False
+        self.motor_ctrl = None
 
         # Initializes our motor_ctrl stuff depending on what hardware we're using.
-        if self.controller_type == MotionController.KST101:
+        if self.model == 'KST101':
+            print('HEEEEEEEEEEEEEEEERE')
             if dummy:
                 serials = tlkt.Thorlabs.KSTDummy._ListDevices()
                 self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
@@ -82,9 +88,9 @@ class MotionController:
                     print("Connection with motor controller failed.")
                     raise RuntimeError('Connection with motor controller failed.')
                 self.motor_ctrl.set_stage('ZST25')
-
-        elif self.controller_type == MotionController.EXAMPLE_DEV: # Example for adding future controller hardware.
-            print("Controller type 1 does not exist yet.")
+        else:
+            print('Motion controller device model "%s" is not supported.'%(dev_model))
+            raise Exception
 
         self.mm_to_idx = self.motor_ctrl.mm_to_idx
 
@@ -111,16 +117,13 @@ class MotionController:
 #%% DataSampler
 # Genericizes the type of data sampler.
 class DataSampler:
-    KEITHLEY_6485 = 0 
-    EXAMPLE_DEV = 1
-
-    def __init__(self, dummy: bool = False, man_port: str = None):
+    def __init__(self, dummy: bool, dev_model: str, man_port: str = None):
         # TODO: Come up with a proper way of setting the sampler_type, ie as an argument.
-        self.sampler_type = DataSampler.KEITHLEY_6485
+        self.model = dev_model
         self.pa = None
         self._is_dummy = False
 
-        if self.sampler_type == DataSampler.KEITHLEY_6485:
+        if self.model == 'KEITHLEY 6485':
             if dummy:
                 self.pa = pico.Picodummy(3)
                 self._is_dummy = True
@@ -129,8 +132,9 @@ class DataSampler:
                     self.pa = pico.Picoammeter(3, man_port)
                 else:
                     self.pa = pico.Picoammeter(3)
-        elif self.sampler_type == DataSampler.EXAMPLE_DEV: # Example for adding future controller hardware.
-            print("Sampler type 1 does not exist yet.")
+        else:
+            print('Data sampler device model "%s" is not supported.'%(dev_model))
+            raise Exception
 
     # Only function used in mmc.py (.pa.sample_data())
     def sample_data(self):
