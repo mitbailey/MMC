@@ -141,7 +141,3 @@ class DataSampler:
         return self._is_dummy
 
     pass
-
-#%% ColorWheel
-class ColorWheel:
-    pass

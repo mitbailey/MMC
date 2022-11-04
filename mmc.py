@@ -65,13 +65,10 @@ from utilities.datatable import DataTableWidget
 
 from middleware import MotionController#, list_all_devices
 from middleware import DataSampler
-from middleware import ColorWheel
 
 # %% Fonts
 digital_7_italic_22 = None
 digital_7_16 = None
-
-#TODO: Add networking capability, ie allow the program to be controlled from incoming commands via a pypeernet network.
 
 # %% Classes
 class NavigationToolbar(NavigationToolbar2QT):
@@ -144,7 +141,7 @@ class MMC_Main(QMainWindow):
     # ELSE allow user to interact w/ device manager
 
     SIGNAL_device_manager_ready = pyqtSignal()
-    SIGNAL_devices_connection_check = pyqtSignal(bool, bool, bool, bool)
+    SIGNAL_devices_connection_check = pyqtSignal(bool, bool, bool)
 
     EXIT_CODE_FINISHED = 0
     EXIT_CODE_REBOOT = 1
@@ -199,9 +196,6 @@ class MMC_Main(QMainWindow):
             self.dm_mtn_ctrl_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "mtn_combo")
             self.dm_mtn_ctrl_combo.addItem("Auto-Connect")
 
-            self.dm_color_wheel_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "wheel_combo")
-            self.dm_color_wheel_combo.addItem("Auto-Connect")
-
             self.dm_accept_button: QPushButton = self.dev_man_win.findChild(QPushButton, "acc_button")
             self.dm_accept_button.clicked.connect(self.connect_devices)
             # self.dm_accept_button.setDisabled(True)
@@ -226,7 +220,6 @@ class MMC_Main(QMainWindow):
         # Note that, for now, the Keithley 6485 and KST101 are the defaults.
         sampler_connected = True
         mtn_ctrl_connected = True
-        color_wheel_connected = True
 
         self.sampler = None
         self.mtn_ctrl = None
@@ -259,29 +252,13 @@ class MMC_Main(QMainWindow):
         if self.mtn_ctrl is None:
             mtn_ctrl_connected = False
 
-        try:
-            if self.dm_color_wheel_combo.currentIndex() != 0:
-                print("Using manual port: %s"%(self.dm_color_wheel_combo.currentText().split(' ')[0]))
-                self.color_wheel = ColorWheel(dummy, self.dm_color_wheel_combo.currentText().split(' ')[0])
-            else:
-                self.color_wheel = ColorWheel(dummy)
-
-        except Exception as e:
-            print("Failed to find color wheel.")
-            self.color_wheel = None
-            color_wheel_connected = False
-            pass
-
-        if self.color_wheel is None:
-            color_wheel_connected = False
-
         # Emits a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
         
-        self.SIGNAL_devices_connection_check.emit(dummy, sampler_connected, mtn_ctrl_connected, color_wheel_connected)
+        self.SIGNAL_devices_connection_check.emit(dummy, sampler_connected, mtn_ctrl_connected)
 
     # If things are connected, boot main GUI.
     # If somethings wrong, enable advanced dev man functions.
-    def devices_connection_check(self, dummy: bool, sampler: bool, mtn_ctrl: bool, color_wheel: bool):
+    def devices_connection_check(self, dummy: bool, sampler: bool, mtn_ctrl: bool):
         if (sampler and mtn_ctrl):
             if self.device_timer is not None:
                 self.device_timer.stop()
@@ -295,7 +272,7 @@ class MMC_Main(QMainWindow):
             self.device_timer = QTimer()
             self.device_timer.timeout.connect(self.devman_list_devices)
             self.device_timer.start(1000)
-        self.dm_prompt_label.setText('The software was unable to automatically connect to the devices. Please ensure all devices are connected properly and press "Retry Auto-Connect" or select devices below.\n\nSupported Devices:\nSamplers\n- Keithley Model 6485 Picoammeter\n\nMotion Controllers\n- ThorLabs KST101\n\nColor Wheels\n  N/A\n\n')   
+        self.dm_prompt_label.setText('The software was unable to automatically connect to the devices. Please ensure all devices are connected properly and press "Retry Auto-Connect" or select devices below.\n\nSupported Devices:\nSamplers\n- Keithley Model 6485 Picoammeter\n\nMotion Controllers\n- ThorLabs KST101\n\n')   
 
     def _show_main_gui(self, dummy: bool):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
@@ -568,19 +545,9 @@ class MMC_Main(QMainWindow):
             self.dm_mtn_ctrl_combo.addItem("Auto-Connect")
             self.dm_mtn_ctrl_combo.setCurrentIndex(0)
 
-            self.dm_color_wheel_combo.clear()
-            self.dm_color_wheel_combo.addItem("Auto-Connect")
-            self.dm_color_wheel_combo.setCurrentIndex(0)
-
             for dev in dev_list:
                 self.dm_sampler_combo.addItem('%s'%(dev))
                 self.dm_mtn_ctrl_combo.addItem('%s'%(dev))
-                self.dm_color_wheel_combo.addItem('%s'%(dev))
-
-            # for port, desc, hwid in sorted(ports):
-            #     self.dm_sampler_combo.addItem('%s (%s): %s'%(port, hwid, desc))
-            #     self.dm_mtn_ctrl_combo.addItem('%s (%s): %s'%(port, hwid, desc))
-            #     self.dm_color_wheel_combo.addItem('%s (%s): %s'%(port, hwid, desc))
 
             self.dm_list_label.setText("~DEVICE LIST~\n" + dev_list_str)
 

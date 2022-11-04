@@ -161,16 +161,6 @@
             <property name="bottomMargin">
              <number>5</number>
             </property>
-            <item>
-             <widget class="QLabel" name="label_5">
-              <property name="text">
-               <string>Color Wheel:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QComboBox" name="wheel_combo"/>
-            </item>
            </layout>
           </item>
           <item>
