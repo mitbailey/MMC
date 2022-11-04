@@ -141,7 +141,7 @@ class MMC_Main(QMainWindow):
     # ELSE allow user to interact w/ device manager
 
     SIGNAL_device_manager_ready = pyqtSignal()
-    SIGNAL_devices_connection_check = pyqtSignal(bool, bool, bool)
+    SIGNAL_devices_connection_check = pyqtSignal(bool, list, list)
 
     EXIT_CODE_FINISHED = 0
     EXIT_CODE_REBOOT = 1
@@ -190,11 +190,17 @@ class MMC_Main(QMainWindow):
 
             self.dm_list_label: QLabel = self.dev_man_win.findChild(QLabel, "devices_label")
 
-            self.dm_sampler_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "samp_combo")
-            self.dm_sampler_combo.addItem("Auto-Connect")
+            self.dm_sampler_combos = []
+            # self.dm_sampler_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "samp_combo")
+            # self.dm_sampler_combo.addItem("Auto-Connect")
+            self.dm_sampler_combos.append(self.dev_man_win.findChild(QComboBox, "samp_combo"))
+            self.dm_sampler_combos[0].addItem("Auto-Connect")
 
-            self.dm_mtn_ctrl_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "mtn_combo")
-            self.dm_mtn_ctrl_combo.addItem("Auto-Connect")
+            self.dm_mtn_ctrl_combos = []
+            # self.dm_mtn_ctrl_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "mtn_combo")
+            # self.dm_mtn_ctrl_combo.addItem("Auto-Connect")
+            self.dm_mtn_ctrl_combos.append(self.dev_man_win.findChild(QComboBox, "mtn_combo"))
+            self.dm_mtn_ctrl_combos[0].addItem("Auto-Connect")
 
             self.dm_accept_button: QPushButton = self.dev_man_win.findChild(QPushButton, "acc_button")
             self.dm_accept_button.clicked.connect(self.connect_devices)
@@ -202,10 +208,48 @@ class MMC_Main(QMainWindow):
             self.dm_dummy_checkbox: QCheckBox = self.dev_man_win.findChild(QCheckBox, "dum_checkbox")
             self.dm_dummy_checkbox.setChecked(len(self._startup_args) == 2)
 
+            self.dm_num_samplers_spin: QSpinBox = self.dev_man_win.findChild(QSpinBox, "num_samplers")
+            self.dm_num_samplers_spin.valueChanged.connect(self.update_num_samplers_ui)
+            self.num_samplers = 1
+
+            self.dm_num_motion_controllers_spin: QSpinBox = self.dev_man_win.findChild(QSpinBox, "num_motion_controllers")
+            self.dm_num_motion_controllers_spin.valueChanged.connect(self.update_num_motion_controllers_ui)
+            self.num_motion_controllers = 1
+
+            self.sampler_combo_layout: QVBoxLayout = self.dev_man_win.findChild(QVBoxLayout, "sampler_combo_layout")
+            self.mtn_ctrl_combo_layout: QVBoxLayout = self.dev_man_win.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
+
             self.dev_man_win.show()
 
         self.application.processEvents()
         self.SIGNAL_device_manager_ready.emit()
+
+    def update_num_samplers_ui(self):
+        if self.num_samplers != self.dm_num_samplers_spin.value():
+            self.num_samplers = self.dm_num_samplers_spin.value()
+            for widget in self.dm_sampler_combos:
+                widget.setParent(None)
+            for i in range(self.num_samplers):
+                combo = QComboBox()
+                combo.addItem("Auto-Connect")
+                combo.set
+                for dev in self.dev_list:
+                    combo.addItem('%s'%(dev))
+                self.sampler_combo_layout.addWidget(combo)
+                self.dm_sampler_combos.append(combo)
+
+    def update_num_motion_controllers_ui(self):
+        if self.num_motion_controllers != self.dm_num_motion_controllers_spin.value():
+            self.num_motion_controllers = self.dm_num_motion_controllers_spin.value()
+            for widget in self.dm_mtn_ctrl_combos:
+                widget.setParent(None)
+            for i in range(self.num_motion_controllers):
+                combo = QComboBox()
+                combo.addItem("Auto-Connect")
+                for dev in self.dev_list:
+                    combo.addItem('%s'%(dev))
+                self.mtn_ctrl_combo_layout.addWidget(combo)
+                self.dm_mtn_ctrl_combos.append(combo)
 
     def connect_devices(self):
         print("connect_devices")
@@ -218,49 +262,65 @@ class MMC_Main(QMainWindow):
 
         # Motion Controller and Sampler initialization.
         # Note that, for now, the Keithley 6485 and KST101 are the defaults.
-        sampler_connected = True
-        mtn_ctrl_connected = True
+        samplers_connected = [True] * self.num_samplers
+        mtn_ctrls_connected = [True] * self.num_motion_controllers
 
-        self.sampler = None
-        self.mtn_ctrl = None
-        try:
-            if self.dm_sampler_combo.currentIndex() != 0:
-                print("Using manual port: %s"%(self.dm_sampler_combo.currentText().split(' ')[0]))
-                self.sampler = DataSampler(dummy, self.dm_sampler_combo.currentText().split(' ')[0])
-            else:
-                self.sampler = DataSampler(dummy)
+        self.samplers = [None] * self.num_samplers
+        self.mtn_ctrls = [None] * self.num_motion_controllers
+        # for i, combo in self.dm_sampler_combos:
+        for i in range(self.num_samplers):
+            try:
+                if self.dm_sampler_combos[i].currentIndex() != 0:
+                    print("Using manual port: %s"%(self.dm_sampler_combos[i].currentText().split(' ')[0]))
+                    self.sampler = DataSampler(dummy, self.dm_sampler_combos[i].currentText().split(' ')[0])
+                else:
+                    self.sampler = DataSampler(dummy)
 
-        except Exception as e:
-            print("Failed to find sampler.")
-            self.sampler = None
-            sampler_connected = False
-        if self.sampler is None:
-            sampler_connected = False
+            except Exception as e:
+                print("Failed to find sampler.")
+                self.samplers[i] = None
+                samplers_connected[i] = False
+            if self.samplers[i] is None:
+                samplers_connected[i] = False
 
-        try:
-            if self.dm_mtn_ctrl_combo.currentIndex() != 0:
-                print("Using manual port: %s"%(self.dm_mtn_ctrl_combo.currentText().split(' ')[0]))
-                self.mtn_ctrl = MotionController(dummy, self.dm_mtn_ctrl_combo.currentText().split(' ')[0])
-            else:
-                self.mtn_ctrl = MotionController(dummy)
+        # for i, combo in self.dm_sampler_combos:
+        for i in range(self.num_motion_controllers):
+            try:
+                if self.dm_mtn_ctrl_combos[i].currentIndex() != 0:
+                    print("Using manual port: %s"%(self.dm_mtn_ctrl_combos[i].currentText().split(' ')[0]))
+                    self.mtn_ctrl = MotionController(dummy, self.dm_mtn_ctrl_combos[i].currentText().split(' ')[0])
+                else:
+                    self.mtn_ctrl = MotionController(dummy)
 
-        except Exception as e:
-            print("Failed to find motion controller.")
-            self.mtn_ctrl = None
-            mtn_ctrl_connected = False
-            pass
-        if self.mtn_ctrl is None:
-            mtn_ctrl_connected = False
+            except Exception as e:
+                print("Failed to find motion controller.")
+                self.mtn_ctrls[i] = None
+                mtn_ctrls_connected[i] = False
+                pass
+            if self.mtn_ctrls[i] is None:
+                mtn_ctrls_connected[i] = False
 
         # Emits a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
         
-        self.SIGNAL_devices_connection_check.emit(dummy, sampler_connected, mtn_ctrl_connected)
+        self.SIGNAL_devices_connection_check.emit(dummy, samplers_connected, mtn_ctrls_connected)
 
     # If things are connected, boot main GUI.
     # If somethings wrong, enable advanced dev man functions.
-    def devices_connection_check(self, dummy: bool, sampler: bool, mtn_ctrl: bool):
-        if (sampler and mtn_ctrl):
+    def devices_connection_check(self, dummy: bool, samplers: list, mtn_ctrls: list):
+        connected = True
+        for status in samplers:
+            if not status:
+                connected = False
+                break
+        if connected:
+            for status in mtn_ctrls:
+                if not status:
+                    connected = False
+                    break
+
+        if connected:
             if self.device_timer is not None:
+                print('WARNING: STOPPING DEVICE TIMER!')
                 self.device_timer.stop()
             self.dev_man_win.close()
             self._show_main_gui(dummy)
@@ -519,35 +579,28 @@ class MMC_Main(QMainWindow):
         self.show()  
 
     def devman_list_devices(self):
-        dev_list = ports_finder.find_all_ports()
+        self.dev_list = ports_finder.find_all_ports()
 
         dev_list_str = ''
-        for dev in dev_list:
+        for dev in self.dev_list:
             dev_list_str += '%s\n'%(dev)
 
-        # dev_list = []
-        # for port in ports:
-        #     dev_list += '%s\n'%(port)
-        # print(dev_list)
-
-        # for port, desc, hwid in sorted(ports):
-        #     dev_list += "PORT: %s\n"%(port)
-        #     dev_list += "DESC: %s\n"%(desc)
-        #     dev_list += "HWID: %s\n\n"%(hwid)
-        #     print(dev_list)
-
         if (self.dm_list_label.text() != "~DEVICE LIST~\n" + dev_list_str):
-            self.dm_sampler_combo.clear()
-            self.dm_sampler_combo.addItem("Auto-Connect")
-            self.dm_sampler_combo.setCurrentIndex(0)
+            for i in range(self.num_samplers):
+                self.dm_sampler_combos[i].clear()
+                self.dm_sampler_combos[i].addItem('Auto-Connect')
+                self.dm_sampler_combos[i].setCurrentIndex(0)
 
-            self.dm_mtn_ctrl_combo.clear()
-            self.dm_mtn_ctrl_combo.addItem("Auto-Connect")
-            self.dm_mtn_ctrl_combo.setCurrentIndex(0)
+                for dev in self.dev_list:
+                    self.dm_sampler_combos[i].addItem('%s'%(dev))
 
-            for dev in dev_list:
-                self.dm_sampler_combo.addItem('%s'%(dev))
-                self.dm_mtn_ctrl_combo.addItem('%s'%(dev))
+            for i in range(self.num_motion_controllers):
+                self.dm_mtn_ctrl_combos[i].clear()
+                self.dm_mtn_ctrl_combos[i].addItem('Auto-Connect')
+                self.dm_mtn_ctrl_combos[i].setCurrentIndex(0)
+
+                for dev in self.dev_list:
+                    self.dm_mtn_ctrl_combos[i].addItem('%s'%(dev))
 
             self.dm_list_label.setText("~DEVICE LIST~\n" + dev_list_str)
 
