@@ -129,9 +129,9 @@ class DataSampler:
         self.pa = None
         self._is_dummy = False
 
-        if self.model == 'KEITHLEY 6485':
+        if self.model == DataSampler.SupportedDevices[0]:
             if dummy:
-                self.pa = ki_pico.KI_Picodummy(3)
+                self.pa = ki_pico.KI_Picoammeter_Dummy(3)
                 self._is_dummy = True
             else:
                 if man_port is not None:
