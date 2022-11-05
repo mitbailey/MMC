@@ -106,11 +106,13 @@ class MP_789A_4:
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, block: bool):
         steps = position - self._position
-        self.move_relative(steps)
+        self.move_relative(steps, block)
 
-    def move_relative(self, steps: int):
+    def move_relative(self, steps: int, block: bool):
         self.s.write(b'+%d\r', steps)
         self._position += steps
+
+        
 
 """ 
 McPherson Model 789A-4 Scan Controller Command Set
