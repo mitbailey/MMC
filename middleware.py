@@ -39,7 +39,7 @@ from matplotlib.figure import Figure
 
 # %% Custom Imports
 from drivers import _thorlabs_kst_advanced as tlkt
-from drivers import picoammeter as pico
+from drivers import ki_picoammeter as ki_pico
 
 from utilities import ports_finder
 
@@ -51,16 +51,11 @@ from utilities import ports_finder
 
 # TODO: Need to implement external triggers when certain actions occur. Should also consider adding a trigger-only faux 'device.'
 
-class Supported:
-    class MotionControllers:
-        Devices = ['KST101', '789A-4', '792']
-    
-    class DataSamplers:
-        Devices = ['KEITHLEY 6485']
-
 #%% MotionController
 # Genericizes the type of motor controller.
 class MotionController:
+    SupportedDevices = ['TL KST101', 'MP 789A-4', 'MP 792']
+
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None):
         # TODO: Come up with a proper way of setting the sampler_type, ie as an argument.
         self.model = dev_model
@@ -69,8 +64,7 @@ class MotionController:
         self.motor_ctrl = None
 
         # Initializes our motor_ctrl stuff depending on what hardware we're using.
-        if self.model == 'KST101':
-            print('HEEEEEEEEEEEEEEEERE')
+        if self.model == MotionController.SupportedDevices[0]:
             if dummy:
                 serials = tlkt.Thorlabs.KSTDummy._ListDevices()
                 self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
@@ -88,6 +82,16 @@ class MotionController:
                     print("Connection with motor controller failed.")
                     raise RuntimeError('Connection with motor controller failed.')
                 self.motor_ctrl.set_stage('ZST25')
+        elif self.model == MotionController.SupportedDevices[1]:
+            if dummy:
+                pass
+            else:
+                pass
+        elif self.model == MotionController.SupportedDevices[2]:
+            if dummy:
+                pass
+            else:
+                pass
         else:
             print('Motion controller device model "%s" is not supported.'%(dev_model))
             raise Exception
@@ -117,6 +121,8 @@ class MotionController:
 #%% DataSampler
 # Genericizes the type of data sampler.
 class DataSampler:
+    SupportedDevices = ['KI 6485']
+
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None):
         # TODO: Come up with a proper way of setting the sampler_type, ie as an argument.
         self.model = dev_model
@@ -125,13 +131,13 @@ class DataSampler:
 
         if self.model == 'KEITHLEY 6485':
             if dummy:
-                self.pa = pico.Picodummy(3)
+                self.pa = ki_pico.KI_Picodummy(3)
                 self._is_dummy = True
             else:
                 if man_port is not None:
-                    self.pa = pico.Picoammeter(3, man_port)
+                    self.pa = ki_pico.KI_Picoammeter(3, man_port)
                 else:
-                    self.pa = pico.Picoammeter(3)
+                    self.pa = ki_pico.KI_Picoammeter(3)
         else:
             print('Data sampler device model "%s" is not supported.'%(dev_model))
             raise Exception

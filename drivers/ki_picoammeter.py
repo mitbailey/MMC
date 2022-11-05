@@ -5,7 +5,7 @@ import serial
 from time import sleep
 from utilities import ports_finder
 
-class Picoammeter:
+class KI_Picoammeter:
     def __init__(self, samples: int, man_port: str = None):
         if samples < 2:
             samples = 2
@@ -107,7 +107,7 @@ class Picoammeter:
         if self.s is not None:
             self.s.close()
 
-class Picodummy:
+class KI_Picoammeter_Dummy:
     def __init__(self, samples: int):
         if samples < 2:
             samples = 2
@@ -192,7 +192,7 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    pa = Picoammeter(3)
+    pa = KI_Picoammeter(3)
     while not done:
         print(pa.sample_data())
 
