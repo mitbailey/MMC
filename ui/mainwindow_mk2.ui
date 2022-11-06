@@ -59,7 +59,7 @@
            </font>
           </property>
           <property name="title">
-           <string>Main Drive - [PORT] ([MODEL])</string>
+           <string>Main Drive</string>
           </property>
           <property name="flat">
            <bool>true</bool>
@@ -538,8 +538,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>455</width>
-                   <height>108</height>
+                   <width>472</width>
+                   <height>118</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_9">

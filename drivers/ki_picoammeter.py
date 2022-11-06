@@ -107,6 +107,12 @@ class KI_Picoammeter:
         if self.s is not None:
             self.s.close()
 
+    def short_name(self):
+        return 'KI6485'
+
+    def full_name(self):
+        return 'Keithley 6485 Picoammeter'
+
 class KI_Picoammeter_Dummy:
     def __init__(self, samples: int):
         if samples < 2:
@@ -176,6 +182,12 @@ class KI_Picoammeter_Dummy:
         pass
         # if self.s is not None:
             # self.s.close()
+
+    def short_name(self):
+        return 'KI6485DUM'
+
+    def full_name(self):
+        return 'Keithley 6485 Picoammeter Dummy'
 
 # test code
 

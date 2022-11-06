@@ -112,7 +112,11 @@ class MP_789A_4:
         self.s.write(b'+%d\r', steps)
         self._position += steps
 
-        
+    def short_name(self):
+        return 'MP789'
+
+    def full_name(self):
+        return 'McPherson 789A-4'
 
 """ 
 McPherson Model 789A-4 Scan Controller Command Set

@@ -76,6 +76,12 @@ class MP_792:
         self.confirm_axis()
         self._V_789.move_relative(steps)
 
+    def short_name(self):
+        return 'MP792'
+
+    def full_name(self):
+        return 'McPherson 792'
+
 """ 
 McPherson Model 789A-4 Scan Controller Command Set
 

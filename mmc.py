@@ -837,8 +837,12 @@ class MMC_Main(QMainWindow):
         if n_scan_idx != scan_idx:
             print('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
 
-    def scan_data_update(self, scan_idx: int, xdata: float, ydata: float):
-        self.table.insertDataAt(scan_idx, xdata, ydata)
+    def scan_data_update(self, scan_idx: int, which_sampler: int, xdata: float, ydata: float):
+        # TODO: Add the ability to plot multiple sampler's data. These will come in distinguished by the which_sampler variable, which is equivalent to that sampler's index in the samplers list. This is a slot and will be called via a signal in Scan.run().
+        # TODO: This is going to require an overhaul to datatable.py, allowing two X and two Y axes.
+        
+        if which_sampler == 0:
+            self.table.insertDataAt(scan_idx, xdata, ydata)
 
     def scan_data_complete(self, scan_idx: int):
         self.table.markInsertFinished(scan_idx)
@@ -945,6 +949,28 @@ class MMC_Main(QMainWindow):
 
             # layout.addWidget(self.apply_button)
             self.grating_conf_win.setLayout(layout)
+
+                        # Get axes combos.
+            self.dm_main_drive_axis_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "main_drive_axis_combo")
+            self.dm_color_wheel_axis_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "color_wheel_axis_combo")
+            self.dm_sample_rotation_axis_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "sample_rotation_axis_combo")
+            self.dm_sample_translation_axis_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "sample_translation_axis_combo")
+            self.dm_detector_rotation_axis_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "detector_rotation_axis_combo")
+
+            none = 'No Device Selected'
+            self.dm_main_drive_axis_combo.addItem('%s'%(none))
+            self.dm_color_wheel_axis_combo.addItem('%s'%(none))
+            self.dm_sample_rotation_axis_combo.addItem('%s'%(none))
+            self.dm_sample_translation_axis_combo.addItem('%s'%(none))
+            self.dm_detector_rotation_axis_combo.addItem('%s'%(none))
+
+            # Populate axes combos.
+            for dev in self.dev_list:
+                self.dm_main_drive_axis_combo.addItem('%s'%(dev))
+                self.dm_color_wheel_axis_combo.addItem('%s'%(dev))
+                self.dm_sample_rotation_axis_combo.addItem('%s'%(dev))
+                self.dm_sample_translation_axis_combo.addItem('%s'%(dev))
+                self.dm_detector_rotation_axis_combo.addItem('%s'%(dev))
 
         self.grating_spinbox.setFocus() # Automatically sets this as focus.
         self.grating_spinbox.selectAll()
@@ -1075,9 +1101,9 @@ class Scan(QThread):
     SIGNAL_progress = pyqtSignal(int)
     SIGNAL_complete = pyqtSignal()
 
-    SIGNAL_data_begin = pyqtSignal(int, dict) # scan index, redundant
-    SIGNAL_data_update = pyqtSignal(int, float, float) # scan index, xdata, ydata (to be appended into index)
-    SIGNAL_data_complete = pyqtSignal(int) # scan index, redundant
+    SIGNAL_data_begin = pyqtSignal(int, dict) # scan index, which sampler, redundant
+    SIGNAL_data_update = pyqtSignal(int, int, float, float) # scan index, which sampler, xdata, ydata (to be appended into index)
+    SIGNAL_data_complete = pyqtSignal(int) # scan index, which sampler, redundant
 
     def __init__(self, parent: QMainWindow):
         super(Scan, self).__init__()
@@ -1101,13 +1127,15 @@ class Scan(QThread):
         print("Save to file? " + str(self.other.autosave_data_bool))
 
         self.SIGNAL_status_update.emit("PREPARING")
-        sav_file = None
+        sav_files = []
         tnow = dt.datetime.now()
         if (self.other.autosave_data_bool):
-            
-            filename = self.other.data_save_directory + tnow.strftime('%Y%m%d%H%M%S') + "_data.csv"
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            sav_file = open(filename, 'w')
+            filetime = tnow.strftime('%Y%m%d%H%M%S')
+            for sampler in self.other.samplers:
+                filename = '%s%s_%s_data.csv'%(self.other.data_save_directory, filetime, sampler.short_name())
+                # filename = self.other.data_save_directory + tnow.strftime('%Y%m%d%H%M%S') + "_data.csv"
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                sav_files.append(open(filename, 'w'))
 
         print("SCAN QTHREAD")
         print("Start | Stop | Step")
@@ -1116,8 +1144,9 @@ class Scan(QThread):
         self.other.stoppos = (self.other.stop_spin.value() + self.other.zero_ofst) * self.other.conversion_slope
         self.other.steppos = (self.other.step_spin.value()) * self.other.conversion_slope
         if self.other.steppos == 0 or self.other.startpos == self.other.stoppos:
-            if (sav_file is not None):
-                sav_file.close()
+            for f in sav_files:
+                if (f is not None):
+                    f.close()
             self.SIGNAL_complete.emit()
             return
         scanrange = np.arange(self.other.startpos, self.other.stoppos + self.other.steppos, self.other.steppos)
@@ -1132,9 +1161,14 @@ class Scan(QThread):
 
         self._xdata = []
         self._ydata = []
+
+        for sampler in self.other.samplers:
+            self._xdata.append([])
+            self._ydata.append([])
+
         self._scan_id = self.other.table.scanId
         metadata = {'tstamp': tnow, 'mm_to_idx': self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx, 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
-        self.SIGNAL_data_begin.emit(self.scanId, metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
+        self.SIGNAL_data_begin.emit(self.scanId,  metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
         while self.scanId == self.other.table.scanId: # spin until that happens
             continue
         for idx, dpos in enumerate(scanrange):
@@ -1144,35 +1178,41 @@ class Scan(QThread):
             self.other.mtn_ctrls[self.other.main_drive_i].move_to(dpos * self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx, True)
             pos = self.other.mtn_ctrls[self.other.main_drive_i].get_position()
             self.SIGNAL_status_update.emit("SAMPLING")
-            buf = self.other.sampler.sample_data()
-            print(buf)
-            self.SIGNAL_progress.emit(round((idx + 1) * 100 / nidx))
-            # process buf
-            words = buf.split(',') # split at comma
-            if len(words) != 3:
-                continue
-            try:
-                mes = float(words[0][:-1]) # skip the A (unit suffix)
-                err = int(float(words[2])) # skip timestamp
-            except Exception:
-                continue
-            self._xdata.append((((pos / self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
-            self._ydata.append(self.other.mes_sign * mes * 1e12)
-            self.dataUpdate.emit(self.scanId, self._xdata[-1], self._ydata[-1])
 
-            if sav_file is not None:
-                if idx == 0:
-                    sav_file.write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
-                    sav_file.write('# Steps/mm: %f\n'%(self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx))
-                    sav_file.write('# mm/nm: %e; lambda_0 (nm): %e\n'%(self.other.conversion_slope, self.other.zero_ofst))
-                    sav_file.write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
+            i=0
+            for sampler in self.other.samplers:
+                buf = sampler.sample_data()
+                print(buf)
+                self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.samplers)))
                 # process buf
-                # 1. split by \n
-                buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
-                sav_file.write(buf)
+                words = buf.split(',') # split at comma
+                if len(words) != 3:
+                    continue
+                try:
+                    mes = float(words[0][:-1]) # skip the A (unit suffix)
+                    err = int(float(words[2])) # skip timestamp
+                except Exception:
+                    continue
+                self._xdata[i].append((((pos / self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
+                self._ydata[i].append(self.other.mes_sign * mes * 1e12)
+                self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
 
-        if (sav_file is not None):
-            sav_file.close()
+                if sav_files[i] is not None:
+                    if idx == 0:
+                        sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
+                        sav_files[i].write('# Steps/mm: %f\n'%(self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx))
+                        sav_files[i].write('# mm/nm: %e; lambda_0 (nm): %e\n'%(self.other.conversion_slope, self.other.zero_ofst))
+                        sav_files[i].write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
+                    # process buf
+                    # 1. split by \n
+                    buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
+                    sav_files[i].write(buf)
+
+                i += 1
+
+        for sav_file in sav_files:
+            if (sav_file is not None):
+                sav_file.close()
         self.other.num_scans += 1
 
         self.SIGNAL_complete.emit()
@@ -1180,12 +1220,12 @@ class Scan(QThread):
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
     
     @property
-    def xdata(self):
-        return np.array(self._xdata, dtype=float)
+    def xdata(self, which_sampler: int):
+        return np.array(self._xdata[which_sampler], dtype=float)
     
     @property
-    def ydata(self):
-        return np.array(self._ydata, dtype=float)
+    def ydata(self, which_sampler: int):
+        return np.array(self._ydata[which_sampler], dtype=float)
 
     @property
     def scanId(self):

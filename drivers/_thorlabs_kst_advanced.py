@@ -634,6 +634,12 @@ class Thorlabs: # Wrapper class for TLI methods
         def setup_kcube_trigpos(self):
             pass
 
+        def short_name(self):
+            return 'KST101'
+
+        def full_name(self):
+            return 'ThorLabs KST-101'
+
     class KSTDummy: # Subclass for KST101 devices
         # API calls; possible examples.
         """
@@ -1039,6 +1045,12 @@ class Thorlabs: # Wrapper class for TLI methods
         # setup_kcube_trigpos
         def setup_kcube_trigpos(self):
             pass
+
+        def short_name(self):
+            return 'KST101DUM'
+
+        def full_name(self):
+            return 'ThorLabs KST-101 Dummy'
 
 # %%
 if __name__ == '__main__':

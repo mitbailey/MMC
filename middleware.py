@@ -116,6 +116,12 @@ class MotionController:
     def move_to(self, position, block):
         return self.motor_ctrl.move_to(position, block)
 
+    def short_name(self):
+        return self.motor_ctrl.short_name()
+
+    def long_name(self):
+        return self.motor_ctrl.long_name()
+
     pass
 
 #%% DataSampler
@@ -149,5 +155,11 @@ class DataSampler:
 
     def is_dummy(self):
         return self._is_dummy
+
+    def short_name(self):
+        return self.pa.short_name()
+
+    def long_name(self):
+        return self.pa.long_name()
 
     pass
