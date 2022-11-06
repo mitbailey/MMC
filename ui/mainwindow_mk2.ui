@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1101</width>
-    <height>686</height>
+    <height>941</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -36,7 +36,7 @@
        <number>5</number>
       </property>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0">
+       <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0">
         <property name="leftMargin">
          <number>5</number>
         </property>
@@ -50,41 +50,744 @@
          <number>5</number>
         </property>
         <item>
-         <widget class="QGroupBox" name="mancon_groupbox">
-          <property name="maximumSize">
-           <size>
-            <width>595</width>
-            <height>16777215</height>
-           </size>
-          </property>
+         <widget class="QGroupBox" name="main_drive_groupbox">
           <property name="font">
            <font>
             <family>Segoe UI Semibold</family>
             <pointsize>12</pointsize>
-            <underline>false</underline>
+            <italic>true</italic>
            </font>
           </property>
           <property name="title">
-           <string>Manual Control (nm)</string>
+           <string>Main Drive - [PORT] ([MODEL])</string>
           </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_13" stretch="0">
-           <property name="spacing">
-            <number>6</number>
-           </property>
-           <property name="leftMargin">
-            <number>5</number>
-           </property>
-           <property name="topMargin">
-            <number>5</number>
-           </property>
-           <property name="rightMargin">
-            <number>5</number>
-           </property>
-           <property name="bottomMargin">
-            <number>5</number>
-           </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_7">
+            <widget class="QGroupBox" name="mancon_groupbox">
+             <property name="maximumSize">
+              <size>
+               <width>595</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Segoe UI Semibold</family>
+               <pointsize>12</pointsize>
+               <italic>false</italic>
+               <underline>false</underline>
+              </font>
+             </property>
+             <property name="title">
+              <string>Manual Control (nm)</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_12" stretch="0">
+              <property name="spacing">
+               <number>6</number>
+              </property>
+              <property name="leftMargin">
+               <number>5</number>
+              </property>
+              <property name="topMargin">
+               <number>5</number>
+              </property>
+              <property name="rightMargin">
+               <number>5</number>
+              </property>
+              <property name="bottomMargin">
+               <number>5</number>
+              </property>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <property name="leftMargin">
+                 <number>5</number>
+                </property>
+                <property name="topMargin">
+                 <number>5</number>
+                </property>
+                <property name="rightMargin">
+                 <number>5</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>5</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="pos_set_label">
+                  <property name="text">
+                   <string>Position:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="pos_set_spinbox">
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-50000.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>5000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="move_pos_button">
+                  <property name="font">
+                   <font>
+                    <family>Segoe UI Semibold</family>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Move to Position</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_2">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="home_button">
+                  <property name="font">
+                   <font>
+                    <family>Segoe UI Semibold</family>
+                    <pointsize>12</pointsize>
+                    <underline>false</underline>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Home</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="scancon_groupbox">
+             <property name="maximumSize">
+              <size>
+               <width>595</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Segoe UI Semibold</family>
+               <pointsize>12</pointsize>
+               <italic>false</italic>
+              </font>
+             </property>
+             <property name="title">
+              <string>Scanning Control (nm)</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0">
+              <property name="leftMargin">
+               <number>5</number>
+              </property>
+              <property name="topMargin">
+               <number>5</number>
+              </property>
+              <property name="rightMargin">
+               <number>5</number>
+              </property>
+              <property name="bottomMargin">
+               <number>5</number>
+              </property>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_6">
+                <property name="leftMargin">
+                 <number>5</number>
+                </property>
+                <property name="topMargin">
+                 <number>5</number>
+                </property>
+                <property name="rightMargin">
+                 <number>5</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>5</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="start_set_label">
+                  <property name="text">
+                   <string>Start:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="start_set_spinbox">
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-9999.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>500000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QLabel" name="end_set_label">
+                  <property name="text">
+                   <string>End:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="end_set_spinbox">
+                  <property name="decimals">
+                   <number>2</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-9999.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>500000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_4">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QLabel" name="step_set_label">
+                  <property name="text">
+                   <string>Step:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="step_set_spinbox">
+                  <property name="suffix">
+                   <string/>
+                  </property>
+                  <property name="decimals">
+                   <number>4</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.000100000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>500000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>0.100000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_14">
+                <property name="leftMargin">
+                 <number>5</number>
+                </property>
+                <property name="topMargin">
+                 <number>5</number>
+                </property>
+                <property name="rightMargin">
+                 <number>5</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>5</number>
+                </property>
+                <item>
+                 <spacer name="horizontalSpacer_5">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="begin_scan_button">
+                  <property name="minimumSize">
+                   <size>
+                    <width>130</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Begin Scan</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QFrame" name="frame">
+                  <property name="minimumSize">
+                   <size>
+                    <width>50</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="frameShape">
+                   <enum>QFrame::StyledPanel</enum>
+                  </property>
+                  <property name="frameShadow">
+                   <enum>QFrame::Raised</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="stop_scan_button">
+                  <property name="minimumSize">
+                   <size>
+                    <width>130</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Stop Scan</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="color_wheel_groupbox">
+          <property name="font">
+           <font>
+            <family>Segoe UI Semibold</family>
+            <pointsize>12</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
+          <property name="title">
+           <string>Color Wheel</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <item>
+            <widget class="QGroupBox" name="color_wheel_mancon_groupbox">
+             <property name="maximumSize">
+              <size>
+               <width>595</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <italic>false</italic>
+              </font>
+             </property>
+             <property name="title">
+              <string>Manual Control (steps)</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_11">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_12">
+                <property name="leftMargin">
+                 <number>5</number>
+                </property>
+                <property name="topMargin">
+                 <number>5</number>
+                </property>
+                <property name="rightMargin">
+                 <number>5</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>5</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="label_3">
+                  <property name="text">
+                   <string>Position:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="color_wheel_pos_set_spinbox">
+                  <property name="minimum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>5000000.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="color_wheel_move_pos_button">
+                  <property name="text">
+                   <string>Move to Position</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_9">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="color_wheel_home_button">
+                  <property name="text">
+                   <string>Home</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_5">
+             <property name="maximumSize">
+              <size>
+               <width>595</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <italic>false</italic>
+              </font>
+             </property>
+             <property name="title">
+              <string>Rules</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_10">
+              <item>
+               <widget class="QScrollArea" name="scrollArea">
+                <property name="widgetResizable">
+                 <bool>true</bool>
+                </property>
+                <widget class="QWidget" name="scrollAreaWidgetContents">
+                 <property name="geometry">
+                  <rect>
+                   <x>0</x>
+                   <y>0</y>
+                   <width>455</width>
+                   <height>108</height>
+                  </rect>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_9">
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_11">
+                    <property name="leftMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>5</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_4">
+                      <property name="font">
+                       <font>
+                        <family>Segoe UI</family>
+                       </font>
+                      </property>
+                      <property name="text">
+                       <string>At</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDoubleSpinBox" name="color_wheel_rule_set_spinbox">
+                      <property name="font">
+                       <font>
+                        <italic>false</italic>
+                       </font>
+                      </property>
+                      <property name="maximum">
+                       <double>9999.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_5">
+                      <property name="font">
+                       <font>
+                        <family>Segoe UI</family>
+                       </font>
+                      </property>
+                      <property name="text">
+                       <string>nm or greater, be at step</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QSpinBox" name="color_wheel_rule_step_spinbox">
+                      <property name="font">
+                       <font>
+                        <italic>false</italic>
+                       </font>
+                      </property>
+                      <property name="maximum">
+                       <number>9999999</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_8">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="color_wheel_remove_rule_button">
+                      <property name="maximumSize">
+                       <size>
+                        <width>29</width>
+                        <height>29</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>-</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_13">
+                    <property name="leftMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>5</number>
+                    </property>
+                    <item>
+                     <spacer name="horizontalSpacer_10">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="color_wheel_add_rule_button">
+                      <property name="maximumSize">
+                       <size>
+                        <width>29</width>
+                        <height>29</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>+</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <spacer name="verticalSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="sample_movement_groupbox">
+          <property name="font">
+           <font>
+            <family>Segoe UI Semibold</family>
+            <pointsize>12</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
+          <property name="title">
+           <string>Sample Movement</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QGroupBox" name="groupBox_8">
+             <property name="maximumSize">
+              <size>
+               <width>595</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <italic>false</italic>
+              </font>
+             </property>
+             <property name="title">
+              <string>Rotation</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_9">
+             <property name="maximumSize">
+              <size>
+               <width>595</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <italic>false</italic>
+              </font>
+             </property>
+             <property name="title">
+              <string>Translation</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="detector_rotation_groupbox">
+          <property name="font">
+           <font>
+            <family>Segoe UI Semibold</family>
+            <pointsize>12</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
+          <property name="title">
+           <string>Detector Rotation</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox">
+          <property name="font">
+           <font>
+            <family>Segoe UI Semibold</family>
+            <pointsize>12</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
+          <property name="title">
+           <string>Data Table</string>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_13">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_2" stretch="5,0,0">
              <property name="leftMargin">
               <number>5</number>
              </property>
@@ -98,7 +801,17 @@
               <number>5</number>
              </property>
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <widget class="QFrame" name="table_frame">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_9">
                <property name="leftMargin">
                 <number>5</number>
                </property>
@@ -112,37 +825,7 @@
                 <number>5</number>
                </property>
                <item>
-                <widget class="QLabel" name="pos_set_label">
-                 <property name="text">
-                  <string>Position:</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QDoubleSpinBox" name="pos_set_spinbox">
-                 <property name="decimals">
-                  <number>2</number>
-                 </property>
-                 <property name="minimum">
-                  <double>-50000.000000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>5000000.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="move_pos_button">
-                 <property name="text">
-                  <string>Move to Position</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_2">
+                <spacer name="horizontalSpacer_6">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
                  </property>
@@ -155,72 +838,35 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QPushButton" name="home_button">
+                <widget class="QPushButton" name="save_data_button">
                  <property name="font">
                   <font>
                    <family>Segoe UI Semibold</family>
                    <pointsize>12</pointsize>
-                   <underline>false</underline>
                   </font>
                  </property>
                  <property name="text">
-                  <string>Home</string>
+                  <string>Save Data</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="delete_data_button">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI Semibold</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>Delete Data</string>
                  </property>
                 </widget>
                </item>
               </layout>
              </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="scancon_groupbox">
-          <property name="maximumSize">
-           <size>
-            <width>595</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Segoe UI Semibold</family>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="title">
-           <string>Scanning Control (nm)</string>
-          </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_16" stretch="0">
-           <property name="leftMargin">
-            <number>5</number>
-           </property>
-           <property name="topMargin">
-            <number>5</number>
-           </property>
-           <property name="rightMargin">
-            <number>5</number>
-           </property>
-           <property name="bottomMargin">
-            <number>5</number>
-           </property>
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_4">
-             <property name="leftMargin">
-              <number>5</number>
-             </property>
-             <property name="topMargin">
-              <number>5</number>
-             </property>
-             <property name="rightMargin">
-              <number>5</number>
-             </property>
-             <property name="bottomMargin">
-              <number>5</number>
-             </property>
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <layout class="QHBoxLayout" name="horizontalLayout_3">
                <property name="leftMargin">
                 <number>5</number>
                </property>
@@ -234,33 +880,7 @@
                 <number>5</number>
                </property>
                <item>
-                <widget class="QLabel" name="start_set_label">
-                 <property name="text">
-                  <string>Start:</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QDoubleSpinBox" name="start_set_spinbox">
-                 <property name="decimals">
-                  <number>2</number>
-                 </property>
-                 <property name="minimum">
-                  <double>-9999.000000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>500000.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.010000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_3">
+                <spacer name="horizontalSpacer">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
                  </property>
@@ -273,141 +893,15 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QLabel" name="end_set_label">
-                 <property name="text">
-                  <string>End:</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QDoubleSpinBox" name="end_set_spinbox">
-                 <property name="decimals">
-                  <number>2</number>
-                 </property>
-                 <property name="minimum">
-                  <double>-9999.000000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>500000.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.010000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_4">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
-                <widget class="QLabel" name="step_set_label">
-                 <property name="text">
-                  <string>Step:</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QDoubleSpinBox" name="step_set_spinbox">
-                 <property name="suffix">
-                  <string/>
-                 </property>
-                 <property name="decimals">
-                  <number>4</number>
-                 </property>
-                 <property name="minimum">
-                  <double>0.000100000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>500000.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.010000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>0.100000000000000</double>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_14">
-               <property name="leftMargin">
-                <number>5</number>
-               </property>
-               <property name="topMargin">
-                <number>5</number>
-               </property>
-               <property name="rightMargin">
-                <number>5</number>
-               </property>
-               <item>
-                <spacer name="horizontalSpacer_5">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
-                <widget class="QPushButton" name="begin_scan_button">
-                 <property name="minimumSize">
-                  <size>
-                   <width>130</width>
-                   <height>0</height>
-                  </size>
+                <widget class="QPushButton" name="save_config_button">
+                 <property name="font">
+                  <font>
+                   <family>Segoe UI Semibold</family>
+                   <pointsize>12</pointsize>
+                  </font>
                  </property>
                  <property name="text">
-                  <string>Begin Scan</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QFrame" name="frame">
-                 <property name="minimumSize">
-                  <size>
-                   <width>50</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="frameShape">
-                  <enum>QFrame::StyledPanel</enum>
-                 </property>
-                 <property name="frameShadow">
-                  <enum>QFrame::Raised</enum>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="stop_scan_button">
-                 <property name="minimumSize">
-                  <size>
-                   <width>130</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Stop Scan</string>
+                  <string>Machine Configuration</string>
                  </property>
                 </widget>
                </item>
@@ -417,129 +911,6 @@
            </item>
           </layout>
          </widget>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="5,0,0">
-          <property name="leftMargin">
-           <number>5</number>
-          </property>
-          <property name="topMargin">
-           <number>5</number>
-          </property>
-          <property name="rightMargin">
-           <number>5</number>
-          </property>
-          <property name="bottomMargin">
-           <number>5</number>
-          </property>
-          <item>
-           <widget class="QFrame" name="table_frame">
-            <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_9">
-            <property name="leftMargin">
-             <number>5</number>
-            </property>
-            <property name="topMargin">
-             <number>5</number>
-            </property>
-            <property name="rightMargin">
-             <number>5</number>
-            </property>
-            <property name="bottomMargin">
-             <number>5</number>
-            </property>
-            <item>
-             <spacer name="horizontalSpacer_6">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="save_data_button">
-              <property name="font">
-               <font>
-                <family>Segoe UI Semibold</family>
-                <pointsize>12</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Save Data</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="delete_data_button">
-              <property name="font">
-               <font>
-                <family>Segoe UI Semibold</family>
-                <pointsize>12</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Delete Data</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <property name="leftMargin">
-             <number>5</number>
-            </property>
-            <property name="topMargin">
-             <number>5</number>
-            </property>
-            <property name="rightMargin">
-             <number>5</number>
-            </property>
-            <property name="bottomMargin">
-             <number>5</number>
-            </property>
-            <item>
-             <spacer name="horizontalSpacer">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="save_config_button">
-              <property name="font">
-               <font>
-                <family>Segoe UI Semibold</family>
-                <pointsize>12</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Machine Configuration</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
         </item>
        </layout>
       </item>
@@ -855,6 +1226,12 @@
     </property>
     <addaction name="pop_out_plot"/>
     <addaction name="pop_out_table"/>
+    <addaction name="separator"/>
+    <addaction name="actionShow_Main_Drive"/>
+    <addaction name="actionShow_Color_Wheel"/>
+    <addaction name="actionShow_Sample_Movement"/>
+    <addaction name="actionShow_Detector_Rotation"/>
+    <addaction name="actionShow_Data_Table"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -968,6 +1345,61 @@
    </property>
    <property name="text">
     <string>Invert Measurements</string>
+   </property>
+  </action>
+  <action name="actionShow_Main_Drive">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Main Drive</string>
+   </property>
+  </action>
+  <action name="actionShow_Color_Wheel">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Color Wheel</string>
+   </property>
+  </action>
+  <action name="actionShow_Sample_Movement">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Sample Movement</string>
+   </property>
+  </action>
+  <action name="actionShow_Detector_Rotation">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Detector Rotation</string>
+   </property>
+  </action>
+  <action name="actionShow_Data_Table">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Data Table</string>
    </property>
   </action>
  </widget>

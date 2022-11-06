@@ -466,9 +466,9 @@ class MMC_Main(QMainWindow):
         self.steppos = 0.1
 
         if dummy:
-            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.4")
+            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.5")
         else:
-            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.4")
+            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.5")
 
         self.is_conv_set = False # Use this flag to set conversion
 
@@ -1125,15 +1125,15 @@ class Scan(QThread):
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
         self.SIGNAL_status_update.emit("ZEROING")
-        prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.mtn_ctrls[self.main_drive_i].mm_to_idx)
-        self.other.mtn_ctrls[self.main_drive_i].move_to(prep_pos, True)
+        prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx)
+        self.other.mtn_ctrls[self.other.main_drive_i].move_to(prep_pos, True)
         self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
 
         self._xdata = []
         self._ydata = []
         self._scan_id = self.other.table.scanId
-        metadata = {'tstamp': tnow, 'mm_to_idx': self.other.mtn_ctrls[self.main_drive_i].mm_to_idx, 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+        metadata = {'tstamp': tnow, 'mm_to_idx': self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx, 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
         self.SIGNAL_data_begin.emit(self.scanId, metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
         while self.scanId == self.other.table.scanId: # spin until that happens
             continue
@@ -1141,8 +1141,8 @@ class Scan(QThread):
             if not self.other.scanRunning:
                 break
             self.SIGNAL_status_update.emit("MOVING")
-            self.other.mtn_ctrls[self.main_drive_i].move_to(dpos * self.other.mtn_ctrls[self.main_drive_i].mm_to_idx, True)
-            pos = self.other.mtn_ctrls[self.main_drive_i].get_position()
+            self.other.mtn_ctrls[self.other.main_drive_i].move_to(dpos * self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx, True)
+            pos = self.other.mtn_ctrls[self.other.main_drive_i].get_position()
             self.SIGNAL_status_update.emit("SAMPLING")
             buf = self.other.sampler.sample_data()
             print(buf)
@@ -1156,19 +1156,19 @@ class Scan(QThread):
                 err = int(float(words[2])) # skip timestamp
             except Exception:
                 continue
-            self._xdata.append((((pos / self.other.mtn_ctrls[self.main_drive_i].mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
+            self._xdata.append((((pos / self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
             self._ydata.append(self.other.mes_sign * mes * 1e12)
             self.dataUpdate.emit(self.scanId, self._xdata[-1], self._ydata[-1])
 
             if sav_file is not None:
                 if idx == 0:
                     sav_file.write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
-                    sav_file.write('# Steps/mm: %f\n'%(self.other.mtn_ctrls[self.main_drive_i].mm_to_idx))
+                    sav_file.write('# Steps/mm: %f\n'%(self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx))
                     sav_file.write('# mm/nm: %e; lambda_0 (nm): %e\n'%(self.other.conversion_slope, self.other.zero_ofst))
                     sav_file.write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
                 # process buf
                 # 1. split by \n
-                buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.mtn_ctrls[self.main_drive_i].mm_to_idx) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
+                buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
                 sav_file.write(buf)
 
         if (sav_file is not None):
