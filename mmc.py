@@ -51,7 +51,7 @@ import math as m
 import numpy as np
 import datetime as dt
 # import serial.tools.list_ports
-from utilities import ports_finder
+# from utilities import ports_finder
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -63,8 +63,10 @@ from utilities.config import load_config, save_config, reset_config
 import webbrowser
 from utilities.datatable import DataTableWidget
 
+import middleware as mw
 from middleware import MotionController#, list_all_devices
 from middleware import DataSampler
+from middleware import DevFinder
 
 # %% Fonts
 digital_7_italic_22 = None
@@ -150,6 +152,8 @@ class MMC_Main(QMainWindow):
     def __del__(self):
         del self.mtn_ctrls
         del self.samplers
+        self.dev_finder.done = True
+        del self.dev_finder
 
     # Constructor
     def __init__(self, application, uiresource = None):
@@ -170,6 +174,7 @@ class MMC_Main(QMainWindow):
         self.main_gui_booted = False
         self.dev_man_win = None
         self.show_window_device_manager()
+        self.dev_finder = None
 
         # TODO: These indices will keep track of which drives correspond to which controllers.
         self.main_drive_i = 0
@@ -310,28 +315,32 @@ class MMC_Main(QMainWindow):
 
         # Motion Controller and Sampler initialization.
         # Note that, for now, the Keithley 6485 and KST101 are the defaults.
-        samplers_connected = [True] * self.num_samplers
-        mtn_ctrls_connected = [True] * self.num_motion_controllers
+        samplers_connected = [False] * self.num_samplers
+        mtn_ctrls_connected = [False] * self.num_motion_controllers
 
         self.samplers = [None] * self.num_samplers
         self.mtn_ctrls = [None] * self.num_motion_controllers
-        # for i, combo in self.dm_sampler_combos:
+
+        # TODO: Re-instate some sort of auto-connect.
+
         for i in range(self.num_samplers):
             try:
                 if self.dm_sampler_combos[i].currentIndex() != 0:
                     print("Using manual port: %s"%(self.dm_sampler_combos[i].currentText().split(' ')[0]))
                     self.samplers[i] = DataSampler(dummy, self.dm_sampler_model_combos[i].currentText(), self.dm_sampler_combos[i].currentText().split(' ')[0])
-                else:
-                    # Auto-Connect
-                    self.samplers[i] = DataSampler(dummy, DataSampler.SupportedDevices[0])
+                # else:
+                #     # Auto-Connect
+                #     self.samplers[i] = DataSampler(dummy, DataSampler.SupportedDevices[0])
 
             except Exception as e:
                 print(e)
-                print("Failed to find sampler.")
+                print("Failed to find sampler (%s)."%(e))
                 self.samplers[i] = None
                 samplers_connected[i] = False
             if self.samplers[i] is None:
                 samplers_connected[i] = False
+            else:
+                samplers_connected[i] = True
 
         # for i, combo in self.dm_sampler_combos:
         for i in range(self.num_motion_controllers):
@@ -339,17 +348,19 @@ class MMC_Main(QMainWindow):
                 if self.dm_mtn_ctrl_combos[i].currentIndex() != 0:
                     print("Using manual port: %s"%(self.dm_mtn_ctrl_combos[i].currentText().split(' ')[0]))
                     self.mtn_ctrls[i] = MotionController(dummy, self.dm_mtn_ctrl_model_combos[i].currentText(), self.dm_mtn_ctrl_combos[i].currentText().split(' ')[0])
-                else:
-                    # Auto-Connect
-                    self.mtn_ctrls[i] = MotionController(dummy, MotionController.SupportedDevices[0])
+                # else:
+                #     # Auto-Connect
+                #     self.mtn_ctrls[i] = MotionController(dummy, MotionController.SupportedDevices[0])
 
             except Exception as e:
-                print("Failed to find motion controller.")
+                print("Failed to find motion controller (%s)."%(e))
                 self.mtn_ctrls[i] = None
                 mtn_ctrls_connected[i] = False
                 pass
             if self.mtn_ctrls[i] is None:
                 mtn_ctrls_connected[i] = False
+            else:
+                mtn_ctrls_connected[i] = True
 
         # Emits a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
         
@@ -630,7 +641,11 @@ class MMC_Main(QMainWindow):
         self.show()  
 
     def devman_list_devices(self):
-        self.dev_list = ports_finder.find_all_ports()
+        # self.dev_list = ports_finder.find_all_ports()
+        # if self.dev_finder is None:
+            # self.dev_finder = DevFinder()
+        # self.dev_list = self.dev_finder.get_dev_list()
+        self.dev_list = mw.find_all_ports()
 
         dev_list_str = ''
         for dev in self.dev_list:

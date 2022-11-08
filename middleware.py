@@ -31,6 +31,8 @@ from io import TextIOWrapper
 import math as m
 import numpy as np
 import datetime as dt
+import serial
+import threading
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -40,6 +42,8 @@ from matplotlib.figure import Figure
 # %% Custom Imports
 from drivers import _thorlabs_kst_advanced as tlkt
 from drivers import ki_picoammeter as ki_pico
+from drivers import mp_789a_4 as mp789
+from drivers import mp_792 as mp792
 
 from utilities import ports_finder
 
@@ -50,6 +54,70 @@ from utilities import ports_finder
 # 0 - Picoammeter, Keithley
 
 # TODO: Need to implement external triggers when certain actions occur. Should also consider adding a trigger-only faux 'device.'
+
+#%%
+class DevFinder:
+    def __init__(self):
+        self.done = False
+        self._master_dev_list = []
+
+        self.device_tid = threading.Thread(target=self.device_t)
+        self.device_tid.start()
+
+    def __del__(self):
+        self.done = True
+        self.device_tid.join()
+
+    def device_t(self):
+        while not self.done:
+            port_list = ports_finder.find_serial_ports()
+            dev_name_list = port_list
+
+            for i, port in enumerate(port_list):
+                dev_name_list[i] = port_list[i] + ' ' + self.discern_comport(port_list[i])
+
+            apt_list = ports_finder.find_apt_ports()
+
+            self._master_dev_list = dev_name_list + apt_list
+
+            sleep(2)
+
+    def get_dev_list(self):
+        return self._master_dev_list
+
+    def discern_comport(self, comport: str):
+        s = serial.Serial(comport, 9600, timeout=1)
+        sleep(0.5)
+
+        # For each serial port, since they're likely KEYSPAN devices, we will need to figure out what device is on the other end. 
+
+        # Check if a 789A-4 or 792 is on this comport.
+        s.write(b' \r')
+        sleep(0.5)
+
+        raw = s.read(128)
+
+        if raw == b' v2.55\r\n#\r\n' or raw == b' #\r\n':
+            # print('MP 789A-4  or MP 792 detected!')
+            s.close()
+            return '(MP 789A-4 or MP 792)'
+        else:
+            # Check if a Keithley 6485 is on this comport.
+            s.write(b'*RST\r')
+            sleep(0.5)
+            s.write(b'*IDN?\r')
+            sleep(0.5)
+            raw = s.read(128)
+            if b'KEITHLEY INSTRUMENTS INC.,MODEL 6485' in raw:
+                # print('Keithley 6485 detected!')
+                s.close()
+                return '(KI 6485)'
+        
+        s.close()
+        return '(Unknown)'
+
+def find_all_ports():
+    return ports_finder.find_all_ports()
 
 #%% MotionController
 # Genericizes the type of motor controller.
@@ -84,18 +152,22 @@ class MotionController:
                 self.motor_ctrl.set_stage('ZST25')
         elif self.model == MotionController.SupportedDevices[1]:
             if dummy:
+                # self.motor_ctrl = mp789.MP_789A_4_DUMMY(man_port)
                 pass
             else:
-                pass
+                self.motor_ctrl = mp789.MP_789A_4(man_port)
         elif self.model == MotionController.SupportedDevices[2]:
             if dummy:
+                # self.motor_ctrl = mp792.MP_792(man_port)
                 pass
             else:
-                pass
+                self.motor_ctrl = mp792.MP_792(man_port)
         else:
             print('Motion controller device model "%s" is not supported.'%(dev_model))
             raise Exception
 
+        if self.motor_ctrl is None:
+            raise RuntimeError('self.motor_ctrl is None')
         self.mm_to_idx = self.motor_ctrl.mm_to_idx
 
     def is_dummy(self):

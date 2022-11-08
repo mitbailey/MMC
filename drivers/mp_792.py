@@ -12,14 +12,18 @@
 import serial
 import time
 from utilities import ports_finder
-from mp_789a_4 import MP_789A_4
+from drivers.mp_789a_4 import MP_789A_4
 
 class MP_792:
     AXES = [b'A0', b'A8', b'A16', b'A24']
 
     def __init__(self, port: serial.Serial):
         if port is None:
+            print('Port is none type.')
             raise RuntimeError('Port is none type.')
+
+        # TODO: Change default.
+        self.mm_to_idx = 1
 
         print('Attempting to connect to McPherson 792 on port %s.'%(port))
 
@@ -32,12 +36,12 @@ class MP_792:
 
         self.s = serial.Serial(port, 9600, timeout=1)
         self.s.write(b' \r')
-        rx = self.s.read(128).decode('utf-8').rstrip()
+        rx = self.s.read(128)#.decode('utf-8').rstrip()
         print(rx)
 
         if rx is None or rx == b'':
             raise RuntimeError('Response timed out.')
-        elif '#' in rx:
+        elif rx == b' v2.55\r\n#\r\n' or rx == b' #\r\n':
             print('McPherson model 789A-4 Scan Controller found.')
         else:
             raise RuntimeError('Invalid response.')
