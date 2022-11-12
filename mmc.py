@@ -205,6 +205,7 @@ class MMC_Main(QMainWindow):
             self.dm_mtn_ctrl_layouts.append(self.dev_man_win.findChild(QHBoxLayout, "mtn_ctrl_combo_sublayout"))
 
             self.dm_sampler_combos = []
+            # self.dm_sampler_combos.clear()
             # self.dm_sampler_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "samp_combo")
             # self.dm_sampler_combo.addItem("Auto-Connect")
             self.dm_sampler_combos.append(self.dev_man_win.findChild(QComboBox, "samp_combo"))
@@ -216,6 +217,7 @@ class MMC_Main(QMainWindow):
                 self.dm_sampler_model_combos[0].addItem(device)
 
             self.dm_mtn_ctrl_combos = []
+            # self.dm_mtn_ctrl_combos.clear()
             # self.dm_mtn_ctrl_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "mtn_combo")
             # self.dm_mtn_ctrl_combo.addItem("Auto-Connect")
             self.dm_mtn_ctrl_combos.append(self.dev_man_win.findChild(QComboBox, "mtn_combo"))
@@ -257,6 +259,11 @@ class MMC_Main(QMainWindow):
                 widget.setParent(None)
             for layout in self.dm_sampler_layouts:
                 self.sampler_combo_layout.removeItem(layout)
+
+            self.dm_sampler_combos = []
+            self.dm_sampler_model_combos = []
+            self.dm_sampler_layouts = []
+
             for i in range(self.num_samplers):
                 s_combo = QComboBox()
                 s_combo.addItem("Auto-Connect")
@@ -276,6 +283,8 @@ class MMC_Main(QMainWindow):
                 self.dm_sampler_model_combos.append(m_combo)
                 self.dm_sampler_layouts.append(layout)
 
+        print('new samplers combo list len: %d'%(len(self.dm_sampler_combos)))
+
     def update_num_motion_controllers_ui(self):
         if self.num_motion_controllers != self.dm_num_motion_controllers_spin.value():
             self.num_motion_controllers = self.dm_num_motion_controllers_spin.value()
@@ -285,6 +294,12 @@ class MMC_Main(QMainWindow):
                 widget.setParent(None)
             for layout in self.dm_mtn_ctrl_layouts:
                 self.mtn_ctrl_combo_layout.removeItem(layout)
+
+            # Very important - must reset the combos list.
+            self.dm_mtn_ctrl_combos = []
+            self.dm_mtn_ctrl_model_combos = []
+            self.dm_mtn_ctrl_layouts = []
+
             for i in range(self.num_motion_controllers):
                 s_combo = QComboBox()
                 s_combo.addItem("Auto-Connect")
@@ -304,7 +319,10 @@ class MMC_Main(QMainWindow):
                 self.dm_mtn_ctrl_model_combos.append(m_combo)
                 self.dm_mtn_ctrl_layouts.append(layout)
 
+        print('new mtn ctrls combo list len: %d'%(len(self.dm_mtn_ctrl_combos)))
+
     def connect_devices(self):
+        print('\n\n')
         print("connect_devices")
 
         self.dm_prompt_label.setText("Attempting to connect...")
@@ -321,16 +339,23 @@ class MMC_Main(QMainWindow):
         self.samplers = [None] * self.num_samplers
         self.mtn_ctrls = [None] * self.num_motion_controllers
 
+        print('Samplers: %d'%(self.num_samplers))
+        print('Motion controllers: %d'%(self.num_motion_controllers))
+
         # TODO: Re-instate some sort of auto-connect.
 
         for i in range(self.num_samplers):
+            print('Instantiation attempt for sampler #%d.'%(i))
             try:
                 if self.dm_sampler_combos[i].currentIndex() != 0:
                     print("Using manual port: %s"%(self.dm_sampler_combos[i].currentText().split(' ')[0]))
                     self.samplers[i] = DataSampler(dummy, self.dm_sampler_model_combos[i].currentText(), self.dm_sampler_combos[i].currentText().split(' ')[0])
-                # else:
-                #     # Auto-Connect
-                #     self.samplers[i] = DataSampler(dummy, DataSampler.SupportedDevices[0])
+                else:
+                    # Auto-Connect
+                    # self.samplers[i] = DataSampler(dummy, DataSampler.SupportedDevices[0])
+                    print('currentIndex', self.dm_sampler_combos[i].currentIndex(), self.dm_sampler_combos[i].currentText())
+                    print(len(self.dm_sampler_combos))
+                    print('AUTO-CONNECT CURRENTLY DISABLED!')
 
             except Exception as e:
                 print(e)
@@ -344,6 +369,7 @@ class MMC_Main(QMainWindow):
 
         # for i, combo in self.dm_sampler_combos:
         for i in range(self.num_motion_controllers):
+            print('Instantiation attempt for motion controller #%d.'%(i))
             try:
                 if self.dm_mtn_ctrl_combos[i].currentIndex() != 0:
                     print("Using manual port: %s"%(self.dm_mtn_ctrl_combos[i].currentText().split(' ')[0]))
@@ -937,6 +963,7 @@ class MMC_Main(QMainWindow):
         self.manual_position = (self.pos_spin.value() + self.zero_ofst) * self.conversion_slope
 
     def show_window_grating_config(self):
+        print('show_window_grating_config')
         if self.grating_conf_win is None: 
             self.grating_conf_win = QDialog(self)
 
@@ -964,28 +991,6 @@ class MMC_Main(QMainWindow):
 
             # layout.addWidget(self.apply_button)
             self.grating_conf_win.setLayout(layout)
-
-                        # Get axes combos.
-            self.dm_main_drive_axis_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "main_drive_axis_combo")
-            self.dm_color_wheel_axis_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "color_wheel_axis_combo")
-            self.dm_sample_rotation_axis_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "sample_rotation_axis_combo")
-            self.dm_sample_translation_axis_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "sample_translation_axis_combo")
-            self.dm_detector_rotation_axis_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "detector_rotation_axis_combo")
-
-            none = 'No Device Selected'
-            self.dm_main_drive_axis_combo.addItem('%s'%(none))
-            self.dm_color_wheel_axis_combo.addItem('%s'%(none))
-            self.dm_sample_rotation_axis_combo.addItem('%s'%(none))
-            self.dm_sample_translation_axis_combo.addItem('%s'%(none))
-            self.dm_detector_rotation_axis_combo.addItem('%s'%(none))
-
-            # Populate axes combos.
-            for dev in self.dev_list:
-                self.dm_main_drive_axis_combo.addItem('%s'%(dev))
-                self.dm_color_wheel_axis_combo.addItem('%s'%(dev))
-                self.dm_sample_rotation_axis_combo.addItem('%s'%(dev))
-                self.dm_sample_translation_axis_combo.addItem('%s'%(dev))
-                self.dm_detector_rotation_axis_combo.addItem('%s'%(dev))
 
         self.grating_spinbox.setFocus() # Automatically sets this as focus.
         self.grating_spinbox.selectAll()
@@ -1064,6 +1069,29 @@ class MMC_Main(QMainWindow):
 
             self.machine_conf_btn = self.machine_conf_win.findChild(QPushButton, 'update_conf_btn')
             self.machine_conf_btn.clicked.connect(self.apply_machine_conf)
+
+            # Get axes combos.
+            self.mc_main_drive_axis_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, "main_drive_axis_combo")
+            self.mc_color_wheel_axis_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, "color_wheel_axis_combo")
+            self.mc_sample_rotation_axis_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, "sample_rotation_axis_combo")
+            self.mc_sample_translation_axis_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, "sample_translation_axis_combo")
+            self.mc_detector_rotation_axis_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, "detector_rotation_axis_combo")
+
+            none = 'No Device Selected'
+            self.mc_main_drive_axis_combo.addItem('%s'%(none))
+            self.mc_color_wheel_axis_combo.addItem('%s'%(none))
+            self.mc_sample_rotation_axis_combo.addItem('%s'%(none))
+            self.mc_sample_translation_axis_combo.addItem('%s'%(none))
+            self.mc_detector_rotation_axis_combo.addItem('%s'%(none))
+
+            # Populate axes combos.
+            for dev in self.dev_list:
+                print('Adding %s to config list.'%(dev))
+                self.mc_main_drive_axis_combo.addItem('%s'%(dev))
+                self.mc_color_wheel_axis_combo.addItem('%s'%(dev))
+                self.mc_sample_rotation_axis_combo.addItem('%s'%(dev))
+                self.mc_sample_translation_axis_combo.addItem('%s'%(dev))
+                self.mc_detector_rotation_axis_combo.addItem('%s'%(dev))
         
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         print('Exec done', self.current_grating_idx, self.grating_combo.currentIndex())
