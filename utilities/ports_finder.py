@@ -67,5 +67,11 @@ def find_apt_ports():
     
     return devices
 
+def generate_virtual_ports(num):
+    virt_dev_list = []
+    for i in range(num):
+        virt_dev_list.append('VIRTUAL_%d - For testing purposes.'%(i))
+    return virt_dev_list
+
 def find_all_ports():
-    return find_com_ports() + find_apt_ports()
+    return find_com_ports() + find_apt_ports() + generate_virtual_ports(5)

@@ -9,6 +9,10 @@
 # 
 #
 
+# TODO: Change all instances of 'Color Wheel' to 'Filter Wheel'.
+# TODO: Change 'Data Sampler' and 'Sampler' to 'Detector'.
+# TODO: Other re-naming, such as 'mtn_ctrl' to 'motion_controller', etc.
+
 # %% OS and SYS Imports
 import os
 import sys
@@ -888,6 +892,9 @@ class MMC_Main(QMainWindow):
     def scan_data_complete(self, scan_idx: int):
         self.table.markInsertFinished(scan_idx)
         self.table.updateTableDisplay()
+        if self.queued_scans > 1:
+            self.queued_scans -= 1
+            self._scan_button_pressed()
 
     def update_position_displays(self):
         self.current_position = self.mtn_ctrls[self.main_drive_i].get_position()
@@ -923,6 +930,11 @@ class MMC_Main(QMainWindow):
 
     def scan_button_pressed(self):
         # self.moving = True
+        # TODO: 
+        self.queued_scans = 1
+        self._scan_button_pressed()
+
+    def _scan_button_pressed(self):
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
@@ -1164,6 +1176,7 @@ class Scan(QThread):
         self.wait()
 
     def run(self):
+        print('\n\n\n')
         self.other.disable_movement_sensitive_buttons(True)
 
         print(self.other)
