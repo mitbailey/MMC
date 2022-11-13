@@ -708,8 +708,8 @@ class Thorlabs: # Wrapper class for TLI methods
             self.poll_thread = None
             if str(serialNumber)[:2] != str(Thorlabs.TYPE_KST101):
                 raise ValueError('Invalid serial %d: KST101 Serial starts with %s'%(serialNumber, str(Thorlabs.TYPE_KST101)))
-            elif serialNumber in Thorlabs.KSTDummy.open_devices:
-                raise RuntimeError('Serial %d already in use.'%(serialNumber))
+            # elif serialNumber in Thorlabs.KSTDummy.open_devices:
+                # raise RuntimeError('Serial %d already in use.'%(serialNumber))
             elif serialNumber not in Thorlabs.KSTDummy._ListDevices():
                 raise RuntimeError('Serial %d not in device list.'%(serialNumber))
             self.serial = str(serialNumber)
@@ -741,8 +741,8 @@ class Thorlabs: # Wrapper class for TLI methods
             Returns:
                 bool: _description_
             """
-            if int(self.serial) in Thorlabs.KSTDummy.open_devices:
-                raise RuntimeError('Device %d is already open.'%(int(self.serial)))
+            # if int(self.serial) in Thorlabs.KSTDummy.open_devices:
+                # raise RuntimeError('Device %d is already open.'%(int(self.serial)))
             Thorlabs.KSTDummy.open_devices.append(int(self.serial))
             self.open = True
             # Run self connection test.
@@ -755,8 +755,8 @@ class Thorlabs: # Wrapper class for TLI methods
                 with self.cond:
                     self.cond.notify_all()
                 self.poll_thread.join()
-            if self.open:
-                self._Close()
+            # if self.open:
+                # self._Close()
         
         def _Close(self) -> None:
             """Close connection to the KST101 Controller.
