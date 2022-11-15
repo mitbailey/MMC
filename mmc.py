@@ -13,6 +13,21 @@
 # TODO: Change 'Data Sampler' and 'Sampler' to 'Detector'.
 # TODO: Other re-naming, such as 'mtn_ctrl' to 'motion_controller', etc.
 
+""" 
+UI Element Naming Scheme
+------------------------
+
+Main Drive          md_
+Color Wheel         cw_
+Sample Movement     sm_
+Detector Rotation   dr_
+Data Table          dt_
+
+
+
+"""
+
+
 # %% OS and SYS Imports
 import os
 import sys
@@ -39,9 +54,9 @@ from PyQt5.QtMultimedia import (QAbstractVideoBuffer, QMediaContent,
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBox, QDialog, QFileDialog,
                              QFormLayout, QHBoxLayout, QLabel, QListView, QMessageBox, QPushButton,
-                             QSizePolicy, QSlider, QStyle, QToolButton, QVBoxLayout, QWidget, QLineEdit, QPlainTextEdit,
+                             QSizePolicy, QSlider, QStyle, QToolButton, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QPlainTextEdit,
                              QTableWidget, QTableWidgetItem, QSplitter, QAbstractItemView, QStyledItemDelegate, QHeaderView, QFrame, QProgressBar, QCheckBox, QToolTip, QGridLayout, QSpinBox,
-                             QLCDNumber, QAbstractSpinBox, QStatusBar, QAction)
+                             QLCDNumber, QAbstractSpinBox, QStatusBar, QAction, QScrollArea, QSpacerItem)
 from PyQt5.QtCore import QTimer
 from PyQt5 import QtCore, QtWidgets
 
@@ -652,6 +667,22 @@ class MMC_Main(QMainWindow):
         self.startpos = (self.start_spin.value() + self.zero_ofst) * self.conversion_slope
         self.stoppos = (self.stop_spin.value() + self.zero_ofst) * self.conversion_slope
 
+        self.cw_mancon_position_set_spinbox: QSpinBox = self.findChild(QSpinBox, 'color_wheel_pos_set_spinbox')
+        self.cw_mancon_move_pos_button: QPushButton = self.findChild(QPushButton, 'color_wheel_move_pos_button')
+        self.cw_mancon_home_button: QPushButton = self.findChild(QPushButton, 'color_wheel_home_button')
+        self.cw_add_rule_button: QPushButton = self.findChild(QPushButton, 'color_wheel_add_rule_button')
+        self.cw_rules = [] # List to hold the actual rules.
+        self.cw_rules_set_spinboxes = []
+        self.cw_rules_set_spinboxes.append(self.findChild(QDoubleSpinBox, 'color_wheel_rule_set_spinbox'))
+        self.cw_rules_step_spinboxes = []
+        self.cw_rules_step_spinboxes.append(self.findChild(QSpinBox, 'color_wheel_rule_step_spinbox'))
+        self.cw_rules_remove_buttons = []
+        self.cw_rules_remove_buttons.append(self.findChild(QPushButton, 'color_wheel_remove_rule_button'))
+        self.cw_rules_enact_buttons = []
+        self.cw_rules_enact_buttons.append(self.findChild(QPushButton, 'color_wheel_enact_rule_button'))
+        self.cw_add_rule_button.clicked.connect(self.new_color_wheel_rule)
+        self.cw_rules_scroll_area: QVBoxLayout = self.findChild(QVBoxLayout, 'scroll_area_layout')
+
         if self.mes_sign == -1:
             self.invert_mes_act.setChecked(True)
         else:
@@ -669,6 +700,58 @@ class MMC_Main(QMainWindow):
         self.dev_man_win.close()
         self.main_gui_booted = True
         self.show()  
+
+    def new_color_wheel_rule(self):
+        geq_label: QLabel = QLabel('≥')
+        geq_label.setMaximumWidth(13)
+        geq_label.setMaximumHeight(29)
+        font = QFont('Segoe UI', 14)
+        font.setBold(False)
+        geq_label.setFont(font)
+
+        goto_label: QLabel = QLabel('nm, go to step')
+        goto_label.setMaximumWidth(99)
+        goto_label.setMaximumHeight(29)
+        font = QFont('Segoe UI', 12)
+        font.setBold(False)
+        goto_label.setFont(font)
+
+        enact_button: QPushButton = QPushButton('ENACT')
+        enact_button.setMaximumWidth(75)
+        enact_button.setMaximumHeight(29)
+
+        remove_button: QPushButton = QPushButton('-')
+        remove_button.setMaximumWidth(29)
+        remove_button.setMaximumHeight(29)
+
+        rule_set_spinbox: QDoubleSpinBox = QDoubleSpinBox()
+        rule_set_spinbox.setRange(0, 9999)
+        rule_set_spinbox.setDecimals(2)
+        rule_set_spinbox.setMaximumWidth(89)
+        rule_set_spinbox.setMaximumHeight(27)
+
+        rule_step_spinbox: QSpinBox = QSpinBox()
+        rule_step_spinbox.setRange(0, 9999999)
+        rule_step_spinbox.setMaximumWidth(84)
+        rule_step_spinbox.setMaximumHeight(27)
+
+        hspacer: QSpacerItem = QSpacerItem(20, 40, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        layout = QHBoxLayout()
+        layout.addWidget(geq_label)
+        layout.addWidget(rule_set_spinbox)
+        layout.addWidget(goto_label)
+        layout.addWidget(rule_step_spinbox)
+        layout.addWidget(enact_button)
+        layout.addItem(hspacer)
+        layout.addWidget(remove_button)
+
+        print(layout.spacing())
+
+        self.cw_rules_scroll_area.addLayout(layout)
+
+        pass
+        # TODO: Instantiate new rule's UI elements.
 
     def devman_list_devices(self):
         # self.dev_list = ports_finder.find_all_ports()
@@ -892,9 +975,9 @@ class MMC_Main(QMainWindow):
     def scan_data_complete(self, scan_idx: int):
         self.table.markInsertFinished(scan_idx)
         self.table.updateTableDisplay()
-        if self.queued_scans > 1:
-            self.queued_scans -= 1
-            self._scan_button_pressed()
+        if self.scan_repeats.value() > 0:
+            self.scan_repeats.setValue(self.scan_repeats.value() - 1)
+            self.scan_button_pressed()
 
     def update_position_displays(self):
         self.current_position = self.mtn_ctrls[self.main_drive_i].get_position()
@@ -929,12 +1012,6 @@ class MMC_Main(QMainWindow):
         self.currpos_nm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.mtn_ctrls[self.main_drive_i].mm_to_idx) / self.conversion_slope) - self.zero_ofst))
 
     def scan_button_pressed(self):
-        # self.moving = True
-        # TODO: 
-        self.queued_scans = 1
-        self._scan_button_pressed()
-
-    def _scan_button_pressed(self):
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)

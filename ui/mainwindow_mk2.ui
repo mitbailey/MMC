@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1101</width>
+    <width>1439</width>
     <height>941</height>
    </rect>
   </property>
@@ -353,6 +353,16 @@
                  <number>5</number>
                 </property>
                 <item>
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>Repeats:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="scan_repeats"/>
+                </item>
+                <item>
                  <spacer name="horizontalSpacer_5">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -374,23 +384,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>Begin Scan</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QFrame" name="frame">
-                  <property name="minimumSize">
-                   <size>
-                    <width>50</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="frameShape">
-                   <enum>QFrame::StyledPanel</enum>
-                  </property>
-                  <property name="frameShadow">
-                   <enum>QFrame::Raised</enum>
+                   <string>Begin</string>
                   </property>
                  </widget>
                 </item>
@@ -403,7 +397,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>Stop Scan</string>
+                   <string>Stop</string>
                   </property>
                  </widget>
                 </item>
@@ -538,13 +532,26 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>472</width>
-                   <height>118</height>
+                   <width>506</width>
+                   <height>116</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_9">
                   <item>
-                   <layout class="QHBoxLayout" name="horizontalLayout_11">
+                   <spacer name="verticalSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="scroll_area_layout">
                     <property name="leftMargin">
                      <number>5</number>
                     </property>
@@ -558,78 +565,134 @@
                      <number>5</number>
                     </property>
                     <item>
-                     <widget class="QLabel" name="label_4">
-                      <property name="font">
-                       <font>
-                        <family>Segoe UI</family>
-                       </font>
+                     <layout class="QHBoxLayout" name="horizontalLayout_11">
+                      <property name="leftMargin">
+                       <number>0</number>
                       </property>
-                      <property name="text">
-                       <string>At</string>
+                      <property name="topMargin">
+                       <number>0</number>
                       </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QDoubleSpinBox" name="color_wheel_rule_set_spinbox">
-                      <property name="font">
-                       <font>
-                        <italic>false</italic>
-                       </font>
+                      <property name="rightMargin">
+                       <number>0</number>
                       </property>
-                      <property name="maximum">
-                       <double>9999.000000000000000</double>
+                      <property name="bottomMargin">
+                       <number>0</number>
                       </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="label_5">
-                      <property name="font">
-                       <font>
-                        <family>Segoe UI</family>
-                       </font>
-                      </property>
-                      <property name="text">
-                       <string>nm or greater, be at step</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QSpinBox" name="color_wheel_rule_step_spinbox">
-                      <property name="font">
-                       <font>
-                        <italic>false</italic>
-                       </font>
-                      </property>
-                      <property name="maximum">
-                       <number>9999999</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="horizontalSpacer_8">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="color_wheel_remove_rule_button">
-                      <property name="maximumSize">
-                       <size>
-                        <width>29</width>
-                        <height>29</height>
-                       </size>
-                      </property>
-                      <property name="text">
-                       <string>-</string>
-                      </property>
-                     </widget>
+                      <item>
+                       <widget class="QLabel" name="label_4">
+                        <property name="maximumSize">
+                         <size>
+                          <width>13</width>
+                          <height>29</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <family>Segoe UI</family>
+                          <pointsize>14</pointsize>
+                          <weight>50</weight>
+                          <bold>false</bold>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>≥</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QDoubleSpinBox" name="color_wheel_rule_set_spinbox">
+                        <property name="maximumSize">
+                         <size>
+                          <width>84</width>
+                          <height>27</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <italic>false</italic>
+                         </font>
+                        </property>
+                        <property name="maximum">
+                         <double>9999.000000000000000</double>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QLabel" name="label_5">
+                        <property name="maximumSize">
+                         <size>
+                          <width>99</width>
+                          <height>29</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <family>Segoe UI</family>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>nm, go to step</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QSpinBox" name="color_wheel_rule_step_spinbox">
+                        <property name="maximumSize">
+                         <size>
+                          <width>89</width>
+                          <height>27</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <italic>false</italic>
+                         </font>
+                        </property>
+                        <property name="maximum">
+                         <number>9999999</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="color_wheel_enact_rule_button">
+                        <property name="maximumSize">
+                         <size>
+                          <width>75</width>
+                          <height>29</height>
+                         </size>
+                        </property>
+                        <property name="text">
+                         <string>ENACT</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_8">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="color_wheel_remove_rule_button">
+                        <property name="maximumSize">
+                         <size>
+                          <width>29</width>
+                          <height>29</height>
+                         </size>
+                        </property>
+                        <property name="text">
+                         <string>-</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
                     </item>
                    </layout>
                   </item>
@@ -674,19 +737,6 @@
                      </widget>
                     </item>
                    </layout>
-                  </item>
-                  <item>
-                   <spacer name="verticalSpacer">
-                    <property name="orientation">
-                     <enum>Qt::Vertical</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>20</width>
-                      <height>40</height>
-                     </size>
-                    </property>
-                   </spacer>
                   </item>
                  </layout>
                 </widget>
@@ -1197,7 +1247,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1101</width>
+     <width>1439</width>
      <height>21</height>
     </rect>
    </property>
