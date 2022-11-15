@@ -16,15 +16,27 @@
 """ 
 UI Element Naming Scheme
 ------------------------
+All UI elements should be named in the following format:
+UIE_[window code]_[subsection code]_[Chosen Name]_[Q-type]
 
-Main Drive          md_
-Color Wheel         cw_
-Sample Movement     sm_
-Detector Rotation   dr_
-Data Table          dt_
+Device Manager Window       dmw_
+Main GUI Window             mgw_
+Machine Config. Window       mcw_
 
+Main Drive                  md_
+Color Wheel                 cw_
+Sample Movement             sm_
+Detector Rotation           dr_
+Data Table                  dt_
 
+Q-Types: Capital letters of the type; 
+ex:
+QMainWindow                 _qmw
+QPushButton                 _qpb
 
+EXCEPTIONS: 
+QCheckBox = qckbx
+QProgressBar = qpbar
 """
 
 
@@ -169,10 +181,13 @@ class MMC_Main(QMainWindow):
 
     # Destructor
     def __del__(self):
-        del self.mtn_ctrls
-        del self.samplers
+        if self.mtn_ctrls is not None:
+            del self.mtn_ctrls
+        if self.samplers is not None:
+            del self.samplers
         self.dev_finder.done = True
-        del self.dev_finder
+        if self.dev_finder is not None:
+            del self.dev_finder
 
     # Constructor
     def __init__(self, application, uiresource = None):
@@ -184,14 +199,9 @@ class MMC_Main(QMainWindow):
         self.SIGNAL_device_manager_ready.connect(self.connect_devices)
         self.SIGNAL_devices_connection_check.connect(self.devices_connection_check)
 
-        # if len(self._startup_args) != 1:
-        #     self.dummy = False
-        # else:
-        #     self.dummy = True
-
         self.dev_man_win_enabled = False
         self.main_gui_booted = False
-        self.dev_man_win = None
+        self.dmw = None
         self.show_window_device_manager()
         self.dev_finder = None
 
@@ -201,87 +211,78 @@ class MMC_Main(QMainWindow):
     # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
     def show_window_device_manager(self):
         self.device_timer = None
-        if self.dev_man_win is None:
+        if self.dmw is None:
             ui_file_name = exeDir + '/ui/device_manager.ui'
             ui_file = QFile(ui_file_name)
             if not ui_file.open(QIODevice.ReadOnly):
                 print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
                 raise RuntimeError('Could not load grating input UI file')
 
-            self.dev_man_win = QDialog(self) # pass parent window
-            uic.loadUi(ui_file, self.dev_man_win)
+            self.dmw = QDialog(self) # pass parent window
+            uic.loadUi(ui_file, self.dmw)
 
-            self.dev_man_win.setWindowTitle('Device Manager')
+            self.dmw.setWindowTitle('Device Manager')
 
-            self.dm_prompt_label: QLabel = self.dev_man_win.findChild(QLabel, "explanation_label")
+            self.UIE_dmw_explanation_ql: QLabel = self.dmw.findChild(QLabel, "dmw_explanation_ql")
+            
+            self.UIE_dmw_list_ql: QLabel = self.dmw.findChild(QLabel, "devices_label")
 
-            self.dm_list_label: QLabel = self.dev_man_win.findChild(QLabel, "devices_label")
+            self.UIEL_dmw_sampler_qhbl = []
+            self.UIEL_dmw_sampler_qhbl.append(self.dmw.findChild(QHBoxLayout, "sampler_combo_sublayout"))
 
-            self.dm_sampler_layouts = []
-            self.dm_sampler_layouts.append(self.dev_man_win.findChild(QHBoxLayout, "sampler_combo_sublayout"))
+            self.UIEL_dmw_mtn_ctrl_qhbl = []
+            self.UIEL_dmw_mtn_ctrl_qhbl.append(self.dmw.findChild(QHBoxLayout, "mtn_ctrl_combo_sublayout"))
 
-            self.dm_mtn_ctrl_layouts = []
-            self.dm_mtn_ctrl_layouts.append(self.dev_man_win.findChild(QHBoxLayout, "mtn_ctrl_combo_sublayout"))
-
-            self.dm_sampler_combos = []
-            # self.dm_sampler_combos.clear()
-            # self.dm_sampler_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "samp_combo")
-            # self.dm_sampler_combo.addItem("Auto-Connect")
-            self.dm_sampler_combos.append(self.dev_man_win.findChild(QComboBox, "samp_combo"))
-            self.dm_sampler_combos[0].addItem("Auto-Connect")
-            self.dm_sampler_model_combos = []
-            self.dm_sampler_model_combos.append(self.dev_man_win.findChild(QComboBox, "samp_model_combo"))
-            # self.dm_sampler_model_combos[0].addItem('<SELECT>')
+            self.UIEL_dmw_sampler_qcb = []
+            self.UIEL_dmw_sampler_qcb.append(self.dmw.findChild(QComboBox, "samp_combo"))
+            self.UIEL_dmw_sampler_qcb[0].addItem("Auto-Connect")
+            self.UIEL_dmw_sampler_model_qcb = []
+            self.UIEL_dmw_sampler_model_qcb.append(self.dmw.findChild(QComboBox, "samp_model_combo"))
             for device in DataSampler.SupportedDevices:
-                self.dm_sampler_model_combos[0].addItem(device)
+                self.UIEL_dmw_sampler_model_qcb[0].addItem(device)
 
-            self.dm_mtn_ctrl_combos = []
-            # self.dm_mtn_ctrl_combos.clear()
-            # self.dm_mtn_ctrl_combo: QComboBox = self.dev_man_win.findChild(QComboBox, "mtn_combo")
-            # self.dm_mtn_ctrl_combo.addItem("Auto-Connect")
-            self.dm_mtn_ctrl_combos.append(self.dev_man_win.findChild(QComboBox, "mtn_combo"))
-            self.dm_mtn_ctrl_combos[0].addItem("Auto-Connect")
-            self.dm_mtn_ctrl_model_combos = []
-            self.dm_mtn_ctrl_model_combos.append(self.dev_man_win.findChild(QComboBox, "mtn_model_combo"))
-            # self.dm_mtn_ctrl_model_combos[0].addItem('<SELECT>')
+            self.UIEL_dmw_mtn_ctrl_qcb = []
+            self.UIEL_dmw_mtn_ctrl_qcb.append(self.dmw.findChild(QComboBox, "mtn_combo"))
+            self.UIEL_dmw_mtn_ctrl_qcb[0].addItem("Auto-Connect")
+            self.UIEL_dmw_mtn_ctrl_model_qcb = []
+            self.UIEL_dmw_mtn_ctrl_model_qcb.append(self.dmw.findChild(QComboBox, "mtn_model_combo"))
             for device in MotionController.SupportedDevices:
-                self.dm_mtn_ctrl_model_combos[0].addItem(device)
+                self.UIEL_dmw_mtn_ctrl_model_qcb[0].addItem(device)
 
-            self.dm_accept_button: QPushButton = self.dev_man_win.findChild(QPushButton, "acc_button")
-            self.dm_accept_button.clicked.connect(self.connect_devices)
-            # self.dm_accept_button.setDisabled(True)
-            self.dm_dummy_checkbox: QCheckBox = self.dev_man_win.findChild(QCheckBox, "dum_checkbox")
-            self.dm_dummy_checkbox.setChecked(len(self._startup_args) == 2)
+            self.UIE_dmw_accept_qpb: QPushButton = self.dmw.findChild(QPushButton, "acc_button")
+            self.UIE_dmw_accept_qpb.clicked.connect(self.connect_devices)
+            self.UIE_dmw_dummy_qckbx: QCheckBox = self.dmw.findChild(QCheckBox, "dum_checkbox")
+            self.UIE_dmw_dummy_qckbx.setChecked(len(self._startup_args) == 2)
 
-            self.dm_num_samplers_spin: QSpinBox = self.dev_man_win.findChild(QSpinBox, "num_samplers")
-            self.dm_num_samplers_spin.valueChanged.connect(self.update_num_samplers_ui)
+            self.UIE_dmw_num_samplers_qsb: QSpinBox = self.dmw.findChild(QSpinBox, "num_samplers")
+            self.UIE_dmw_num_samplers_qsb.valueChanged.connect(self.update_num_samplers_ui)
             self.num_samplers = 1
 
-            self.dm_num_motion_controllers_spin: QSpinBox = self.dev_man_win.findChild(QSpinBox, "num_motion_controllers")
-            self.dm_num_motion_controllers_spin.valueChanged.connect(self.update_num_motion_controllers_ui)
+            self.UIE_dmw_num_motion_controllers_qsb: QSpinBox = self.dmw.findChild(QSpinBox, "num_motion_controllers")
+            self.UIE_dmw_num_motion_controllers_qsb.valueChanged.connect(self.update_num_motion_controllers_ui)
             self.num_motion_controllers = 1
 
-            self.sampler_combo_layout: QVBoxLayout = self.dev_man_win.findChild(QVBoxLayout, "sampler_combo_layout")
-            self.mtn_ctrl_combo_layout: QVBoxLayout = self.dev_man_win.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
+            self.UIE_dmw_sampler_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "sampler_combo_layout")
+            self.UIE_dmw_mtn_ctrl_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
 
-            self.dev_man_win.show()
+            self.dmw.show()
 
         self.application.processEvents()
         self.SIGNAL_device_manager_ready.emit()
 
     def update_num_samplers_ui(self):
-        if self.num_samplers != self.dm_num_samplers_spin.value():
-            self.num_samplers = self.dm_num_samplers_spin.value()
-            for widget in self.dm_sampler_combos:
+        if self.num_samplers != self.UIE_dmw_num_samplers_qsb.value():
+            self.num_samplers = self.UIE_dmw_num_samplers_qsb.value()
+            for widget in self.UIEL_dmw_sampler_qcb:
                 widget.setParent(None)
-            for widget in self.dm_sampler_model_combos:
+            for widget in self.UIEL_dmw_sampler_model_qcb:
                 widget.setParent(None)
-            for layout in self.dm_sampler_layouts:
-                self.sampler_combo_layout.removeItem(layout)
+            for layout in self.UIEL_dmw_sampler_qhbl:
+                self.UIE_dmw_sampler_combo_qvbl.removeItem(layout)
 
-            self.dm_sampler_combos = []
-            self.dm_sampler_model_combos = []
-            self.dm_sampler_layouts = []
+            self.UIEL_dmw_sampler_qcb = []
+            self.UIEL_dmw_sampler_model_qcb = []
+            self.UIEL_dmw_sampler_qhbl = []
 
             for i in range(self.num_samplers):
                 s_combo = QComboBox()
@@ -289,7 +290,6 @@ class MMC_Main(QMainWindow):
                 for dev in self.dev_list:
                     s_combo.addItem('%s'%(dev))
                 m_combo = QComboBox()
-                # m_combo.addItem('<SELECT>')
                 for device in DataSampler.SupportedDevices:
                     m_combo.addItem(device)
                 layout = QHBoxLayout()
@@ -297,27 +297,27 @@ class MMC_Main(QMainWindow):
                 layout.addStretch(4)
                 layout.addWidget(m_combo)
                 layout.addStretch(1)
-                self.sampler_combo_layout.addLayout(layout)
-                self.dm_sampler_combos.append(s_combo)
-                self.dm_sampler_model_combos.append(m_combo)
-                self.dm_sampler_layouts.append(layout)
+                self.UIE_dmw_sampler_combo_qvbl.addLayout(layout)
+                self.UIEL_dmw_sampler_qcb.append(s_combo)
+                self.UIEL_dmw_sampler_model_qcb.append(m_combo)
+                self.UIEL_dmw_sampler_qhbl.append(layout)
 
-        print('new samplers combo list len: %d'%(len(self.dm_sampler_combos)))
+        print('new samplers combo list len: %d'%(len(self.UIEL_dmw_sampler_qcb)))
 
     def update_num_motion_controllers_ui(self):
-        if self.num_motion_controllers != self.dm_num_motion_controllers_spin.value():
-            self.num_motion_controllers = self.dm_num_motion_controllers_spin.value()
-            for widget in self.dm_mtn_ctrl_combos:
+        if self.num_motion_controllers != self.UIE_dmw_num_motion_controllers_qsb.value():
+            self.num_motion_controllers = self.UIE_dmw_num_motion_controllers_qsb.value()
+            for widget in self.UIEL_dmw_mtn_ctrl_qcb:
                 widget.setParent(None)
-            for widget in self.dm_mtn_ctrl_model_combos:
+            for widget in self.UIEL_dmw_mtn_ctrl_model_qcb:
                 widget.setParent(None)
-            for layout in self.dm_mtn_ctrl_layouts:
-                self.mtn_ctrl_combo_layout.removeItem(layout)
+            for layout in self.UIEL_dmw_mtn_ctrl_qhbl:
+                self.UIE_dmw_mtn_ctrl_combo_qvbl.removeItem(layout)
 
             # Very important - must reset the combos list.
-            self.dm_mtn_ctrl_combos = []
-            self.dm_mtn_ctrl_model_combos = []
-            self.dm_mtn_ctrl_layouts = []
+            self.UIEL_dmw_mtn_ctrl_qcb = []
+            self.UIEL_dmw_mtn_ctrl_model_qcb = []
+            self.UIEL_dmw_mtn_ctrl_qhbl = []
 
             for i in range(self.num_motion_controllers):
                 s_combo = QComboBox()
@@ -325,7 +325,6 @@ class MMC_Main(QMainWindow):
                 for dev in self.dev_list:
                     s_combo.addItem('%s'%(dev))
                 m_combo = QComboBox()
-                # m_combo.addItem('<SELECT>')
                 for device in MotionController.SupportedDevices:
                     m_combo.addItem(device)
                 layout = QHBoxLayout()
@@ -333,21 +332,21 @@ class MMC_Main(QMainWindow):
                 layout.addStretch(4)
                 layout.addWidget(m_combo)
                 layout.addStretch(1)
-                self.mtn_ctrl_combo_layout.addLayout(layout)
-                self.dm_mtn_ctrl_combos.append(s_combo)
-                self.dm_mtn_ctrl_model_combos.append(m_combo)
-                self.dm_mtn_ctrl_layouts.append(layout)
+                self.UIE_dmw_mtn_ctrl_combo_qvbl.addLayout(layout)
+                self.UIEL_dmw_mtn_ctrl_qcb.append(s_combo)
+                self.UIEL_dmw_mtn_ctrl_model_qcb.append(m_combo)
+                self.UIEL_dmw_mtn_ctrl_qhbl.append(layout)
 
-        print('new mtn ctrls combo list len: %d'%(len(self.dm_mtn_ctrl_combos)))
+        print('new mtn ctrls combo list len: %d'%(len(self.UIEL_dmw_mtn_ctrl_qcb)))
 
     def connect_devices(self):
         print('\n\n')
         print("connect_devices")
 
-        self.dm_prompt_label.setText("Attempting to connect...")
+        self.UIE_dmw_explanation_ql.setText("Attempting to connect...")
         self.application.processEvents()
 
-        dummy = self.dm_dummy_checkbox.isChecked()
+        dummy = self.UIE_dmw_dummy_qckbx.isChecked()
         print("Dummy Mode: " + str(dummy))
 
         # Motion Controller and Sampler initialization.
@@ -366,14 +365,14 @@ class MMC_Main(QMainWindow):
         for i in range(self.num_samplers):
             print('Instantiation attempt for sampler #%d.'%(i))
             try:
-                if self.dm_sampler_combos[i].currentIndex() != 0:
-                    print("Using manual port: %s"%(self.dm_sampler_combos[i].currentText().split(' ')[0]))
-                    self.samplers[i] = DataSampler(dummy, self.dm_sampler_model_combos[i].currentText(), self.dm_sampler_combos[i].currentText().split(' ')[0])
+                if self.UIEL_dmw_sampler_qcb[i].currentIndex() != 0:
+                    print("Using manual port: %s"%(self.UIEL_dmw_sampler_qcb[i].currentText().split(' ')[0]))
+                    self.samplers[i] = DataSampler(dummy, self.UIEL_dmw_sampler_model_qcb[i].currentText(), self.UIEL_dmw_sampler_qcb[i].currentText().split(' ')[0])
                 else:
                     # Auto-Connect
                     # self.samplers[i] = DataSampler(dummy, DataSampler.SupportedDevices[0])
-                    print('currentIndex', self.dm_sampler_combos[i].currentIndex(), self.dm_sampler_combos[i].currentText())
-                    print(len(self.dm_sampler_combos))
+                    print('currentIndex', self.UIEL_dmw_sampler_qcb[i].currentIndex(), self.UIEL_dmw_sampler_qcb[i].currentText())
+                    print(len(self.UIEL_dmw_sampler_qcb))
                     print('AUTO-CONNECT CURRENTLY DISABLED!')
 
             except Exception as e:
@@ -390,9 +389,9 @@ class MMC_Main(QMainWindow):
         for i in range(self.num_motion_controllers):
             print('Instantiation attempt for motion controller #%d.'%(i))
             try:
-                if self.dm_mtn_ctrl_combos[i].currentIndex() != 0:
-                    print("Using manual port: %s"%(self.dm_mtn_ctrl_combos[i].currentText().split(' ')[0]))
-                    self.mtn_ctrls[i] = MotionController(dummy, self.dm_mtn_ctrl_model_combos[i].currentText(), self.dm_mtn_ctrl_combos[i].currentText().split(' ')[0])
+                if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() != 0:
+                    print("Using manual port: %s"%(self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
+                    self.mtn_ctrls[i] = MotionController(dummy, self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
                 # else:
                 #     # Auto-Connect
                 #     self.mtn_ctrls[i] = MotionController(dummy, MotionController.SupportedDevices[0])
@@ -429,7 +428,7 @@ class MMC_Main(QMainWindow):
             if self.device_timer is not None:
                 print('WARNING: STOPPING DEVICE TIMER!')
                 self.device_timer.stop()
-            self.dev_man_win.close()
+            self.dmw.close()
             self._show_main_gui(dummy)
             return
         
@@ -439,7 +438,7 @@ class MMC_Main(QMainWindow):
             self.device_timer = QTimer()
             self.device_timer.timeout.connect(self.devman_list_devices)
             self.device_timer.start(1000)
-        self.dm_prompt_label.setText('Auto-connect failed.')   
+        self.UIE_dmw_explanation_ql.setText('Auto-connect failed.')   
 
     def _show_main_gui(self, dummy: bool):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
@@ -464,14 +463,14 @@ class MMC_Main(QMainWindow):
         self.machine_conf_win: QDialog = None
         self.grating_conf_win: QDialog = None
         self.grating_density_in: QDoubleSpinBox = None
-        self.diff_order_in: QDoubleSpinBox = None
-        self.max_pos_in: QDoubleSpinBox = None
-        self.min_pos_in: QDoubleSpinBox = None
-        self.zero_ofst_in: QDoubleSpinBox = None
-        self.arm_length_in: QDoubleSpinBox = None
-        self.incidence_ang_in: QDoubleSpinBox = None
-        self.tangent_ang_in: QDoubleSpinBox = None
-        self.machine_conf_btn: QPushButton = None
+        self.UIE_mcw_diff_order_in_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_max_pos_in_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_min_pos_in_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_zero_ofst_in_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_arm_length_in_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_incidence_ang_in_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_tangent_ang_in_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_machine_conf_qpb: QPushButton = None
 
         self.grating_combo_lstr = ['1200', '2400', '* New Entry']
         self.current_grating_idx = 0
@@ -529,60 +528,60 @@ class MMC_Main(QMainWindow):
         self.is_conv_set = False # Use this flag to set conversion
 
         # GUI initialization, gets the UI elements from the .ui file.
-        self.scan_button = self.findChild(QPushButton, "begin_scan_button") # Scanning Control 'Begin Scan' Button
+        self.UIE_mgw_scan_qpb: QPushButton = self.findChild(QPushButton, "begin_scan_button") # Scanning Control 'Begin Scan' Button
         pixmapi = getattr(QStyle, 'SP_ArrowForward')
         icon = self.style().standardIcon(pixmapi)
-        self.scan_button.setIcon(icon)
-        self.stop_scan_button: QPushButton = self.findChild(QPushButton, "stop_scan_button")
+        self.UIE_mgw_scan_qpb.setIcon(icon)
+        self.UIE_mgw_stop_scan_qpb: QPushButton = self.findChild(QPushButton, "stop_scan_button")
         pixmapi = getattr(QStyle, 'SP_BrowserStop')
         icon = self.style().standardIcon(pixmapi)
-        self.stop_scan_button.setIcon(icon)
-        self.stop_scan_button.setEnabled(False)
-        self.save_data_checkbox = self.findChild(QCheckBox, "save_data_checkbox") # Scanning Control 'Save Data' Checkbox
-        self.dir_box = self.findChild(QLineEdit, "save_dir_lineedit")
-        self.start_spin = self.findChild(QDoubleSpinBox, "start_set_spinbox")
-        self.stop_spin = self.findChild(QDoubleSpinBox, "end_set_spinbox")
+        self.UIE_mgw_stop_scan_qpb.setIcon(icon)
+        self.UIE_mgw_stop_scan_qpb.setEnabled(False)
+        self.UIE_mgw_save_data_qckbx: QCheckBox = self.findChild(QCheckBox, "save_data_checkbox") # Scanning Control 'Save Data' Checkbox
+        self.UIE_mgw_dir_box_qle = self.findChild(QLineEdit, "save_dir_lineedit")
+        self.UIE_mgw_start_qdsb = self.findChild(QDoubleSpinBox, "start_set_spinbox")
+        self.UIE_mgw_stop_qdsb = self.findChild(QDoubleSpinBox, "end_set_spinbox")
 
         if dummy:
-            self.stop_spin.setValue(0.2)
+            self.UIE_mgw_stop_qdsb.setValue(0.2)
 
-        self.step_spin = self.findChild(QDoubleSpinBox, "step_set_spinbox")
-        self.currpos_nm_disp = self.findChild(QLabel, "currpos_nm")
-        self.scan_status = self.findChild(QLabel, "status_label")
-        self.scan_progressbar = self.findChild(QProgressBar, "progressbar")
-        save_config_btn: QPushButton = self.findChild(QPushButton, 'save_config_button')
-        self.pos_spin: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox") # Manual Control 'Position:' Spin Box
-        self.move_to_position_button: QPushButton = self.findChild(QPushButton, "move_pos_button")
-        self.plotFrame: QWidget = self.findChild(QWidget, "data_graph")
-        self.xmin_in: QLineEdit = self.findChild(QLineEdit, "xmin_in")
-        self.ymin_in: QLineEdit = self.findChild(QLineEdit, "ymin_in")
-        self.xmax_in: QLineEdit = self.findChild(QLineEdit, "xmax_in")
-        self.ymax_in: QLineEdit = self.findChild(QLineEdit, "ymax_in")
-        self.plot_autorange: QCheckBox = self.findChild(QCheckBox, "autorange_checkbox")
-        self.plot_clear_plots: QPushButton = self.findChild(QPushButton, "clear_plots_button")
+        self.UIE_mgw_step_qdsb = self.findChild(QDoubleSpinBox, "step_set_spinbox")
+        self.UIE_mgw_currpos_nm_disp_ql = self.findChild(QLabel, "currpos_nm")
+        self.UIE_mgw_scan_status_ql = self.findChild(QLabel, "status_label")
+        self.UIE_mgw_scan_qpbar = self.findChild(QProgressBar, "progressbar")
+        UIE_mgw_save_config_qpb: QPushButton = self.findChild(QPushButton, 'save_config_button')
+        self.UIE_mgw_pos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox") # Manual Control 'Position:' Spin Box
+        self.UIE_mgw_move_to_position_qpb: QPushButton = self.findChild(QPushButton, "move_pos_button")
+        self.UIE_mgw_plot_frame_qw: QWidget = self.findChild(QWidget, "data_graph")
+        self.UIE_mgw_xmin_in_qle: QLineEdit = self.findChild(QLineEdit, "xmin_in")
+        self.UIE_mgw_ymin_in_qle: QLineEdit = self.findChild(QLineEdit, "ymin_in")
+        self.UIE_mgw_xmax_in_qle: QLineEdit = self.findChild(QLineEdit, "xmax_in")
+        self.UIE_mgw_ymax_in_qle: QLineEdit = self.findChild(QLineEdit, "ymax_in")
+        self.UIE_mgw_plot_autorange_qckbx: QCheckBox = self.findChild(QCheckBox, "autorange_checkbox")
+        self.UIE_mgw_plot_clear_plots_qpb: QPushButton = self.findChild(QPushButton, "clear_plots_button")
 
-        self.machine_conf_act: QAction = self.findChild(QAction, "machine_configuration")
-        self.invert_mes_act: QAction = self.findChild(QAction, "invert_mes")
-        self.autosave_data_act: QAction = self.findChild(QAction, "autosave_data")
-        self.autosave_dir_act: QAction = self.findChild(QAction, "autosave_dir_prompt")
-        self.preferences_act: QAction = self.findChild(QAction, "preferences")
-        self.pop_out_table_act: QAction = self.findChild(QAction, "pop_out_table")
-        self.pop_out_plot_act: QAction = self.findChild(QAction, "pop_out_plot")
-        self.about_source_act: QAction = self.findChild(QAction, "actionSource_Code")
-        self.about_licensing_act: QAction = self.findChild(QAction, "actionLicensing")
-        self.about_manual_act: QAction = self.findChild(QAction, "actionManual_2")
+        self.UIE_mgw_machine_conf_qa: QAction = self.findChild(QAction, "machine_configuration")
+        self.UIE_mgw_invert_mes_qa: QAction = self.findChild(QAction, "invert_mes")
+        self.UIE_mgw_autosave_data_qa: QAction = self.findChild(QAction, "autosave_data")
+        self.UIE_mgw_autosave_dir_qa: QAction = self.findChild(QAction, "autosave_dir_prompt")
+        self.UIE_mgw_preferences_qa: QAction = self.findChild(QAction, "preferences")
+        self.UIE_mgw_pop_out_table_qa: QAction = self.findChild(QAction, "pop_out_table")
+        self.UIE_mgw_pop_out_plot_qa: QAction = self.findChild(QAction, "pop_out_plot")
+        self.UIE_mgw_about_source_qa: QAction = self.findChild(QAction, "actionSource_Code")
+        self.UIE_mgw_about_licensing_qa: QAction = self.findChild(QAction, "actionLicensing")
+        self.UIE_mgw_about_manual_qa: QAction = self.findChild(QAction, "actionManual_2")
 
-        self.save_data_btn: QPushButton = self.findChild(QPushButton, 'save_data_button')
-        self.save_data_btn.clicked.connect(self.save_data_cb)
-        self.delete_data_btn: QPushButton = self.findChild(QPushButton, 'delete_data_button')
-        self.delete_data_btn.clicked.connect(self.delete_data_cb)
+        self.UIE_mgw_save_data_qpb: QPushButton = self.findChild(QPushButton, 'save_data_button')
+        self.UIE_mgw_save_data_qpb.clicked.connect(self.save_data_cb)
+        self.UIE_mgw_delete_data_qpb: QPushButton = self.findChild(QPushButton, 'delete_data_button')
+        self.UIE_mgw_delete_data_qpb.clicked.connect(self.delete_data_cb)
         
-        table_frame: QFrame = self.findChild(QFrame, "table_frame")
+        UIE_mgw_table_qf: QFrame = self.findChild(QFrame, "table_frame")
         self.table = DataTableWidget(self)
         VLayout = QVBoxLayout()
         VLayout.addWidget(self.table)
-        table_frame.setLayout(VLayout)
-        self.home_button: QPushButton = self.findChild(QPushButton, "home_button")
+        UIE_mgw_table_qf.setLayout(VLayout)
+        self.UIE_mgw_home_qpb: QPushButton = self.findChild(QPushButton, "home_button")
         
         self.homing_started = False
         if not dummy:
@@ -592,12 +591,12 @@ class MMC_Main(QMainWindow):
             self.mtn_ctrls[self.main_drive_i].home()
 
         # Get and set the palette.
-        palette = self.currpos_nm_disp.palette()
+        palette = self.UIE_mgw_currpos_nm_disp_ql.palette()
         palette.setColor(palette.WindowText, QColor(255, 0, 0))
         palette.setColor(palette.Background, QColor(0, 170, 255))
         palette.setColor(palette.Light, QColor(80, 80, 255))
         palette.setColor(palette.Dark, QColor(0, 255, 0))
-        self.currpos_nm_disp.setPalette(palette)
+        self.UIE_mgw_currpos_nm_disp_ql.setPalette(palette)
 
         self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
         self.plotCanvas.clear_plot_fcn()
@@ -606,36 +605,36 @@ class MMC_Main(QMainWindow):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(toolbar)
         layout.addWidget(self.plotCanvas)
-        self.plotFrame.setLayout(layout)
+        self.UIE_mgw_plot_frame_qw.setLayout(layout)
 
-        self.plot_clear_plots.clicked.connect(self.plotCanvas.clear_plot_fcn)
+        self.UIE_mgw_plot_clear_plots_qpb.clicked.connect(self.plotCanvas.clear_plot_fcn)
 
         # Set the initial value of the Manual Control 'Position:' spin box.
-        self.pos_spin.setValue(0)
+        self.UIE_mgw_pos_qdsb.setValue(0)
 
         # Signal-to-slot connections.
-        save_config_btn.clicked.connect(self.show_window_machine_config)
-        self.scan_button.clicked.connect(self.scan_button_pressed)
-        self.stop_scan_button.clicked.connect(self.stop_scan_button_pressed)
+        UIE_mgw_save_config_qpb.clicked.connect(self.show_window_machine_config)
+        self.UIE_mgw_scan_qpb.clicked.connect(self.scan_button_pressed)
+        self.UIE_mgw_stop_scan_qpb.clicked.connect(self.stop_scan_button_pressed)
         # self.collect_data.clicked.connect(self.manual_collect_button_pressed)
-        self.move_to_position_button.clicked.connect(self.move_to_position_button_pressed)
-        self.start_spin.valueChanged.connect(self.start_changed)
-        self.stop_spin.valueChanged.connect(self.stop_changed)
-        self.step_spin.valueChanged.connect(self.step_changed)
-        self.pos_spin.valueChanged.connect(self.manual_pos_changed)
+        self.UIE_mgw_move_to_position_qpb.clicked.connect(self.move_to_position_button_pressed)
+        self.UIE_mgw_start_qdsb.valueChanged.connect(self.start_changed)
+        self.UIE_mgw_stop_qdsb.valueChanged.connect(self.stop_changed)
+        self.UIE_mgw_step_qdsb.valueChanged.connect(self.step_changed)
+        self.UIE_mgw_pos_qdsb.valueChanged.connect(self.manual_pos_changed)
 
-        self.machine_conf_act.triggered.connect(self.show_window_machine_config)
-        self.invert_mes_act.toggled.connect(self.invert_mes_toggled)
-        self.autosave_data_act.toggled.connect(self.autosave_data_toggled)
-        self.autosave_dir_act.triggered.connect(self.autosave_dir_triggered)
-        self.preferences_act.triggered.connect(self.preferences_triggered)
-        self.pop_out_table_act.toggled.connect(self.pop_out_table_toggled)
-        self.pop_out_plot_act.toggled.connect(self.pop_out_plot_toggled)
-        self.about_licensing_act.triggered.connect(self.open_licensing_hyperlink)
-        self.about_manual_act.triggered.connect(self.open_manual_hyperlink)
-        self.about_source_act.triggered.connect(self.open_source_hyperlink)
+        self.UIE_mgw_machine_conf_qa.triggered.connect(self.show_window_machine_config)
+        self.UIE_mgw_invert_mes_qa.toggled.connect(self.invert_mes_toggled)
+        self.UIE_mgw_autosave_data_qa.toggled.connect(self.autosave_data_toggled)
+        self.UIE_mgw_autosave_dir_qa.triggered.connect(self.autosave_dir_triggered)
+        self.UIE_mgw_preferences_qa.triggered.connect(self.preferences_triggered)
+        self.UIE_mgw_pop_out_table_qa.toggled.connect(self.pop_out_table_toggled)
+        self.UIE_mgw_pop_out_plot_qa.toggled.connect(self.pop_out_plot_toggled)
+        self.UIE_mgw_about_licensing_qa.triggered.connect(self.open_licensing_hyperlink)
+        self.UIE_mgw_about_manual_qa.triggered.connect(self.open_manual_hyperlink)
+        self.UIE_mgw_about_source_qa.triggered.connect(self.open_source_hyperlink)
 
-        self.home_button.clicked.connect(self.manual_home)
+        self.UIE_mgw_home_qpb.clicked.connect(self.manual_home)
 
         # Other stuff.
         self.scan = Scan(weakref.proxy(self))
@@ -663,41 +662,41 @@ class MMC_Main(QMainWindow):
         self.statusBar.addPermanentWidget(self.sb_conv_slope)
         self.update_status_bar_grating_equation_values()
 
-        self.manual_position = (self.pos_spin.value() + self.zero_ofst) * self.conversion_slope
-        self.startpos = (self.start_spin.value() + self.zero_ofst) * self.conversion_slope
-        self.stoppos = (self.stop_spin.value() + self.zero_ofst) * self.conversion_slope
+        self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope
+        self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst) * self.conversion_slope
+        self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst) * self.conversion_slope
 
-        self.cw_mancon_position_set_spinbox: QSpinBox = self.findChild(QSpinBox, 'color_wheel_pos_set_spinbox')
-        self.cw_mancon_move_pos_button: QPushButton = self.findChild(QPushButton, 'color_wheel_move_pos_button')
-        self.cw_mancon_home_button: QPushButton = self.findChild(QPushButton, 'color_wheel_home_button')
-        self.cw_add_rule_button: QPushButton = self.findChild(QPushButton, 'color_wheel_add_rule_button')
+        self.UIE_mgw_cw_mancon_position_set_qsb: QSpinBox = self.findChild(QSpinBox, 'color_wheel_pos_set_spinbox')
+        self.UIE_mgw_cw_mancon_move_pos_qpb: QPushButton = self.findChild(QPushButton, 'color_wheel_move_pos_button')
+        self.UIE_mgw_cw_mancon_home_qpb: QPushButton = self.findChild(QPushButton, 'color_wheel_home_button')
+        self.UIE_mgw_cw_add_rule_qpb: QPushButton = self.findChild(QPushButton, 'color_wheel_add_rule_button')
         self.cw_rules = [] # List to hold the actual rules.
-        self.cw_rules_set_spinboxes = []
-        self.cw_rules_set_spinboxes.append(self.findChild(QDoubleSpinBox, 'color_wheel_rule_set_spinbox'))
-        self.cw_rules_step_spinboxes = []
-        self.cw_rules_step_spinboxes.append(self.findChild(QSpinBox, 'color_wheel_rule_step_spinbox'))
-        self.cw_rules_remove_buttons = []
-        self.cw_rules_remove_buttons.append(self.findChild(QPushButton, 'color_wheel_remove_rule_button'))
-        self.cw_rules_enact_buttons = []
-        self.cw_rules_enact_buttons.append(self.findChild(QPushButton, 'color_wheel_enact_rule_button'))
-        self.cw_add_rule_button.clicked.connect(self.new_color_wheel_rule)
-        self.cw_rules_scroll_area: QVBoxLayout = self.findChild(QVBoxLayout, 'scroll_area_layout')
+        self.UIEL_mgw_cw_rules_set_qsb = []
+        self.UIEL_mgw_cw_rules_set_qsb.append(self.findChild(QDoubleSpinBox, 'color_wheel_rule_set_spinbox'))
+        self.UIEL_mgw_cw_rules_step_qsb = []
+        self.UIEL_mgw_cw_rules_step_qsb.append(self.findChild(QSpinBox, 'color_wheel_rule_step_spinbox'))
+        self.UIEL_mgw_cw_rules_remove_qpb = []
+        self.UIEL_mgw_cw_rules_remove_qpb.append(self.findChild(QPushButton, 'color_wheel_remove_rule_button'))
+        self.UIEL_mgw_cw_rules_enact_qpb = []
+        self.UIEL_mgw_cw_rules_enact_qpb.append(self.findChild(QPushButton, 'color_wheel_enact_rule_button'))
+        self.UIE_mgw_cw_add_rule_qpb.clicked.connect(self.new_color_wheel_rule)
+        self.UIE_mgw_cw_rules_qsa: QVBoxLayout = self.findChild(QVBoxLayout, 'scroll_area_layout')
 
         if self.mes_sign == -1:
-            self.invert_mes_act.setChecked(True)
+            self.UIE_mgw_invert_mes_qa.setChecked(True)
         else:
-            self.invert_mes_act.setChecked(False)
+            self.UIE_mgw_invert_mes_qa.setChecked(False)
 
         if self.autosave_data_bool:
-            self.autosave_data_act.setChecked(True)
+            self.UIE_mgw_autosave_data_qa.setChecked(True)
         else:
-            self.autosave_data_act.setChecked(False)
+            self.UIE_mgw_autosave_data_qa.setChecked(False)
 
         self.update_movement_limits()
 
         self.table.updatePlots()
 
-        self.dev_man_win.close()
+        self.dmw.close()
         self.main_gui_booted = True
         self.show()  
 
@@ -748,7 +747,7 @@ class MMC_Main(QMainWindow):
 
         print(layout.spacing())
 
-        self.cw_rules_scroll_area.addLayout(layout)
+        self.UIE_mgw_cw_rules_qsa.addLayout(layout)
 
         pass
         # TODO: Instantiate new rule's UI elements.
@@ -764,24 +763,24 @@ class MMC_Main(QMainWindow):
         for dev in self.dev_list:
             dev_list_str += '%s\n'%(dev)
 
-        if (self.dm_list_label.text() != "~DEVICE LIST~\n" + dev_list_str):
+        if (self.UIE_dmw_list_ql.text() != "~DEVICE LIST~\n" + dev_list_str):
             for i in range(self.num_samplers):
-                self.dm_sampler_combos[i].clear()
-                self.dm_sampler_combos[i].addItem('Auto-Connect')
-                self.dm_sampler_combos[i].setCurrentIndex(0)
+                self.UIEL_dmw_sampler_qcb[i].clear()
+                self.UIEL_dmw_sampler_qcb[i].addItem('Auto-Connect')
+                self.UIEL_dmw_sampler_qcb[i].setCurrentIndex(0)
 
                 for dev in self.dev_list:
-                    self.dm_sampler_combos[i].addItem('%s'%(dev))
+                    self.UIEL_dmw_sampler_qcb[i].addItem('%s'%(dev))
 
             for i in range(self.num_motion_controllers):
-                self.dm_mtn_ctrl_combos[i].clear()
-                self.dm_mtn_ctrl_combos[i].addItem('Auto-Connect')
-                self.dm_mtn_ctrl_combos[i].setCurrentIndex(0)
+                self.UIEL_dmw_mtn_ctrl_qcb[i].clear()
+                self.UIEL_dmw_mtn_ctrl_qcb[i].addItem('Auto-Connect')
+                self.UIEL_dmw_mtn_ctrl_qcb[i].setCurrentIndex(0)
 
                 for dev in self.dev_list:
-                    self.dm_mtn_ctrl_combos[i].addItem('%s'%(dev))
+                    self.UIEL_dmw_mtn_ctrl_qcb[i].addItem('%s'%(dev))
 
-            self.dm_list_label.setText("~DEVICE LIST~\n" + dev_list_str)
+            self.UIE_dmw_list_ql.setText("~DEVICE LIST~\n" + dev_list_str)
 
     def save_data_cb(self):
         if self.table is None:
@@ -841,20 +840,20 @@ class MMC_Main(QMainWindow):
         webbrowser.open('https://github.com/mitbailey/MMC')
 
     def disable_movement_sensitive_buttons(self, disable: bool):
-        if self.move_to_position_button is not None:
-            self.move_to_position_button.setDisabled(disable)
-        if self.scan_button is not None:
-            self.scan_button.setDisabled(disable)
+        if self.UIE_mgw_move_to_position_qpb is not None:
+            self.UIE_mgw_move_to_position_qpb.setDisabled(disable)
+        if self.UIE_mgw_scan_qpb is not None:
+            self.UIE_mgw_scan_qpb.setDisabled(disable)
 
         # The stop scan button should always be set based on if a scan is running.
         if self.scanRunning:
             # Always have the Stop Scan button available when a scan is running.
-            self.stop_scan_button.setDisabled(False)
+            self.UIE_mgw_stop_scan_qpb.setDisabled(False)
         else:
-            self.stop_scan_button.setDisabled(True)
+            self.UIE_mgw_stop_scan_qpb.setDisabled(True)
 
-        if self.home_button is not None:
-            self.home_button.setDisabled(disable)
+        if self.UIE_mgw_home_qpb is not None:
+            self.UIE_mgw_home_qpb.setDisabled(disable)
 
     def manual_home(self):
         self.scan_status_update("HOMING")
@@ -924,7 +923,7 @@ class MMC_Main(QMainWindow):
         if not self.scanRunning:
             self.autosave_data_bool = state
         else:
-            self.autosave_data_act.setChecked(self.autosave_data_bool)
+            self.UIE_mgw_autosave_data_qa.setChecked(self.autosave_data_bool)
             
     def pop_out_table_toggled(self, state):
         self.pop_out_table = state
@@ -948,17 +947,17 @@ class MMC_Main(QMainWindow):
         self.plotCanvas.update_plots(data)
 
     def scan_status_update(self, status):
-        self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>'%(status))
+        self.UIE_mgw_scan_status_ql.setText('<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>'%(status))
 
     def scan_progress(self, curr_percent):
-        self.scan_progressbar.setValue(curr_percent)
+        self.UIE_mgw_scan_qpbar.setValue(curr_percent)
 
     def scan_complete(self):
         self.scanRunning = False
         self.disable_movement_sensitive_buttons(False)
-        self.scan_button.setText('Begin Scan')
-        self.scan_status.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
-        self.scan_progressbar.reset()
+        self.UIE_mgw_scan_qpb.setText('Begin Scan')
+        self.UIE_mgw_scan_status_ql.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
+        self.UIE_mgw_scan_qpbar.reset()
 
     def scan_data_begin(self, scan_idx: int, metadata: dict):
         n_scan_idx = self.table.insertData(None, None, metadata)
@@ -1009,7 +1008,7 @@ class MMC_Main(QMainWindow):
         self.moving = move_status
         self.previous_position = self.current_position
 
-        self.currpos_nm_disp.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.mtn_ctrls[self.main_drive_i].mm_to_idx) / self.conversion_slope) - self.zero_ofst))
+        self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.mtn_ctrls[self.main_drive_i].mm_to_idx) / self.conversion_slope) - self.zero_ofst))
 
     def scan_button_pressed(self):
         if not self.scanRunning:
@@ -1029,27 +1028,27 @@ class MMC_Main(QMainWindow):
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
-        pos = int((self.pos_spin.value() + self.zero_ofst) * self.conversion_slope * self.mtn_ctrls[self.main_drive_i].mm_to_idx)
+        pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.mtn_ctrls[self.main_drive_i].mm_to_idx)
         self.mtn_ctrls[self.main_drive_i].move_to(pos, False)
 
     def start_changed(self):
-        print("Start changed to: %s mm"%(self.start_spin.value()))
-        self.startpos = (self.start_spin.value() + self.zero_ofst) * self.conversion_slope
+        print("Start changed to: %s mm"%(self.UIE_mgw_start_qdsb.value()))
+        self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst) * self.conversion_slope
         print(self.startpos)
 
     def stop_changed(self):
-        print("Stop changed to: %s mm"%(self.stop_spin.value()))
-        self.stoppos = (self.stop_spin.value() + self.zero_ofst) * self.conversion_slope
+        print("Stop changed to: %s mm"%(self.UIE_mgw_stop_qdsb.value()))
+        self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst) * self.conversion_slope
         print(self.stoppos)
 
     def step_changed(self):
-        print("Step changed to: %s mm"%(self.step_spin.value()))
-        self.steppos = (self.step_spin.value()) * self.conversion_slope
+        print("Step changed to: %s mm"%(self.UIE_mgw_step_qdsb.value()))
+        self.steppos = (self.UIE_mgw_step_qdsb.value()) * self.conversion_slope
         print(self.steppos)
 
     def manual_pos_changed(self):
-        print("Manual position changed to: %s mm"%(self.pos_spin.value()))
-        self.manual_position = (self.pos_spin.value() + self.zero_ofst) * self.conversion_slope
+        print("Manual position changed to: %s mm"%(self.UIE_mgw_pos_qdsb.value()))
+        self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope
 
     def show_window_grating_config(self):
         print('show_window_grating_config')
@@ -1097,8 +1096,8 @@ class MMC_Main(QMainWindow):
             if int(float(out)) == float(out):
                 out = out.split('.')[0]
             self.grating_combo_lstr.insert(-1, out)
-            self.grating_combo.insertItem(self.grating_combo.count() - 1, self.grating_combo_lstr[-2])
-            self.grating_combo.setCurrentIndex(self.grating_combo.count() - 2)
+            self.UIE_mcw_grating_qcb.insertItem(self.UIE_mcw_grating_qcb.count() - 1, self.grating_combo_lstr[-2])
+            self.UIE_mcw_grating_qcb.setCurrentIndex(self.UIE_mcw_grating_qcb.count() - 2)
         self.grating_conf_win.close()    
 
     def new_grating_item(self, idx: int):
@@ -1106,9 +1105,9 @@ class MMC_Main(QMainWindow):
         if idx == slen - 1:
             self.show_window_grating_config()
             if len(self.grating_combo_lstr) != slen: # new length is different, new entry has been added
-                self.current_grating_idx = self.grating_combo.setCurrentIndex(idx)
+                self.current_grating_idx = self.UIE_mcw_grating_qcb.setCurrentIndex(idx)
             else: # new entry has not been added
-                self.grating_combo.setCurrentIndex(self.current_grating_idx)
+                self.UIE_mcw_grating_qcb.setCurrentIndex(self.current_grating_idx)
 
     # def dm_retry_button(self):
     #     # self.application.exit(MMC_Main.EXIT_CODE_REBOOT)
@@ -1129,91 +1128,91 @@ class MMC_Main(QMainWindow):
 
             self.machine_conf_win.setWindowTitle('Monochromator Configuration')
 
-            self.grating_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, 'grating_combo_2')
-            self.grating_combo.addItems(self.grating_combo_lstr)
+            self.UIE_mcw_grating_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'grating_combo_2')
+            self.UIE_mcw_grating_qcb.addItems(self.grating_combo_lstr)
             print(self.current_grating_idx)
-            self.grating_combo.setCurrentIndex(self.current_grating_idx)
-            self.grating_combo.activated.connect(self.new_grating_item)
+            self.UIE_mcw_grating_qcb.setCurrentIndex(self.current_grating_idx)
+            self.UIE_mcw_grating_qcb.activated.connect(self.new_grating_item)
             
-            self.zero_ofst_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'zero_offset_in')
-            self.zero_ofst_in.setValue(self.zero_ofst)
+            self.UIE_mcw_zero_ofst_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'zero_offset_in')
+            self.UIE_mcw_zero_ofst_in_qdsb.setValue(self.zero_ofst)
             
-            self.incidence_ang_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'incidence_angle_in')
-            self.incidence_ang_in.setValue(self.incidence_ang)
+            self.UIE_mcw_incidence_ang_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'incidence_angle_in')
+            self.UIE_mcw_incidence_ang_in_qdsb.setValue(self.incidence_ang)
             
-            self.tangent_ang_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'tangent_angle_in')
-            self.tangent_ang_in.setValue(self.tangent_ang)
+            self.UIE_mcw_tangent_ang_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'tangent_angle_in')
+            self.UIE_mcw_tangent_ang_in_qdsb.setValue(self.tangent_ang)
 
-            self.arm_length_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'arm_length_in')
-            self.arm_length_in.setValue(self.arm_length)
+            self.UIE_mcw_arm_length_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'arm_length_in')
+            self.UIE_mcw_arm_length_in_qdsb.setValue(self.arm_length)
 
-            self.diff_order_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'diff_order_in')
-            self.diff_order_in.setValue(self.diff_order)
+            self.UIE_mcw_diff_order_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'diff_order_in')
+            self.UIE_mcw_diff_order_in_qdsb.setValue(self.diff_order)
 
-            self.max_pos_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'max_pos_sbox')
-            self.max_pos_in.setValue(self.max_pos)
+            self.UIE_mcw_max_pos_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'max_pos_sbox')
+            self.UIE_mcw_max_pos_in_qdsb.setValue(self.max_pos)
 
-            self.min_pos_in = self.machine_conf_win.findChild(QDoubleSpinBox, 'min_pos_sbox')
-            self.min_pos_in.setValue(self.min_pos)
+            self.UIE_mcw_min_pos_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'min_pos_sbox')
+            self.UIE_mcw_min_pos_in_qdsb.setValue(self.min_pos)
 
-            self.machine_conf_btn = self.machine_conf_win.findChild(QPushButton, 'update_conf_btn')
-            self.machine_conf_btn.clicked.connect(self.apply_machine_conf)
+            self.UIE_mcw_machine_conf_qpb = self.machine_conf_win.findChild(QPushButton, 'update_conf_btn')
+            self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
 
             # Get axes combos.
-            self.mc_main_drive_axis_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, "main_drive_axis_combo")
-            self.mc_color_wheel_axis_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, "color_wheel_axis_combo")
-            self.mc_sample_rotation_axis_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, "sample_rotation_axis_combo")
-            self.mc_sample_translation_axis_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, "sample_translation_axis_combo")
-            self.mc_detector_rotation_axis_combo: QComboBox = self.machine_conf_win.findChild(QComboBox, "detector_rotation_axis_combo")
+            self.UIE_mcw_main_drive_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "main_drive_axis_combo")
+            self.UIE_mcw_color_wheel_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "color_wheel_axis_combo")
+            self.UIE_mcw_sample_rotation_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "sample_rotation_axis_combo")
+            self.UIE_mcw_sample_translation_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "sample_translation_axis_combo")
+            self.UIE_mcw_detector_rotation_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "detector_rotation_axis_combo")
 
             none = 'No Device Selected'
-            self.mc_main_drive_axis_combo.addItem('%s'%(none))
-            self.mc_color_wheel_axis_combo.addItem('%s'%(none))
-            self.mc_sample_rotation_axis_combo.addItem('%s'%(none))
-            self.mc_sample_translation_axis_combo.addItem('%s'%(none))
-            self.mc_detector_rotation_axis_combo.addItem('%s'%(none))
+            self.UIE_mcw_main_drive_axis_qcb.addItem('%s'%(none))
+            self.UIE_mcw_color_wheel_axis_qcb.addItem('%s'%(none))
+            self.UIE_mcw_sample_rotation_axis_qcb.addItem('%s'%(none))
+            self.UIE_mcw_sample_translation_axis_qcb.addItem('%s'%(none))
+            self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s'%(none))
 
             # Populate axes combos.
             for dev in self.dev_list:
                 print('Adding %s to config list.'%(dev))
-                self.mc_main_drive_axis_combo.addItem('%s'%(dev))
-                self.mc_color_wheel_axis_combo.addItem('%s'%(dev))
-                self.mc_sample_rotation_axis_combo.addItem('%s'%(dev))
-                self.mc_sample_translation_axis_combo.addItem('%s'%(dev))
-                self.mc_detector_rotation_axis_combo.addItem('%s'%(dev))
+                self.UIE_mcw_main_drive_axis_qcb.addItem('%s'%(dev))
+                self.UIE_mcw_color_wheel_axis_qcb.addItem('%s'%(dev))
+                self.UIE_mcw_sample_rotation_axis_qcb.addItem('%s'%(dev))
+                self.UIE_mcw_sample_translation_axis_qcb.addItem('%s'%(dev))
+                self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s'%(dev))
         
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
-        print('Exec done', self.current_grating_idx, self.grating_combo.currentIndex())
-        if self.current_grating_idx != self.grating_combo.currentIndex():
-            self.grating_combo.setCurrentIndex(self.current_grating_idx)
+        print('Exec done', self.current_grating_idx, self.UIE_mcw_grating_qcb.currentIndex())
+        if self.current_grating_idx != self.UIE_mcw_grating_qcb.currentIndex():
+            self.UIE_mcw_grating_qcb.setCurrentIndex(self.current_grating_idx)
 
     def update_movement_limits(self):
-        self.pos_spin.setMaximum(self.max_pos)
-        self.pos_spin.setMinimum(self.min_pos)
+        self.UIE_mgw_pos_qdsb.setMaximum(self.max_pos)
+        self.UIE_mgw_pos_qdsb.setMinimum(self.min_pos)
 
-        self.start_spin.setMaximum(self.max_pos)
-        self.start_spin.setMinimum(self.min_pos)
+        self.UIE_mgw_start_qdsb.setMaximum(self.max_pos)
+        self.UIE_mgw_start_qdsb.setMinimum(self.min_pos)
 
-        self.stop_spin.setMaximum(self.max_pos)
-        self.stop_spin.setMinimum(self.min_pos)
+        self.UIE_mgw_stop_qdsb.setMaximum(self.max_pos)
+        self.UIE_mgw_stop_qdsb.setMinimum(self.min_pos)
 
     def apply_machine_conf(self):
         print('Apply config called')
-        idx = self.grating_combo.currentIndex()
+        idx = self.UIE_mcw_grating_qcb.currentIndex()
         if idx < len(self.grating_combo_lstr) - 1:
             self.current_grating_idx = idx
         self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
         print(self.grating_density)
-        self.diff_order = int(self.diff_order_in.value())
-        self.max_pos = self.max_pos_in.value()
-        self.min_pos = self.min_pos_in.value()
+        self.diff_order = int(self.UIE_mcw_diff_order_in_qdsb.value())
+        self.max_pos = self.UIE_mcw_max_pos_in_qdsb.value()
+        self.min_pos = self.UIE_mcw_min_pos_in_qdsb.value()
 
         self.update_movement_limits()
 
-        self.zero_ofst = self.zero_ofst_in.value()
-        self.incidence_ang = self.incidence_ang_in.value()
-        self.tangent_ang = self.tangent_ang_in.value()
-        self.arm_length = self.arm_length_in.value()
+        self.zero_ofst = self.UIE_mcw_zero_ofst_in_qdsb.value()
+        self.incidence_ang = self.UIE_mcw_incidence_ang_in_qdsb.value()
+        self.tangent_ang = self.UIE_mcw_tangent_ang_in_qdsb.value()
+        self.arm_length = self.UIE_mcw_arm_length_in_qdsb.value()
 
         self.calculate_conversion_slope()
 
@@ -1223,10 +1222,6 @@ class MMC_Main(QMainWindow):
     
     def calculate_conversion_slope(self):
         self.conversion_slope = ((self.arm_length * self.diff_order * self.grating_density)/(2 * (m.cos(m.radians(self.tangent_ang))) * (m.cos(m.radians(self.incidence_ang))) * 1e6))
-
-# TODO: QThread which will be run by the loading UI to initialize communication with devices. Will need to save important data. This functionality currently handled by the MainWindow UI.
-class Boot(QThread):
-    pass
 
 class Scan(QThread):
     SIGNAL_status_update = pyqtSignal(str)
@@ -1273,9 +1268,9 @@ class Scan(QThread):
         print("SCAN QTHREAD")
         print("Start | Stop | Step")
         print(self.other.startpos, self.other.stoppos, self.other.steppos)
-        self.other.startpos = (self.other.start_spin.value() + self.other.zero_ofst) * self.other.conversion_slope
-        self.other.stoppos = (self.other.stop_spin.value() + self.other.zero_ofst) * self.other.conversion_slope
-        self.other.steppos = (self.other.step_spin.value()) * self.other.conversion_slope
+        self.other.startpos = (self.other.UIE_mgw_start_qdsb.value() + self.other.zero_ofst) * self.other.conversion_slope
+        self.other.stoppos = (self.other.UIE_mgw_stop_qdsb.value() + self.other.zero_ofst) * self.other.conversion_slope
+        self.other.steppos = (self.other.UIE_mgw_step_qdsb.value()) * self.other.conversion_slope
         if self.other.steppos == 0 or self.other.startpos == self.other.stoppos:
             for f in sav_files:
                 if (f is not None):
