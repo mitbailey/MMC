@@ -81,6 +81,7 @@ from io import TextIOWrapper
 import math as m
 import numpy as np
 import datetime as dt
+from functools import partial
 # import serial.tools.list_ports
 # from utilities import ports_finder
 
@@ -670,17 +671,24 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_cw_mancon_move_pos_qpb: QPushButton = self.findChild(QPushButton, 'color_wheel_move_pos_button')
         self.UIE_mgw_cw_mancon_home_qpb: QPushButton = self.findChild(QPushButton, 'color_wheel_home_button')
         self.UIE_mgw_cw_add_rule_qpb: QPushButton = self.findChild(QPushButton, 'color_wheel_add_rule_button')
-        self.cw_rules = [] # List to hold the actual rules.
-        self.UIEL_mgw_cw_rules_set_qsb = []
-        self.UIEL_mgw_cw_rules_set_qsb.append(self.findChild(QDoubleSpinBox, 'color_wheel_rule_set_spinbox'))
-        self.UIEL_mgw_cw_rules_step_qsb = []
-        self.UIEL_mgw_cw_rules_step_qsb.append(self.findChild(QSpinBox, 'color_wheel_rule_step_spinbox'))
-        self.UIEL_mgw_cw_rules_remove_qpb = []
-        self.UIEL_mgw_cw_rules_remove_qpb.append(self.findChild(QPushButton, 'color_wheel_remove_rule_button'))
-        self.UIEL_mgw_cw_rules_enact_qpb = []
-        self.UIEL_mgw_cw_rules_enact_qpb.append(self.findChild(QPushButton, 'color_wheel_enact_rule_button'))
         self.UIE_mgw_cw_add_rule_qpb.clicked.connect(self.new_color_wheel_rule)
+        
+        self.cw_rules = [] # List to hold the actual rules.
+        self.UIEL_mgw_cw_rules_qvbl = []
+        # self.UIEL_mgw_cw_rules_qvbl.append(self.scroll_area_layout)
+        self.UIEL_mgw_cw_rules_set_qdsb = []
+        # self.UIEL_mgw_cw_rules_set_qdsb.append(self.findChild(QDoubleSpinBox, 'color_wheel_rule_set_spinbox'))
+        self.UIEL_mgw_cw_rules_step_qsb = []
+        # self.UIEL_mgw_cw_rules_step_qsb.append(self.findChild(QSpinBox, 'color_wheel_rule_step_spinbox'))
+        self.UIEL_mgw_cw_rules_remove_qpb = []
+        # self.UIEL_mgw_cw_rules_remove_qpb.append(self.findChild(QPushButton, 'color_wheel_remove_rule_button'))
+        # self.UIEL_mgw_cw_rules_remove_qpb[0].clicked.connect(partial(self.del_color_wheel_rule, 0))
+        self.UIEL_mgw_cw_rules_enact_qpb = []
+        # self.UIEL_mgw_cw_rules_enact_qpb.append(self.findChild(QPushButton, 'color_wheel_enact_rule_button'))
         self.UIE_mgw_cw_rules_qsa: QVBoxLayout = self.findChild(QVBoxLayout, 'scroll_area_layout')
+        self.UIEL_mgw_cw_misc_tuples_ql = []
+        # self.UIEL_mgw_cw_misc_tuples_ql.append([self.label_4, self.label_5])
+        self.new_color_wheel_rule()
 
         if self.mes_sign == -1:
             self.UIE_mgw_invert_mes_qa.setChecked(True)
@@ -718,21 +726,27 @@ class MMC_Main(QMainWindow):
         enact_button: QPushButton = QPushButton('ENACT')
         enact_button.setMaximumWidth(75)
         enact_button.setMaximumHeight(29)
+        self.UIEL_mgw_cw_rules_enact_qpb.append(enact_button)
 
         remove_button: QPushButton = QPushButton('-')
         remove_button.setMaximumWidth(29)
         remove_button.setMaximumHeight(29)
+        self.UIEL_mgw_cw_rules_remove_qpb.append(remove_button)
+        remove_button.clicked.connect(partial(self.del_color_wheel_rule, self.UIEL_mgw_cw_rules_enact_qpb[-1]))
+        print('RULE ADDED AT INDEX:', len(self.UIEL_mgw_cw_rules_remove_qpb) - 1)
 
         rule_set_spinbox: QDoubleSpinBox = QDoubleSpinBox()
         rule_set_spinbox.setRange(0, 9999)
         rule_set_spinbox.setDecimals(2)
         rule_set_spinbox.setMaximumWidth(89)
         rule_set_spinbox.setMaximumHeight(27)
+        self.UIEL_mgw_cw_rules_set_qdsb.append(rule_set_spinbox)
 
         rule_step_spinbox: QSpinBox = QSpinBox()
         rule_step_spinbox.setRange(0, 9999999)
         rule_step_spinbox.setMaximumWidth(84)
         rule_step_spinbox.setMaximumHeight(27)
+        self.UIEL_mgw_cw_rules_step_qsb.append(rule_step_spinbox)
 
         hspacer: QSpacerItem = QSpacerItem(20, 40, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -747,10 +761,49 @@ class MMC_Main(QMainWindow):
 
         print(layout.spacing())
 
+        self.UIEL_mgw_cw_misc_tuples_ql.append([geq_label, goto_label])
+
+        self.UIEL_mgw_cw_rules_qvbl.append(layout)
         self.UIE_mgw_cw_rules_qsa.addLayout(layout)
 
-        pass
-        # TODO: Instantiate new rule's UI elements.
+    def del_color_wheel_rule(self, index_finder):
+        # TODO: Currently an issue where if a lower index is removed first, then the higher index remains the same.
+
+        index = self.UIEL_mgw_cw_rules_enact_qpb.index(index_finder)
+
+        # button_index tells is which button it is
+        print('RULE REMOVAL AT INDEX:', index)
+
+        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_rules_enact_qpb[index])
+        self.UIEL_mgw_cw_rules_enact_qpb[index].setParent(None)
+        del self.UIEL_mgw_cw_rules_enact_qpb[index]
+
+        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_rules_remove_qpb[index])
+        print('len', len(self.UIEL_mgw_cw_rules_remove_qpb))
+        print('index', index)
+        self.UIEL_mgw_cw_rules_remove_qpb[index].setParent(None)
+        del self.UIEL_mgw_cw_rules_remove_qpb[index]
+
+        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_rules_set_qdsb[index])
+        self.UIEL_mgw_cw_rules_set_qdsb[index].setParent(None)
+        del self.UIEL_mgw_cw_rules_set_qdsb[index]
+
+        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_rules_step_qsb[index])
+        self.UIEL_mgw_cw_rules_step_qsb[index].setParent(None)
+        del self.UIEL_mgw_cw_rules_step_qsb[index]
+
+        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_misc_tuples_ql[index][0])
+        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_misc_tuples_ql[index][1])
+
+        self.UIEL_mgw_cw_misc_tuples_ql[index][0].setParent(None)
+        self.UIEL_mgw_cw_misc_tuples_ql[index][1].setParent(None)
+        del self.UIEL_mgw_cw_misc_tuples_ql[index]
+
+        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_misc_tuples_ql[index][2])
+        # del self.UIEL_mgw_cw_rules_qvbl[index]
+        
+        self.UIE_mgw_cw_rules_qsa.removeItem(self.UIEL_mgw_cw_rules_qvbl[index])
+        del self.UIEL_mgw_cw_rules_qvbl[index]
 
     def devman_list_devices(self):
         # self.dev_list = ports_finder.find_all_ports()
