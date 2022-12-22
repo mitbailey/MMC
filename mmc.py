@@ -726,6 +726,7 @@ class MMC_Main(QMainWindow):
         enact_button: QPushButton = QPushButton('ENACT')
         enact_button.setMaximumWidth(75)
         enact_button.setMaximumHeight(29)
+        enact_button.clicked.connect(self.enact_filter_wheel_rule)
         self.UIEL_mgw_cw_rules_enact_qpb.append(enact_button)
 
         remove_button: QPushButton = QPushButton('-')
@@ -765,6 +766,28 @@ class MMC_Main(QMainWindow):
 
         self.UIEL_mgw_cw_rules_qvbl.append(layout)
         self.UIE_mgw_cw_rules_qsa.addLayout(layout)
+    
+    def enact_filter_wheel_rule(self):
+        sender = self.sender()
+        sidx = -1
+        for i in range(len(self.UIEL_mgw_cw_rules_enact_qpb)):
+            if self.UIEL_mgw_cw_rules_enact_qpb[i] == sender:
+                sidx = i
+                break
+        if sidx < 0:
+            print('FAILED TO FIND SENDER INDEX!')
+            return
+
+        # sender.
+        print('SENDER:')
+        print(sender)
+
+        dspin = self.UIEL_mgw_cw_rules_set_qdsb[sidx]
+        spin = self.UIEL_mgw_cw_rules_step_qsb[sidx]
+
+        print(dspin)
+        print(spin)
+        print('Values are %f and %d.'%(dspin.value(), spin.value()))
 
     def del_color_wheel_rule(self, index_finder):
         # TODO: Currently an issue where if a lower index is removed first, then the higher index remains the same.
