@@ -127,7 +127,7 @@ class MP_789A_4:
     def short_name(self):
         return 'MP789'
 
-    def full_name(self):
+    def long_name(self):
         return 'McPherson 789A-4'
 
 """ 

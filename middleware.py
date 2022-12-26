@@ -130,6 +130,7 @@ class MotionController:
         self.mm_to_idx = 0
         self._is_dummy = False
         self.motor_ctrl = None
+        self.port = None
 
         # Initializes our motor_ctrl stuff depending on what hardware we're using.
         if self.model == MotionController.SupportedDevices[0]:
@@ -169,6 +170,7 @@ class MotionController:
         if self.motor_ctrl is None:
             raise RuntimeError('self.motor_ctrl is None')
         self.mm_to_idx = self.motor_ctrl.mm_to_idx
+        self.port = man_port
 
     def is_dummy(self):
         return self.is_dummy
@@ -187,6 +189,9 @@ class MotionController:
 
     def move_to(self, position, block):
         return self.motor_ctrl.move_to(position, block)
+
+    def port_name(self):
+        return self.port
 
     def short_name(self):
         return self.motor_ctrl.short_name()

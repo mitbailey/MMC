@@ -83,7 +83,7 @@ class MP_792:
     def short_name(self):
         return 'MP792'
 
-    def full_name(self):
+    def long_name(self):
         return 'McPherson 792'
 
 """ 

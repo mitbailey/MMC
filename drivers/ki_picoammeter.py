@@ -110,7 +110,7 @@ class KI_Picoammeter:
     def short_name(self):
         return 'KI6485'
 
-    def full_name(self):
+    def long_name(self):
         return 'Keithley 6485 Picoammeter'
 
 class KI_Picoammeter_Dummy:
@@ -186,7 +186,7 @@ class KI_Picoammeter_Dummy:
     def short_name(self):
         return 'KI6485DUM'
 
-    def full_name(self):
+    def long_name(self):
         return 'Keithley 6485 Picoammeter Dummy'
 
 # test code

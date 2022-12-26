@@ -598,7 +598,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="mcw_accept">
        <property name="font">
         <font>
          <family>Segoe UI Semibold</family>

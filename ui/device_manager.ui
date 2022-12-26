@@ -49,6 +49,19 @@
         <number>5</number>
        </property>
        <item>
+        <widget class="QLabel" name="label_5">
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>STATUS:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="dmw_explanation_ql">
          <property name="font">
           <font>
@@ -81,7 +94,7 @@
         <string>Devices Selection</string>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="0">
+        <item row="2" column="0">
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <property name="leftMargin">
            <number>5</number>
@@ -140,7 +153,7 @@
                 <item>
                  <widget class="QLabel" name="label_3">
                   <property name="text">
-                   <string>Sampler:</string>
+                   <string>Sampler(s)</string>
                   </property>
                  </widget>
                 </item>
@@ -191,7 +204,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>621</width>
-                 <height>224</height>
+                 <height>176</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -297,7 +310,7 @@
                 <item>
                  <widget class="QLabel" name="label_4">
                   <property name="text">
-                   <string>Motion Controller:</string>
+                   <string>Motion Controller(s)</string>
                   </property>
                  </widget>
                 </item>
@@ -350,8 +363,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>621</width>
-                 <height>224</height>
+                 <width>618</width>
+                 <height>176</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -416,7 +429,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="">
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
             <property name="leftMargin">
              <number>5</number>
             </property>
@@ -504,6 +517,33 @@
            </layout>
           </item>
          </layout>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Devices must first be selected and verified here before continuing. Devices which are not selected here will not be usable within the program.</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="font">
+           <font>
+            <weight>50</weight>
+            <italic>true</italic>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>As of v0.5 this Device Manager window is only viewable at program startup. Later this window will be accessible during runtime.</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

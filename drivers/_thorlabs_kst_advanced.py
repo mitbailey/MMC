@@ -637,7 +637,7 @@ class Thorlabs: # Wrapper class for TLI methods
         def short_name(self):
             return 'KST101'
 
-        def full_name(self):
+        def long_name(self):
             return 'ThorLabs KST-101'
 
     class KSTDummy: # Subclass for KST101 devices
@@ -1049,7 +1049,7 @@ class Thorlabs: # Wrapper class for TLI methods
         def short_name(self):
             return 'KST101DUM'
 
-        def full_name(self):
+        def long_name(self):
             return 'ThorLabs KST-101 Dummy'
 
 # %%

@@ -1234,6 +1234,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_machine_conf_qpb = self.machine_conf_win.findChild(QPushButton, 'update_conf_btn')
             self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
 
+            self.UIE_mcw_accept_qpb = self.machine_conf_win.findChild(QPushButton, 'mcw_accept')
+            self.UIE_mcw_accept_qpb.clicked.connect(self.accept_mcw)
+
             # Get axes combos.
             self.UIE_mcw_main_drive_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "main_drive_axis_combo")
             self.UIE_mcw_color_wheel_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "color_wheel_axis_combo")
@@ -1249,14 +1252,16 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s'%(none))
 
             # Populate axes combos.
-            for dev in self.dev_list:
+            for dev in self.mtn_ctrls:
                 print('Adding %s to config list.'%(dev))
-                self.UIE_mcw_main_drive_axis_qcb.addItem('%s'%(dev))
-                self.UIE_mcw_color_wheel_axis_qcb.addItem('%s'%(dev))
-                self.UIE_mcw_sample_rotation_axis_qcb.addItem('%s'%(dev))
-                self.UIE_mcw_sample_translation_axis_qcb.addItem('%s'%(dev))
-                self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s'%(dev))
-        
+                self.UIE_mcw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                self.UIE_mcw_color_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                self.UIE_mcw_sample_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                self.UIE_mcw_sample_translation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+
+            # Select the devices selected in device manager.
+            
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         print('Exec done', self.current_grating_idx, self.UIE_mcw_grating_qcb.currentIndex())
         if self.current_grating_idx != self.UIE_mcw_grating_qcb.currentIndex():
@@ -1294,7 +1299,11 @@ class MMC_Main(QMainWindow):
 
         self.update_status_bar_grating_equation_values()
 
+    def accept_mcw(self):
+
+
         self.machine_conf_win.close()
+
     
     def calculate_conversion_slope(self):
         self.conversion_slope = ((self.arm_length * self.diff_order * self.grating_density)/(2 * (m.cos(m.radians(self.tangent_ang))) * (m.cos(m.radians(self.incidence_ang))) * 1e6))
