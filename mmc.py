@@ -95,6 +95,7 @@ from utilities.config import load_config, save_config, reset_config
 import webbrowser
 from utilities.datatable import DataTableWidget
 
+import motion_controller_list as mcl
 import middleware as mw
 from middleware import MotionController#, list_all_devices
 from middleware import DataSampler
@@ -182,6 +183,8 @@ class MMC_Main(QMainWindow):
 
     # Destructor
     def __del__(self):
+        if self.motion_controllers is not None:
+            del self.motion_controllers
         if self.mtn_ctrls is not None:
             del self.mtn_ctrls
         if self.samplers is not None:
@@ -205,6 +208,8 @@ class MMC_Main(QMainWindow):
         self.dmw = None
         self.show_window_device_manager()
         self.dev_finder = None
+
+        self.motion_controllers = mcl.MotionControllerList()
 
         # TODO: These indices will keep track of which drives correspond to which controllers.
         self.main_drive_i = 0
@@ -584,12 +589,15 @@ class MMC_Main(QMainWindow):
         UIE_mgw_table_qf.setLayout(VLayout)
         self.UIE_mgw_home_qpb: QPushButton = self.findChild(QPushButton, "home_button")
         
+        self.motion_controllers.main_drive_axis = self.mtn_ctrls[0]
+
         self.homing_started = False
         if not dummy:
             self.homing_started = True
             self.disable_movement_sensitive_buttons(True)
             self.scan_status_update("HOMING")
-            self.mtn_ctrls[self.main_drive_i].home()
+            # self.mtn_ctrls[self.main_drive_i].home()
+            self.motion_controllers.main_drive_axis.home()
 
         # Get and set the palette.
         palette = self.UIE_mgw_currpos_nm_disp_ql.palette()
@@ -935,7 +943,8 @@ class MMC_Main(QMainWindow):
         self.scan_status_update("HOMING")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
-        self.mtn_ctrls[self.main_drive_i].home()
+        # self.mtn_ctrls[self.main_drive_i].home()
+        self.motion_controllers.main_drive_axis.home()
 
     def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
         self.scan_number += 1
@@ -1055,17 +1064,17 @@ class MMC_Main(QMainWindow):
             self.scan_button_pressed()
 
     def update_position_displays(self):
-        self.current_position = self.mtn_ctrls[self.main_drive_i].get_position()
+        self.current_position = self.motion_controllers.main_drive_axis.get_position()
         
         if self.homing_started: # set this to True at __init__ because we are homing, and disable everything. same goes for 'Home' button
-            home_status = self.mtn_ctrls[self.main_drive_i].is_homing() # explore possibility of replacing this with is_homed()
+            home_status = self.motion_controllers.main_drive_axis.is_homing() # explore possibility of replacing this with is_homed()
 
             if home_status:
                 # Detect if the device is saying its homing, but its not actually moving.
                 if self.current_position == self.previous_position:
                     self.immobile_count += 1
                 if self.immobile_count >= 3:
-                    self.mtn_ctrls[self.main_drive_i].home()
+                    self.motion_controllers.main_drive_axis.home()
                     self.immobile_count = 0
 
             if not home_status:
@@ -1076,7 +1085,7 @@ class MMC_Main(QMainWindow):
                 self.disable_movement_sensitive_buttons(False)
                 self.homing_started = False
                 pass
-        move_status = self.mtn_ctrls[self.main_drive_i].is_moving()
+        move_status = self.motion_controllers.main_drive_axis.is_moving()
         
         if not move_status and self.moving and not self.scanRunning:
             self.disable_movement_sensitive_buttons(False)
@@ -1084,7 +1093,7 @@ class MMC_Main(QMainWindow):
         self.moving = move_status
         self.previous_position = self.current_position
 
-        self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.mtn_ctrls[self.main_drive_i].mm_to_idx) / self.conversion_slope) - self.zero_ofst))
+        self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.motion_controllers.main_drive_axis.mm_to_idx) / self.conversion_slope) - self.zero_ofst))
 
     def scan_button_pressed(self):
         if not self.scanRunning:
@@ -1104,8 +1113,8 @@ class MMC_Main(QMainWindow):
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
-        pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.mtn_ctrls[self.main_drive_i].mm_to_idx)
-        self.mtn_ctrls[self.main_drive_i].move_to(pos, False)
+        pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.mm_to_idx)
+        self.motion_controllers.main_drive_axis.move_to(pos, False)
 
     def start_changed(self):
         print("Start changed to: %s mm"%(self.UIE_mgw_start_qdsb.value()))
@@ -1253,8 +1262,10 @@ class MMC_Main(QMainWindow):
 
             # Populate axes combos.
             for dev in self.mtn_ctrls:
+                # TODO: Have selected the current one.
                 print('Adding %s to config list.'%(dev))
                 self.UIE_mcw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
                 self.UIE_mcw_color_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
                 self.UIE_mcw_sample_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
                 self.UIE_mcw_sample_translation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
@@ -1301,6 +1312,26 @@ class MMC_Main(QMainWindow):
 
     def accept_mcw(self):
 
+
+        print('~~MACHINE CONFIGURATION ACCEPT CALLED:')
+        print('~Main Drive')
+        print(self.UIE_mcw_main_drive_axis_qcb.currentText())
+        print('~Color Wheel Axis')
+        print(self.UIE_mcw_color_wheel_axis_qcb.currentText())
+        print('~Sample Axes')
+        print(self.UIE_mcw_sample_rotation_axis_qcb.currentText())
+        print(self.UIE_mcw_sample_translation_axis_qcb.currentText())
+        print('~Detector Rotation Axis')
+        print(self.UIE_mcw_detector_rotation_axis_qcb.currentText())
+        print('~~')
+
+        # print(self.dev_list)
+
+        self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.UIE_mcw_main_drive_axis_qcb.currentIndex() - 1]
+        self.motion_controllers.color_wheel_axis = self.mtn_ctrls[self.UIE_mcw_color_wheel_axis_qcb.currentIndex() - 1]
+        self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.UIE_mcw_sample_rotation_axis_qcb.currentIndex() - 1]
+        self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.UIE_mcw_sample_translation_axis_qcb.currentIndex() - 1]
+        self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.UIE_mcw_detector_rotation_axis_qcb.currentIndex() - 1]
 
         self.machine_conf_win.close()
 
@@ -1367,8 +1398,8 @@ class Scan(QThread):
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
         self.SIGNAL_status_update.emit("ZEROING")
-        prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx)
-        self.other.mtn_ctrls[self.other.main_drive_i].move_to(prep_pos, True)
+        prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.motion_controllers.main_drive_axis.mm_to_idx)
+        self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
         self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
 
@@ -1380,7 +1411,7 @@ class Scan(QThread):
             self._ydata.append([])
 
         self._scan_id = self.other.table.scanId
-        metadata = {'tstamp': tnow, 'mm_to_idx': self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx, 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+        metadata = {'tstamp': tnow, 'mm_to_idx': self.other.motion_controllers.main_drive_axis.mm_to_idx, 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
         self.SIGNAL_data_begin.emit(self.scanId,  metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
         while self.scanId == self.other.table.scanId: # spin until that happens
             continue
@@ -1388,8 +1419,8 @@ class Scan(QThread):
             if not self.other.scanRunning:
                 break
             self.SIGNAL_status_update.emit("MOVING")
-            self.other.mtn_ctrls[self.other.main_drive_i].move_to(dpos * self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx, True)
-            pos = self.other.mtn_ctrls[self.other.main_drive_i].get_position()
+            self.other.motion_controllers.main_drive_axis.move_to(dpos * self.other.motion_controllers.main_drive_axis.mm_to_idx, True)
+            pos = self.other.motion_controllers.main_drive_axis.get_position()
             self.SIGNAL_status_update.emit("SAMPLING")
 
             i=0
@@ -1406,19 +1437,19 @@ class Scan(QThread):
                     err = int(float(words[2])) # skip timestamp
                 except Exception:
                     continue
-                self._xdata[i].append((((pos / self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
+                self._xdata[i].append((((pos / self.other.motion_controllers.main_drive_axis.mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
                 self._ydata[i].append(self.other.mes_sign * mes * 1e12)
                 self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
 
                 if sav_files[i] is not None:
                     if idx == 0:
                         sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
-                        sav_files[i].write('# Steps/mm: %f\n'%(self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx))
+                        sav_files[i].write('# Steps/mm: %f\n'%(self.other.motion_controllers.main_drive_axis.mm_to_idx))
                         sav_files[i].write('# mm/nm: %e; lambda_0 (nm): %e\n'%(self.other.conversion_slope, self.other.zero_ofst))
                         sav_files[i].write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
                     # process buf
                     # 1. split by \n
-                    buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.mtn_ctrls[self.other.main_drive_i].mm_to_idx) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
+                    buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.motion_controllers.main_drive_axis.mm_to_idx) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
                     sav_files[i].write(buf)
 
                 i += 1
