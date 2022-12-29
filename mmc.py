@@ -186,8 +186,8 @@ class MMC_Main(QMainWindow):
             del self.mtn_ctrls
         if self.samplers is not None:
             del self.samplers
-        self.dev_finder.done = True
         if self.dev_finder is not None:
+            self.dev_finder.done = True
             del self.dev_finder
 
     # Constructor
@@ -1505,6 +1505,9 @@ if __name__ == '__main__':
         # Cleanup.
         del mainWindow
 
+    print('Exiting program...')
+
     # Exit.
-    sys.exit(exit_code)
+    # sys.exit(exit_code)
+    os._exit(exit_code)
 # %%
