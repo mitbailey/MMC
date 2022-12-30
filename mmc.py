@@ -342,6 +342,13 @@ class MMC_Main(QMainWindow):
         print('\n\n')
         print("connect_devices")
 
+        self.UIE_dmw_accept_qpb.setEnabled(False)
+        # msg = QMessageBox()
+        # msg.setWindowTitle('Something')
+        # msg.setText('Something happened, gasp!')
+        # msg.setIcon(QMessageBox.Warning)
+        # popup = msg.exec_()
+
         self.UIE_dmw_explanation_ql.setText("Attempting to connect...")
         self.application.processEvents()
 
@@ -372,10 +379,13 @@ class MMC_Main(QMainWindow):
                     print('currentIndex', self.UIEL_dmw_detector_qcb[i].currentIndex(), self.UIEL_dmw_detector_qcb[i].currentText())
                     print(len(self.UIEL_dmw_detector_qcb))
                     print('AUTO-CONNECT CURRENTLY DISABLED!')
+                    QMessageBox.information(self.dmw, 'Connection Failure', 'Auto-connect is currently disabled.') 
+
 
             except Exception as e:
                 print(e)
                 print("Failed to find detector (%s)."%(e))
+                QMessageBox.warning(self.dmw, 'Connection Failure', 'Failed to find detector (%s).'%(e)) 
                 self.detectors[i] = None
                 detectors_connected[i] = False
             if self.detectors[i] is None:
@@ -396,6 +406,7 @@ class MMC_Main(QMainWindow):
 
             except Exception as e:
                 print("Failed to find motion controller (%s)."%(e))
+                QMessageBox.warning(self.dmw, 'Connection Failure', 'Failed to find motion controller (%s).'%(e)) 
                 self.mtn_ctrls[i] = None
                 mtn_ctrls_connected[i] = False
                 pass
@@ -406,6 +417,7 @@ class MMC_Main(QMainWindow):
 
         # Emits a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
         
+        self.UIE_dmw_accept_qpb.setEnabled(True)
         self.SIGNAL_devices_connection_check.emit(dummy, detectors_connected, mtn_ctrls_connected)
 
     # If things are connected, boot main GUI.
@@ -436,7 +448,9 @@ class MMC_Main(QMainWindow):
             self.device_timer = QTimer()
             self.device_timer.timeout.connect(self.devman_list_devices)
             self.device_timer.start(1000)
-        self.UIE_dmw_explanation_ql.setText('Auto-connect failed.')   
+
+        # self.UIE_dmw_explanation_ql.setText('Auto-connect failed.')  
+        QMessageBox.warning(self.dmw, 'Connection Failure', 'Auto-connect has failed!') 
 
     def _show_main_gui(self, dummy: bool):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
@@ -1516,7 +1530,7 @@ if __name__ == '__main__':
         mainWindow = MMC_Main(application, ui_file)
         
         # Wait for the Qt loop to exit before exiting.
-        exit_code = application.exec_() # block until
+        exit_code = application.exec() # block until
 
         # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
         if mainWindow.main_gui_booted:
