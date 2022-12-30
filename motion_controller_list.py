@@ -12,7 +12,7 @@
 class MotionControllerList:
     def __init__(self):
         self.main_drive_axis = None
-        self.color_wheel_axis = None
+        self.filter_wheel_axis = None
         self.sample_rotation_axis = None
         self.sample_translation_axis = None
         self.detector_rotation_axis = None

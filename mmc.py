@@ -9,7 +9,6 @@
 # 
 #
 
-# TODO: Change all instances of 'Color Wheel' to 'Filter Wheel'.
 # TODO: Change 'Data Sampler' and 'Sampler' to 'Detector'.
 # TODO: Other re-naming, such as 'mtn_ctrl' to 'motion_controller', etc.
 
@@ -24,7 +23,7 @@ Main GUI Window             mgw_
 Machine Config. Window       mcw_
 
 Main Drive                  md_
-Color Wheel                 cw_
+Filter Wheel                fw_
 Sample Movement             sm_
 Detector Rotation           dr_
 Data Table                  dt_
@@ -675,28 +674,28 @@ class MMC_Main(QMainWindow):
         self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst) * self.conversion_slope
         self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst) * self.conversion_slope
 
-        self.UIE_mgw_cw_mancon_position_set_qsb: QSpinBox = self.findChild(QSpinBox, 'color_wheel_pos_set_spinbox')
-        self.UIE_mgw_cw_mancon_move_pos_qpb: QPushButton = self.findChild(QPushButton, 'color_wheel_move_pos_button')
-        self.UIE_mgw_cw_mancon_home_qpb: QPushButton = self.findChild(QPushButton, 'color_wheel_home_button')
-        self.UIE_mgw_cw_add_rule_qpb: QPushButton = self.findChild(QPushButton, 'color_wheel_add_rule_button')
-        self.UIE_mgw_cw_add_rule_qpb.clicked.connect(self.new_color_wheel_rule)
+        self.UIE_mgw_fw_mancon_position_set_qsb: QSpinBox = self.findChild(QSpinBox, 'filter_wheel_pos_set_spinbox')
+        self.UIE_mgw_fw_mancon_move_pos_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_move_pos_button')
+        self.UIE_mgw_fw_mancon_home_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_home_button')
+        self.UIE_mgw_fw_add_rule_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_add_rule_button')
+        self.UIE_mgw_fw_add_rule_qpb.clicked.connect(self.new_filter_wheel_rule)
         
         self.cw_rules = [] # List to hold the actual rules.
-        self.UIEL_mgw_cw_rules_qvbl = []
-        # self.UIEL_mgw_cw_rules_qvbl.append(self.scroll_area_layout)
-        self.UIEL_mgw_cw_rules_set_qdsb = []
-        # self.UIEL_mgw_cw_rules_set_qdsb.append(self.findChild(QDoubleSpinBox, 'color_wheel_rule_set_spinbox'))
-        self.UIEL_mgw_cw_rules_step_qsb = []
-        # self.UIEL_mgw_cw_rules_step_qsb.append(self.findChild(QSpinBox, 'color_wheel_rule_step_spinbox'))
-        self.UIEL_mgw_cw_rules_remove_qpb = []
-        # self.UIEL_mgw_cw_rules_remove_qpb.append(self.findChild(QPushButton, 'color_wheel_remove_rule_button'))
-        # self.UIEL_mgw_cw_rules_remove_qpb[0].clicked.connect(partial(self.del_color_wheel_rule, 0))
-        self.UIEL_mgw_cw_rules_enact_qpb = []
-        # self.UIEL_mgw_cw_rules_enact_qpb.append(self.findChild(QPushButton, 'color_wheel_enact_rule_button'))
-        self.UIE_mgw_cw_rules_qsa: QVBoxLayout = self.findChild(QVBoxLayout, 'scroll_area_layout')
-        self.UIEL_mgw_cw_misc_tuples_ql = []
-        # self.UIEL_mgw_cw_misc_tuples_ql.append([self.label_4, self.label_5])
-        self.new_color_wheel_rule()
+        self.UIEL_mgw_fw_rules_qvbl = []
+        # self.UIEL_mgw_fw_rules_qvbl.append(self.scroll_area_layout)
+        self.UIEL_mgw_fw_rules_set_qdsb = []
+        # self.UIEL_mgw_fw_rules_set_qdsb.append(self.findChild(QDoubleSpinBox, 'filter_wheel_rule_set_spinbox'))
+        self.UIEL_mgw_fw_rules_step_qsb = []
+        # self.UIEL_mgw_fw_rules_step_qsb.append(self.findChild(QSpinBox, 'filter_wheel_rule_step_spinbox'))
+        self.UIEL_mgw_fw_rules_remove_qpb = []
+        # self.UIEL_mgw_fw_rules_remove_qpb.append(self.findChild(QPushButton, 'filter_wheel_remove_rule_button'))
+        # self.UIEL_mgw_fw_rules_remove_qpb[0].clicked.connect(partial(self.del_filter_wheel_rule, 0))
+        self.UIEL_mgw_fw_rules_enact_qpb = []
+        # self.UIEL_mgw_fw_rules_enact_qpb.append(self.findChild(QPushButton, 'filter_wheel_enact_rule_button'))
+        self.UIE_mgw_fw_rules_qsa: QVBoxLayout = self.findChild(QVBoxLayout, 'scroll_area_layout')
+        self.UIEL_mgw_fw_misc_tuples_ql = []
+        # self.UIEL_mgw_fw_misc_tuples_ql.append([self.label_4, self.label_5])
+        self.new_filter_wheel_rule()
 
         if self.mes_sign == -1:
             self.UIE_mgw_invert_mes_qa.setChecked(True)
@@ -716,7 +715,7 @@ class MMC_Main(QMainWindow):
         self.main_gui_booted = True
         self.show()  
 
-    def new_color_wheel_rule(self):
+    def new_filter_wheel_rule(self):
         geq_label: QLabel = QLabel('≥')
         geq_label.setMaximumWidth(13)
         geq_label.setMaximumHeight(29)
@@ -735,27 +734,27 @@ class MMC_Main(QMainWindow):
         enact_button.setMaximumWidth(75)
         enact_button.setMaximumHeight(29)
         enact_button.clicked.connect(self.enact_filter_wheel_rule)
-        self.UIEL_mgw_cw_rules_enact_qpb.append(enact_button)
+        self.UIEL_mgw_fw_rules_enact_qpb.append(enact_button)
 
         remove_button: QPushButton = QPushButton('-')
         remove_button.setMaximumWidth(29)
         remove_button.setMaximumHeight(29)
-        self.UIEL_mgw_cw_rules_remove_qpb.append(remove_button)
-        remove_button.clicked.connect(partial(self.del_color_wheel_rule, self.UIEL_mgw_cw_rules_enact_qpb[-1]))
-        print('RULE ADDED AT INDEX:', len(self.UIEL_mgw_cw_rules_remove_qpb) - 1)
+        self.UIEL_mgw_fw_rules_remove_qpb.append(remove_button)
+        remove_button.clicked.connect(partial(self.del_filter_wheel_rule, self.UIEL_mgw_fw_rules_enact_qpb[-1]))
+        print('RULE ADDED AT INDEX:', len(self.UIEL_mgw_fw_rules_remove_qpb) - 1)
 
         rule_set_spinbox: QDoubleSpinBox = QDoubleSpinBox()
         rule_set_spinbox.setRange(0, 9999)
         rule_set_spinbox.setDecimals(2)
         rule_set_spinbox.setMaximumWidth(89)
         rule_set_spinbox.setMaximumHeight(27)
-        self.UIEL_mgw_cw_rules_set_qdsb.append(rule_set_spinbox)
+        self.UIEL_mgw_fw_rules_set_qdsb.append(rule_set_spinbox)
 
         rule_step_spinbox: QSpinBox = QSpinBox()
         rule_step_spinbox.setRange(0, 9999999)
         rule_step_spinbox.setMaximumWidth(84)
         rule_step_spinbox.setMaximumHeight(27)
-        self.UIEL_mgw_cw_rules_step_qsb.append(rule_step_spinbox)
+        self.UIEL_mgw_fw_rules_step_qsb.append(rule_step_spinbox)
 
         hspacer: QSpacerItem = QSpacerItem(20, 40, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -770,16 +769,16 @@ class MMC_Main(QMainWindow):
 
         print(layout.spacing())
 
-        self.UIEL_mgw_cw_misc_tuples_ql.append([geq_label, goto_label])
+        self.UIEL_mgw_fw_misc_tuples_ql.append([geq_label, goto_label])
 
-        self.UIEL_mgw_cw_rules_qvbl.append(layout)
-        self.UIE_mgw_cw_rules_qsa.addLayout(layout)
+        self.UIEL_mgw_fw_rules_qvbl.append(layout)
+        self.UIE_mgw_fw_rules_qsa.addLayout(layout)
     
     def enact_filter_wheel_rule(self):
         sender = self.sender()
         sidx = -1
-        for i in range(len(self.UIEL_mgw_cw_rules_enact_qpb)):
-            if self.UIEL_mgw_cw_rules_enact_qpb[i] == sender:
+        for i in range(len(self.UIEL_mgw_fw_rules_enact_qpb)):
+            if self.UIEL_mgw_fw_rules_enact_qpb[i] == sender:
                 sidx = i
                 break
         if sidx < 0:
@@ -790,51 +789,51 @@ class MMC_Main(QMainWindow):
         print('SENDER:')
         print(sender)
 
-        dspin = self.UIEL_mgw_cw_rules_set_qdsb[sidx]
-        spin = self.UIEL_mgw_cw_rules_step_qsb[sidx]
+        dspin = self.UIEL_mgw_fw_rules_set_qdsb[sidx]
+        spin = self.UIEL_mgw_fw_rules_step_qsb[sidx]
 
         print(dspin)
         print(spin)
         print('Values are %f and %d.'%(dspin.value(), spin.value()))
 
-    def del_color_wheel_rule(self, index_finder):
+    def del_filter_wheel_rule(self, index_finder):
         # TODO: Currently an issue where if a lower index is removed first, then the higher index remains the same.
 
-        index = self.UIEL_mgw_cw_rules_enact_qpb.index(index_finder)
+        index = self.UIEL_mgw_fw_rules_enact_qpb.index(index_finder)
 
         # button_index tells is which button it is
         print('RULE REMOVAL AT INDEX:', index)
 
-        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_rules_enact_qpb[index])
-        self.UIEL_mgw_cw_rules_enact_qpb[index].setParent(None)
-        del self.UIEL_mgw_cw_rules_enact_qpb[index]
+        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_rules_enact_qpb[index])
+        self.UIEL_mgw_fw_rules_enact_qpb[index].setParent(None)
+        del self.UIEL_mgw_fw_rules_enact_qpb[index]
 
-        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_rules_remove_qpb[index])
-        print('len', len(self.UIEL_mgw_cw_rules_remove_qpb))
+        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_rules_remove_qpb[index])
+        print('len', len(self.UIEL_mgw_fw_rules_remove_qpb))
         print('index', index)
-        self.UIEL_mgw_cw_rules_remove_qpb[index].setParent(None)
-        del self.UIEL_mgw_cw_rules_remove_qpb[index]
+        self.UIEL_mgw_fw_rules_remove_qpb[index].setParent(None)
+        del self.UIEL_mgw_fw_rules_remove_qpb[index]
 
-        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_rules_set_qdsb[index])
-        self.UIEL_mgw_cw_rules_set_qdsb[index].setParent(None)
-        del self.UIEL_mgw_cw_rules_set_qdsb[index]
+        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_rules_set_qdsb[index])
+        self.UIEL_mgw_fw_rules_set_qdsb[index].setParent(None)
+        del self.UIEL_mgw_fw_rules_set_qdsb[index]
 
-        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_rules_step_qsb[index])
-        self.UIEL_mgw_cw_rules_step_qsb[index].setParent(None)
-        del self.UIEL_mgw_cw_rules_step_qsb[index]
+        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_rules_step_qsb[index])
+        self.UIEL_mgw_fw_rules_step_qsb[index].setParent(None)
+        del self.UIEL_mgw_fw_rules_step_qsb[index]
 
-        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_misc_tuples_ql[index][0])
-        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_misc_tuples_ql[index][1])
+        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_misc_tuples_ql[index][0])
+        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_misc_tuples_ql[index][1])
 
-        self.UIEL_mgw_cw_misc_tuples_ql[index][0].setParent(None)
-        self.UIEL_mgw_cw_misc_tuples_ql[index][1].setParent(None)
-        del self.UIEL_mgw_cw_misc_tuples_ql[index]
+        self.UIEL_mgw_fw_misc_tuples_ql[index][0].setParent(None)
+        self.UIEL_mgw_fw_misc_tuples_ql[index][1].setParent(None)
+        del self.UIEL_mgw_fw_misc_tuples_ql[index]
 
-        # self.UIEL_mgw_cw_rules_qvbl[index].removeWidget(self.UIEL_mgw_cw_misc_tuples_ql[index][2])
-        # del self.UIEL_mgw_cw_rules_qvbl[index]
+        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_misc_tuples_ql[index][2])
+        # del self.UIEL_mgw_fw_rules_qvbl[index]
         
-        self.UIE_mgw_cw_rules_qsa.removeItem(self.UIEL_mgw_cw_rules_qvbl[index])
-        del self.UIEL_mgw_cw_rules_qvbl[index]
+        self.UIE_mgw_fw_rules_qsa.removeItem(self.UIEL_mgw_fw_rules_qvbl[index])
+        del self.UIEL_mgw_fw_rules_qvbl[index]
 
     def devman_list_devices(self):
         # self.dev_list = ports_finder.find_all_ports()
@@ -1248,14 +1247,14 @@ class MMC_Main(QMainWindow):
 
             # Get axes combos.
             self.UIE_mcw_main_drive_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "main_drive_axis_combo")
-            self.UIE_mcw_color_wheel_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "color_wheel_axis_combo")
+            self.UIE_mcw_filter_wheel_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "filter_wheel_axis_combo")
             self.UIE_mcw_sample_rotation_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "sample_rotation_axis_combo")
             self.UIE_mcw_sample_translation_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "sample_translation_axis_combo")
             self.UIE_mcw_detector_rotation_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "detector_rotation_axis_combo")
 
             none = 'No Device Selected'
             self.UIE_mcw_main_drive_axis_qcb.addItem('%s'%(none))
-            self.UIE_mcw_color_wheel_axis_qcb.addItem('%s'%(none))
+            self.UIE_mcw_filter_wheel_axis_qcb.addItem('%s'%(none))
             self.UIE_mcw_sample_rotation_axis_qcb.addItem('%s'%(none))
             self.UIE_mcw_sample_translation_axis_qcb.addItem('%s'%(none))
             self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s'%(none))
@@ -1266,7 +1265,7 @@ class MMC_Main(QMainWindow):
                 print('Adding %s to config list.'%(dev))
                 self.UIE_mcw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
                 self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
-                self.UIE_mcw_color_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                self.UIE_mcw_filter_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
                 self.UIE_mcw_sample_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
                 self.UIE_mcw_sample_translation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
                 self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
@@ -1317,7 +1316,7 @@ class MMC_Main(QMainWindow):
         print('~Main Drive')
         print(self.UIE_mcw_main_drive_axis_qcb.currentText())
         print('~Color Wheel Axis')
-        print(self.UIE_mcw_color_wheel_axis_qcb.currentText())
+        print(self.UIE_mcw_filter_wheel_axis_qcb.currentText())
         print('~Sample Axes')
         print(self.UIE_mcw_sample_rotation_axis_qcb.currentText())
         print(self.UIE_mcw_sample_translation_axis_qcb.currentText())
@@ -1328,7 +1327,7 @@ class MMC_Main(QMainWindow):
         # print(self.dev_list)
 
         self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.UIE_mcw_main_drive_axis_qcb.currentIndex() - 1]
-        self.motion_controllers.color_wheel_axis = self.mtn_ctrls[self.UIE_mcw_color_wheel_axis_qcb.currentIndex() - 1]
+        self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.UIE_mcw_filter_wheel_axis_qcb.currentIndex() - 1]
         self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.UIE_mcw_sample_rotation_axis_qcb.currentIndex() - 1]
         self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.UIE_mcw_sample_translation_axis_qcb.currentIndex() - 1]
         self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.UIE_mcw_detector_rotation_axis_qcb.currentIndex() - 1]

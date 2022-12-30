@@ -26,7 +26,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="main_drive_tab">
       <attribute name="title">
@@ -373,9 +373,9 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="color_wheel_tab">
+     <widget class="QWidget" name="filter_wheel_tab">
       <attribute name="title">
-       <string>Color Wheel</string>
+       <string>Filter Wheel</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
@@ -401,12 +401,12 @@
             </font>
            </property>
            <property name="text">
-            <string>Device for Color Wheel Axis:</string>
+            <string>Device for Filter Wheel Axis:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="color_wheel_axis_combo">
+          <widget class="QComboBox" name="filter_wheel_axis_combo">
            <property name="font">
             <font>
              <family>Segoe UI</family>

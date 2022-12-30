@@ -431,7 +431,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="color_wheel_groupbox">
+             <widget class="QGroupBox" name="filter_wheel_groupbox">
               <property name="font">
                <font>
                 <family>Segoe UI Semibold</family>
@@ -440,14 +440,14 @@
                </font>
               </property>
               <property name="title">
-               <string>Color Wheel</string>
+               <string>Filter Wheel</string>
               </property>
               <property name="flat">
                <bool>true</bool>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_8">
                <item>
-                <widget class="QGroupBox" name="color_wheel_mancon_groupbox">
+                <widget class="QGroupBox" name="filter_wheel_mancon_groupbox">
                  <property name="maximumSize">
                   <size>
                    <width>595</width>
@@ -485,7 +485,7 @@
                      </widget>
                     </item>
                     <item>
-                     <widget class="QDoubleSpinBox" name="color_wheel_pos_set_spinbox">
+                     <widget class="QDoubleSpinBox" name="filter_wheel_pos_set_spinbox">
                       <property name="minimum">
                        <double>0.000000000000000</double>
                       </property>
@@ -495,7 +495,7 @@
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="color_wheel_move_pos_button">
+                     <widget class="QPushButton" name="filter_wheel_move_pos_button">
                       <property name="text">
                        <string>Move to Position</string>
                       </property>
@@ -515,7 +515,7 @@
                      </spacer>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="color_wheel_home_button">
+                     <widget class="QPushButton" name="filter_wheel_home_button">
                       <property name="text">
                        <string>Home</string>
                       </property>
@@ -608,7 +608,7 @@
                          </spacer>
                         </item>
                         <item>
-                         <widget class="QPushButton" name="color_wheel_add_rule_button">
+                         <widget class="QPushButton" name="filter_wheel_add_rule_button">
                           <property name="minimumSize">
                            <size>
                             <width>29</width>
@@ -1185,7 +1185,7 @@
     <addaction name="pop_out_table"/>
     <addaction name="separator"/>
     <addaction name="actionShow_Main_Drive"/>
-    <addaction name="actionShow_Color_Wheel"/>
+    <addaction name="actionShow_Filter_Wheel"/>
     <addaction name="actionShow_Sample_Movement"/>
     <addaction name="actionShow_Detector_Rotation"/>
     <addaction name="actionShow_Data_Table"/>
@@ -1315,7 +1315,7 @@
     <string>Show Main Drive</string>
    </property>
   </action>
-  <action name="actionShow_Color_Wheel">
+  <action name="actionShow_Filter_Wheel">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -1323,7 +1323,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show Color Wheel</string>
+    <string>Show Filter Wheel</string>
    </property>
   </action>
   <action name="actionShow_Sample_Movement">
