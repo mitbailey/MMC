@@ -9,9 +9,6 @@
 # 
 #
 
-# TODO: Change 'Data Sampler' and 'Sampler' to 'Detector'.
-# TODO: Other re-naming, such as 'mtn_ctrl' to 'motion_controller', etc.
-
 """ 
 UI Element Naming Scheme
 ------------------------
@@ -97,7 +94,7 @@ from utilities.datatable import DataTableWidget
 import motion_controller_list as mcl
 import middleware as mw
 from middleware import MotionController#, list_all_devices
-from middleware import DataSampler
+from middleware import Detector
 from middleware import DevFinder
 
 # %% Fonts
@@ -186,8 +183,8 @@ class MMC_Main(QMainWindow):
             del self.motion_controllers
         if self.mtn_ctrls is not None:
             del self.mtn_ctrls
-        if self.samplers is not None:
-            del self.samplers
+        if self.detectors is not None:
+            del self.detectors
         if self.dev_finder is not None:
             self.dev_finder.done = True
             del self.dev_finder
@@ -229,19 +226,19 @@ class MMC_Main(QMainWindow):
             
             self.UIE_dmw_list_ql: QLabel = self.dmw.findChild(QLabel, "devices_label")
 
-            self.UIEL_dmw_sampler_qhbl = []
-            self.UIEL_dmw_sampler_qhbl.append(self.dmw.findChild(QHBoxLayout, "sampler_combo_sublayout"))
+            self.UIEL_dmw_detector_qhbl = []
+            self.UIEL_dmw_detector_qhbl.append(self.dmw.findChild(QHBoxLayout, "detector_combo_sublayout"))
 
             self.UIEL_dmw_mtn_ctrl_qhbl = []
             self.UIEL_dmw_mtn_ctrl_qhbl.append(self.dmw.findChild(QHBoxLayout, "mtn_ctrl_combo_sublayout"))
 
-            self.UIEL_dmw_sampler_qcb = []
-            self.UIEL_dmw_sampler_qcb.append(self.dmw.findChild(QComboBox, "samp_combo"))
-            self.UIEL_dmw_sampler_qcb[0].addItem("Auto-Connect")
-            self.UIEL_dmw_sampler_model_qcb = []
-            self.UIEL_dmw_sampler_model_qcb.append(self.dmw.findChild(QComboBox, "samp_model_combo"))
-            for device in DataSampler.SupportedDevices:
-                self.UIEL_dmw_sampler_model_qcb[0].addItem(device)
+            self.UIEL_dmw_detector_qcb = []
+            self.UIEL_dmw_detector_qcb.append(self.dmw.findChild(QComboBox, "samp_combo"))
+            self.UIEL_dmw_detector_qcb[0].addItem("Auto-Connect")
+            self.UIEL_dmw_detector_model_qcb = []
+            self.UIEL_dmw_detector_model_qcb.append(self.dmw.findChild(QComboBox, "samp_model_combo"))
+            for device in Detector.SupportedDevices:
+                self.UIEL_dmw_detector_model_qcb[0].addItem(device)
 
             self.UIEL_dmw_mtn_ctrl_qcb = []
             self.UIEL_dmw_mtn_ctrl_qcb.append(self.dmw.findChild(QComboBox, "mtn_combo"))
@@ -256,15 +253,15 @@ class MMC_Main(QMainWindow):
             self.UIE_dmw_dummy_qckbx: QCheckBox = self.dmw.findChild(QCheckBox, "dum_checkbox")
             self.UIE_dmw_dummy_qckbx.setChecked(len(self._startup_args) == 2)
 
-            self.UIE_dmw_num_samplers_qsb: QSpinBox = self.dmw.findChild(QSpinBox, "num_samplers")
-            self.UIE_dmw_num_samplers_qsb.valueChanged.connect(self.update_num_samplers_ui)
-            self.num_samplers = 1
+            self.UIE_dmw_num_detectors_qsb: QSpinBox = self.dmw.findChild(QSpinBox, "num_detectors")
+            self.UIE_dmw_num_detectors_qsb.valueChanged.connect(self.update_num_detectors_ui)
+            self.num_detectors = 1
 
             self.UIE_dmw_num_motion_controllers_qsb: QSpinBox = self.dmw.findChild(QSpinBox, "num_motion_controllers")
             self.UIE_dmw_num_motion_controllers_qsb.valueChanged.connect(self.update_num_motion_controllers_ui)
             self.num_motion_controllers = 1
 
-            self.UIE_dmw_sampler_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "sampler_combo_layout")
+            self.UIE_dmw_detector_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "detector_combo_layout")
             self.UIE_dmw_mtn_ctrl_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
 
             self.dmw.show()
@@ -272,39 +269,39 @@ class MMC_Main(QMainWindow):
         self.application.processEvents()
         self.SIGNAL_device_manager_ready.emit()
 
-    def update_num_samplers_ui(self):
-        if self.num_samplers != self.UIE_dmw_num_samplers_qsb.value():
-            self.num_samplers = self.UIE_dmw_num_samplers_qsb.value()
-            for widget in self.UIEL_dmw_sampler_qcb:
+    def update_num_detectors_ui(self):
+        if self.num_detectors != self.UIE_dmw_num_detectors_qsb.value():
+            self.num_detectors = self.UIE_dmw_num_detectors_qsb.value()
+            for widget in self.UIEL_dmw_detector_qcb:
                 widget.setParent(None)
-            for widget in self.UIEL_dmw_sampler_model_qcb:
+            for widget in self.UIEL_dmw_detector_model_qcb:
                 widget.setParent(None)
-            for layout in self.UIEL_dmw_sampler_qhbl:
-                self.UIE_dmw_sampler_combo_qvbl.removeItem(layout)
+            for layout in self.UIEL_dmw_detector_qhbl:
+                self.UIE_dmw_detector_combo_qvbl.removeItem(layout)
 
-            self.UIEL_dmw_sampler_qcb = []
-            self.UIEL_dmw_sampler_model_qcb = []
-            self.UIEL_dmw_sampler_qhbl = []
+            self.UIEL_dmw_detector_qcb = []
+            self.UIEL_dmw_detector_model_qcb = []
+            self.UIEL_dmw_detector_qhbl = []
 
-            for i in range(self.num_samplers):
+            for i in range(self.num_detectors):
                 s_combo = QComboBox()
                 s_combo.addItem("Auto-Connect")
                 for dev in self.dev_list:
                     s_combo.addItem('%s'%(dev))
                 m_combo = QComboBox()
-                for device in DataSampler.SupportedDevices:
+                for device in Detector.SupportedDevices:
                     m_combo.addItem(device)
                 layout = QHBoxLayout()
                 layout.addWidget(s_combo)
                 layout.addStretch(4)
                 layout.addWidget(m_combo)
                 layout.addStretch(1)
-                self.UIE_dmw_sampler_combo_qvbl.addLayout(layout)
-                self.UIEL_dmw_sampler_qcb.append(s_combo)
-                self.UIEL_dmw_sampler_model_qcb.append(m_combo)
-                self.UIEL_dmw_sampler_qhbl.append(layout)
+                self.UIE_dmw_detector_combo_qvbl.addLayout(layout)
+                self.UIEL_dmw_detector_qcb.append(s_combo)
+                self.UIEL_dmw_detector_model_qcb.append(m_combo)
+                self.UIEL_dmw_detector_qhbl.append(layout)
 
-        print('new samplers combo list len: %d'%(len(self.UIEL_dmw_sampler_qcb)))
+        print('new detectors combo list len: %d'%(len(self.UIEL_dmw_detector_qcb)))
 
     def update_num_motion_controllers_ui(self):
         if self.num_motion_controllers != self.UIE_dmw_num_motion_controllers_qsb.value():
@@ -351,43 +348,42 @@ class MMC_Main(QMainWindow):
         dummy = self.UIE_dmw_dummy_qckbx.isChecked()
         print("Dummy Mode: " + str(dummy))
 
-        # Motion Controller and Sampler initialization.
+        # Motion Controller and Detector initialization.
         # Note that, for now, the Keithley 6485 and KST101 are the defaults.
-        samplers_connected = [False] * self.num_samplers
+        detectors_connected = [False] * self.num_detectors
         mtn_ctrls_connected = [False] * self.num_motion_controllers
 
-        self.samplers = [None] * self.num_samplers
+        self.detectors = [None] * self.num_detectors
         self.mtn_ctrls = [None] * self.num_motion_controllers
 
-        print('Samplers: %d'%(self.num_samplers))
+        print('Detectors: %d'%(self.num_detectors))
         print('Motion controllers: %d'%(self.num_motion_controllers))
 
         # TODO: Re-instate some sort of auto-connect.
 
-        for i in range(self.num_samplers):
-            print('Instantiation attempt for sampler #%d.'%(i))
+        for i in range(self.num_detectors):
+            print('Instantiation attempt for detector #%d.'%(i))
             try:
-                if self.UIEL_dmw_sampler_qcb[i].currentIndex() != 0:
-                    print("Using manual port: %s"%(self.UIEL_dmw_sampler_qcb[i].currentText().split(' ')[0]))
-                    self.samplers[i] = DataSampler(dummy, self.UIEL_dmw_sampler_model_qcb[i].currentText(), self.UIEL_dmw_sampler_qcb[i].currentText().split(' ')[0])
+                if self.UIEL_dmw_detector_qcb[i].currentIndex() != 0:
+                    print("Using manual port: %s"%(self.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0]))
+                    self.detectors[i] = Detector(dummy, self.UIEL_dmw_detector_model_qcb[i].currentText(), self.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0])
                 else:
                     # Auto-Connect
-                    # self.samplers[i] = DataSampler(dummy, DataSampler.SupportedDevices[0])
-                    print('currentIndex', self.UIEL_dmw_sampler_qcb[i].currentIndex(), self.UIEL_dmw_sampler_qcb[i].currentText())
-                    print(len(self.UIEL_dmw_sampler_qcb))
+                    print('currentIndex', self.UIEL_dmw_detector_qcb[i].currentIndex(), self.UIEL_dmw_detector_qcb[i].currentText())
+                    print(len(self.UIEL_dmw_detector_qcb))
                     print('AUTO-CONNECT CURRENTLY DISABLED!')
 
             except Exception as e:
                 print(e)
-                print("Failed to find sampler (%s)."%(e))
-                self.samplers[i] = None
-                samplers_connected[i] = False
-            if self.samplers[i] is None:
-                samplers_connected[i] = False
+                print("Failed to find detector (%s)."%(e))
+                self.detectors[i] = None
+                detectors_connected[i] = False
+            if self.detectors[i] is None:
+                detectors_connected[i] = False
             else:
-                samplers_connected[i] = True
+                detectors_connected[i] = True
 
-        # for i, combo in self.dm_sampler_combos:
+        # for i, combo in self.dm_detector_combos:
         for i in range(self.num_motion_controllers):
             print('Instantiation attempt for motion controller #%d.'%(i))
             try:
@@ -410,13 +406,13 @@ class MMC_Main(QMainWindow):
 
         # Emits a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
         
-        self.SIGNAL_devices_connection_check.emit(dummy, samplers_connected, mtn_ctrls_connected)
+        self.SIGNAL_devices_connection_check.emit(dummy, detectors_connected, mtn_ctrls_connected)
 
     # If things are connected, boot main GUI.
     # If somethings wrong, enable advanced dev man functions.
-    def devices_connection_check(self, dummy: bool, samplers: list, mtn_ctrls: list):
+    def devices_connection_check(self, dummy: bool, detectors: list, mtn_ctrls: list):
         connected = True
-        for status in samplers:
+        for status in detectors:
             if not status:
                 connected = False
                 break
@@ -843,13 +839,13 @@ class MMC_Main(QMainWindow):
             dev_list_str += '%s\n'%(dev)
 
         if (self.UIE_dmw_list_ql.text() != "~DEVICE LIST~\n" + dev_list_str):
-            for i in range(self.num_samplers):
-                self.UIEL_dmw_sampler_qcb[i].clear()
-                self.UIEL_dmw_sampler_qcb[i].addItem('Auto-Connect')
-                self.UIEL_dmw_sampler_qcb[i].setCurrentIndex(0)
+            for i in range(self.num_detectors):
+                self.UIEL_dmw_detector_qcb[i].clear()
+                self.UIEL_dmw_detector_qcb[i].addItem('Auto-Connect')
+                self.UIEL_dmw_detector_qcb[i].setCurrentIndex(0)
 
                 for dev in self.dev_list:
-                    self.UIEL_dmw_sampler_qcb[i].addItem('%s'%(dev))
+                    self.UIEL_dmw_detector_qcb[i].addItem('%s'%(dev))
 
             for i in range(self.num_motion_controllers):
                 self.UIEL_dmw_mtn_ctrl_qcb[i].clear()
@@ -1043,11 +1039,11 @@ class MMC_Main(QMainWindow):
         if n_scan_idx != scan_idx:
             print('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
 
-    def scan_data_update(self, scan_idx: int, which_sampler: int, xdata: float, ydata: float):
-        # TODO: Add the ability to plot multiple sampler's data. These will come in distinguished by the which_sampler variable, which is equivalent to that sampler's index in the samplers list. This is a slot and will be called via a signal in Scan.run().
+    def scan_data_update(self, scan_idx: int, which_detector: int, xdata: float, ydata: float):
+        # TODO: Add the ability to plot multiple detector's data. These will come in distinguished by the which_detector variable, which is equivalent to that detector's index in the detectors list. This is a slot and will be called via a signal in Scan.run().
         # TODO: This is going to require an overhaul to datatable.py, allowing two X and two Y axes.
         
-        if which_sampler == 0:
+        if which_detector == 0:
             self.table.insertDataAt(scan_idx, xdata, ydata)
 
     def scan_data_complete(self, scan_idx: int):
@@ -1338,9 +1334,9 @@ class Scan(QThread):
     SIGNAL_progress = pyqtSignal(int)
     SIGNAL_complete = pyqtSignal()
 
-    SIGNAL_data_begin = pyqtSignal(int, dict) # scan index, which sampler, redundant
-    SIGNAL_data_update = pyqtSignal(int, int, float, float) # scan index, which sampler, xdata, ydata (to be appended into index)
-    SIGNAL_data_complete = pyqtSignal(int) # scan index, which sampler, redundant
+    SIGNAL_data_begin = pyqtSignal(int, dict) # scan index, which detector, redundant
+    SIGNAL_data_update = pyqtSignal(int, int, float, float) # scan index, which detector, xdata, ydata (to be appended into index)
+    SIGNAL_data_complete = pyqtSignal(int) # scan index, which detector, redundant
 
     def __init__(self, parent: QMainWindow):
         super(Scan, self).__init__()
@@ -1369,9 +1365,8 @@ class Scan(QThread):
         tnow = dt.datetime.now()
         if (self.other.autosave_data_bool):
             filetime = tnow.strftime('%Y%m%d%H%M%S')
-            for sampler in self.other.samplers:
-                filename = '%s%s_%s_data.csv'%(self.other.data_save_directory, filetime, sampler.short_name())
-                # filename = self.other.data_save_directory + tnow.strftime('%Y%m%d%H%M%S') + "_data.csv"
+            for detector in self.other.detectors:
+                filename = '%s%s_%s_data.csv'%(self.other.data_save_directory, filetime, detector.short_name())
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 sav_files.append(open(filename, 'w'))
 
@@ -1400,7 +1395,7 @@ class Scan(QThread):
         self._xdata = []
         self._ydata = []
 
-        for sampler in self.other.samplers:
+        for detector in self.other.detectors:
             self._xdata.append([])
             self._ydata.append([])
 
@@ -1418,10 +1413,10 @@ class Scan(QThread):
             self.SIGNAL_status_update.emit("SAMPLING")
 
             i=0
-            for sampler in self.other.samplers:
-                buf = sampler.sample_data()
+            for detector in self.other.detectors:
+                buf = detector.detect()
                 print(buf)
-                self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.samplers)))
+                self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
                 # process buf
                 words = buf.split(',') # split at comma
                 if len(words) != 3:
@@ -1458,12 +1453,12 @@ class Scan(QThread):
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
     
     @property
-    def xdata(self, which_sampler: int):
-        return np.array(self._xdata[which_sampler], dtype=float)
+    def xdata(self, which_detector: int):
+        return np.array(self._xdata[which_detector], dtype=float)
     
     @property
-    def ydata(self, which_sampler: int):
-        return np.array(self._ydata[which_sampler], dtype=float)
+    def ydata(self, which_detector: int):
+        return np.array(self._ydata[which_detector], dtype=float)
 
     @property
     def scanId(self):

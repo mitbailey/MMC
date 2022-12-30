@@ -83,7 +83,7 @@ class KI_Picoammeter:
         self.samples = samples
         self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
 
-    def sample_data(self):
+    def detect(self):
         out = ''
         self.s.write(b'READ?\r')
         retry = 10
@@ -156,7 +156,7 @@ class KI_Picoammeter_Dummy:
         if samples > 20:
             samples = 20
         self.samples = samples
-    def sample_data(self):
+    def detect(self):
         import numpy as np
         out = np.random.random(2)
         return '%eA,%e,0'%(out[0], out[1])
@@ -206,7 +206,7 @@ if __name__ == '__main__':
 
     pa = KI_Picoammeter(3)
     while not done:
-        print(pa.sample_data())
+        print(pa.detect())
 
     sys.exit(0)
 

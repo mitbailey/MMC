@@ -153,12 +153,12 @@
                 <item>
                  <widget class="QLabel" name="label_3">
                   <property name="text">
-                   <string>Sampler(s)</string>
+                   <string>Detector(s)</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QSpinBox" name="num_samplers">
+                 <widget class="QSpinBox" name="num_detectors">
                   <property name="minimumSize">
                    <size>
                     <width>44</width>
@@ -209,7 +209,7 @@
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_4">
                 <item>
-                 <layout class="QVBoxLayout" name="sampler_combo_layout">
+                 <layout class="QVBoxLayout" name="detector_combo_layout">
                   <property name="leftMargin">
                    <number>5</number>
                   </property>
@@ -223,7 +223,7 @@
                    <number>5</number>
                   </property>
                   <item>
-                   <layout class="QHBoxLayout" name="sampler_combo_sublayout" stretch="4,1">
+                   <layout class="QHBoxLayout" name="detector_combo_sublayout" stretch="4,1">
                     <property name="leftMargin">
                      <number>5</number>
                     </property>

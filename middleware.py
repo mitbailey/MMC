@@ -50,7 +50,7 @@ from utilities import ports_finder
 # Motion Controller Types
 # 0 - KST101
 
-# Data Sampler Types
+# Detector Types
 # 0 - Picoammeter, Keithley
 
 # TODO: Need to implement external triggers when certain actions occur. Should also consider adding a trigger-only faux 'device.'
@@ -125,7 +125,7 @@ class MotionController:
     SupportedDevices = ['TL KST101', 'MP 789A-4', 'MP 792']
 
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None):
-        # TODO: Come up with a proper way of setting the sampler_type, ie as an argument.
+        # TODO: Come up with a proper way of setting the detector, ie as an argument.
         self.model = dev_model
         self.mm_to_idx = 0
         self._is_dummy = False
@@ -201,18 +201,18 @@ class MotionController:
 
     pass
 
-#%% DataSampler
-# Genericizes the type of data sampler.
-class DataSampler:
+#%% Detector
+# Genericizes the type of detector.
+class Detector:
     SupportedDevices = ['KI 6485']
 
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None):
-        # TODO: Come up with a proper way of setting the sampler_type, ie as an argument.
+        # TODO: Come up with a proper way of setting the detector, ie as an argument.
         self.model = dev_model
         self.pa = None
         self._is_dummy = False
 
-        if self.model == DataSampler.SupportedDevices[0]:
+        if self.model == Detector.SupportedDevices[0]:
             if dummy:
                 self.pa = ki_pico.KI_Picoammeter_Dummy(3)
                 self._is_dummy = True
@@ -222,13 +222,13 @@ class DataSampler:
                 else:
                     self.pa = ki_pico.KI_Picoammeter(3)
         else:
-            print('Data sampler device model "%s" is not supported.'%(dev_model))
+            print('Detector device model "%s" is not supported.'%(dev_model))
             raise Exception
 
-    # Only function used in mmc.py (.pa.sample_data())
-    def sample_data(self):
+    # Only function used in mmc.py (.pa.detect())
+    def detect(self):
         # TODO: Fire out a trigger here.
-        return self.pa.sample_data()
+        return self.pa.detect()
 
     def is_dummy(self):
         return self._is_dummy
