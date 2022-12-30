@@ -210,9 +210,6 @@ class MMC_Main(QMainWindow):
 
         self.motion_controllers = mcl.MotionControllerList()
 
-        # TODO: These indices will keep track of which drives correspond to which controllers.
-        self.main_drive_i = 0
-
     # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
     def show_window_device_manager(self):
         self.device_timer = None
@@ -595,7 +592,6 @@ class MMC_Main(QMainWindow):
             self.homing_started = True
             self.disable_movement_sensitive_buttons(True)
             self.scan_status_update("HOMING")
-            # self.mtn_ctrls[self.main_drive_i].home()
             self.motion_controllers.main_drive_axis.home()
 
         # Get and set the palette.
@@ -942,7 +938,6 @@ class MMC_Main(QMainWindow):
         self.scan_status_update("HOMING")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
-        # self.mtn_ctrls[self.main_drive_i].home()
         self.motion_controllers.main_drive_axis.home()
 
     def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
