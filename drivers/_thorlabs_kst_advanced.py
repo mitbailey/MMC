@@ -214,6 +214,7 @@ class Thorlabs: # Wrapper class for TLI methods
                 RuntimeError: Instance of KST101 exists with this serial number
                 RuntimeError: Serial number not in device list
             """
+            self.num_axes = 1
             self.poll_thread = None
             if str(serialNumber)[:2] != str(Thorlabs.TYPE_KST101):
                 raise ValueError('Invalid serial %d: KST101 Serial starts with %s'%(serialNumber, str(Thorlabs.TYPE_KST101)))
@@ -705,6 +706,7 @@ class Thorlabs: # Wrapper class for TLI methods
                 RuntimeError: Instance of KST101 exists with this serial number
                 RuntimeError: Serial number not in device list
             """
+            self.num_axes = 1
             self.poll_thread = None
             if str(serialNumber)[:2] != str(Thorlabs.TYPE_KST101):
                 raise ValueError('Invalid serial %d: KST101 Serial starts with %s'%(serialNumber, str(Thorlabs.TYPE_KST101)))

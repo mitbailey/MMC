@@ -17,7 +17,13 @@ from utilities import ports_finder
 # This class is also used by the 792, since the 792 is essentially four 789A-4s addressed separately.
 
 class MP_789A_4:
-    def __init__(self, port, s = None):
+    def __init__(self, port, s = None, s_name: str = 'MP789', l_name: str = 'McPherson 789A-4', axis: int = 0, parent = None):
+        self.num_axes = 1
+        self.s_name = s_name
+        self.l_name = l_name
+        self.axis = axis
+        self.parent = parent
+
         print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
         # TODO: Change default.
@@ -51,7 +57,17 @@ class MP_789A_4:
             print('Creating virtual McPherson 789A-4 at the request of MP_792.')
             self.s = s
 
+        self.home()
+
+    # For when we are a sub-controller of a multi-axis controller.
+    def _confirm_axis(self):
+        if self.parent is not None and self.parent.current_axis != self.axis:
+            self.parent.set_axis(self.axis)
+
     def home(self)->bool:
+        # For when we are a sub-controller of a multi-axis controller.
+        self._confirm_axis()
+
         print('Beginning home.')
         self.s.write(b'A24\r') # Enable Homing Circuit
         time.sleep(0.5)
@@ -103,10 +119,16 @@ class MP_789A_4:
 
         return success
 
-    def position(self):
+    def get_position(self):
+        # For when we are a sub-controller of a multi-axis controller.
+        self._confirm_axis()
+
         return self._position
 
     def is_moving(self):
+        # For when we are a sub-controller of a multi-axis controller.
+        self._confirm_axis()
+
         self.s.write(b'^\r')
         status = self.s.read(128).decode('utf-8').rstrip()
         print(status)
@@ -121,14 +143,94 @@ class MP_789A_4:
         self.move_relative(steps, block)
 
     def move_relative(self, steps: int, block: bool):
+        # For when we are a sub-controller of a multi-axis controller.
+        self._confirm_axis()
+
         self.s.write(b'+%d\r', steps)
         self._position += steps
 
     def short_name(self):
-        return 'MP789'
+        return self.s_name
 
     def long_name(self):
-        return 'McPherson 789A-4'
+        return self.l_name
+
+class MP_789A_4_DUMMY:
+    def __init__(self, port, s_name: str = 'MP789_DUMMY', l_name: str = 'McPherson 789A-4 (DUMMY)', axis: int = 0, parent = None):
+        self.s_name = s_name
+        self.l_name = l_name
+        self.axis = axis
+        self.parent = parent
+
+        if parent is not None:
+            self.s_name += 'Ax' + str(axis)
+            self.l_name += 'Axis ' + str(axis)
+
+        print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
+
+        # TODO: Change default.
+        self.mm_to_idx = 1
+
+        if port is not None:     
+            print('McPherson model 789A-4 (DUMMY) Scan Controller generated.')
+        
+        else:
+            print('Creating virtual McPherson 789A-4 (DUMMY) at the request of MP_792.')
+            self.s = self.parent.s
+
+        self._position = 0
+        self.home()
+
+    # For when we are a sub-controller of a multi-axis controller.
+    def _confirm_axis(self):
+        if self.parent is not None and self.parent.current_axis != self.axis:
+            self.parent.set_axis(self.axis)
+
+    def home(self)->bool:
+        # For when we are a sub-controller of a multi-axis controller.
+        self._confirm_axis()
+
+        print('Beginning home.')
+        print('Finished homing.')
+        success = True
+
+        if success:
+            self._position = 0
+
+        return success
+
+    def get_position(self):
+        # For when we are a sub-controller of a multi-axis controller.
+        self._confirm_axis()
+
+        return self._position
+
+    def is_moving(self):
+        # For when we are a sub-controller of a multi-axis controller.
+        self._confirm_axis()
+
+        return False
+
+    # Moves to a position, in steps, based on the software's understanding of where it last was.
+    def move_to(self, position: int, block: bool):
+        # For when we are a sub-controller of a multi-axis controller.
+        self._confirm_axis()
+
+        steps = position - self._position
+        self.move_relative(steps, block)
+
+    def move_relative(self, steps: int, block: bool):
+        # For when we are a sub-controller of a multi-axis controller.
+        self._confirm_axis()
+
+        print(b'+%d\r', steps)
+        self._position += steps
+
+    def short_name(self):
+        return self.s_name
+
+    def long_name(self):
+        return self.l_name
 
 """ 
 McPherson Model 789A-4 Scan Controller Command Set

@@ -121,14 +121,36 @@ def find_all_ports():
 
 #%% MotionController
 # Genericizes the type of motor controller.
+def new_motion_controller(dummy: bool, dev_model: str, man_port: str = None):
+    devs = []
+    if dev_model == MotionController.SupportedDevices[2]:
+        # Multi-axis device.
+        parent = mp792.MP_792_DUMMY(man_port)
+        devs.append(MotionController(dummy, 'V_MP_789A_4_W', man_port, 0, parent))
+        devs.append(MotionController(dummy, 'V_MP_789A_4_X', man_port, 1, parent))
+        devs.append(MotionController(dummy, 'V_MP_789A_4_Y', man_port, 2, parent))
+        devs.append(MotionController(dummy, 'V_MP_789A_4_Z', man_port, 3, parent))
+    else:
+        # Single-axis device.
+        devs.append(MotionController(dummy, dev_model, man_port))
+    return devs
+
 class MotionController:
+
+
+
+    # TODO: If the device has more than one axis, then somehow we must present MMC with n-MotionControllers.
+
+
+
+
     SupportedDevices = ['TL KST101', 'MP 789A-4', 'MP 792']
 
-    def __init__(self, dummy: bool, dev_model: str, man_port: str = None):
+    def __init__(self, dummy: bool, dev_model: str, man_port: str = None, axis: int = 0, parent = None):
         # TODO: Come up with a proper way of setting the detector, ie as an argument.
         self.model = dev_model
         self.mm_to_idx = 0
-        self._is_dummy = False
+        self._is_dummy = dummy
         self.motor_ctrl = None
         self.port = None
 
@@ -138,7 +160,6 @@ class MotionController:
                 serials = tlkt.Thorlabs.KSTDummy._ListDevices()
                 self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
                 self.motor_ctrl.set_stage('ZST25')
-                self._is_dummy = True
             else:
                 print("Trying...")
                 serials = tlkt.Thorlabs.ListDevicesAny()
@@ -153,16 +174,15 @@ class MotionController:
                 self.motor_ctrl.set_stage('ZST25')
         elif self.model == MotionController.SupportedDevices[1]:
             if dummy:
-                # self.motor_ctrl = mp789.MP_789A_4_DUMMY(man_port)
+                self.motor_ctrl = mp789.MP_789A_4_DUMMY(man_port)
                 pass
             else:
                 self.motor_ctrl = mp789.MP_789A_4(man_port)
-        elif self.model == MotionController.SupportedDevices[2]:
+        elif self.model.startswith('V_MP_789A_4_'):
             if dummy:
-                # self.motor_ctrl = mp792.MP_792(man_port)
-                pass
+                self.motor_ctrl = mp789.MP_789A_4_DUMMY(None, 'MP792_DUMMY_', 'McPherson 792 (DUMMY) ', axis, parent)
             else:
-                self.motor_ctrl = mp792.MP_792(man_port)
+                self.motor_ctrl = mp789.MP_789A_4(None, 'MP792_', 'McPherson 792 ', axis, parent)
         else:
             print('Motion controller device model "%s" is not supported.'%(dev_model))
             raise Exception

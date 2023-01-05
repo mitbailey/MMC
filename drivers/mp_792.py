@@ -12,12 +12,18 @@
 import serial
 import time
 from utilities import ports_finder
+
 from drivers.mp_789a_4 import MP_789A_4
+from drivers.mp_789a_4 import MP_789A_4_DUMMY
 
 class MP_792:
     AXES = [b'A0', b'A8', b'A16', b'A24']
 
-    def __init__(self, port: serial.Serial):
+    def __init__(self, port: serial.Serial, axes: int = 4):
+        self.num_axes = axes
+        self.s_name = 'MP782'
+        self.l_name = 'McPherson 782'
+
         if port is None:
             print('Port is none type.')
             raise RuntimeError('Port is none type.')
@@ -49,42 +55,60 @@ class MP_792:
         self.s.write(b'C1\r')
         time.sleep(0.1)
 
-        self._V_789 = MP_789A_4(None)
+        print('McPherson 792 initialization complete.')
+
+        self.current_axis = 0
+
+    def set_axis(self, axis: int):
+        if axis != self.current_axis:
+            self.s.write(MP_792.AXES[axis] + '\r')
+            self.current_axis = axis
+            time.sleep(0.1)
+
+    def short_name(self):
+        return self.s_name
+
+    def long_name(self):
+        return self.l_name
+
+class MP_792_DUMMY:
+    AXES = [b'A0', b'A8', b'A16', b'A24']
+
+    def __init__(self, port: serial.Serial, axes: int = 4):
+        self.num_axes = axes
+        self.s_name = 'MP782'
+        self.l_name = 'McPherson 782'
+        self.s = None
+
+        if port is None:
+            print('Port is none type.')
+            raise RuntimeError('Port is none type.')
+
+        # TODO: Change default.
+        self.mm_to_idx = 1
+
+        print('Attempting to connect to McPherson 792 on port %s.'%(port))
+
+        self._position = [0] * 4
+
+        print('McPherson model 789A-4 (DUMMY) Scan Controller generated.')
 
         print('McPherson 792 initialization complete.')
 
         self.current_axis = 0
 
-    def _confirm_axis(self, axis: int):
+    def set_axis(self, axis: int):
         if axis != self.current_axis:
-            self.s.write(MP_792[self.current_axis] + '\r')
+            print('self.write(): ', MP_792_DUMMY.AXES[axis], '\r')
+            self.current_axis = axis
+            print('Current axis:', self.current_axis)
             time.sleep(0.1)
 
-    def home(self, axis: int):
-        self.confirm_axis()
-        return self._V_789.home()
-
-    def position(self, axis: int):
-        self.confirm_axis()
-        return self._V_789.position()
-
-    def is_moving(self, axis: int):
-        self.confirm_axis()
-        return self._V_789.is_moving()
-
-    def move_to(self, axis: int, position: int):
-        self.confirm_axis()
-        self._V_789.move_to(position)
-
-    def move_relative(self, axis: int, steps: int):
-        self.confirm_axis()
-        self._V_789.move_relative(steps)
-
     def short_name(self):
-        return 'MP792'
+        return self.s_name
 
     def long_name(self):
-        return 'McPherson 792'
+        return self.l_name
 
 """ 
 McPherson Model 789A-4 Scan Controller Command Set

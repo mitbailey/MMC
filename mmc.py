@@ -361,7 +361,8 @@ class MMC_Main(QMainWindow):
         mtn_ctrls_connected = [False] * self.num_motion_controllers
 
         self.detectors = [None] * self.num_detectors
-        self.mtn_ctrls = [None] * self.num_motion_controllers
+        # self.mtn_ctrls = [None] * self.num_motion_controllers
+        self.mtn_ctrls = []
 
         print('Detectors: %d'%(self.num_detectors))
         print('Motion controllers: %d'%(self.num_motion_controllers))
@@ -399,7 +400,10 @@ class MMC_Main(QMainWindow):
             try:
                 if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() != 0:
                     print("Using manual port: %s"%(self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
-                    self.mtn_ctrls[i] = MotionController(dummy, self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
+                    new_mtn_ctrls = mw.new_motion_controller(dummy, self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText().split(' ')[0])
+                    for ctrlr in new_mtn_ctrls:
+                        self.mtn_ctrls.append(ctrlr)
+                    # self.mtn_ctrls[i] = MotionController(dummy, self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
                 # else:
                 #     # Auto-Connect
                 #     self.mtn_ctrls[i] = MotionController(dummy, MotionController.SupportedDevices[0])
@@ -407,10 +411,9 @@ class MMC_Main(QMainWindow):
             except Exception as e:
                 print("Failed to find motion controller (%s)."%(e))
                 QMessageBox.warning(self.dmw, 'Connection Failure', 'Failed to find motion controller (%s).'%(e)) 
-                self.mtn_ctrls[i] = None
+                self.mtn_ctrls[-1] = None
                 mtn_ctrls_connected[i] = False
-                pass
-            if self.mtn_ctrls[i] is None:
+            if not self.mtn_ctrls or self.mtn_ctrls[-1] is None:
                 mtn_ctrls_connected[i] = False
             else:
                 mtn_ctrls_connected[i] = True
@@ -435,6 +438,10 @@ class MMC_Main(QMainWindow):
                     break
 
         if connected:
+            # Setup the device axes list.
+
+
+
             if self.device_timer is not None:
                 print('WARNING: STOPPING DEVICE TIMER!')
                 self.device_timer.stop()
@@ -450,7 +457,7 @@ class MMC_Main(QMainWindow):
             self.device_timer.start(1000)
 
         # self.UIE_dmw_explanation_ql.setText('Auto-connect failed.')  
-        QMessageBox.warning(self.dmw, 'Connection Failure', 'Auto-connect has failed!') 
+        QMessageBox.warning(self.dmw, 'Connection Failure', 'Connection attempt has failed!\n%s'%(mtn_ctrls)) 
 
     def _show_main_gui(self, dummy: bool):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
@@ -595,6 +602,7 @@ class MMC_Main(QMainWindow):
         UIE_mgw_table_qf.setLayout(VLayout)
         self.UIE_mgw_home_qpb: QPushButton = self.findChild(QPushButton, "home_button")
         
+        # self.motion_controllers.main_drive_axis = self.mtn_ctrls[0]
         self.motion_controllers.main_drive_axis = self.mtn_ctrls[0]
 
         self.homing_started = False
@@ -1265,16 +1273,18 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s'%(none))
 
             # Populate axes combos.
+            print(self.mtn_ctrls)
             for dev in self.mtn_ctrls:
                 # TODO: Have selected the current one.
                 print('Adding %s to config list.'%(dev))
+
                 self.UIE_mcw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
-                self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
                 self.UIE_mcw_filter_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
                 self.UIE_mcw_sample_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
                 self.UIE_mcw_sample_translation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
                 self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
 
+                self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
             # Select the devices selected in device manager.
             
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
