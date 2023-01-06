@@ -221,10 +221,7 @@ class MMC_Main(QMainWindow):
             uic.loadUi(ui_file, self.dmw)
 
             self.dmw.setWindowTitle('Device Manager')
-
-            self.UIE_dmw_explanation_ql: QLabel = self.dmw.findChild(QLabel, "dmw_explanation_ql")
-            
-            self.UIE_dmw_list_ql: QLabel = self.dmw.findChild(QLabel, "devices_label")
+            self.dmw_list = ''
 
             self.UIEL_dmw_detector_qhbl = []
             self.UIEL_dmw_detector_qhbl.append(self.dmw.findChild(QHBoxLayout, "detector_combo_sublayout"))
@@ -343,13 +340,7 @@ class MMC_Main(QMainWindow):
         print("connect_devices")
 
         self.UIE_dmw_accept_qpb.setEnabled(False)
-        # msg = QMessageBox()
-        # msg.setWindowTitle('Something')
-        # msg.setText('Something happened, gasp!')
-        # msg.setIcon(QMessageBox.Warning)
-        # popup = msg.exec_()
 
-        self.UIE_dmw_explanation_ql.setText("Attempting to connect...")
         self.application.processEvents()
 
         dummy = self.UIE_dmw_dummy_qckbx.isChecked()
@@ -861,7 +852,7 @@ class MMC_Main(QMainWindow):
         for dev in self.dev_list:
             dev_list_str += '%s\n'%(dev)
 
-        if (self.UIE_dmw_list_ql.text() != "~DEVICE LIST~\n" + dev_list_str):
+        if (self.dmw_list != "~DEVICE LIST~\n" + dev_list_str):
             for i in range(self.num_detectors):
                 self.UIEL_dmw_detector_qcb[i].clear()
                 self.UIEL_dmw_detector_qcb[i].addItem('Auto-Connect')
@@ -878,7 +869,7 @@ class MMC_Main(QMainWindow):
                 for dev in self.dev_list:
                     self.UIEL_dmw_mtn_ctrl_qcb[i].addItem('%s'%(dev))
 
-            self.UIE_dmw_list_ql.setText("~DEVICE LIST~\n" + dev_list_str)
+            self.dmw_list = "~DEVICE LIST~\n" + dev_list_str
 
     def save_data_cb(self):
         if self.table is None:

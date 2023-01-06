@@ -198,14 +198,17 @@ class MP_792:
     def long_name(self):
         return self.l_name
 
-
 class MP_792_DUMMY:
     AXES = [b'A0', b'A8', b'A16', b'A24']
 
     def __init__(self, port: serial.Serial, axes: int = 4):
         self.num_axes = axes
-        self.s_name = 'MP792_DUMMY'
-        self.l_name = 'McPherson 792 DUMMY'
+        self.s_name = 'MP792'
+        self.l_name = 'McPherson 792'
+        self.axis_alive = [False] * axes
+        self._is_homing = [False] * axes
+        self._is_moving_l = [False] * axes
+        self.current_axis = 0
 
         if port is None:
             print('Port is none type.')
@@ -218,48 +221,72 @@ class MP_792_DUMMY:
 
         self._position = [0] * 4
 
-        print('McPherson 792 Dummy generation complete.')
+        print('Checking axes...')
+        for i in range(4):
+            print('WR:', MP_792.AXES[i] + b'\r')
+            time.sleep(0.1)
 
-        self.current_axis = 0
+            print('WR:', b']\r')
+            print('RD:', 'Dummy - Axes Always Alive')
+            time.sleep(0.1)
+
+
+            print('Axis %d is alive.'%(i))
+            self.axis_alive[i] = True
+
+            self.home(i)
+
+        print('McPherson 792 initialization complete.')
 
     def set_axis(self, axis: int):
         if axis != self.current_axis:
+            print('WR:', MP_792.AXES[axis] + b'\r')
             self.current_axis = axis
             time.sleep(0.1)
 
     def home(self, axis: int)->bool:
         self.set_axis(axis)
 
-        print('Beginning home.')
+        print('Beginning home for 792 axis %d.'%(axis))
+        self._is_homing[axis] = True
 
+        print('WR:', b'M-10000\r')
         time.sleep(0.5)
 
-        print('Moving has completed - homing successful.')
-
-        time.sleep(0.5)
+        start_time = time.time()
+        retries = 3
+        success = True
 
         self._position[axis] = 0
+        self._is_homing[axis] = False
         return True
 
     def get_position(self, axis: int):
         return self._position[axis]
 
-    def is_moving(self, axis: int):
+    def _is_moving(self, axis: int):
         self.set_axis(axis)
 
+        self._is_moving_l[axis] = False
         return False
+
+    def is_moving(self, axis: int):
+        return self._is_moving_l[axis]
+
+    def is_homing(self, axis: int):
+        return self._is_homing[axis]
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, block: bool, axis: int):
         self.set_axis(axis)
 
         steps = position - self._position[axis]
-        self.move_relative(steps, block)
+        self.move_relative(steps, block, axis)
 
     def move_relative(self, steps: int, block: bool, axis: int):
         self.set_axis(axis)
 
-        self._position += steps
+        self._position[axis] += steps
 
     def short_name(self):
         return self.s_name

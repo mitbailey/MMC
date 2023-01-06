@@ -26,8 +26,13 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>Model</string>
+      </attribute>
+     </widget>
      <widget class="QWidget" name="main_drive_tab">
       <attribute name="title">
        <string>Main Drive</string>
