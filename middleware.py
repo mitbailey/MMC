@@ -125,11 +125,15 @@ def new_motion_controller(dummy: bool, dev_model: str, man_port: str = None):
     devs = []
     if dev_model == MotionController.SupportedDevices[2]:
         # Multi-axis device.
-        parent = mp792.MP_792_DUMMY(man_port)
-        devs.append(MotionController(dummy, 'V_MP_789A_4_W', man_port, 0, parent))
-        devs.append(MotionController(dummy, 'V_MP_789A_4_X', man_port, 1, parent))
-        devs.append(MotionController(dummy, 'V_MP_789A_4_Y', man_port, 2, parent))
-        devs.append(MotionController(dummy, 'V_MP_789A_4_Z', man_port, 3, parent))
+        if dummy:
+            parent = mp792.MP_792_DUMMY(man_port)
+        else:
+            parent = mp792.MP_792(man_port)
+        # Creates a motion controller for each axis while also not enabling dead axes.
+        for i, status in enumerate(parent.axis_alive):
+            if status:
+                print('Creating motion controller for axis ', i)
+                devs.append(MotionController(dummy, 'MP_792_AXIS_%d'%(i), man_port, i, parent))
     else:
         # Single-axis device.
         devs.append(MotionController(dummy, dev_model, man_port))
@@ -153,6 +157,8 @@ class MotionController:
         self._is_dummy = dummy
         self.motor_ctrl = None
         self.port = None
+        self.axis = 0
+        self.multi_axis = False
 
         # Initializes our motor_ctrl stuff depending on what hardware we're using.
         if self.model == MotionController.SupportedDevices[0]:
@@ -178,11 +184,10 @@ class MotionController:
                 pass
             else:
                 self.motor_ctrl = mp789.MP_789A_4(man_port)
-        elif self.model.startswith('V_MP_789A_4_'):
-            if dummy:
-                self.motor_ctrl = mp789.MP_789A_4_DUMMY(None, 'MP792_DUMMY_', 'McPherson 792 (DUMMY) ', axis, parent)
-            else:
-                self.motor_ctrl = mp789.MP_789A_4(None, 'MP792_', 'McPherson 792 ', axis, parent)
+        elif self.model.startswith('MP_792_AXIS_'):
+            self.motor_ctrl = parent
+            self.axis = axis
+            self.multi_axis = True
         else:
             print('Motion controller device model "%s" is not supported.'%(dev_model))
             raise Exception
@@ -196,28 +201,45 @@ class MotionController:
         return self.is_dummy
 
     def home(self):
-        return self.motor_ctrl.home()
+        if self.multi_axis:
+            return self.motor_ctrl.home(self.axis)
+        else:
+            return self.motor_ctrl.home()
 
     def get_position(self):
-        return self.motor_ctrl.get_position()
+        if self.multi_axis:
+            return self.motor_ctrl.get_position(self.axis)
+        else:
+            return self.motor_ctrl.get_position()
 
     def is_homing(self):
-        return self.motor_ctrl.is_homing()
+        if self.multi_axis:
+            return self.motor_ctrl.is_homing(self.axis)
+        else:
+            return self.motor_ctrl.is_homing()
 
     def is_moving(self):
-        return self.motor_ctrl.is_moving()
+        if self.multi_axis:
+            return self.motor_ctrl.is_moving(self.axis)
+        else:
+            return self.motor_ctrl.is_moving()
 
     def move_to(self, position, block):
-        return self.motor_ctrl.move_to(position, block)
+        print(self.long_name())
+        print(self.multi_axis)
+        if self.multi_axis:
+            return self.motor_ctrl.move_to(position, block, self.axis)
+        else:
+            return self.motor_ctrl.move_to(position, block)
 
     def port_name(self):
         return self.port
 
     def short_name(self):
-        return self.motor_ctrl.short_name()
+        return self.motor_ctrl.short_name() + '_' + str(self.axis)
 
     def long_name(self):
-        return self.motor_ctrl.long_name()
+        return self.motor_ctrl.long_name() + ' Axis ' + str(self.axis)
 
     pass
 

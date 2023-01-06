@@ -17,12 +17,10 @@ from utilities import ports_finder
 # This class is also used by the 792, since the 792 is essentially four 789A-4s addressed separately.
 
 class MP_789A_4:
-    def __init__(self, port, s = None, s_name: str = 'MP789', l_name: str = 'McPherson 789A-4', axis: int = 0, parent = None):
-        self.num_axes = 1
-        self.s_name = s_name
-        self.l_name = l_name
-        self.axis = axis
-        self.parent = parent
+    def __init__(self, port):
+        self.s_name = 'MP789'
+        self.l_name = 'McPherson 789A-4'
+        self._is_homing = False
 
         print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
@@ -35,8 +33,8 @@ class MP_789A_4:
 
             ser_ports = ports_finder.find_serial_ports()
             if port not in ser_ports:
-                print('Port not valid.')
-                raise RuntimeError('Port not valid.')
+                print('Port not valid. Is another program using the port?')
+                raise RuntimeError('Port not valid. Is another program using the port?')
 
             self.s = serial.Serial(port, 9600, timeout=1)
             self.s.write(b' \r')
@@ -45,39 +43,36 @@ class MP_789A_4:
 
             if rx is None or rx == b'':
                 raise RuntimeError('Response timed out.')
-            elif rx == b' v2.55\r\n#\r\n' or rx == b' #\r\n':
+            elif rx == b' v2.55\r\n#\r\n':
                 print('McPherson model 789A-4 Scan Controller found.')
+            elif rx == b' #\r\n':
+                print('McPherson model 789A-4 Scan Controller already initialized.')
             else:
                 raise RuntimeError('Invalid response.')
 
             self.s.write(b'C1\r')
             time.sleep(0.1)
-        
-        else:
-            print('Creating virtual McPherson 789A-4 at the request of MP_792.')
-            self.s = s
+
+        if self.s is None:
+            raise RuntimeError('self.s is None')
 
         self.home()
 
-    # For when we are a sub-controller of a multi-axis controller.
-    def _confirm_axis(self):
-        if self.parent is not None and self.parent.current_axis != self.axis:
-            self.parent.set_axis(self.axis)
-
     def home(self)->bool:
-        # For when we are a sub-controller of a multi-axis controller.
-        self._confirm_axis()
-
         print('Beginning home.')
+        self._is_homing = True
+        print('WR:', b'A24\r')
         self.s.write(b'A24\r') # Enable Homing Circuit
         time.sleep(0.5)
-        print(self.s.read(128))
+        print('RD:', self.s.read(128))
+        print('WR:', b'A8\r')
         self.s.write(b'A8\r') # Set Home Switch "ON"
         time.sleep(0.5)
-        print(self.s.read(128))
+        print('RD:', self.s.read(128))
+        print('WR:', b'F1000,0\r')
         self.s.write(b'F1000,0\r') # Searches for home.
         time.sleep(0.5)
-        print(self.s.read(128))
+        print('RD:', self.s.read(128))
 
         start_time = time.time()
         retries = 0
@@ -92,12 +87,15 @@ class MP_789A_4:
                 retries += 1
                 print('Not homed after 60 seconds. Repeating command.')
                 start_time = current_time
+                print('WR:', b'F1000,0\r')
                 self.s.write(b'F1000,0\r')
                 time.sleep(0.5)
-                print(self.s.read(128))
+                print('RD:', self.s.read(128))
+            print('WR:', b']\r')
             self.s.write(b']\r')
             time.sleep(0.5)
             rx = self.s.read(128).decode('utf-8').rstrip()
+            print('Rx:', rx)
             if '32' in rx:
                 print('Finished homing.')
                 success = True
@@ -117,25 +115,23 @@ class MP_789A_4:
             time.sleep(0.5)
             print(self.s.read(128))
 
+        self._is_homing = False
         return success
 
     def get_position(self):
-        # For when we are a sub-controller of a multi-axis controller.
-        self._confirm_axis()
-
         return self._position
 
     def is_moving(self):
-        # For when we are a sub-controller of a multi-axis controller.
-        self._confirm_axis()
-
         self.s.write(b'^\r')
         status = self.s.read(128).decode('utf-8').rstrip()
-        print(status)
+        print('789a-4 status:', status)
         if '0' in status:
-            return True
-        else:
             return False
+        else:
+            return True
+
+    def is_homing(self):
+        return self._is_homing
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, block: bool):
@@ -143,9 +139,6 @@ class MP_789A_4:
         self.move_relative(steps, block)
 
     def move_relative(self, steps: int, block: bool):
-        # For when we are a sub-controller of a multi-axis controller.
-        self._confirm_axis()
-
         self.s.write(b'+%d\r', steps)
         self._position += steps
 
@@ -156,15 +149,9 @@ class MP_789A_4:
         return self.l_name
 
 class MP_789A_4_DUMMY:
-    def __init__(self, port, s_name: str = 'MP789_DUMMY', l_name: str = 'McPherson 789A-4 (DUMMY)', axis: int = 0, parent = None):
-        self.s_name = s_name
-        self.l_name = l_name
-        self.axis = axis
-        self.parent = parent
-
-        if parent is not None:
-            self.s_name += 'Ax' + str(axis)
-            self.l_name += 'Axis ' + str(axis)
+    def __init__(self, port):
+        self.s_name = 'MP789_DUMMY'
+        self.l_name = 'McPherson 789A-4 (DUMMY)'
 
         print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
@@ -174,22 +161,10 @@ class MP_789A_4_DUMMY:
         if port is not None:     
             print('McPherson model 789A-4 (DUMMY) Scan Controller generated.')
         
-        else:
-            print('Creating virtual McPherson 789A-4 (DUMMY) at the request of MP_792.')
-            self.s = self.parent.s
-
         self._position = 0
         self.home()
 
-    # For when we are a sub-controller of a multi-axis controller.
-    def _confirm_axis(self):
-        if self.parent is not None and self.parent.current_axis != self.axis:
-            self.parent.set_axis(self.axis)
-
     def home(self)->bool:
-        # For when we are a sub-controller of a multi-axis controller.
-        self._confirm_axis()
-
         print('Beginning home.')
         print('Finished homing.')
         success = True
@@ -200,29 +175,17 @@ class MP_789A_4_DUMMY:
         return success
 
     def get_position(self):
-        # For when we are a sub-controller of a multi-axis controller.
-        self._confirm_axis()
-
         return self._position
 
     def is_moving(self):
-        # For when we are a sub-controller of a multi-axis controller.
-        self._confirm_axis()
-
         return False
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, block: bool):
-        # For when we are a sub-controller of a multi-axis controller.
-        self._confirm_axis()
-
         steps = position - self._position
         self.move_relative(steps, block)
 
     def move_relative(self, steps: int, block: bool):
-        # For when we are a sub-controller of a multi-axis controller.
-        self._confirm_axis()
-
         print(b'+%d\r', steps)
         self._position += steps
 

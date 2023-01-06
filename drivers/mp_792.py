@@ -21,8 +21,12 @@ class MP_792:
 
     def __init__(self, port: serial.Serial, axes: int = 4):
         self.num_axes = axes
-        self.s_name = 'MP782'
-        self.l_name = 'McPherson 782'
+        self.s_name = 'MP792'
+        self.l_name = 'McPherson 792'
+        self.axis_alive = [False] * axes
+        self._is_homing = [False] * axes
+        self._is_moving_l = [False] * axes
+        self.current_axis = 0
 
         if port is None:
             print('Port is none type.')
@@ -37,8 +41,9 @@ class MP_792:
 
         ser_ports = ports_finder.find_serial_ports()
         if port not in ser_ports:
-            print('Port not valid.')
-            raise RuntimeError('Port not valid.')
+            print('Port not valid. Is another program using the port?')
+            print('%s\nnot found in\n%s'%(port, ser_ports))
+            raise RuntimeError('Port not valid. Is another program using the port?')
 
         self.s = serial.Serial(port, 9600, timeout=1)
         self.s.write(b' \r')
@@ -47,23 +52,145 @@ class MP_792:
 
         if rx is None or rx == b'':
             raise RuntimeError('Response timed out.')
-        elif rx == b' v2.55\r\n#\r\n' or rx == b' #\r\n':
-            print('McPherson model 789A-4 Scan Controller found.')
+        elif rx == b' v2.55\r\n#\r\n':
+            print('McPherson model 792 Scan Controller found.')
+        elif rx == b' #\r\n':
+            print('McPherson model 792 Multi-Axis already initialized.')
         else:
             raise RuntimeError('Invalid response.')
 
-        self.s.write(b'C1\r')
-        time.sleep(0.1)
+        # self.s.write(b'C1\r')
+        # time.sleep(0.1)
+
+        print('Checking axes...')
+        for i in range(4):
+            print('WR:', MP_792.AXES[i] + b'\r')
+            self.s.write(MP_792.AXES[i] + b'\r')
+            print('RD:', self.s.read(128))
+            time.sleep(0.1)
+
+            print('WR:', b']\r')
+            self.s.write(b']\r')
+            alivestat = self.s.read(128).decode('utf-8')
+            print('RD:', alivestat)
+            time.sleep(0.1)
+
+
+            if '192' in alivestat:
+                print('Axis %d is dead.'%(i))
+                self.axis_alive[i] = False
+            else:
+                print('Axis %d is alive.'%(i))
+                self.axis_alive[i] = True
+
+                self.home(i)
 
         print('McPherson 792 initialization complete.')
 
-        self.current_axis = 0
 
     def set_axis(self, axis: int):
         if axis != self.current_axis:
-            self.s.write(MP_792.AXES[axis] + '\r')
+            print('WR:', MP_792.AXES[axis] + b'\r')
+            self.s.write(MP_792.AXES[axis] + b'\r')
+            print('RD:', self.s.read(128))
             self.current_axis = axis
             time.sleep(0.1)
+
+    def home(self, axis: int)->bool:
+        self.set_axis(axis)
+
+        print('Beginning home for 792 axis %d.'%(axis))
+        self._is_homing[axis] = True
+
+        print('WR:', b'M-10000\r')
+        self.s.write(b'M-10000\r')
+        time.sleep(0.5)
+        print('RD:', self.s.read(128))
+
+        start_time = time.time()
+        retries = 3
+        success = True
+        while True:
+            current_time = time.time()
+
+            # self.s.write(b'^\r')
+            # movstat = self.s.read(128).decode('utf-8')
+            # print('movstat:', movstat)
+
+            moving = self._is_moving(axis)
+            time.sleep(0.1)
+
+            self.s.write(b']\r')
+            limstat = self.s.read(128).decode('utf-8')
+            print('limstat:', limstat)
+            time.sleep(0.1)
+
+            if moving:
+                print('Moving...')
+            if '0' not in limstat:
+                print('Not yet homed...')
+            
+            if not moving and '128' in limstat:
+                print('Moving has completed - homing successful.')
+                break
+            elif (not moving and '128' not in limstat) or (current_time - start_time > 60):
+                print('Moving has completed - homing failed.')
+                if retries == 0:
+                    print('Homing failed.')
+                    self._is_homing[axis] = False
+                    return False
+                else:
+                    print('Retrying homing...')
+                    retries -= 1
+
+                    print('WR:', b'M-10000\r')
+                    self.s.write(b'M-10000\r')
+                    time.sleep(0.5)
+                    print('RD:', self.s.read(128))
+
+                    start_time = time.time()
+
+            time.sleep(0.5)
+
+        self._position[axis] = 0
+        self._is_homing[axis] = False
+        return True
+
+    def get_position(self, axis: int):
+        return self._position[axis]
+
+    def _is_moving(self, axis: int):
+        self.set_axis(axis)
+
+        self.s.write(b'^\r')
+        status = self.s.read(128).decode('utf-8').rstrip()
+        print('792 _status:', status)
+
+        if '0' in status:
+            self._is_moving_l[axis] = False
+            return False
+        else:
+            self._is_moving_l[axis] = True
+            return True
+
+    def is_moving(self, axis: int):
+        return self._is_moving_l[axis]
+
+    def is_homing(self, axis: int):
+        return self._is_homing[axis]
+
+    # Moves to a position, in steps, based on the software's understanding of where it last was.
+    def move_to(self, position: int, block: bool, axis: int):
+        self.set_axis(axis)
+
+        steps = position - self._position[axis]
+        self.move_relative(steps, block, axis)
+
+    def move_relative(self, steps: int, block: bool, axis: int):
+        self.set_axis(axis)
+
+        self.s.write(b'+%d\r'%(steps))
+        self._position[axis] += steps
 
     def short_name(self):
         return self.s_name
@@ -71,14 +198,14 @@ class MP_792:
     def long_name(self):
         return self.l_name
 
+
 class MP_792_DUMMY:
     AXES = [b'A0', b'A8', b'A16', b'A24']
 
     def __init__(self, port: serial.Serial, axes: int = 4):
         self.num_axes = axes
-        self.s_name = 'MP782'
-        self.l_name = 'McPherson 782'
-        self.s = None
+        self.s_name = 'MP792_DUMMY'
+        self.l_name = 'McPherson 792 DUMMY'
 
         if port is None:
             print('Port is none type.')
@@ -91,18 +218,48 @@ class MP_792_DUMMY:
 
         self._position = [0] * 4
 
-        print('McPherson model 789A-4 (DUMMY) Scan Controller generated.')
-
-        print('McPherson 792 initialization complete.')
+        print('McPherson 792 Dummy generation complete.')
 
         self.current_axis = 0
 
     def set_axis(self, axis: int):
         if axis != self.current_axis:
-            print('self.write(): ', MP_792_DUMMY.AXES[axis], '\r')
             self.current_axis = axis
-            print('Current axis:', self.current_axis)
             time.sleep(0.1)
+
+    def home(self, axis: int)->bool:
+        self.set_axis(axis)
+
+        print('Beginning home.')
+
+        time.sleep(0.5)
+
+        print('Moving has completed - homing successful.')
+
+        time.sleep(0.5)
+
+        self._position[axis] = 0
+        return True
+
+    def get_position(self, axis: int):
+        return self._position[axis]
+
+    def is_moving(self, axis: int):
+        self.set_axis(axis)
+
+        return False
+
+    # Moves to a position, in steps, based on the software's understanding of where it last was.
+    def move_to(self, position: int, block: bool, axis: int):
+        self.set_axis(axis)
+
+        steps = position - self._position[axis]
+        self.move_relative(steps, block)
+
+    def move_relative(self, steps: int, block: bool, axis: int):
+        self.set_axis(axis)
+
+        self._position += steps
 
     def short_name(self):
         return self.s_name

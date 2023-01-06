@@ -400,7 +400,8 @@ class MMC_Main(QMainWindow):
             try:
                 if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() != 0:
                     print("Using manual port: %s"%(self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
-                    new_mtn_ctrls = mw.new_motion_controller(dummy, self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText().split(' ')[0])
+                    print(dummy, self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
+                    new_mtn_ctrls = mw.new_motion_controller(dummy, self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
                     for ctrlr in new_mtn_ctrls:
                         self.mtn_ctrls.append(ctrlr)
                     # self.mtn_ctrls[i] = MotionController(dummy, self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
@@ -413,7 +414,7 @@ class MMC_Main(QMainWindow):
                 QMessageBox.warning(self.dmw, 'Connection Failure', 'Failed to find motion controller (%s).'%(e)) 
                 self.mtn_ctrls[-1] = None
                 mtn_ctrls_connected[i] = False
-            if not self.mtn_ctrls or self.mtn_ctrls[-1] is None:
+            if len(self.mtn_ctrls) == 0 or self.mtn_ctrls[-1] is None:
                 mtn_ctrls_connected[i] = False
             else:
                 mtn_ctrls_connected[i] = True
@@ -663,7 +664,7 @@ class MMC_Main(QMainWindow):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_position_displays)
-        self.timer.start(100)
+        self.timer.start(1000)
 
         # Set up the status bar.
         self.statusBar = QStatusBar()
