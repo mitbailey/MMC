@@ -703,6 +703,29 @@ class MMC_Main(QMainWindow):
         # self.UIEL_mgw_fw_misc_tuples_ql.append([self.label_4, self.label_5])
         self.new_filter_wheel_rule()
 
+        # Sample Movement UI
+        self.UIE_mgw_sm_rpos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sample_rotate_spin')
+        self.UIE_mgw_sm_tpos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sample_trans_spin')
+
+        self.UIE_mgw_sm_rhome_qpb: QPushButton = self.findChild(QPushButton, 'sample_rotate_home_button')
+        self.UIE_mgw_sm_rhome_qpb.clicked.connect(self.manual_home_smr)
+        self.UIE_mgw_sm_thome_qpb: QPushButton = self.findChild(QPushButton, 'sample_trans_home_button')
+        self.UIE_mgw_sm_thome_qpb.clicked.connect(self.manual_home_smt)
+
+        self.UIE_mgw_sm_rmove_qpb: QPushButton = self.findChild(QPushButton, 'sample_rotate_move_button')
+        self.UIE_mgw_sm_rmove_qpb.clicked.connect(self.move_to_position_button_pressed_sr)
+        self.UIE_mgw_sm_tmove_qpb: QPushButton = self.findChild(QPushButton, 'sample_trans_move_button')
+        self.UIE_mgw_sm_rmove_qpb.clicked.connect(self.move_to_position_button_pressed_st)
+
+        # Detector Movement UI
+        self.UIE_mgw_dm_rpos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'detector_rotate_spin')
+
+        self.UIE_mgw_dm_rhome_qpb: QPushButton = self.findChild(QPushButton, 'detector_rotate_home_button')
+        self.UIE_mgw_dm_rhome_qpb.clicked.connect(self.manual_home_dmr)
+
+        self.UIE_mgw_dm_rmove_qpb: QPushButton = self.findChild(QPushButton, 'detector_rotate_move_button')
+        self.UIE_mgw_dm_rmove_qpb.clicked.connect(self.move_to_position_button_pressed_dr)
+
         if self.mes_sign == -1:
             self.UIE_mgw_invert_mes_qa.setChecked(True)
         else:
@@ -950,6 +973,24 @@ class MMC_Main(QMainWindow):
         self.disable_movement_sensitive_buttons(True)
         self.motion_controllers.main_drive_axis.home()
 
+    def manual_home_smr(self):
+        self.scan_status_update("HOMING SR")
+        self.homing_started = True
+        self.disable_movement_sensitive_buttons(True)
+        self.motion_controllers.sample_rotation_axis.home()
+
+    def manual_home_smt(self):
+        self.scan_status_update("HOMING ST")
+        self.homing_started = True
+        self.disable_movement_sensitive_buttons(True)
+        self.motion_controllers.sample_translation_axis.home()
+
+    def manual_home_dmr(self):
+        self.scan_status_update("HOMING DR")
+        self.homing_started = True
+        self.disable_movement_sensitive_buttons(True)
+        self.motion_controllers.detector_rotation_axis.home()
+
     def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
         self.scan_number += 1
 
@@ -1111,7 +1152,6 @@ class MMC_Main(QMainWindow):
 
     def move_to_position_button_pressed(self):
         self.moving = True
-
         self.disable_movement_sensitive_buttons(True)
 
         print("Conversion slope: " + str(self.conversion_slope))
@@ -1119,6 +1159,48 @@ class MMC_Main(QMainWindow):
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
         pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.mm_to_idx)
         self.motion_controllers.main_drive_axis.move_to(pos, False)
+
+    # fw sr st dr
+
+    def move_to_position_button_pressed_sr(self):
+        if (self.moving):
+            print('ALREADY MOVING!')
+            return
+        self.moving = True
+        self.disable_movement_sensitive_buttons(True)
+
+        pos = self.UIE_mgw_sm_rpos_qdsb.value()
+
+        print("Move to position button (SR) pressed, moving to step %d"%(pos))
+        # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.mm_to_idx)
+        self.motion_controllers.sample_rotation_axis.move_to(pos, False)
+
+    def move_to_position_button_pressed_st(self):
+        if (self.moving):
+            print('ALREADY MOVING!')
+            return
+        self.moving = True
+        self.disable_movement_sensitive_buttons(True)
+
+        pos = self.UIE_mgw_sm_tpos_qdsb.value()
+
+        print("Move to position button (ST) pressed, moving to step %d"%(pos))
+        # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.mm_to_idx)
+        self.motion_controllers.sample_translation_axis.move_to(pos, False)
+
+    def move_to_position_button_pressed_dr(self):
+        if (self.moving):
+            print('ALREADY MOVING!')
+            return
+
+        self.moving = True
+        self.disable_movement_sensitive_buttons(True)
+
+        pos = self.UIE_mgw_dm_rpos_qdsb.value()
+
+        print("Move to position button (DR) pressed, moving to step %d"%(pos))
+        # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.mm_to_idx)
+        self.motion_controllers.detector_rotation_axis.move_to(pos, False)
 
     def start_changed(self):
         print("Start changed to: %s mm"%(self.UIE_mgw_start_qdsb.value()))
@@ -1138,6 +1220,9 @@ class MMC_Main(QMainWindow):
     def manual_pos_changed(self):
         print("Manual position changed to: %s mm"%(self.UIE_mgw_pos_qdsb.value()))
         self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope
+
+    def manual_pos_changed_sr(self):
+        print('Manual position (SR) changed to: %d steps'%(self.UIE_mgw_sm_rpos))
 
     def show_window_grating_config(self):
         print('show_window_grating_config')

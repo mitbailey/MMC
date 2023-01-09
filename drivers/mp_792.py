@@ -47,6 +47,7 @@ class MP_792:
 
         self.s = serial.Serial(port, 9600, timeout=1)
         self.s.write(b' \r')
+        time.sleep(0.1)
         rx = self.s.read(128)#.decode('utf-8').rstrip()
         print(rx)
 
@@ -66,11 +67,13 @@ class MP_792:
         for i in range(4):
             print('WR:', MP_792.AXES[i] + b'\r')
             self.s.write(MP_792.AXES[i] + b'\r')
+            time.sleep(0.1)
             print('RD:', self.s.read(128))
             time.sleep(0.1)
 
             print('WR:', b']\r')
             self.s.write(b']\r')
+            time.sleep(0.1)
             alivestat = self.s.read(128).decode('utf-8')
             print('RD:', alivestat)
             time.sleep(0.1)
@@ -92,9 +95,10 @@ class MP_792:
         if axis != self.current_axis:
             print('WR:', MP_792.AXES[axis] + b'\r')
             self.s.write(MP_792.AXES[axis] + b'\r')
+            time.sleep(0.1)
             print('RD:', self.s.read(128))
             self.current_axis = axis
-            time.sleep(0.1)
+            time.sleep(0.5)
 
     def home(self, axis: int)->bool:
         self.set_axis(axis)
@@ -104,7 +108,7 @@ class MP_792:
 
         print('WR:', b'M-10000\r')
         self.s.write(b'M-10000\r')
-        time.sleep(0.5)
+        time.sleep(0.1)
         print('RD:', self.s.read(128))
 
         start_time = time.time()
@@ -121,9 +125,9 @@ class MP_792:
             time.sleep(0.1)
 
             self.s.write(b']\r')
+            time.sleep(0.1)
             limstat = self.s.read(128).decode('utf-8')
             print('limstat:', limstat)
-            time.sleep(0.1)
 
             if moving:
                 print('Moving...')
@@ -145,7 +149,7 @@ class MP_792:
 
                     print('WR:', b'M-10000\r')
                     self.s.write(b'M-10000\r')
-                    time.sleep(0.5)
+                    time.sleep(0.1)
                     print('RD:', self.s.read(128))
 
                     start_time = time.time()
@@ -163,6 +167,7 @@ class MP_792:
         self.set_axis(axis)
 
         self.s.write(b'^\r')
+        time.sleep(0.1)
         status = self.s.read(128).decode('utf-8').rstrip()
         print('792 _status:', status)
 
@@ -189,7 +194,20 @@ class MP_792:
     def move_relative(self, steps: int, block: bool, axis: int):
         self.set_axis(axis)
 
-        self.s.write(b'+%d\r'%(steps))
+        print('Being told to move %d steps.'%(steps))
+
+        if steps > 0:
+            print('Moving...')
+            print(b'+%d\r'%(steps))
+            self.s.write(b'+%d\r'%(steps))
+            time.sleep(0.1)
+        elif steps < 0:
+            print('Moving...')
+            print(b'-%d\r'%(steps * -1))
+            self.s.write(b'-%d\r'%(steps * -1))
+            time.sleep(0.1)
+        else:
+            print('Not moving (0 steps).')
         self._position[axis] += steps
 
     def short_name(self):

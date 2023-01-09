@@ -64,9 +64,9 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>0</y>
-             <width>681</width>
-             <height>875</height>
+             <y>-139</y>
+             <width>685</width>
+             <height>705</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -655,7 +655,7 @@
                       <rect>
                        <x>0</x>
                        <y>0</y>
-                       <width>573</width>
+                       <width>579</width>
                        <height>148</height>
                       </rect>
                      </property>
@@ -757,7 +757,7 @@
                </font>
               </property>
               <property name="title">
-               <string>Sample Movement</string>
+               <string>Sample</string>
               </property>
               <property name="flat">
                <bool>true</bool>
@@ -826,6 +826,12 @@
                         <width>111</width>
                         <height>16777215</height>
                        </size>
+                      </property>
+                      <property name="minimum">
+                       <double>-16777215.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>16777215.000000000000000</double>
                       </property>
                      </widget>
                     </item>
@@ -929,6 +935,12 @@
                         <height>16777215</height>
                        </size>
                       </property>
+                      <property name="minimum">
+                       <double>-16777215.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>16777215.000000000000000</double>
+                      </property>
                      </widget>
                     </item>
                     <item>
@@ -1000,7 +1012,7 @@
                </font>
               </property>
               <property name="title">
-               <string>Detector Rotation</string>
+               <string>Detector</string>
               </property>
               <property name="flat">
                <bool>true</bool>
@@ -1079,6 +1091,12 @@
                        <font>
                         <italic>false</italic>
                        </font>
+                      </property>
+                      <property name="minimum">
+                       <double>-16777215.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>16777215.000000000000000</double>
                       </property>
                      </widget>
                     </item>
@@ -1589,7 +1607,7 @@
      <x>0</x>
      <y>0</y>
      <width>1557</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
