@@ -70,29 +70,27 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>0</y>
+             <y>-11</y>
              <width>681</width>
-             <height>930</height>
+             <height>899</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_14">
             <item>
-             <widget class="QGroupBox" name="main_drive_groupbox">
-              <property name="font">
-               <font>
-                <family>Segoe UI Semibold</family>
-                <pointsize>12</pointsize>
-                <italic>true</italic>
-               </font>
+             <layout class="QHBoxLayout" name="horizontalLayout_22">
+              <property name="leftMargin">
+               <number>5</number>
               </property>
-              <property name="title">
-               <string>Main Drive</string>
+              <property name="topMargin">
+               <number>5</number>
               </property>
-              <property name="flat">
-               <bool>true</bool>
+              <property name="rightMargin">
+               <number>5</number>
               </property>
-              <layout class="QVBoxLayout" name="verticalLayout_5"/>
-             </widget>
+              <property name="bottomMargin">
+               <number>5</number>
+              </property>
+             </layout>
             </item>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_17" stretch="0,6,5,1">
@@ -136,7 +134,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox">
+               <widget class="QComboBox" name="main_drive_axis">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -601,7 +599,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox_2">
+               <widget class="QComboBox" name="filter_wheel_axis">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -890,7 +888,7 @@
              </layout>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_19" stretch="0,6,5,1">
+             <layout class="QHBoxLayout" name="horizontalLayout_19" stretch="0,1,5,5,1">
               <property name="leftMargin">
                <number>0</number>
               </property>
@@ -931,7 +929,17 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox_3">
+               <widget class="QComboBox" name="sample_trans_axis">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>25</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="sample_rot_axis">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -1245,7 +1253,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox_4">
+               <widget class="QComboBox" name="detector_axis">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>

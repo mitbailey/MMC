@@ -209,6 +209,7 @@ class MMC_Main(QMainWindow):
 
     # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
     def show_window_device_manager(self):
+
         self.device_timer = None
         if self.dmw is None:
             ui_file_name = exeDir + '/ui/device_manager.ui'
@@ -223,6 +224,7 @@ class MMC_Main(QMainWindow):
             self.dmw.setWindowTitle('Device Manager')
             self.dmw_list = ''
 
+
             self.UIEL_dmw_detector_qhbl = []
             self.UIEL_dmw_detector_qhbl.append(self.dmw.findChild(QHBoxLayout, "detector_combo_sublayout"))
 
@@ -231,7 +233,7 @@ class MMC_Main(QMainWindow):
 
             self.UIEL_dmw_detector_qcb = []
             self.UIEL_dmw_detector_qcb.append(self.dmw.findChild(QComboBox, "samp_combo"))
-            self.UIEL_dmw_detector_qcb[0].addItem("Auto-Connect")
+            self.UIEL_dmw_detector_qcb[0].addItem("NO DEVICE SELECTED")
             self.UIEL_dmw_detector_model_qcb = []
             self.UIEL_dmw_detector_model_qcb.append(self.dmw.findChild(QComboBox, "samp_model_combo"))
             for device in Detector.SupportedDevices:
@@ -239,7 +241,7 @@ class MMC_Main(QMainWindow):
 
             self.UIEL_dmw_mtn_ctrl_qcb = []
             self.UIEL_dmw_mtn_ctrl_qcb.append(self.dmw.findChild(QComboBox, "mtn_combo"))
-            self.UIEL_dmw_mtn_ctrl_qcb[0].addItem("Auto-Connect")
+            self.UIEL_dmw_mtn_ctrl_qcb[0].addItem("NO DEVICE SELECTED")
             self.UIEL_dmw_mtn_ctrl_model_qcb = []
             self.UIEL_dmw_mtn_ctrl_model_qcb.append(self.dmw.findChild(QComboBox, "mtn_model_combo"))
             for device in MotionController.SupportedDevices:
@@ -261,10 +263,18 @@ class MMC_Main(QMainWindow):
             self.UIE_dmw_detector_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "detector_combo_layout")
             self.UIE_dmw_mtn_ctrl_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
 
+            self.devman_list_devices()
+
             self.dmw.show()
 
         self.application.processEvents()
-        self.SIGNAL_device_manager_ready.emit()
+        # self.SIGNAL_device_manager_ready.emit()
+
+        if not self.dev_man_win_enabled:
+            self.dev_man_win_enabled = True
+            self.device_timer = QTimer()
+            self.device_timer.timeout.connect(self.devman_list_devices)
+            self.device_timer.start(1000)
 
     def update_num_detectors_ui(self):
         if self.num_detectors != self.UIE_dmw_num_detectors_qsb.value():
@@ -282,7 +292,7 @@ class MMC_Main(QMainWindow):
 
             for i in range(self.num_detectors):
                 s_combo = QComboBox()
-                s_combo.addItem("Auto-Connect")
+                s_combo.addItem("NO DEVICE SELECTED")
                 for dev in self.dev_list:
                     s_combo.addItem('%s'%(dev))
                 m_combo = QComboBox()
@@ -290,9 +300,9 @@ class MMC_Main(QMainWindow):
                     m_combo.addItem(device)
                 layout = QHBoxLayout()
                 layout.addWidget(s_combo)
-                layout.addStretch(4)
                 layout.addWidget(m_combo)
-                layout.addStretch(1)
+                layout.setStretch(0, 4)
+                layout.setStretch(1, 1)
                 self.UIE_dmw_detector_combo_qvbl.addLayout(layout)
                 self.UIEL_dmw_detector_qcb.append(s_combo)
                 self.UIEL_dmw_detector_model_qcb.append(m_combo)
@@ -317,7 +327,7 @@ class MMC_Main(QMainWindow):
 
             for i in range(self.num_motion_controllers):
                 s_combo = QComboBox()
-                s_combo.addItem("Auto-Connect")
+                s_combo.addItem("NO DEVICE SELECTED")
                 for dev in self.dev_list:
                     s_combo.addItem('%s'%(dev))
                 m_combo = QComboBox()
@@ -325,9 +335,9 @@ class MMC_Main(QMainWindow):
                     m_combo.addItem(device)
                 layout = QHBoxLayout()
                 layout.addWidget(s_combo)
-                layout.addStretch(4)
                 layout.addWidget(m_combo)
-                layout.addStretch(1)
+                layout.setStretch(0, 4)
+                layout.setStretch(1, 1)
                 self.UIE_dmw_mtn_ctrl_combo_qvbl.addLayout(layout)
                 self.UIEL_dmw_mtn_ctrl_qcb.append(s_combo)
                 self.UIEL_dmw_mtn_ctrl_model_qcb.append(m_combo)
@@ -358,8 +368,6 @@ class MMC_Main(QMainWindow):
         print('Detectors: %d'%(self.num_detectors))
         print('Motion controllers: %d'%(self.num_motion_controllers))
 
-        # TODO: Re-instate some sort of auto-connect.
-
         for i in range(self.num_detectors):
             print('Instantiation attempt for detector #%d.'%(i))
             try:
@@ -370,9 +378,8 @@ class MMC_Main(QMainWindow):
                     # Auto-Connect
                     print('currentIndex', self.UIEL_dmw_detector_qcb[i].currentIndex(), self.UIEL_dmw_detector_qcb[i].currentText())
                     print(len(self.UIEL_dmw_detector_qcb))
-                    print('AUTO-CONNECT CURRENTLY DISABLED!')
-                    QMessageBox.information(self.dmw, 'Connection Failure', 'Auto-connect is currently disabled.') 
-
+                    print('NO DEVICE SELECTED!')
+                    QMessageBox.information(self.dmw, 'Connection Failure', 'No device was selected.') 
 
             except Exception as e:
                 print(e)
@@ -442,11 +449,6 @@ class MMC_Main(QMainWindow):
             return
         
         # If we are here, then we have not automatically connected to all required devices. We must now enable the device manager.
-        if not self.dev_man_win_enabled:
-            self.dev_man_win_enabled = True
-            self.device_timer = QTimer()
-            self.device_timer.timeout.connect(self.devman_list_devices)
-            self.device_timer.start(1000)
 
         # self.UIE_dmw_explanation_ql.setText('Auto-connect failed.')  
         QMessageBox.warning(self.dmw, 'Connection Failure', 'Connection attempt has failed!\n%s'%(mtn_ctrls)) 
@@ -593,7 +595,53 @@ class MMC_Main(QMainWindow):
         VLayout.addWidget(self.table)
         UIE_mgw_table_qf.setLayout(VLayout)
         self.UIE_mgw_home_qpb: QPushButton = self.findChild(QPushButton, "home_button")
+
+        # Get axes combos.
+        self.UIE_mgw_main_drive_axis_qcb: QComboBox = self.findChild(QComboBox, "main_drive_axis")
+        self.UIE_mgw_filter_wheel_axis_qcb: QComboBox = self.findChild(QComboBox, "filter_wheel_axis")
+        self.UIE_mgw_sample_rotation_axis_qcb: QComboBox = self.findChild(QComboBox, "sample_rot_axis")
+        self.UIE_mgw_sample_translation_axis_qcb: QComboBox = self.findChild(QComboBox, "sample_trans_axis")
+        self.UIE_mgw_detector_rotation_axis_qcb: QComboBox = self.findChild(QComboBox, "detector_axis")
+
+        self.UIE_mgw_main_drive_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_main)
+        self.UIE_mgw_filter_wheel_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_filter)
+        self.UIE_mgw_sample_rotation_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_rsamp)
+        self.UIE_mgw_sample_translation_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_tsamp)
+        self.UIE_mgw_detector_rotation_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_detector)
         
+        self.UIE_mgw_main_drive_axis_qcb.addItem('%s'%('Select Main Drive Axis'))
+        self.UIE_mgw_filter_wheel_axis_qcb.addItem('%s'%('Select Filter Wheel Axis'))
+        self.UIE_mgw_sample_rotation_axis_qcb.addItem('%s'%('Select Sample Rotation Axis'))
+        self.UIE_mgw_sample_translation_axis_qcb.addItem('%s'%('Select Sample Translation Axis'))
+        self.UIE_mgw_detector_rotation_axis_qcb.addItem('%s'%('Select Detector Rotation Axis'))
+
+
+
+        # Populate axes combos.
+        for dev in self.mtn_ctrls:
+            # TODO: Have selected the current one.
+            print('Adding %s to config list.'%(dev))
+
+            self.UIE_mgw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
+            self.UIE_mgw_filter_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
+            self.UIE_mgw_sample_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
+            self.UIE_mgw_sample_translation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
+            self.UIE_mgw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
+
+        self.main_axis_index = 1
+        self.filter_axis_index = 0
+        self.rsamp_axis_index = 0
+        self.tsamp_axis_index = 0
+        self.detector_axis_index = 0
+
+        print('Got here')
+        self.UIE_mgw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
+        self.UIE_mgw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
+        self.UIE_mgw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
+        self.UIE_mgw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
+        self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
+        print('But not here')
+
         # self.motion_controllers.main_drive_axis = self.mtn_ctrls[0]
         self.motion_controllers.main_drive_axis = self.mtn_ctrls[0]
 
@@ -878,7 +926,7 @@ class MMC_Main(QMainWindow):
         if (self.dmw_list != "~DEVICE LIST~\n" + dev_list_str):
             for i in range(self.num_detectors):
                 self.UIEL_dmw_detector_qcb[i].clear()
-                self.UIEL_dmw_detector_qcb[i].addItem('Auto-Connect')
+                self.UIEL_dmw_detector_qcb[i].addItem('NO DEVICE SELECTED')
                 self.UIEL_dmw_detector_qcb[i].setCurrentIndex(0)
 
                 for dev in self.dev_list:
@@ -886,7 +934,7 @@ class MMC_Main(QMainWindow):
 
             for i in range(self.num_motion_controllers):
                 self.UIEL_dmw_mtn_ctrl_qcb[i].clear()
-                self.UIEL_dmw_mtn_ctrl_qcb[i].addItem('Auto-Connect')
+                self.UIEL_dmw_mtn_ctrl_qcb[i].addItem('NO DEVICE SELECTED')
                 self.UIEL_dmw_mtn_ctrl_qcb[i].setCurrentIndex(0)
 
                 for dev in self.dev_list:
@@ -1352,7 +1400,6 @@ class MMC_Main(QMainWindow):
             # Populate axes combos.
             print(self.mtn_ctrls)
             for dev in self.mtn_ctrls:
-                # TODO: Have selected the current one.
                 print('Adding %s to config list.'%(dev))
 
                 self.UIE_mcw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
@@ -1363,6 +1410,12 @@ class MMC_Main(QMainWindow):
 
                 self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
             # Select the devices selected in device manager.
+
+        self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
+        self.UIE_mcw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
+        self.UIE_mcw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
+        self.UIE_mcw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
+        self.UIE_mcw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
             
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         print('Exec done', self.current_grating_idx, self.UIE_mcw_grating_qcb.currentIndex())
@@ -1401,9 +1454,27 @@ class MMC_Main(QMainWindow):
 
         self.update_status_bar_grating_equation_values()
 
+    def mgw_axis_change_main(self):
+        self.main_axis_index = self.UIE_mgw_main_drive_axis_qcb.currentIndex()
+        self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.main_axis_index - 1]
+
+    def mgw_axis_change_filter(self):
+        self.filter_axis_index = self.UIE_mgw_filter_wheel_axis_qcb.currentIndex()
+        self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.filter_axis_index - 1]
+
+    def mgw_axis_change_rsamp(self):
+        self.rsamp_axis_index = self.UIE_mgw_sample_rotation_axis_qcb.currentIndex()
+        self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.rsamp_axis_index - 1]
+
+    def mgw_axis_change_tsamp(self):
+        self.tsamp_axis_index = self.UIE_mgw_sample_translation_axis_qcb.currentIndex()
+        self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.tsamp_axis_index - 1]
+
+    def mgw_axis_change_detector(self):
+        self.detector_axis_index = self.UIE_mgw_detector_rotation_axis_qcb.currentIndex()
+        self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index - 1]
+
     def accept_mcw(self):
-
-
         print('~~MACHINE CONFIGURATION ACCEPT CALLED:')
         print('~Main Drive')
         print(self.UIE_mcw_main_drive_axis_qcb.currentText())
@@ -1418,11 +1489,29 @@ class MMC_Main(QMainWindow):
 
         # print(self.dev_list)
 
-        self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.UIE_mcw_main_drive_axis_qcb.currentIndex() - 1]
-        self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.UIE_mcw_filter_wheel_axis_qcb.currentIndex() - 1]
-        self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.UIE_mcw_sample_rotation_axis_qcb.currentIndex() - 1]
-        self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.UIE_mcw_sample_translation_axis_qcb.currentIndex() - 1]
-        self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.UIE_mcw_detector_rotation_axis_qcb.currentIndex() - 1]
+        # self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.UIE_mcw_main_drive_axis_qcb.currentIndex() - 1]
+        # self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.UIE_mcw_filter_wheel_axis_qcb.currentIndex() - 1]
+        # self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.UIE_mcw_sample_rotation_axis_qcb.currentIndex() - 1]
+        # self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.UIE_mcw_sample_translation_axis_qcb.currentIndex() - 1]
+        # self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.UIE_mcw_detector_rotation_axis_qcb.currentIndex() - 1]
+
+        self.main_axis_index = self.UIE_mcw_main_drive_axis_qcb.currentIndex()
+        self.filter_axis_index = self.UIE_mcw_filter_wheel_axis_qcb.currentIndex()
+        self.rsamp_axis_index = self.UIE_mcw_sample_rotation_axis_qcb.currentIndex()
+        self.tsamp_axis_index = self.UIE_mcw_sample_translation_axis_qcb.currentIndex()
+        self.detector_axis_index = self.UIE_mcw_detector_rotation_axis_qcb.currentIndex()
+
+        self.UIE_mgw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
+        self.UIE_mgw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
+        self.UIE_mgw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
+        self.UIE_mgw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
+        self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
+
+        self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.main_axis_index - 1]
+        self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.filter_axis_index - 1]
+        self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.rsamp_axis_index - 1]
+        self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.tsamp_axis_index - 1]
+        self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index - 1]
 
         self.machine_conf_win.close()
 
