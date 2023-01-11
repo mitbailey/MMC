@@ -1680,7 +1680,7 @@ if __name__ == '__main__':
         print(e.what())
 
     # Main GUI and child-window setup.
-    ui_file_name = exeDir + '/ui/grating_input.ui'
+    ui_file_name = exeDir + '/ui/machine_config.ui'
     ui_file = QFile(ui_file_name)
     if not ui_file.open(QIODevice.ReadOnly):
         print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
@@ -1692,7 +1692,7 @@ if __name__ == '__main__':
         print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
         sys.exit(-1)
 
-    ui_file_name = exeDir + '/ui/mainwindow_mk2.ui'
+    ui_file_name = exeDir + '/ui/main_window.ui'
     ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
     if not ui_file.open(QIODevice.ReadOnly):
         print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
