@@ -228,7 +228,7 @@ class Thorlabs: # Wrapper class for TLI methods
             self.moving = False
             self.homed = False
             self.homing = False
-            self._mm_to_idx = 0 # this will cause errors unless a stage is set
+            self._steps_per_value = 0 # this will cause errors unless a stage is set
             self.keep_polling = True
             self.poll_interval = pollingIntervalMs * 0.001
             self.mutex = threading.Lock()
@@ -378,13 +378,13 @@ class Thorlabs: # Wrapper class for TLI methods
         def set_stage(self, stype: str):
             if stype not in KST_Stages:
                 raise RuntimeError('%s not a valid stage type'%(stype))
-            self._mm_to_idx = Thorlabs.KST101.avail_stages[stype]
+            self._steps_per_value = Thorlabs.KST101.avail_stages[stype]
             ret = TLI_KST.SetStageType(self.serial, KST_Stages.index(stype))
             return ret
 
         @property
-        def mm_to_idx(self):
-            return self._mm_to_idx
+        def steps_per_value(self):
+            return self._steps_per_value
 
         def wait_for(self, mtype: str, mid: str) -> bool:
             if mtype not in KST_MessageType.keys():
@@ -721,7 +721,7 @@ class Thorlabs: # Wrapper class for TLI methods
             self.moving = False
             self.homed = False
             self.homing = False
-            self._mm_to_idx = 0
+            self._steps_per_value = 0
             self.keep_polling = True
             self.poll_interval = pollingIntervalMs * 0.001
             self.mutex = threading.Lock()
@@ -841,12 +841,12 @@ class Thorlabs: # Wrapper class for TLI methods
         # API calls; possible examples.
 
         def set_stage(self, stype: str):
-            self._mm_to_idx = Thorlabs.KST101.avail_stages[stype]
+            self._steps_per_value = Thorlabs.KST101.avail_stages[stype]
             return True
 
         @property
-        def mm_to_idx(self):
-            return self._mm_to_idx
+        def steps_per_value(self):
+            return self._steps_per_value
 
         def wait_for(self, mtype: str, mid: str) -> bool:
             return True
@@ -1114,8 +1114,8 @@ if __name__ == '__main__':
     print("ATTEMPTING TO MOVE")
 
     # MM_TO_NM = 10e6
-    # MM_TO_IDX = 2184532 # Based on motor/stage...
-    MM_TO_IDX = 2184560.64 # 7471104
+    # STEPS_PER_VALUE = 2184532 # Based on motor/stage...
+    STEPS_PER_VALUE = 2184560.64 # 7471104
 
     # DESIRED_POSITION_NM = 0
 
@@ -1130,7 +1130,7 @@ if __name__ == '__main__':
     DESIRED_POSITION_MM = 5
 
     # DESIRED_POSITION_MM = int((DESIRED_POSITION_NM  ) + 1)
-    DESIRED_POSITION_IDX = int(DESIRED_POSITION_MM * MM_TO_IDX)
+    DESIRED_POSITION_IDX = int(DESIRED_POSITION_MM * STEPS_PER_VALUE)
     # retval = motor_ctrl.move_to(DESIRED_POSITION_IDX, True)
     retval = motor_ctrl.move_to(DESIRED_POSITION_IDX, True)
     # sleep(1)

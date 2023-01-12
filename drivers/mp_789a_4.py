@@ -25,7 +25,7 @@ class MP_789A_4:
         print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
         # TODO: Change default.
-        self.mm_to_idx = 1
+        self.steps_per_value = 1
 
         if port is not None:     
             self._position = 0
@@ -156,7 +156,7 @@ class MP_789A_4_DUMMY:
         print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
         # TODO: Change default.
-        self.mm_to_idx = 1
+        self.steps_per_value = 1
 
         if port is not None:     
             print('McPherson model 789A-4 (DUMMY) Scan Controller generated.')

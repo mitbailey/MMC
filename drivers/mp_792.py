@@ -32,9 +32,6 @@ class MP_792:
             print('Port is none type.')
             raise RuntimeError('Port is none type.')
 
-        # TODO: Change default.
-        self.mm_to_idx = 1
-
         print('Attempting to connect to McPherson 792 on port %s.'%(port))
 
         self._position = [0] * 4
@@ -89,7 +86,6 @@ class MP_792:
                 self.home(i)
 
         print('McPherson 792 initialization complete.')
-
 
     def set_axis(self, axis: int):
         if axis != self.current_axis:
@@ -231,9 +227,6 @@ class MP_792_DUMMY:
         if port is None:
             print('Port is none type.')
             raise RuntimeError('Port is none type.')
-
-        # TODO: Change default.
-        self.mm_to_idx = 1
 
         print('Attempting to connect to McPherson 792 on port %s.'%(port))
 

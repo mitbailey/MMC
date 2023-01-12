@@ -965,7 +965,7 @@ class MMC_Main(QMainWindow):
             return
         ofile.write('# %s\n'%(tstamp.strftime('%Y-%m-%d %H:%M:%S')))
         try:
-            ofile.write('# Steps/mm: %f\n'%(metadata['mm_to_idx']))
+            ofile.write('# Steps/mm: %f\n'%(metadata['steps_per_value']))
         except Exception:
             pass
         try:
@@ -1186,7 +1186,8 @@ class MMC_Main(QMainWindow):
         self.moving = move_status
         self.previous_position = self.current_position
 
-        self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.motion_controllers.main_drive_axis.mm_to_idx) / self.conversion_slope) - self.zero_ofst))
+        # self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.motion_controllers.main_drive_axis.steps_per_value) / self.conversion_slope) - self.zero_ofst))
+        self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position) / self.conversion_slope) - self.zero_ofst))
 
     def scan_button_pressed(self):
         if not self.scanRunning:
@@ -1205,7 +1206,8 @@ class MMC_Main(QMainWindow):
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
-        pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.mm_to_idx)
+        # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.steps_per_value)
+        pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope)
         self.motion_controllers.main_drive_axis.move_to(pos, False)
 
     # fw sr st dr
@@ -1220,7 +1222,6 @@ class MMC_Main(QMainWindow):
         pos = self.UIE_mgw_sm_rpos_qdsb.value()
 
         print("Move to position button (SR) pressed, moving to step %d"%(pos))
-        # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.mm_to_idx)
         self.motion_controllers.sample_rotation_axis.move_to(pos, False)
 
     def move_to_position_button_pressed_st(self):
@@ -1233,7 +1234,6 @@ class MMC_Main(QMainWindow):
         pos = self.UIE_mgw_sm_tpos_qdsb.value()
 
         print("Move to position button (ST) pressed, moving to step %d"%(pos))
-        # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.mm_to_idx)
         self.motion_controllers.sample_translation_axis.move_to(pos, False)
 
     def move_to_position_button_pressed_dr(self):
@@ -1247,7 +1247,6 @@ class MMC_Main(QMainWindow):
         pos = self.UIE_mgw_dm_rpos_qdsb.value()
 
         print("Move to position button (DR) pressed, moving to step %d"%(pos))
-        # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.mm_to_idx)
         self.motion_controllers.detector_rotation_axis.move_to(pos, False)
 
     def start_changed(self):
@@ -1416,11 +1415,31 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
         self.UIE_mcw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
         self.UIE_mcw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
+
+        self.UIE_mcw_sm_steps_per_rot: QSpinBox = self.machine_conf_win.findChild(QSpinBox, 'set_smr_steps_per_deg')
+        self.UIE_mcw_sm_steps_per_trans: QSpinBox = self.machine_conf_win.findChild(QSpinBox, 'set_smt_steps_per_deg')
+        self.UIE_mcw_dr_steps_per: QSpinBox = self.machine_conf_win.findChild(QSpinBox, 'set_dr_steps_per_deg')
+
+        self.UIE_mcw_sm_steps_per_rot.valueChanged.connect(self.sample_rot_steps_per)
+        self.UIE_mcw_sm_steps_per_trans.valueChanged.connect(self.sample_trans_steps_per)
+        self.UIE_mcw_dr_steps_per.valueChanged.connect(self.detector_steps_per)
             
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         print('Exec done', self.current_grating_idx, self.UIE_mcw_grating_qcb.currentIndex())
         if self.current_grating_idx != self.UIE_mcw_grating_qcb.currentIndex():
             self.UIE_mcw_grating_qcb.setCurrentIndex(self.current_grating_idx)
+
+    def set_main_drive_steps_per(self):
+        pass
+
+    def set_sample_rot_steps_per(self):
+        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_rot.value())
+
+    def set_sample_trans_steps_per(self):
+        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans.value())
+
+    def set_detector_steps_per(self):
+        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per.value())
 
     def update_movement_limits(self):
         self.UIE_mgw_pos_qdsb.setMaximum(self.max_pos)
@@ -1577,7 +1596,8 @@ class Scan(QThread):
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
         self.SIGNAL_status_update.emit("ZEROING")
-        prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.motion_controllers.main_drive_axis.mm_to_idx)
+        # prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.motion_controllers.main_drive_axis.steps_per_value)
+        prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope)
         self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
         self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
@@ -1590,7 +1610,7 @@ class Scan(QThread):
             self._ydata.append([])
 
         self._scan_id = self.other.table.scanId
-        metadata = {'tstamp': tnow, 'mm_to_idx': self.other.motion_controllers.main_drive_axis.mm_to_idx, 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+        metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.main_drive_axis.get_steps_per_value(), 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
         self.SIGNAL_data_begin.emit(self.scanId,  metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
         while self.scanId == self.other.table.scanId: # spin until that happens
             continue
@@ -1598,7 +1618,8 @@ class Scan(QThread):
             if not self.other.scanRunning:
                 break
             self.SIGNAL_status_update.emit("MOVING")
-            self.other.motion_controllers.main_drive_axis.move_to(dpos * self.other.motion_controllers.main_drive_axis.mm_to_idx, True)
+            # self.other.motion_controllers.main_drive_axis.move_to(dpos * self.other.motion_controllers.main_drive_axis.steps_per_value, True)
+            self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
             pos = self.other.motion_controllers.main_drive_axis.get_position()
             self.SIGNAL_status_update.emit("SAMPLING")
 
@@ -1616,19 +1637,21 @@ class Scan(QThread):
                     err = int(float(words[2])) # skip timestamp
                 except Exception:
                     continue
-                self._xdata[i].append((((pos / self.other.motion_controllers.main_drive_axis.mm_to_idx) / self.other.conversion_slope)) - self.other.zero_ofst)
+                # self._xdata[i].append((((pos / self.other.motion_controllers.main_drive_axis.steps_per_value) / self.other.conversion_slope)) - self.other.zero_ofst)
+                self._xdata[i].append((((pos) / self.other.conversion_slope)) - self.other.zero_ofst)
                 self._ydata[i].append(self.other.mes_sign * mes * 1e12)
                 self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
 
                 if sav_files[i] is not None:
                     if idx == 0:
                         sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
-                        sav_files[i].write('# Steps/mm: %f\n'%(self.other.motion_controllers.main_drive_axis.mm_to_idx))
+                        sav_files[i].write('# Steps/mm: %f\n'%(self.other.motion_controllers.main_drive_axis.get_steps_per_value()))
                         sav_files[i].write('# mm/nm: %e; lambda_0 (nm): %e\n'%(self.other.conversion_slope, self.other.zero_ofst))
                         sav_files[i].write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
                     # process buf
                     # 1. split by \n
-                    buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.motion_controllers.main_drive_axis.mm_to_idx) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
+                    # buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.motion_controllers.main_drive_axis.steps_per_value) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
+                    buf = '%d,%e,%e,%d\n'%(pos, ((pos) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
                     sav_files[i].write(buf)
 
                 i += 1

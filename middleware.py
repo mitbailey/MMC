@@ -153,7 +153,7 @@ class MotionController:
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None, axis: int = 0, parent = None):
         # TODO: Come up with a proper way of setting the detector, ie as an argument.
         self.model = dev_model
-        self.mm_to_idx = 0
+        self._steps_per_value = 1
         self._is_dummy = dummy
         self.motor_ctrl = None
         self.port = None
@@ -194,8 +194,19 @@ class MotionController:
 
         if self.motor_ctrl is None:
             raise RuntimeError('self.motor_ctrl is None')
-        self.mm_to_idx = self.motor_ctrl.mm_to_idx
+
+        # Why would the motor controller know the steps per value?!
+        # self.steps_per_value = self.motor_ctrl.steps_per_value
+
         self.port = man_port
+
+    # The number of steps per input value. Could be steps per millimeter, nanometer, or degree.
+    def set_steps_per_value(self, steps: int):
+        if steps > 0:
+            self._steps_per_value = steps
+
+    def get_steps_per_value(self):
+        return self._steps_per_value
 
     def is_dummy(self):
         return self.is_dummy
@@ -208,9 +219,9 @@ class MotionController:
 
     def get_position(self):
         if self.multi_axis:
-            return self.motor_ctrl.get_position(self.axis)
+            return self.motor_ctrl.get_position(self.axis) / self._steps_per_value
         else:
-            return self.motor_ctrl.get_position()
+            return self.motor_ctrl.get_position() / self._steps_per_value
 
     def is_homing(self):
         if self.multi_axis:
@@ -225,12 +236,10 @@ class MotionController:
             return self.motor_ctrl.is_moving()
 
     def move_to(self, position, block):
-        print(self.long_name())
-        print(self.multi_axis)
         if self.multi_axis:
-            return self.motor_ctrl.move_to(position, block, self.axis)
+            return self.motor_ctrl.move_to(position * self._steps_per_value, block, self.axis)
         else:
-            return self.motor_ctrl.move_to(position, block)
+            return self.motor_ctrl.move_to(position * self._steps_per_value, block)
 
     def port_name(self):
         return self.port
