@@ -153,7 +153,7 @@ class MotionController:
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None, axis: int = 0, parent = None):
         # TODO: Come up with a proper way of setting the detector, ie as an argument.
         self.model = dev_model
-        self._steps_per_value = 1
+        self._steps_per_value = 0
         self._is_dummy = dummy
         self.motor_ctrl = None
         self.port = None
@@ -201,7 +201,7 @@ class MotionController:
         self.port = man_port
 
     # The number of steps per input value. Could be steps per millimeter, nanometer, or degree.
-    def set_steps_per_value(self, steps: int):
+    def set_steps_per_value(self, steps):
         if steps > 0:
             self._steps_per_value = steps
 
@@ -218,6 +218,9 @@ class MotionController:
             return self.motor_ctrl.home()
 
     def get_position(self):
+        if self._steps_per_value == 0:
+            return 0
+
         if self.multi_axis:
             return self.motor_ctrl.get_position(self.axis) / self._steps_per_value
         else:
@@ -236,6 +239,9 @@ class MotionController:
             return self.motor_ctrl.is_moving()
 
     def move_to(self, position, block):
+        if self._steps_per_value == 0:
+            raise Exception('Steps-per value has not been set for this axis. This value can be set in the Machine Configuration window.')
+
         if self.multi_axis:
             return self.motor_ctrl.move_to(position * self._steps_per_value, block, self.axis)
         else:

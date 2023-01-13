@@ -207,6 +207,11 @@ class MMC_Main(QMainWindow):
 
         self.motion_controllers = mcl.MotionControllerList()
 
+    def eventFilter(self, source, event):
+        if event.type() == QEvent.Wheel:
+            return True
+        return super().eventFilter(source, event)
+
     # Screen shown during startup to disable premature user interaction as well as handle device-not-found issues.
     def show_window_device_manager(self):
 
@@ -485,6 +490,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_tangent_ang_in_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_machine_conf_qpb: QPushButton = None
 
+        self.UIE_mcw_steps_per_nm_qdsb: QDoubleSpinBox = None
+
         self.grating_combo_lstr = ['1200', '2400', '* New Entry']
         self.current_grating_idx = 0
 
@@ -614,8 +621,6 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sample_rotation_axis_qcb.addItem('%s'%('Select Sample Rotation Axis'))
         self.UIE_mgw_sample_translation_axis_qcb.addItem('%s'%('Select Sample Translation Axis'))
         self.UIE_mgw_detector_rotation_axis_qcb.addItem('%s'%('Select Detector Rotation Axis'))
-
-
 
         # Populate axes combos.
         for dev in self.mtn_ctrls:
@@ -787,6 +792,13 @@ class MMC_Main(QMainWindow):
         self.update_movement_limits()
 
         self.table.updatePlots()
+
+        # This is where we disable the scroll function for all spin and combo boxes, because its dumb.
+        uiel = self.findChildren(QDoubleSpinBox)
+        uiel += self.findChildren(QSpinBox)
+        uiel += self.findChildren(QComboBox)
+        for uie in uiel:
+            uie.installEventFilter(self)
 
         self.dmw.close()
         self.main_gui_booted = True
@@ -1208,7 +1220,12 @@ class MMC_Main(QMainWindow):
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
         # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.steps_per_value)
         pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope)
-        self.motion_controllers.main_drive_axis.move_to(pos, False)
+
+        try:
+            self.motion_controllers.main_drive_axis.move_to(pos, False)
+        except Exception as e:
+            QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
+            pass
 
     # fw sr st dr
 
@@ -1222,7 +1239,11 @@ class MMC_Main(QMainWindow):
         pos = self.UIE_mgw_sm_rpos_qdsb.value()
 
         print("Move to position button (SR) pressed, moving to step %d"%(pos))
-        self.motion_controllers.sample_rotation_axis.move_to(pos, False)
+        try:
+            self.motion_controllers.sample_rotation_axis.move_to(pos, False)
+        except Exception as e:
+            QMessageBox.critical(self, 'Move Failure', 'Sample rotation axis failed to move: %s'%(e))
+            pass
 
     def move_to_position_button_pressed_st(self):
         if (self.moving):
@@ -1234,7 +1255,11 @@ class MMC_Main(QMainWindow):
         pos = self.UIE_mgw_sm_tpos_qdsb.value()
 
         print("Move to position button (ST) pressed, moving to step %d"%(pos))
-        self.motion_controllers.sample_translation_axis.move_to(pos, False)
+        try:
+            self.motion_controllers.sample_translation_axis.move_to(pos, False)
+        except Exception as e:
+            QMessageBox.critical(self, 'Move Failure', 'Sample translation axis failed to move: %s'%(e))
+            pass
 
     def move_to_position_button_pressed_dr(self):
         if (self.moving):
@@ -1247,7 +1272,11 @@ class MMC_Main(QMainWindow):
         pos = self.UIE_mgw_dm_rpos_qdsb.value()
 
         print("Move to position button (DR) pressed, moving to step %d"%(pos))
-        self.motion_controllers.detector_rotation_axis.move_to(pos, False)
+        try:
+            self.motion_controllers.detector_rotation_axis.move_to(pos, False)
+        except Exception as e:
+            QMessageBox.critical(self, 'Move Failure', 'Detector rotation axis failed to move: %s'%(e))
+            pass
 
     def start_changed(self):
         print("Start changed to: %s mm"%(self.UIE_mgw_start_qdsb.value()))
@@ -1338,7 +1367,7 @@ class MMC_Main(QMainWindow):
 
     def show_window_machine_config(self):
         if self.machine_conf_win is None:
-            ui_file_name = exeDir + '/ui/grating_input.ui'
+            ui_file_name = exeDir + '/ui/machine_config.ui'
             ui_file = QFile(ui_file_name)
             if not ui_file.open(QIODevice.ReadOnly):
                 print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
@@ -1379,6 +1408,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_machine_conf_qpb = self.machine_conf_win.findChild(QPushButton, 'update_conf_btn')
             self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
 
+            self.UIE_mcw_steps_per_nm_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'steps_per_nm')
+            self.UIE_mcw_steps_per_nm_qdsb.valueChanged.connect(self.set_main_drive_steps_per)
+
             self.UIE_mcw_accept_qpb = self.machine_conf_win.findChild(QPushButton, 'mcw_accept')
             self.UIE_mcw_accept_qpb.clicked.connect(self.accept_mcw)
 
@@ -1416,13 +1448,13 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
         self.UIE_mcw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
 
-        self.UIE_mcw_sm_steps_per_rot: QSpinBox = self.machine_conf_win.findChild(QSpinBox, 'set_smr_steps_per_deg')
-        self.UIE_mcw_sm_steps_per_trans: QSpinBox = self.machine_conf_win.findChild(QSpinBox, 'set_smt_steps_per_deg')
-        self.UIE_mcw_dr_steps_per: QSpinBox = self.machine_conf_win.findChild(QSpinBox, 'set_dr_steps_per_deg')
+        self.UIE_mcw_sm_steps_per_rot_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smr_steps_per_deg')
+        self.UIE_mcw_sm_steps_per_trans_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smt_steps_per_deg')
+        self.UIE_mcw_dr_steps_per_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_steps_per_deg')
 
-        self.UIE_mcw_sm_steps_per_rot.valueChanged.connect(self.sample_rot_steps_per)
-        self.UIE_mcw_sm_steps_per_trans.valueChanged.connect(self.sample_trans_steps_per)
-        self.UIE_mcw_dr_steps_per.valueChanged.connect(self.detector_steps_per)
+        self.UIE_mcw_sm_steps_per_rot_qdsb.valueChanged.connect(self.set_sample_rot_steps_per)
+        self.UIE_mcw_sm_steps_per_trans_qdsb.valueChanged.connect(self.set_sample_trans_steps_per)
+        self.UIE_mcw_dr_steps_per_qdsb.valueChanged.connect(self.set_detector_steps_per)
             
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         print('Exec done', self.current_grating_idx, self.UIE_mcw_grating_qcb.currentIndex())
@@ -1430,16 +1462,16 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_grating_qcb.setCurrentIndex(self.current_grating_idx)
 
     def set_main_drive_steps_per(self):
-        pass
+        self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_qdsb.value())
 
     def set_sample_rot_steps_per(self):
-        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_rot.value())
+        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_rot_qdsb.value())
 
     def set_sample_trans_steps_per(self):
-        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans.value())
+        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans_qdsb.value())
 
     def set_detector_steps_per(self):
-        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per.value())
+        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per_qdsb.value())
 
     def update_movement_limits(self):
         self.UIE_mgw_pos_qdsb.setMaximum(self.max_pos)
@@ -1598,7 +1630,11 @@ class Scan(QThread):
         self.SIGNAL_status_update.emit("ZEROING")
         # prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.motion_controllers.main_drive_axis.steps_per_value)
         prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope)
-        self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
+        try:
+            self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
+        except Exception as e:
+            QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
+            pass
         self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
 
@@ -1619,7 +1655,11 @@ class Scan(QThread):
                 break
             self.SIGNAL_status_update.emit("MOVING")
             # self.other.motion_controllers.main_drive_axis.move_to(dpos * self.other.motion_controllers.main_drive_axis.steps_per_value, True)
-            self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
+            try:
+                self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
+            except Exception as e:
+                QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
+                pass
             pos = self.other.motion_controllers.main_drive_axis.get_position()
             self.SIGNAL_status_update.emit("SAMPLING")
 
