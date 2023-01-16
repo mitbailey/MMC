@@ -15,9 +15,9 @@ def reset_config(path: str | pathlib.Path):
         os.makedirs(data_save_dir)
 
     os.remove(path + '/config.ini')
-    save_config(path, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0)
+    save_config(path, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0)
 
-def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, data_save_directory: str, grating_combo_lstr: list(str), current_grating_idx: int, diff_order: int, zero_ofst: float, inc_ang: float, tan_ang: float, arm_len: float, max_pos: float, min_pos: float) -> bool:
+def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, data_save_directory: str, grating_combo_lstr: list(str), current_grating_idx: int, diff_order: int, zero_ofst: float, inc_ang: float, tan_ang: float, arm_len: float, max_pos: float, min_pos: float, main_axis_index: int, filter_axis_index: int, rsamp_axis_index: int, tsamp_axis_index: int, detector_axis_index: int, main_axis_dev_name: str, filter_axis_dev_name: str, rsamp_axis_dev_name: str, tsamp_axis_dev_name: str, detector_axis_dev_name: str, num_axes: int) -> bool:
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
     grating_lstr = grating_combo_lstr[:-1]
@@ -42,6 +42,17 @@ def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, da
                                  'armLength': str(arm_len),
                                  'maxPosition': str(max_pos),
                                  'minPosition': str(min_pos)}
+    save_config['CONNECTIONS'] = {'mainAxisIndex': main_axis_index,
+                                  'filterAxisIndex': filter_axis_index,
+                                  'rsampAxisIndex': rsamp_axis_index,
+                                  'tsampAxisIndex': tsamp_axis_index,
+                                  'detectorAxisIndex': detector_axis_index,
+                                  'mainAxisName': main_axis_dev_name,
+                                  'filterAxisName': filter_axis_dev_name,
+                                  'rsampAxisName': rsamp_axis_dev_name,
+                                  'tsampAxisName': tsamp_axis_dev_name,
+                                  'detectorAxisName': detector_axis_dev_name,
+                                  'numAxes': num_axes}
     
     with open(path + '/config.ini', 'w') as confFile:
         save_config.write(confFile)
@@ -55,7 +66,7 @@ def load_config(path: str | pathlib.Path) -> dict:
         if not os.path.exists(data_save_dir):
             os.makedirs(data_save_dir)
 
-        save_config(path, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0)
+        save_config(path, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0)
 
     while os.path.exists(path + '/config.ini'):
         config = confp.ConfigParser()
@@ -149,6 +160,21 @@ def load_config(path: str | pathlib.Path) -> dict:
                 data_save_directory = config['INTERFACE']['dataSaveDirectory']
             except Exception as e:
                 print('Invalid directory, %s'%(e.what()))
+            
+            main_axis_index = int(config['CONNECTIONS']['mainAxisIndex'])
+            filter_axis_index = int(config['CONNECTIONS']['filterAxisIndex'])
+            rsamp_axis_index = int(config['CONNECTIONS']['rsampAxisIndex'])
+            tsamp_axis_index = int(config['CONNECTIONS']['tsampAxisIndex'])
+            detector_axis_index = int(config['CONNECTIONS']['detectorAxisIndex'])
+
+            main_axis_dev_name = str(config['CONNECTIONS']['mainAxisName'])
+            filter_axis_dev_name = str(config['CONNECTIONS']['filterAxisName'])
+            rsamp_axis_dev_name = str(config['CONNECTIONS']['rsampAxisName'])
+            tsamp_axis_dev_name = str(config['CONNECTIONS']['tsampAxisName'])
+            detector_axis_dev_name = str(config['CONNECTIONS']['detectorAxisName'])
+
+            num_axes = int(config['CONNECTIONS']['numAxes'])
+
 
             break
 
@@ -164,7 +190,18 @@ def load_config(path: str | pathlib.Path) -> dict:
         "tangentAngle": tan_ang,
         "armLength": arm_len,
         "maxPosition": max_pos,
-        "minPosition": min_pos
+        "minPosition": min_pos,
+        'mainAxisIndex': main_axis_index,
+        'filterAxisIndex': filter_axis_index,
+        'rsampAxisIndex': rsamp_axis_index,
+        'tsampAxisIndex': tsamp_axis_index,
+        'detectorAxisIndex': detector_axis_index,
+        'mainAxisName': main_axis_dev_name,
+        'filterAxisName': filter_axis_dev_name,
+        'rsampAxisName': rsamp_axis_dev_name,
+        'tsampAxisName': tsamp_axis_dev_name,
+        'detectorAxisName': detector_axis_dev_name,
+        'numAxes': num_axes
     }
 
     print(ret_dict)
