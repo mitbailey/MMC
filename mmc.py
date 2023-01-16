@@ -566,55 +566,6 @@ class MMC_Main(QMainWindow):
 
         self.UIE_mcw_steps_per_nm_qdsb: QDoubleSpinBox = None
 
-        # self.grating_combo_lstr = ['1200', '2400', '* New Entry']
-        # self.current_grating_idx = 0
-
-        # # Default grating equation values.
-        # self.arm_length = 56.53654 # mm
-        # self.diff_order = 1
-        # self.max_pos = 600.0
-        # self.min_pos = -40.0
-        # self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx]) # grooves/mm
-        # self.tangent_ang = 0 # deg
-        # self.incidence_ang = 32 # deg
-        # self.zero_ofst = 37.8461 # nm
-
-        # # Replaces default grating equation values with the values found in the config.ini file.
-        # try:
-        #     load_dict = load_config(appDir)
-        # except Exception as e:
-        #     print("The following exception occurred while attempting to load configuration file: %s"%(e))
-        #     try:
-        #         reset_config(appDir)
-        #         load_dict = load_config(appDir)
-        #     except Exception as e2:
-        #         print("Configuration file recovery failed (exception: %s). Unable to load configuration file. Exiting."%(e2))
-        #         exit(43)
-
-        # self.mes_sign = load_dict['measurementSign']
-        # self.autosave_data_bool = load_dict['autosaveData']
-        # self.data_save_directory = load_dict['dataSaveDirectory']
-        # self.grating_combo_lstr = load_dict["gratingDensities"]
-        # self.current_grating_idx = load_dict["gratingDensityIndex"]
-        # self.diff_order = load_dict["diffractionOrder"]
-        # self.zero_ofst = load_dict["zeroOffset"]
-        # self.incidence_ang = load_dict["incidenceAngle"]
-        # self.tangent_ang = load_dict["tangentAngle"]
-        # self.arm_length = load_dict["armLength"]
-        # self.max_pos = load_dict["maxPosition"]
-        # self.min_pos = load_dict["minPosition"]
-        # self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
-
-        # # Sets the conversion slope based on the found (or default) values.
-        # self.calculate_conversion_slope()
-
-        # print('\n\nConversion constant: %f\n'%(self.conversion_slope))
-
-        # self.manual_position = 0 # 0 nm
-        # self.startpos = 0
-        # self.stoppos = 0
-        # self.steppos = 0.1
-
         if dummy:
             self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.5")
         else:
@@ -685,7 +636,6 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sample_translation_axis_qcb: QComboBox = self.findChild(QComboBox, "sample_trans_axis")
         self.UIE_mgw_detector_rotation_axis_qcb: QComboBox = self.findChild(QComboBox, "detector_axis")
 
-        
         self.UIE_mgw_main_drive_axis_qcb.addItem('%s'%('Select Main Drive Axis'))
         self.UIE_mgw_filter_wheel_axis_qcb.addItem('%s'%('Select Filter Wheel Axis'))
         self.UIE_mgw_sample_rotation_axis_qcb.addItem('%s'%('Select Sample Rotation Axis'))
@@ -715,7 +665,6 @@ class MMC_Main(QMainWindow):
         # Populate axes combos.
         print('Bmain axis idx:', self.main_axis_index)
         for dev in self.mtn_ctrls:
-            # TODO: Have selected the current one.
             print('Adding %s to config list.'%(dev))
 
             self.UIE_mgw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
@@ -834,19 +783,12 @@ class MMC_Main(QMainWindow):
         
         self.cw_rules = [] # List to hold the actual rules.
         self.UIEL_mgw_fw_rules_qvbl = []
-        # self.UIEL_mgw_fw_rules_qvbl.append(self.scroll_area_layout)
         self.UIEL_mgw_fw_rules_set_qdsb = []
-        # self.UIEL_mgw_fw_rules_set_qdsb.append(self.findChild(QDoubleSpinBox, 'filter_wheel_rule_set_spinbox'))
         self.UIEL_mgw_fw_rules_step_qsb = []
-        # self.UIEL_mgw_fw_rules_step_qsb.append(self.findChild(QSpinBox, 'filter_wheel_rule_step_spinbox'))
         self.UIEL_mgw_fw_rules_remove_qpb = []
-        # self.UIEL_mgw_fw_rules_remove_qpb.append(self.findChild(QPushButton, 'filter_wheel_remove_rule_button'))
-        # self.UIEL_mgw_fw_rules_remove_qpb[0].clicked.connect(partial(self.del_filter_wheel_rule, 0))
         self.UIEL_mgw_fw_rules_enact_qpb = []
-        # self.UIEL_mgw_fw_rules_enact_qpb.append(self.findChild(QPushButton, 'filter_wheel_enact_rule_button'))
         self.UIE_mgw_fw_rules_qsa: QVBoxLayout = self.findChild(QVBoxLayout, 'scroll_area_layout')
         self.UIEL_mgw_fw_misc_tuples_ql = []
-        # self.UIEL_mgw_fw_misc_tuples_ql.append([self.label_4, self.label_5])
         self.new_filter_wheel_rule()
 
         # Sample Movement UI
@@ -979,49 +921,32 @@ class MMC_Main(QMainWindow):
         print('Values are %f and %d.'%(dspin.value(), spin.value()))
 
     def del_filter_wheel_rule(self, index_finder):
-        # TODO: Currently an issue where if a lower index is removed first, then the higher index remains the same.
-
         index = self.UIEL_mgw_fw_rules_enact_qpb.index(index_finder)
 
-        # button_index tells is which button it is
         print('RULE REMOVAL AT INDEX:', index)
 
-        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_rules_enact_qpb[index])
         self.UIEL_mgw_fw_rules_enact_qpb[index].setParent(None)
         del self.UIEL_mgw_fw_rules_enact_qpb[index]
 
-        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_rules_remove_qpb[index])
         print('len', len(self.UIEL_mgw_fw_rules_remove_qpb))
         print('index', index)
         self.UIEL_mgw_fw_rules_remove_qpb[index].setParent(None)
         del self.UIEL_mgw_fw_rules_remove_qpb[index]
 
-        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_rules_set_qdsb[index])
         self.UIEL_mgw_fw_rules_set_qdsb[index].setParent(None)
         del self.UIEL_mgw_fw_rules_set_qdsb[index]
 
-        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_rules_step_qsb[index])
         self.UIEL_mgw_fw_rules_step_qsb[index].setParent(None)
         del self.UIEL_mgw_fw_rules_step_qsb[index]
-
-        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_misc_tuples_ql[index][0])
-        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_misc_tuples_ql[index][1])
 
         self.UIEL_mgw_fw_misc_tuples_ql[index][0].setParent(None)
         self.UIEL_mgw_fw_misc_tuples_ql[index][1].setParent(None)
         del self.UIEL_mgw_fw_misc_tuples_ql[index]
-
-        # self.UIEL_mgw_fw_rules_qvbl[index].removeWidget(self.UIEL_mgw_fw_misc_tuples_ql[index][2])
-        # del self.UIEL_mgw_fw_rules_qvbl[index]
         
         self.UIE_mgw_fw_rules_qsa.removeItem(self.UIEL_mgw_fw_rules_qvbl[index])
         del self.UIEL_mgw_fw_rules_qvbl[index]
 
     def devman_list_devices(self):
-        # self.dev_list = ports_finder.find_all_ports()
-        # if self.dev_finder is None:
-            # self.dev_finder = DevFinder()
-        # self.dev_list = self.dev_finder.get_dev_list()
         self.dev_list = mw.find_all_ports()
 
         dev_list_str = ''
@@ -1190,10 +1115,6 @@ class MMC_Main(QMainWindow):
     def autosave_dir_triggered(self):
         self.data_save_directory = QFileDialog.getExistingDirectory(self, 'Auto logging files location', self.data_save_directory, options=QFileDialog.ShowDirsOnly)
 
-    # TODO: Delete?
-    def preferences_triggered(self):
-        pass
-
     def invert_mes_toggled(self, state):
         if not self.scanRunning:
             if state:
@@ -1248,9 +1169,6 @@ class MMC_Main(QMainWindow):
             print('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
 
     def scan_data_update(self, scan_idx: int, which_detector: int, xdata: float, ydata: float):
-        # TODO: Add the ability to plot multiple detector's data. These will come in distinguished by the which_detector variable, which is equivalent to that detector's index in the detectors list. This is a slot and will be called via a signal in Scan.run().
-        # TODO: This is going to require an overhaul to datatable.py, allowing two X and two Y axes.
-        
         if which_detector == 0:
             self.table.insertDataAt(scan_idx, xdata, ydata)
 
@@ -1291,7 +1209,6 @@ class MMC_Main(QMainWindow):
         self.moving = move_status
         self.previous_position = self.current_position
 
-        # self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position / self.motion_controllers.main_drive_axis.steps_per_value) / self.conversion_slope) - self.zero_ofst))
         self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position) / self.conversion_slope) - self.zero_ofst))
 
     def scan_button_pressed(self):
@@ -1311,7 +1228,6 @@ class MMC_Main(QMainWindow):
         print("Conversion slope: " + str(self.conversion_slope))
         print("Manual position: " + str(self.manual_position))
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
-        # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope * self.motion_controllers.main_drive_axis.steps_per_value)
         pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope)
 
         try:
@@ -1319,8 +1235,6 @@ class MMC_Main(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
             pass
-
-    # fw sr st dr
 
     def move_to_position_button_pressed_sr(self):
         if (self.moving):
@@ -1420,7 +1334,6 @@ class MMC_Main(QMainWindow):
             layout2.addStretch(1)
             layout.addLayout(layout2)
 
-            # layout.addWidget(self.apply_button)
             self.grating_conf_win.setLayout(layout)
 
         self.grating_spinbox.setFocus() # Automatically sets this as focus.
@@ -1451,12 +1364,6 @@ class MMC_Main(QMainWindow):
                 self.current_grating_idx = self.UIE_mcw_grating_qcb.setCurrentIndex(idx)
             else: # new entry has not been added
                 self.UIE_mcw_grating_qcb.setCurrentIndex(self.current_grating_idx)
-
-    # def dm_retry_button(self):
-    #     # self.application.exit(MMC_Main.EXIT_CODE_REBOOT)
-    #     self.dm_list_label.setText("Attempting to autoconnect...")
-    #     self.application.processEvents()
-    #     self.autoconnect_devices()
 
     def show_window_machine_config(self):
         if self.machine_conf_win is None:
@@ -1577,7 +1484,6 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_stop_qdsb.setMinimum(self.min_pos)
 
     def apply_machine_conf(self):
-        print('Apply config called')
         idx = self.UIE_mcw_grating_qcb.currentIndex()
         if idx < len(self.grating_combo_lstr) - 1:
             self.current_grating_idx = idx
@@ -1599,13 +1505,7 @@ class MMC_Main(QMainWindow):
         self.update_status_bar_grating_equation_values()
 
     def mgw_axis_change_main(self):
-        
         self.main_axis_index = self.UIE_mgw_main_drive_axis_qcb.currentIndex()
-
-        print('self.mtn_ctrls:', self.mtn_ctrls)
-        print('self.main_axis_index:', self.main_axis_index)
-        print('self.main_axis_index - 1:', self.main_axis_index - 1)
-
         self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.main_axis_index - 1]
         self.main_axis_dev_name = self.motion_controllers.main_drive_axis.short_name()
 
@@ -1642,14 +1542,6 @@ class MMC_Main(QMainWindow):
         print(self.UIE_mcw_detector_rotation_axis_qcb.currentText())
         print('~~')
 
-        # print(self.dev_list)
-
-        # self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.UIE_mcw_main_drive_axis_qcb.currentIndex() - 1]
-        # self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.UIE_mcw_filter_wheel_axis_qcb.currentIndex() - 1]
-        # self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.UIE_mcw_sample_rotation_axis_qcb.currentIndex() - 1]
-        # self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.UIE_mcw_sample_translation_axis_qcb.currentIndex() - 1]
-        # self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.UIE_mcw_detector_rotation_axis_qcb.currentIndex() - 1]
-
         self.main_axis_index = self.UIE_mcw_main_drive_axis_qcb.currentIndex()
         self.filter_axis_index = self.UIE_mcw_filter_wheel_axis_qcb.currentIndex()
         self.rsamp_axis_index = self.UIE_mcw_sample_rotation_axis_qcb.currentIndex()
@@ -1670,7 +1562,6 @@ class MMC_Main(QMainWindow):
 
         self.machine_conf_win.close()
 
-    
     def calculate_conversion_slope(self):
         self.conversion_slope = ((self.arm_length * self.diff_order * self.grating_density)/(2 * (m.cos(m.radians(self.tangent_ang))) * (m.cos(m.radians(self.incidence_ang))) * 1e6))
 
@@ -1834,15 +1725,11 @@ if __name__ == '__main__':
     # Finding and setting of fonts.
     try:
         fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono italic).ttf')
-        # fstr = QFontDatabase.applicationFontFamilies(fid)[0]
-        # digital_7_italic_22 = QFont(fstr, 22)
     except Exception as e:
         print(e.what())
 
     try:
         fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono).ttf')
-        # fstr = QFontDatabase.applicationFontFamilies(fid)[0]
-        # digital_7_16 = QFont(fstr, 16)
     except Exception as e:
         print(e.what())
 
@@ -1877,7 +1764,6 @@ if __name__ == '__main__':
 
         # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
         if mainWindow.main_gui_booted:
-            # save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length, mainWindow.max_pos, mainWindow.min_pos)    
             save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length, mainWindow.max_pos, mainWindow.min_pos, mainWindow.main_axis_index, mainWindow.filter_axis_index, mainWindow.rsamp_axis_index, mainWindow.tsamp_axis_index, mainWindow.detector_axis_index, mainWindow.main_axis_dev_name, mainWindow.filter_axis_dev_name, mainWindow.rsamp_axis_dev_name, mainWindow.tsamp_axis_dev_name, mainWindow.detector_axis_dev_name, len(mainWindow.mtn_ctrls))    
 
         # Cleanup.
@@ -1885,7 +1771,5 @@ if __name__ == '__main__':
 
     print('Exiting program...')
 
-    # Exit.
-    # sys.exit(exit_code)
     os._exit(exit_code)
 # %%
