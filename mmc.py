@@ -1826,7 +1826,6 @@ class Scan(QThread):
     def scanId(self):
         return self._scan_id
 
-
 # Main function.
 if __name__ == '__main__':
     # There will be three separate GUIs:
@@ -1875,8 +1874,6 @@ if __name__ == '__main__':
         
         # Wait for the Qt loop to exit before exiting.
         exit_code = application.exec() # block until
-
-        
 
         # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
         if mainWindow.main_gui_booted:
