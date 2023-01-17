@@ -516,10 +516,6 @@ class MMC_Main(QMainWindow):
                     break
 
         if connected:
-            # Setup the device axes list.
-
-
-
             if self.device_timer is not None:
                 print('WARNING: STOPPING DEVICE TIMER!')
                 self.device_timer.stop()
@@ -649,16 +645,15 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_detector_rotation_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_detector)
 
         # If anything has changed, we must use default values.
-        if self.mtn_ctrls[self.main_axis_index - 1].short_name() != self.main_axis_dev_name or self.mtn_ctrls[self.filter_axis_index - 1].short_name() != self.filter_axis_dev_name or self.mtn_ctrls[self.rsamp_axis_index - 1].short_name() != self.rsamp_axis_dev_name or self.mtn_ctrls[self.tsamp_axis_index - 1].short_name() != self.tsamp_axis_dev_name or self.mtn_ctrls[self.detector_axis_index - 1].short_name() != self.detector_axis_dev_name or len(self.mtn_ctrls) != self.num_axes_at_time_of_save:
-            print(self.mtn_ctrls[self.main_axis_index - 1].short_name() != self.main_axis_dev_name, self.mtn_ctrls[self.filter_axis_index - 1].short_name() != self.filter_axis_dev_name, self.mtn_ctrls[self.rsamp_axis_index - 1].short_name() != self.rsamp_axis_dev_name, self.mtn_ctrls[self.tsamp_axis_index - 1].short_name() != self.tsamp_axis_dev_name, self.mtn_ctrls[self.detector_axis_index - 1].short_name() != self.detector_axis_dev_name, len(self.mtn_ctrls) != self.num_axes_at_time_of_save)
-            print(self.mtn_ctrls[self.main_axis_index - 1].short_name())
-            print('Using default CONNECTIONS values.')
-            self.main_axis_index = 1
-            print('AA', self.main_axis_index)
-            self.filter_axis_index = 0
-            self.rsamp_axis_index = 0
-            self.tsamp_axis_index = 0
-            self.detector_axis_index = 0
+        if len(self.mtn_ctrls) != self.num_axes_at_time_of_save or self.mtn_ctrls[self.main_axis_index - 1].short_name() != self.main_axis_dev_name or self.mtn_ctrls[self.filter_axis_index - 1].short_name() != self.filter_axis_dev_name or self.mtn_ctrls[self.rsamp_axis_index - 1].short_name() != self.rsamp_axis_dev_name or self.mtn_ctrls[self.tsamp_axis_index - 1].short_name() != self.tsamp_axis_dev_name or self.mtn_ctrls[self.detector_axis_index - 1].short_name() != self.detector_axis_dev_name:
+
+                print('Using default CONNECTIONS values.')
+                self.main_axis_index = 1
+                print('AA', self.main_axis_index)
+                self.filter_axis_index = 0
+                self.rsamp_axis_index = 0
+                self.tsamp_axis_index = 0
+                self.detector_axis_index = 0
             
         print('Amain axis idx:', self.main_axis_index)
 
@@ -736,7 +731,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_invert_mes_qa.toggled.connect(self.invert_mes_toggled)
         self.UIE_mgw_autosave_data_qa.toggled.connect(self.autosave_data_toggled)
         self.UIE_mgw_autosave_dir_qa.triggered.connect(self.autosave_dir_triggered)
-        self.UIE_mgw_preferences_qa.triggered.connect(self.preferences_triggered)
+        # self.UIE_mgw_preferences_qa.triggered.connect(self.preferences_triggered)
         self.UIE_mgw_pop_out_table_qa.toggled.connect(self.pop_out_table_toggled)
         self.UIE_mgw_pop_out_plot_qa.toggled.connect(self.pop_out_plot_toggled)
         self.UIE_mgw_about_licensing_qa.triggered.connect(self.open_licensing_hyperlink)
@@ -828,6 +823,27 @@ class MMC_Main(QMainWindow):
 
         self.table.updatePlots()
 
+        self.UIE_mgw_mda_qw: QWidget = self.findChild(QWidget, 'main_drive_area')
+        self.UIE_mgw_mda_collapse_qpb: QPushButton = self.findChild(QPushButton, 'main_drive_area_collap')
+        self.mda_collapsed = False
+        self.UIE_mgw_mda_collapse_qpb.clicked.connect(self.collapse_mda)
+        
+        self.UIE_mgw_fwa_qw: QWidget = self.findChild(QWidget, 'filter_wheel_area')
+        self.UIE_mgw_fwa_collapse_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_area_collap')
+        self.fwa_collapsed = False
+        self.UIE_mgw_fwa_collapse_qpb.clicked.connect(self.collapse_fwa)
+        
+        self.UIE_mgw_sa_qw: QWidget = self.findChild(QWidget, 'sample_area')
+        self.UIE_mgw_sa_collapse_qpb: QPushButton = self.findChild(QPushButton, 'sample_area_collap')
+        self.sa_collapsed = False
+        self.UIE_mgw_sa_collapse_qpb.clicked.connect(self.collapse_sa)
+        
+        self.UIE_mgw_da_qw: QWidget = self.findChild(QWidget, 'detector_area')
+        self.UIE_mgw_da_collapse_qpb: QPushButton = self.findChild(QPushButton, 'detector_area_collap')
+        self.da_collapsed = False
+        self.UIE_mgw_da_collapse_qpb.clicked.connect(self.collapse_da)
+        
+
         # This is where we disable the scroll function for all spin and combo boxes, because its dumb.
         uiel = self.findChildren(QDoubleSpinBox)
         uiel += self.findChildren(QSpinBox)
@@ -838,6 +854,46 @@ class MMC_Main(QMainWindow):
         self.dmw.close()
         self.main_gui_booted = True
         self.show()  
+
+    def collapse_mda(self):
+        print('collapse_mda:', self.mda_collapsed)
+        self.mda_collapsed = not self.mda_collapsed
+        print('collapse_mda:', self.mda_collapsed)
+        self.UIE_mgw_mda_qw.setVisible(not self.mda_collapsed)
+        if self.mda_collapsed:
+            self.UIE_mgw_mda_collapse_qpb.setText('<')
+        else:
+            self.UIE_mgw_mda_collapse_qpb.setText('v')
+
+    def collapse_fwa(self):
+        print('collapse_fwa:', self.fwa_collapsed)
+        self.fwa_collapsed = not self.fwa_collapsed
+        print('collapse_fwa:', self.fwa_collapsed)
+        self.UIE_mgw_fwa_qw.setVisible(not self.fwa_collapsed)
+        if self.fwa_collapsed:
+            self.UIE_mgw_fwa_collapse_qpb.setText('<')
+        else:
+            self.UIE_mgw_fwa_collapse_qpb.setText('v')
+
+    def collapse_sa(self):
+        print('collapse_sa:', self.sa_collapsed)
+        self.sa_collapsed = not self.sa_collapsed
+        print('collapse_sa:', self.sa_collapsed)
+        self.UIE_mgw_sa_qw.setVisible(not self.sa_collapsed)
+        if self.sa_collapsed:
+            self.UIE_mgw_sa_collapse_qpb.setText('<')
+        else:
+            self.UIE_mgw_sa_collapse_qpb.setText('v')
+
+    def collapse_da(self):
+        print('collapse_da:', self.da_collapsed)
+        self.da_collapsed = not self.da_collapsed
+        print('collapse_da:', self.da_collapsed)
+        self.UIE_mgw_da_qw.setVisible(not self.da_collapsed)
+        if self.da_collapsed:
+            self.UIE_mgw_da_collapse_qpb.setText('<')
+        else:
+            self.UIE_mgw_da_collapse_qpb.setText('v')
 
     def new_filter_wheel_rule(self):
         geq_label: QLabel = QLabel('≥')
