@@ -1482,7 +1482,6 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
 
             self.UIE_mcw_steps_per_nm_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'steps_per_nm')
-            self.UIE_mcw_steps_per_nm_qdsb.valueChanged.connect(self.set_main_drive_steps_per)
 
             self.UIE_mcw_accept_qpb = self.machine_conf_win.findChild(QPushButton, 'mcw_accept')
             self.UIE_mcw_accept_qpb.clicked.connect(self.accept_mcw)
@@ -1669,6 +1668,10 @@ class MMC_Main(QMainWindow):
     def calculate_conversion_slope(self):
         self.conversion_slope = ((self.arm_length * self.diff_order * self.grating_density)/(2 * (m.cos(m.radians(self.tangent_ang))) * (m.cos(m.radians(self.incidence_ang))) * 1e6))
 
+    def qmsg_crit(self, title: str, msg: str):
+        print('qmsg_crit')
+        QMessageBox.critical(self, title, msg)
+
 class Scan(QThread):
     SIGNAL_status_update = pyqtSignal(str)
     SIGNAL_progress = pyqtSignal(int)
@@ -1677,6 +1680,8 @@ class Scan(QThread):
     SIGNAL_data_begin = pyqtSignal(int, dict) # scan index, which detector, redundant
     SIGNAL_data_update = pyqtSignal(int, int, float, float) # scan index, which detector, xdata, ydata (to be appended into index)
     SIGNAL_data_complete = pyqtSignal(int) # scan index, which detector, redundant
+
+    SIGNAL_error = pyqtSignal(str, str)
 
     def __init__(self, parent: QMainWindow):
         super(Scan, self).__init__()
@@ -1687,6 +1692,7 @@ class Scan(QThread):
         self.SIGNAL_data_begin.connect(self.other.scan_data_begin)
         self.SIGNAL_data_update.connect(self.other.scan_data_update)
         self.SIGNAL_data_complete.connect(self.other.scan_data_complete)
+        self.SIGNAL_error.connect(self.other.qmsg_crit)
         print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
 
@@ -1704,6 +1710,7 @@ class Scan(QThread):
         sav_files = []
         tnow = dt.datetime.now()
         if (self.other.autosave_data_bool):
+            print('Autosaving')
             filetime = tnow.strftime('%Y%m%d%H%M%S')
             for detector in self.other.detectors:
                 filename = '%s%s_%s_data.csv'%(self.other.data_save_directory, filetime, detector.short_name())
@@ -1732,8 +1739,10 @@ class Scan(QThread):
         try:
             self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
         except Exception as e:
-            QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
-            pass
+            print('Exception!')
+            self.SIGNAL_error.emit('Move Failure', 'Main drive axis failed to move: %s'%(e))
+            self.SIGNAL_complete.emit()
+            return
         self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
 
@@ -1781,7 +1790,8 @@ class Scan(QThread):
                 self._ydata[i].append(self.other.mes_sign * mes * 1e12)
                 self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
 
-                if sav_files[i] is not None:
+                print(sav_files)
+                if len(sav_files) > 0 and sav_files[i] is not None:
                     if idx == 0:
                         sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
                         sav_files[i].write('# Steps/mm: %f\n'%(self.other.motion_controllers.main_drive_axis.get_steps_per_value()))
@@ -1865,6 +1875,8 @@ if __name__ == '__main__':
         
         # Wait for the Qt loop to exit before exiting.
         exit_code = application.exec() # block until
+
+        
 
         # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
         if mainWindow.main_gui_booted:
