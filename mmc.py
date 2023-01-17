@@ -235,6 +235,15 @@ class MMC_Main(QMainWindow):
         self.detector_axis_dev_name = 'none'
         self.num_axes_at_time_of_save = 0
 
+        self.fw_max_pos = 9999
+        self.fw_min_pos = -9999
+        self.smr_max_pos = 9999
+        self.smr_min_pos = -9999
+        self.smt_max_pos = 9999
+        self.smt_min_pos = -9999
+        self.dr_max_pos = 9999
+        self.dr_min_pos = -9999
+
         # Replaces default grating equation values with the values found in the config.ini file.
         try:
             load_dict = load_config(appDir)
@@ -274,6 +283,15 @@ class MMC_Main(QMainWindow):
         self.tsamp_axis_dev_name = load_dict['tsampAxisName']
         self.detector_axis_dev_name = load_dict['detectorAxisName']
         self.num_axes_at_time_of_save = load_dict['numAxes']
+
+        self.fw_max_pos = load_dict['fwMax']
+        self.fw_min_pos = load_dict['fwMin']
+        self.smr_max_pos = load_dict['smrMax']
+        self.smr_min_pos = load_dict['smrMin']
+        self.smt_max_pos = load_dict['smrMax']
+        self.smt_min_pos = load_dict['smrMin']
+        self.dr_max_pos = load_dict['drMax']
+        self.dr_min_pos = load_dict['drMin']
 
         # Sets the conversion slope based on the found (or default) values.
         self.calculate_conversion_slope()
@@ -843,7 +861,6 @@ class MMC_Main(QMainWindow):
         self.da_collapsed = False
         self.UIE_mgw_da_collapse_qpb.clicked.connect(self.collapse_da)
         
-
         # This is where we disable the scroll function for all spin and combo boxes, because its dumb.
         uiel = self.findChildren(QDoubleSpinBox)
         uiel += self.findChildren(QSpinBox)
@@ -1477,6 +1494,8 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_sample_translation_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "sample_translation_axis_combo")
             self.UIE_mcw_detector_rotation_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "detector_rotation_axis_combo")
 
+            self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'model_combo')
+
             none = 'No Device Selected'
             self.UIE_mcw_main_drive_axis_qcb.addItem('%s'%(none))
             self.UIE_mcw_filter_wheel_axis_qcb.addItem('%s'%(none))
@@ -1496,7 +1515,19 @@ class MMC_Main(QMainWindow):
                 self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
 
                 self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
-            # Select the devices selected in device manager.
+
+            self.UIE_mcw_fw_steps_per_rot_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_steps_per_deg')
+            self.UIE_mcw_fw_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_max')
+            self.UIE_mcw_fw_min_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_min')
+            self.UIE_mcw_sm_steps_per_rot_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smr_steps_per_deg')
+            self.UIE_mcw_smr_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smr_max')
+            self.UIE_mcw_smr_min_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smr_min')
+            self.UIE_mcw_sm_steps_per_trans_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smt_steps_per_deg')
+            self.UIE_mcw_smt_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smt_max')
+            self.UIE_mcw_smt_min_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smt_min')
+            self.UIE_mcw_dr_steps_per_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_steps_per_deg')
+            self.UIE_mcw_dr_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_max')
+            self.UIE_mcw_dr_min_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_min')
 
         self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
         self.UIE_mcw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
@@ -1504,32 +1535,25 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
         self.UIE_mcw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
 
-        self.UIE_mcw_sm_steps_per_rot_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smr_steps_per_deg')
-        self.UIE_mcw_sm_steps_per_trans_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smt_steps_per_deg')
-        self.UIE_mcw_dr_steps_per_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_steps_per_deg')
+        self.UIE_mcw_min_pos_in_qdsb.setValue(self.max_pos)
+        self.UIE_mcw_max_pos_in_qdsb.setValue(self.min_pos)
+        self.UIE_mcw_fw_max_qdsb.setValue(self.fw_max_pos)
+        self.UIE_mcw_fw_min_qdsb.setValue(self.fw_min_pos)
+        self.UIE_mcw_smr_max_qdsb.setValue(self.smr_max_pos)
+        self.UIE_mcw_smr_min_qdsb.setValue(self.smr_min_pos)
+        self.UIE_mcw_smt_max_qdsb.setValue(self.smt_max_pos)
+        self.UIE_mcw_smt_min_qdsb.setValue(self.smt_min_pos)
+        self.UIE_mcw_dr_max_qdsb.setValue(self.dr_max_pos)
+        self.UIE_mcw_dr_min_qdsb.setValue(self.dr_min_pos)
 
-        self.UIE_mcw_sm_steps_per_rot_qdsb.valueChanged.connect(self.set_sample_rot_steps_per)
-        self.UIE_mcw_sm_steps_per_trans_qdsb.valueChanged.connect(self.set_sample_trans_steps_per)
-        self.UIE_mcw_dr_steps_per_qdsb.valueChanged.connect(self.set_detector_steps_per)
-            
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         print('Exec done', self.current_grating_idx, self.UIE_mcw_grating_qcb.currentIndex())
         if self.current_grating_idx != self.UIE_mcw_grating_qcb.currentIndex():
             self.UIE_mcw_grating_qcb.setCurrentIndex(self.current_grating_idx)
 
-    def set_main_drive_steps_per(self):
-        self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_qdsb.value())
-
-    def set_sample_rot_steps_per(self):
-        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_rot_qdsb.value())
-
-    def set_sample_trans_steps_per(self):
-        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans_qdsb.value())
-
-    def set_detector_steps_per(self):
-        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per_qdsb.value())
-
     def update_movement_limits(self):
+        self.motion_controllers.main_drive_axis.set_limits(self.max_pos, self.min_pos)
+
         self.UIE_mgw_pos_qdsb.setMaximum(self.max_pos)
         self.UIE_mgw_pos_qdsb.setMinimum(self.min_pos)
 
@@ -1546,8 +1570,8 @@ class MMC_Main(QMainWindow):
         self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
         print(self.grating_density)
         self.diff_order = int(self.UIE_mcw_diff_order_in_qdsb.value())
-        self.max_pos = self.UIE_mcw_max_pos_in_qdsb.value()
-        self.min_pos = self.UIE_mcw_min_pos_in_qdsb.value()
+        # self.max_pos = self.UIE_mcw_max_pos_in_qdsb.value()
+        # self.min_pos = self.UIE_mcw_min_pos_in_qdsb.value()
 
         self.update_movement_limits()
 
@@ -1615,6 +1639,30 @@ class MMC_Main(QMainWindow):
         self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.rsamp_axis_index - 1]
         self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.tsamp_axis_index - 1]
         self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index - 1]
+
+        # Set limits.
+        self.max_pos = self.UIE_mcw_min_pos_in_qdsb.value()
+        self.min_pos = self.UIE_mcw_max_pos_in_qdsb.value()
+        self.fw_max_pos = self.UIE_mcw_fw_max_qdsb.value()
+        self.fw_min_pos = self.UIE_mcw_fw_min_qdsb.value()
+        self.smr_max_pos = self.UIE_mcw_smr_max_qdsb.value()
+        self.smr_min_pos = self.UIE_mcw_smr_min_qdsb.value()
+        self.smt_max_pos = self.UIE_mcw_smt_max_qdsb.value()
+        self.smt_min_pos = self.UIE_mcw_smt_min_qdsb.value()
+        self.dr_max_pos = self.UIE_mcw_dr_max_qdsb.value()
+        self.dr_min_pos = self.UIE_mcw_dr_min_qdsb.value()
+        self.motion_controllers.main_drive_axis.set_limits(self.max_pos, self.min_pos)
+        self.motion_controllers.filter_wheel_axis.set_limits(self.fw_max_pos, self.fw_min_pos)
+        self.motion_controllers.sample_rotation_axis.set_limits(self.smr_max_pos, self.smr_min_pos)
+        self.motion_controllers.sample_translation_axis.set_limits(self.smt_max_pos, self.smt_min_pos)
+        self.motion_controllers.detector_rotation_axis.set_limits(self.dr_max_pos, self.dr_min_pos)
+
+        # Set conversion factors.
+        self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_qdsb.value())
+        self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())
+        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_rot_qdsb.value())
+        self.motion_controllers.sample_translation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans_qdsb.value())
+        self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per_qdsb.value())
 
         self.machine_conf_win.close()
 
@@ -1820,7 +1868,7 @@ if __name__ == '__main__':
 
         # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
         if mainWindow.main_gui_booted:
-            save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length, mainWindow.max_pos, mainWindow.min_pos, mainWindow.main_axis_index, mainWindow.filter_axis_index, mainWindow.rsamp_axis_index, mainWindow.tsamp_axis_index, mainWindow.detector_axis_index, mainWindow.main_axis_dev_name, mainWindow.filter_axis_dev_name, mainWindow.rsamp_axis_dev_name, mainWindow.tsamp_axis_dev_name, mainWindow.detector_axis_dev_name, len(mainWindow.mtn_ctrls))    
+            save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length, mainWindow.max_pos, mainWindow.min_pos, mainWindow.main_axis_index, mainWindow.filter_axis_index, mainWindow.rsamp_axis_index, mainWindow.tsamp_axis_index, mainWindow.detector_axis_index, mainWindow.main_axis_dev_name, mainWindow.filter_axis_dev_name, mainWindow.rsamp_axis_dev_name, mainWindow.tsamp_axis_dev_name, mainWindow.detector_axis_dev_name, len(mainWindow.mtn_ctrls), mainWindow.fw_max_pos, mainWindow.fw_min_pos, mainWindow.smr_max_pos, mainWindow.smr_min_pos, mainWindow.smt_max_pos, mainWindow.smt_min_pos, mainWindow.dr_max_pos, mainWindow.dr_min_pos)    
 
         # Cleanup.
         del mainWindow

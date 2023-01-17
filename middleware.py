@@ -160,6 +160,9 @@ class MotionController:
         self.axis = 0
         self.multi_axis = False
 
+        self.max_pos = 9999
+        self.min_pos = -9999
+
         # Initializes our motor_ctrl stuff depending on what hardware we're using.
         if self.model == MotionController.SupportedDevices[0]:
             if dummy:
@@ -199,6 +202,10 @@ class MotionController:
         # self.steps_per_value = self.motor_ctrl.steps_per_value
 
         self.port = man_port
+
+    def set_limits(self, max_pos, min_pos):
+        self.max_pos = max_pos
+        self.min_pos = min_pos
 
     # The number of steps per input value. Could be steps per millimeter, nanometer, or degree.
     def set_steps_per_value(self, steps):
@@ -241,6 +248,10 @@ class MotionController:
     def move_to(self, position, block):
         if self._steps_per_value == 0:
             raise Exception('Steps-per value has not been set for this axis. This value can be set in the Machine Configuration window.')
+        if position > self.max_pos:
+            raise Exception('Position is beyond the upper limit of this axis.')
+        if position < self.min_pos:
+            raise Exception('Position is beyond the lower limit of this axis.')
 
         if self.multi_axis:
             return self.motor_ctrl.move_to(position * self._steps_per_value, block, self.axis)
@@ -257,6 +268,7 @@ class MotionController:
         return self.motor_ctrl.long_name() + ' Axis ' + str(self.axis)
 
     pass
+
 
 #%% Detector
 # Genericizes the type of detector.

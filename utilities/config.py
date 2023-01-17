@@ -17,7 +17,7 @@ def reset_config(path: str | pathlib.Path):
     os.remove(path + '/config.ini')
     save_config(path, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0)
 
-def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, data_save_directory: str, grating_combo_lstr: list(str), current_grating_idx: int, diff_order: int, zero_ofst: float, inc_ang: float, tan_ang: float, arm_len: float, max_pos: float, min_pos: float, main_axis_index: int, filter_axis_index: int, rsamp_axis_index: int, tsamp_axis_index: int, detector_axis_index: int, main_axis_dev_name: str, filter_axis_dev_name: str, rsamp_axis_dev_name: str, tsamp_axis_dev_name: str, detector_axis_dev_name: str, num_axes: int) -> bool:
+def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, data_save_directory: str, grating_combo_lstr: list(str), current_grating_idx: int, diff_order: int, zero_ofst: float, inc_ang: float, tan_ang: float, arm_len: float, max_pos: float, min_pos: float, main_axis_index: int, filter_axis_index: int, rsamp_axis_index: int, tsamp_axis_index: int, detector_axis_index: int, main_axis_dev_name: str, filter_axis_dev_name: str, rsamp_axis_dev_name: str, tsamp_axis_dev_name: str, detector_axis_dev_name: str, num_axes: int, fw_max_pos: float, fw_min_pos: float, smr_max_pos: float, smr_min_pos: float, smt_max_pos: float, smt_min_pos: float, dr_max_pos: float, dr_min_pos: float) -> bool:
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
     grating_lstr = grating_combo_lstr[:-1]
@@ -53,6 +53,14 @@ def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, da
                                   'tsampAxisName': tsamp_axis_dev_name,
                                   'detectorAxisName': detector_axis_dev_name,
                                   'numAxes': num_axes}
+    save_config['AXIS LIMITS'] = {'fwMax': fw_max_pos,
+                                  'fwMin': fw_min_pos,
+                                  'smrMax': smr_max_pos,
+                                  'smrMin': smr_min_pos,
+                                  'smtMax': smt_max_pos,
+                                  'smtMin': smt_min_pos,
+                                  'drMax': dr_max_pos,
+                                  'drMin': dr_min_pos}
     
     with open(path + '/config.ini', 'w') as confFile:
         save_config.write(confFile)
@@ -175,6 +183,14 @@ def load_config(path: str | pathlib.Path) -> dict:
 
             num_axes = int(config['CONNECTIONS']['numAxes'])
 
+            fw_max_pos = float(config['AXIS LIMITS']['fwMax'])
+            fw_min_pos = float(config['AXIS LIMITS']['fwMin'])
+            smr_max_pos = float(config['AXIS LIMITS']['smrMax'])
+            smr_min_pos = float(config['AXIS LIMITS']['smrMin'])
+            smt_max_pos = float(config['AXIS LIMITS']['smtMax'])
+            smt_min_pos = float(config['AXIS LIMITS']['smtMin'])
+            dr_max_pos = float(config['AXIS LIMITS']['drMax'])
+            dr_min_pos = float(config['AXIS LIMITS']['drMin'])
 
             break
 
@@ -201,7 +217,15 @@ def load_config(path: str | pathlib.Path) -> dict:
         'rsampAxisName': rsamp_axis_dev_name,
         'tsampAxisName': tsamp_axis_dev_name,
         'detectorAxisName': detector_axis_dev_name,
-        'numAxes': num_axes
+        'numAxes': num_axes,
+        'fwMax': fw_max_pos,
+        'fwMin': fw_min_pos,
+        'smrMax': smr_max_pos,
+        'smrMin': smr_min_pos,
+        'smtMax': smt_max_pos,
+        'smtMin': smt_min_pos,
+        'drMax': dr_max_pos,
+        'drMin': dr_min_pos
     }
 
     print(ret_dict)
