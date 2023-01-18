@@ -15,9 +15,9 @@ def reset_config(path: str | pathlib.Path):
         os.makedirs(data_save_dir)
 
     os.remove(path + '/config.ini')
-    save_config(path, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999)
+    save_config(path, False, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999)
 
-def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, data_save_directory: str, grating_combo_lstr: list(str), current_grating_idx: int, diff_order: int, zero_ofst: float, inc_ang: float, tan_ang: float, arm_len: float, max_pos: float, min_pos: float, main_axis_index: int, filter_axis_index: int, rsamp_axis_index: int, tsamp_axis_index: int, detector_axis_index: int, main_axis_dev_name: str, filter_axis_dev_name: str, rsamp_axis_dev_name: str, tsamp_axis_dev_name: str, detector_axis_dev_name: str, num_axes: int, fw_max_pos: float, fw_min_pos: float, smr_max_pos: float, smr_min_pos: float, smt_max_pos: float, smt_min_pos: float, dr_max_pos: float, dr_min_pos: float) -> bool:
+def save_config(path: str | pathlib.Path, is_export: bool, mes_sign: int, autosave_data: bool, data_save_directory: str, grating_combo_lstr: list(str), current_grating_idx: int, diff_order: int, zero_ofst: float, inc_ang: float, tan_ang: float, arm_len: float, max_pos: float, min_pos: float, main_axis_index: int, filter_axis_index: int, rsamp_axis_index: int, tsamp_axis_index: int, detector_axis_index: int, main_axis_dev_name: str, filter_axis_dev_name: str, rsamp_axis_dev_name: str, tsamp_axis_dev_name: str, detector_axis_dev_name: str, num_axes: int, fw_max_pos: float, fw_min_pos: float, smr_max_pos: float, smr_min_pos: float, smt_max_pos: float, smt_min_pos: float, dr_max_pos: float, dr_min_pos: float) -> bool:
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
     grating_lstr = grating_combo_lstr[:-1]
@@ -62,11 +62,17 @@ def save_config(path: str | pathlib.Path, mes_sign: int, autosave_data: bool, da
                                   'drMax': dr_max_pos,
                                   'drMin': dr_min_pos}
     
-    with open(path + '/config.ini', 'w') as confFile:
-        save_config.write(confFile)
+    if not is_export:
+        with open(path + '/config.ini', 'w') as confFile:
+            save_config.write(confFile)
+    else:
+        with open(path, 'w') as confFile:
+            save_config.write(confFile)
 
-def load_config(path: str | pathlib.Path) -> dict:
+def load_config(path: str | pathlib.Path, is_import: bool) -> dict:
     if not os.path.exists(path + '/config.ini'):
+        if is_import:
+            raise RuntimeError("File doesn't exist.")
         print("No config.ini file found, creating one...")
         temp_gratings = ['1200', '2400', '* New Entry']
         data_save_dir = os.path.expanduser('~/Documents')
@@ -74,11 +80,15 @@ def load_config(path: str | pathlib.Path) -> dict:
         if not os.path.exists(data_save_dir):
             os.makedirs(data_save_dir)
 
-        save_config(path, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999)
+        save_config(path, False, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999)
 
     while os.path.exists(path + '/config.ini'):
         config = confp.ConfigParser()
-        config.read(path + '/config.ini')
+        if not is_import:
+            config.read(path + '/config.ini')
+        else:
+            config.read(path)
+
         print(config)
         error = False
 

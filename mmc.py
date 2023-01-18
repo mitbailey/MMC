@@ -246,12 +246,12 @@ class MMC_Main(QMainWindow):
 
         # Replaces default grating equation values with the values found in the config.ini file.
         try:
-            load_dict = load_config(appDir)
+            load_dict = load_config(appDir, False)
         except Exception as e:
             print("The following exception occurred while attempting to load configuration file: %s"%(e))
             try:
                 reset_config(appDir)
-                load_dict = load_config(appDir)
+                load_dict = load_config(appDir, False)
             except Exception as e2:
                 print("Configuration file recovery failed (exception: %s). Unable to load configuration file. Exiting."%(e2))
                 exit(43)
@@ -631,6 +631,11 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_about_licensing_qa: QAction = self.findChild(QAction, "actionLicensing")
         self.UIE_mgw_about_manual_qa: QAction = self.findChild(QAction, "actionManual_2")
 
+        self.UIE_mgw_import_qa: QAction = self.findChild(QAction, "actionImport_Config")
+        self.UIE_mgw_export_qa: QAction = self.findChild(QAction, "actionExport_Config")
+        self.UIE_mgw_import_qa.triggered.connect(self.config_import)
+        self.UIE_mgw_export_qa.triggered.connect(self.config_export)
+
         self.UIE_mgw_save_data_qpb: QPushButton = self.findChild(QPushButton, 'save_data_button')
         self.UIE_mgw_save_data_qpb.clicked.connect(self.save_data_cb)
         self.UIE_mgw_delete_data_qpb: QPushButton = self.findChild(QPushButton, 'delete_data_button')
@@ -871,6 +876,17 @@ class MMC_Main(QMainWindow):
         self.dmw.close()
         self.main_gui_booted = True
         self.show()  
+
+    def config_import(self):
+        pass
+
+    def config_export(self):
+        savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv', filter='*.csv')
+        fileInfo = QFileInfo(savFileName)
+        self.save_config(fileInfo.absoluteFilePath(), True) 
+        
+    def save_config(self, path: str, is_export: bool):
+        save_config(path, is_export, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.grating_combo_lstr, self.current_grating_idx, self.diff_order, self.zero_ofst, self.incidence_ang, self.tangent_ang, self.arm_length, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos)
 
     def collapse_mda(self):
         print('collapse_mda:', self.mda_collapsed)
@@ -1877,7 +1893,7 @@ if __name__ == '__main__':
 
         # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
         if mainWindow.main_gui_booted:
-            save_config(appDir, mainWindow.mes_sign, mainWindow.autosave_data_bool, mainWindow.data_save_directory, mainWindow.grating_combo_lstr, mainWindow.current_grating_idx, mainWindow.diff_order, mainWindow.zero_ofst, mainWindow.incidence_ang, mainWindow.tangent_ang, mainWindow.arm_length, mainWindow.max_pos, mainWindow.min_pos, mainWindow.main_axis_index, mainWindow.filter_axis_index, mainWindow.rsamp_axis_index, mainWindow.tsamp_axis_index, mainWindow.detector_axis_index, mainWindow.main_axis_dev_name, mainWindow.filter_axis_dev_name, mainWindow.rsamp_axis_dev_name, mainWindow.tsamp_axis_dev_name, mainWindow.detector_axis_dev_name, len(mainWindow.mtn_ctrls), mainWindow.fw_max_pos, mainWindow.fw_min_pos, mainWindow.smr_max_pos, mainWindow.smr_min_pos, mainWindow.smt_max_pos, mainWindow.smt_min_pos, mainWindow.dr_max_pos, mainWindow.dr_min_pos)    
+            mainWindow.save_config(appDir, False) 
 
         # Cleanup.
         del mainWindow
