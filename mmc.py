@@ -615,7 +615,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_currpos_nm_disp_ql = self.findChild(QLabel, "currpos_nm")
         self.UIE_mgw_scan_status_ql = self.findChild(QLabel, "status_label")
         self.UIE_mgw_scan_qpbar = self.findChild(QProgressBar, "progressbar")
-        UIE_mgw_save_config_qpb: QPushButton = self.findChild(QPushButton, 'save_config_button')
+        self.UIE_mgw_save_config_qpb: QPushButton = self.findChild(QPushButton, 'save_config_button')
         self.UIE_mgw_pos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox") # Manual Control 'Position:' Spin Box
         self.UIE_mgw_move_to_position_qpb: QPushButton = self.findChild(QPushButton, "move_pos_button")
         self.UIE_mgw_plot_frame_qw: QWidget = self.findChild(QWidget, "data_graph")
@@ -746,7 +746,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_pos_qdsb.setValue(0)
 
         # Signal-to-slot connections.
-        UIE_mgw_save_config_qpb.clicked.connect(self.show_window_machine_config)
+        self.UIE_mgw_save_config_qpb.clicked.connect(self.show_window_machine_config)
         self.UIE_mgw_scan_qpb.clicked.connect(self.scan_button_pressed)
         self.UIE_mgw_stop_scan_qpb.clicked.connect(self.stop_scan_button_pressed)
         # self.collect_data.clicked.connect(self.manual_collect_button_pressed)
@@ -880,9 +880,74 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sm_step_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'step_set_spinbox_2')
         self.UIE_mgw_sm_scan_repeats_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'scan_repeats_3')
         self.UIE_mgw_sm_begin_scan_qpb: QPushButton = self.findChild(QPushButton, 'begin_scan_button_3')
-        self.UIE_mgw_sm_end_scan_qpb: QPushButton = self.findChild(QPushButton, 'end_scan_button_3')
+        self.UIE_mgw_sm_begin_scan_qpb.clicked.connect(self.scan_sm_button_pressed)
+        self.UIE_mgw_sm_end_scan_qpb: QPushButton = self.findChild(QPushButton, 'stop_scan_button_3')
+        self.UIE_mgw_sm_end_scan_qpb.clicked.connect(self.stop_scan_button_pressed)
 
+        self.UIE_mgw_dm_start_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'start_set_spinbox_3')
+        self.UIE_mgw_dm_end_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'end_set_spinbox_3')
+        self.UIE_mgw_dm_step_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'step_set_spinbox_3')
+        self.UIE_mgw_dm_scan_repeats_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'scan_repeats_4')
+        self.UIE_mgw_dm_begin_scan_qpb: QPushButton = self.findChild(QPushButton, 'begin_scan_button_4')
+        self.UIE_mgw_dm_begin_scan_qpb.clicked.connect(self.scan_dm_button_pressed)
+        self.UIE_mgw_dm_end_scan_qpb: QPushButton = self.findChild(QPushButton, 'stop_scan_button_4')
+        self.UIE_mgw_dm_end_scan_qpb.clicked.connect(self.stop_scan_button_pressed)
 
+        movement_sensitive_list = []
+        movement_sensitive_list.append(self.UIE_mgw_scan_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_save_data_qckbx)
+        movement_sensitive_list.append(self.UIE_mgw_dir_box_qle)
+        movement_sensitive_list.append(self.UIE_mgw_start_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_stop_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_step_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_save_config_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_pos_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_move_to_position_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_machine_conf_qa)
+        movement_sensitive_list.append(self.UIE_mgw_import_qa)
+        movement_sensitive_list.append(self.UIE_mgw_export_qa)
+        movement_sensitive_list.append(self.UIE_mgw_save_data_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_delete_data_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_main_drive_axis_qcb)
+        movement_sensitive_list.append(self.UIE_mgw_filter_wheel_axis_qcb)
+        movement_sensitive_list.append(self.UIE_mgw_sample_rotation_axis_qcb)
+        movement_sensitive_list.append(self.UIE_mgw_sample_translation_axis_qcb)
+        movement_sensitive_list.append(self.UIE_mgw_detector_rotation_axis_qcb)
+        movement_sensitive_list.append(self.UIE_mgw_fw_mancon_position_set_qsb)
+        movement_sensitive_list.append(self.UIE_mgw_fw_mancon_move_pos_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_fw_mancon_home_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_fw_add_rule_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_rpos_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_tpos_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_rhome_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_thome_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_rmove_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_tmove_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_dm_rpos_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_dm_rhome_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_dm_rmove_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_scan_type_qcb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_start_set_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_end_set_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_step_set_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_scan_repeats_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_begin_scan_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_begin_scan_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_end_scan_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_end_scan_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_dm_start_set_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_dm_end_set_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_dm_step_set_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_dm_scan_repeats_qdsb)
+        movement_sensitive_list.append(self.UIE_mgw_dm_begin_scan_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_dm_end_scan_qpb)
+
+        self.movement_sensitive_metalist = []
+        self.movement_sensitive_metalist.append(movement_sensitive_list)
+        self.movement_sensitive_metalist.append(self.UIEL_mgw_fw_rules_set_qdsb)
+        self.movement_sensitive_metalist.append(self.UIEL_mgw_fw_rules_step_qsb)
+        self.movement_sensitive_metalist.append(self.UIEL_mgw_fw_rules_remove_qpb)
+        self.movement_sensitive_metalist.append(self.UIEL_mgw_fw_rules_enact_qpb)
 
         # This is where we disable the scroll function for all spin and combo boxes, because its dumb.
         uiel = self.findChildren(QDoubleSpinBox)
@@ -1137,6 +1202,11 @@ class MMC_Main(QMainWindow):
         webbrowser.open('https://github.com/mitbailey/MMC')
 
     def disable_movement_sensitive_buttons(self, disable: bool):
+        for uiel in self.movement_sensitive_metalist:
+            for uie in uiel:
+                if uie is not None:
+                    uie.setDisabled(disable)
+
         if self.UIE_mgw_move_to_position_qpb is not None:
             self.UIE_mgw_move_to_position_qpb.setDisabled(disable)
         if self.UIE_mgw_scan_qpb is not None:
@@ -1242,7 +1312,6 @@ class MMC_Main(QMainWindow):
     def pop_out_plot_toggled(self, state):
         self.pop_out_plot = state
 
-
     def update_status_bar_grating_equation_values(self):
         self.sb_grating_density.setText("  <i>G</i> " + str(self.grating_density) + " grooves/mm    ")
         self.sb_zero_offset.setText("  <i>&lambda;</i><sub>0</sub> " + str(self.zero_ofst) + " nm    ")
@@ -1279,12 +1348,21 @@ class MMC_Main(QMainWindow):
         if which_detector == 0:
             self.table.insertDataAt(scan_idx, xdata, ydata)
 
-    def scan_data_complete(self, scan_idx: int):
+    def scan_data_complete(self, scan_idx: int, scan_class: str):
         self.table.markInsertFinished(scan_idx)
         self.table.updateTableDisplay()
         if self.scan_repeats.value() > 0:
-            self.scan_repeats.setValue(self.scan_repeats.value() - 1)
-            self.scan_button_pressed()
+            if scan_class == 'main':
+                self.scan_repeats.setValue(self.scan_repeats.value() - 1)
+                self.scan_button_pressed()
+            elif scan_class == 'sample':
+                self.UIE_mgw_sm_scan_repeats_qdsb.setValue(self.UIE_mgw_sm_scan_repeats_qdsb.value() - 1)
+                self.scan_sm_button_pressed()
+            elif scan_class == 'detector':
+                self.UIE_mgw_dm_scan_repeats_qdsb.setValue(self.UIE_mgw_dm_scan_repeats_qdsb.value() - 1)
+                self.scan_dm_button_pressed()
+            else:
+                print('ERROR: Unknown scan class %s.'%(scan_class))
 
     def update_position_displays(self):
         self.current_position = self.motion_controllers.main_drive_axis.get_position()
@@ -1725,7 +1803,7 @@ class Scan(QThread):
 
     SIGNAL_data_begin = pyqtSignal(int, dict) # scan index, which detector, redundant
     SIGNAL_data_update = pyqtSignal(int, int, float, float) # scan index, which detector, xdata, ydata (to be appended into index)
-    SIGNAL_data_complete = pyqtSignal(int) # scan index, which detector, redundant
+    SIGNAL_data_complete = pyqtSignal(int, str) # scan index, which detector, redundant
 
     SIGNAL_error = pyqtSignal(str, str)
 
@@ -1857,7 +1935,7 @@ class Scan(QThread):
         self.other.num_scans += 1
 
         self.SIGNAL_complete.emit()
-        self.SIGNAL_data_complete.emit(self.scanId)
+        self.SIGNAL_data_complete.emit(self.scanId, 'main')
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
 
     @property
@@ -1879,12 +1957,12 @@ class ScanSM(QThread):
 
     SIGNAL_data_begin = pyqtSignal(int, dict) # scan index, which detector, redundant
     SIGNAL_data_update = pyqtSignal(int, int, float, float) # scan index, which detector, xdata, ydata (to be appended into index)
-    SIGNAL_data_complete = pyqtSignal(int) # scan index, which detector, redundant
+    SIGNAL_data_complete = pyqtSignal(int, str) # scan index, which detector, redundant
 
     SIGNAL_error = pyqtSignal(str, str)
 
     def __init__(self, parent: QMainWindow):
-        super(Scan, self).__init__()
+        super(ScanSM, self).__init__()
         self.other: MMC_Main = parent
         self.SIGNAL_status_update.connect(self.other.scan_status_update)
         self.SIGNAL_progress.connect(self.other.scan_progress)
@@ -1949,7 +2027,73 @@ class ScanSM(QThread):
         prep_pos = 0#int((0 + self.other.zero_ofst) * self.other.conversion_slope)
 
         if scan_type == 0: # Rotation
-            print('Scan type 0 not implemented.')
+            try:
+                self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
+            except Exception as e:
+                self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
+                self.SIGNAL_complete.emit()
+                return
+            self.SIGNAL_status_update.emit('HOLDING')
+            sleep(1)
+
+            self._xdata = []
+            self._ydata = []
+
+            for detector in self.other.detectors:
+                self._xdata.append([])
+                self._ydata.append([])
+
+            self._scan_id = self.other.table.scanId
+            metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.sample_rotation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': 0, 'scan_id': self.scanId}
+
+            self.SIGNAL_data_begin.emit(self.scanId, metadata)
+            while self.scanId == self.other.table.scanId:
+                continue
+            for idx, dpos in enumerate(scanrange):
+                if not self.other.scanRunning:
+                    break
+                self.SIGNAL_status_update.emit('MOVING')
+                try:
+                    self.other.motion_controllers.sample_rotation_axis.move_to(dpos, True)
+                except Exception as e:
+                    self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
+                    continue
+                    pass
+                
+                pos = self.other.motion_controllers.sample_rotation_axis.get_position()
+                
+                self.SIGNAL_status_update.emit('SAMPLING')
+
+                i=0
+                for detector in self.other.detectors:
+                    buf = detector.detect()
+                    print(buf)
+                    self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
+
+                    words = buf.split(',')
+                    if len(words) != 3:
+                        continue
+                    try:
+                        mes = float(words[0][:-1])
+                        err = int(float(words[2]))
+                    except Exception:
+                        continue
+
+                    self._xdata[i].append(pos)
+                    self._ydata[i].append(self.other.mes_sign * mes * 1e12)
+                    self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
+
+                    if len(sav_files) > 0 and sav_files[i] is not None:
+                        if idx == 0:
+                            sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
+                            sav_files[i].write('# Steps/deg: %f\n'%(self.other.motion_controllers.sample_rotation_axis.get_steps_per_value()))
+                            sav_files[i].write('# mm/nm: 0; lambda_0 (nm): 0\n')
+                            sav_files[i].write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
+
+                        buf = '%d,%e,%e,%d\n'%(pos, pos, self.other.mes_sign * mes, err)
+                        sav_files[i].write(buf)
+
+                    i += 1
             pass
         elif scan_type == 1: # Translation
             print('Scan type 1 not implemented.')
@@ -2026,7 +2170,7 @@ class ScanSM(QThread):
                     if len(sav_files) > 0 and sav_files[i] is not None:
                         if idx == 0:
                             sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
-                            sav_files[i].write('# Steps/mm: %f\n'%(self.other.motion_controllers.sample_rotation_axis.get_steps_per_value()))
+                            sav_files[i].write('# Steps/deg: %f\n'%(self.other.motion_controllers.sample_rotation_axis.get_steps_per_value()))
                             sav_files[i].write('# mm/nm: 0; lambda_0 (nm): 0\n')
                             sav_files[i].write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
 
@@ -2049,7 +2193,167 @@ class ScanSM(QThread):
         self.other.num_scans += 1
 
         self.SIGNAL_complete.emit()
-        self.SIGNAL_data_complete.emit(self.scanId)
+        self.SIGNAL_data_complete.emit(self.scanId, 'sample')
+        print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
+
+    @property
+    def xdata(self, which_detector: int):
+        return np.array(self._xdata[which_detector], dtype=float)
+    
+    @property
+    def ydata(self, which_detector: int):
+        return np.array(self._ydata[which_detector], dtype=float)
+
+    @property
+    def scanId(self):
+        return self._scan_id
+
+class ScanDM(QThread):
+    SIGNAL_status_update = pyqtSignal(str)
+    SIGNAL_progress = pyqtSignal(int)
+    SIGNAL_complete = pyqtSignal()
+
+    SIGNAL_data_begin = pyqtSignal(int, dict) # scan index, which detector, redundant
+    SIGNAL_data_update = pyqtSignal(int, int, float, float) # scan index, which detector, xdata, ydata (to be appended into index)
+    SIGNAL_data_complete = pyqtSignal(int, str) # scan index, which detector, redundant
+
+    SIGNAL_error = pyqtSignal(str, str)
+
+    def __init__(self, parent: QMainWindow):
+        super(ScanDM, self).__init__()
+        self.other: MMC_Main = parent
+        self.SIGNAL_status_update.connect(self.other.scan_status_update)
+        self.SIGNAL_progress.connect(self.other.scan_progress)
+        self.SIGNAL_complete.connect(self.other.scan_complete)
+        self.SIGNAL_data_begin.connect(self.other.scan_data_begin)
+        self.SIGNAL_data_update.connect(self.other.scan_data_update)
+        self.SIGNAL_data_complete.connect(self.other.scan_data_complete)
+        self.SIGNAL_error.connect(self.other.qmsg_crit)
+        print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
+        self._last_scan = -1
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        # Local variable setup.
+        autosave_data = self.other.autosave_data_bool
+        start = self.other.UIE_mgw_dm_start_set_qdsb.value()
+        stop = self.other.UIE_mgw_dm_end_set_qdsb.value()
+        step = self.other.UIE_mgw_dm_step_set_qdsb.value()
+        # 0 = Rotation
+        # 1 = Translation
+        # 2 = Theta2Theta (slaved detector axis) 
+
+
+        print('\n\n\n')
+        self.other.disable_movement_sensitive_buttons(True)
+
+        print(self.other)
+        print("Save to file? " + str(autosave_data))
+
+        self.SIGNAL_status_update.emit("PREPARING")
+        sav_files = []
+        tnow = dt.datetime.now()
+        if (autosave_data):
+            print('Autosaving')
+            filetime = tnow.strftime('%Y%m%d%H%M%S')
+            for detector in self.other.detectors:
+                filename = '%s%s_%s_data.csv'%(self.other.data_save_directory, filetime, detector.short_name())
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                sav_files.append(open(filename, 'w'))
+
+        print("SCAN QTHREAD")
+        print("Start | Stop | Step")
+        print(start, stop, step)
+        if step == 0 or start == stop:
+            for f in sav_files:
+                if (f is not None):
+                    f.close()
+            self.SIGNAL_complete.emit()
+            return
+        scanrange = np.arange(start, stop + step, step)
+        nidx = len(scanrange)
+
+        # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
+        self.SIGNAL_status_update.emit("ZEROING")
+        prep_pos = 0#int((0 + self.other.zero_ofst) * self.other.conversion_slope)
+
+        try:
+            self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos, True)
+        except Exception as e:
+            self.SIGNAL_error.emit('Move Failure', 'Detector rotation axis failed to move: %s'%(e))
+            self.SIGNAL_complete.emit()
+            return
+        self.SIGNAL_status_update.emit('HOLDING')
+        sleep(1)
+
+        self._xdata = []
+        self._ydata = []
+
+        for detector in self.other.detectors:
+            self._xdata.append([])
+            self._ydata.append([])
+
+        self._scan_id = self.other.table.scanId
+        metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.detector_rotation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': 0, 'scan_id': self.scanId}
+
+        self.SIGNAL_data_begin.emit(self.scanId, metadata)
+        while self.scanId == self.other.table.scanId:
+            continue
+        for idx, dpos in enumerate(scanrange):
+            if not self.other.scanRunning:
+                break
+            self.SIGNAL_status_update.emit('MOVING')
+            try:
+                self.other.motion_controllers.detector_rotation_axis.move_to(dpos, True)
+            except Exception as e:
+                self.SIGNAL_error.emit('Move Failure', 'Detector rotation axis failed to move: %s'%(e))
+                continue
+                pass
+            
+            pos = self.other.motion_controllers.detector_rotation_axis.get_position()
+            
+            self.SIGNAL_status_update.emit('SAMPLING')
+
+            i=0
+            for detector in self.other.detectors:
+                buf = detector.detect()
+                print(buf)
+                self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
+
+                words = buf.split(',')
+                if len(words) != 3:
+                    continue
+                try:
+                    mes = float(words[0][:-1])
+                    err = int(float(words[2]))
+                except Exception:
+                    continue
+
+                self._xdata[i].append(pos)
+                self._ydata[i].append(self.other.mes_sign * mes * 1e12)
+                self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
+
+                if len(sav_files) > 0 and sav_files[i] is not None:
+                    if idx == 0:
+                        sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
+                        sav_files[i].write('# Steps/deg: %f\n'%(self.other.motion_controllers.detector_rotation_axis.get_steps_per_value()))
+                        sav_files[i].write('# mm/nm: 0; lambda_0 (nm): 0\n')
+                        sav_files[i].write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
+
+                    buf = '%d,%e,%e,%d\n'%(pos, pos, self.other.mes_sign * mes, err)
+                    sav_files[i].write(buf)
+
+                i += 1
+
+        for sav_file in sav_files:
+            if (sav_file is not None):
+                sav_file.close()
+        self.other.num_scans += 1
+
+        self.SIGNAL_complete.emit()
+        self.SIGNAL_data_complete.emit(self.scanId, 'detector')
         print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
 
     @property
