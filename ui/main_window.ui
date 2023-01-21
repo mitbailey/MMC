@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>950</width>
-    <height>600</height>
+    <width>1046</width>
+    <height>661</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -143,7 +143,7 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>-588</y>
+             <y>0</y>
              <width>530</width>
              <height>1002</height>
             </rect>
@@ -274,7 +274,7 @@
                 <widget class="QGroupBox" name="mancon_groupbox">
                  <property name="maximumSize">
                   <size>
-                   <width>595</width>
+                   <width>16777215</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -438,7 +438,7 @@
                 <widget class="QGroupBox" name="scancon_groupbox">
                  <property name="maximumSize">
                   <size>
-                   <width>595</width>
+                   <width>16777215</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -784,7 +784,7 @@
                 <widget class="QGroupBox" name="filter_wheel_mancon_groupbox">
                  <property name="maximumSize">
                   <size>
-                   <width>595</width>
+                   <width>16777215</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -914,7 +914,7 @@
                 <widget class="QGroupBox" name="groupBox_5">
                  <property name="maximumSize">
                   <size>
-                   <width>595</width>
+                   <width>16777215</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -1163,7 +1163,7 @@
                 <widget class="QGroupBox" name="groupBox_8">
                  <property name="maximumSize">
                   <size>
-                   <width>595</width>
+                   <width>16777215</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -1401,7 +1401,7 @@
                 <widget class="QGroupBox" name="scancon_groupbox_3">
                  <property name="maximumSize">
                   <size>
-                   <width>595</width>
+                   <width>16777215</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -1793,7 +1793,7 @@
                 <widget class="QGroupBox" name="groupBox_2">
                  <property name="maximumSize">
                   <size>
-                   <width>595</width>
+                   <width>16777215</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -1943,7 +1943,7 @@
                 <widget class="QGroupBox" name="scancon_groupbox_4">
                  <property name="maximumSize">
                   <size>
-                   <width>595</width>
+                   <width>16777215</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -2608,7 +2608,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>950</width>
+     <width>1046</width>
      <height>18</height>
     </rect>
    </property>

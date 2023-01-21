@@ -21,37 +21,38 @@ class MP_789A_4:
         self.s_name = 'MP789'
         self.l_name = 'McPherson 789A-4'
         self._is_homing = False
+        self._is_moving = False
 
         print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
-        # TODO: Change default.
-        self.steps_per_value = 1
+        if port is None:
+            print('Port is none type.')
+            raise RuntimeError('Port is none type.')
+            
+        self._position = 0
 
-        if port is not None:     
-            self._position = 0
-            # self.port = -1
+        ser_ports = ports_finder.find_serial_ports()
+        if port not in ser_ports:
+            print('Port not valid. Is another program using the port?')
+            raise RuntimeError('Port not valid. Is another program using the port?')
 
-            ser_ports = ports_finder.find_serial_ports()
-            if port not in ser_ports:
-                print('Port not valid. Is another program using the port?')
-                raise RuntimeError('Port not valid. Is another program using the port?')
+        self.s = serial.Serial(port, 9600, timeout=1)
+        self.s.write(b' \r')
+        time.sleep(0.1)
+        rx = self.s.read(128)#.decode('utf-8').rstrip()
+        print(rx)
 
-            self.s = serial.Serial(port, 9600, timeout=1)
-            self.s.write(b' \r')
-            rx = self.s.read(128)#.decode('utf-8').rstrip()
-            print(rx)
+        if rx is None or rx == b'':
+            raise RuntimeError('Response timed out.')
+        elif rx == b' v2.55\r\n#\r\n':
+            print('McPherson model 789A-4 Scan Controller found.')
+        elif rx == b' #\r\n':
+            print('McPherson model 789A-4 Scan Controller already initialized.')
+        else:
+            raise RuntimeError('Invalid response.')
 
-            if rx is None or rx == b'':
-                raise RuntimeError('Response timed out.')
-            elif rx == b' v2.55\r\n#\r\n':
-                print('McPherson model 789A-4 Scan Controller found.')
-            elif rx == b' #\r\n':
-                print('McPherson model 789A-4 Scan Controller already initialized.')
-            else:
-                raise RuntimeError('Invalid response.')
-
-            self.s.write(b'C1\r')
-            time.sleep(0.1)
+        # self.s.write(b'C1\r')
+        # time.sleep(0.1)
 
         if self.s is None:
             raise RuntimeError('self.s is None')
@@ -61,62 +62,90 @@ class MP_789A_4:
     def home(self)->bool:
         print('Beginning home.')
         self._is_homing = True
-        print('WR:', b'A24\r')
-        self.s.write(b'A24\r') # Enable Homing Circuit
-        time.sleep(0.5)
-        print('RD:', self.s.read(128))
-        print('WR:', b'A8\r')
-        self.s.write(b'A8\r') # Set Home Switch "ON"
-        time.sleep(0.5)
-        print('RD:', self.s.read(128))
-        print('WR:', b'F1000,0\r')
-        self.s.write(b'F1000,0\r') # Searches for home.
-        time.sleep(0.5)
-        print('RD:', self.s.read(128))
 
-        start_time = time.time()
-        retries = 0
-        success = True
-        while True:
-            current_time = time.time()
-            if current_time - start_time > 60:
-                if retries > 3:
-                    print('Giving up trying to home after three tries.')
-                    success = False
+        # Enable Home Circuit
+        self.s.write(b'A8\r')
+        time.sleep(0.1)
+        rx = self.s.read(128).decode('utf-8')
+
+        # Check Limit Status
+        self.s.write(b']\r')
+        time.sleep(0.1)
+        rx = self.s.read(128).decode('utf-8')
+
+        if '32' in rx:
+            # Home switch blocked.
+            # Move at constant velocity (23 KHz).
+            self.s.write(b'M+23000\r')
+            time.sleep(0.1)
+            while True:
+                # Check limit status - send every 0.8 seconds.
+                self.s.write(b']\r')
+                time.sleep(0.1)     
+                rx = self.s.read(128).decode('utf-8')
+                if '0' in rx:
                     break
-                retries += 1
-                print('Not homed after 60 seconds. Repeating command.')
-                start_time = current_time
-                print('WR:', b'F1000,0\r')
-                self.s.write(b'F1000,0\r')
-                time.sleep(0.5)
-                print('RD:', self.s.read(128))
-            print('WR:', b']\r')
-            self.s.write(b']\r')
-            time.sleep(0.5)
-            rx = self.s.read(128).decode('utf-8').rstrip()
-            print('Rx:', rx)
-            if '32' in rx:
-                print('Finished homing.')
-                success = True
-                break
-            else:
-                print('Still homing...')
-            time.sleep(0.5)
-        
-        self.s.write(b'A0\r') # Set home switch off.
-        time.sleep(0.5)
-        print(self.s.read(128))
+                time.sleep(0.7)
+            # Soft stop when homing flag is located.
+            self.s.write(b'@\r')
+            time.sleep(0.1) 
+            # Back into home switch 3 motor revolutions.
+            self.s.write(b'-108000\r')
+            time.sleep(0.1) 
+            # Go 2 motor revolutions up.
+            self.s.write(b'+72000\r')
+            time.sleep(0.1) 
+            # Enable 'high accuracy' circuit.
+            self.s.write(b'A24\r')
+            time.sleep(0.1) 
+            # Find edge of home flag at 1000 steps/sec.
+            self.s.write(b'F1000,0\r')
+            time.sleep(0.1) 
+            time.sleep(3)
+            # Disable home circuit.
+            self.s.write(b'A0\r')
+            time.sleep(0.1) 
+            pass
+        elif '0' in rx:
+            # Home switch blocked.
+            # Move at constant velocity (23 KHz).
+            self.s.write(b'M-23000\r')
+            time.sleep(0.1)
+            while True:
+                # Check limit status - send every 0.8 seconds.
+                self.s.write(b']\r')
+                time.sleep(0.1)     
+                rx = self.s.read(128).decode('utf-8')
+                if '0' in rx:
+                    break
+                time.sleep(0.7)
+            # Soft stop when homing flag is located.
+            self.s.write(b'@\r')
+            time.sleep(0.1) 
+            # Back into home switch 3 motor revolutions.
+            self.s.write(b'-108000\r')
+            time.sleep(0.1) 
+            # Go 2 motor revolutions up.
+            self.s.write(b'+72000\r')
+            time.sleep(0.1) 
+            # Enable 'high accuracy' circuit.
+            self.s.write(b'A24\r')
+            time.sleep(0.1) 
+            # Find edge of home flag at 1000 steps/sec.
+            self.s.write(b'F1000,0\r')
+            time.sleep(0.1) 
+            time.sleep(3)
+            # Disable home circuit.
+            self.s.write(b'A0\r')
+            time.sleep(0.1) 
+            pass
+        else:
+            print('Unknown position to home from.')
+            raise RuntimeError('Unknown position to home from.')
 
-        if success:
-            self._position = 0
-
-            self.write(b'\x03\r') # Resets counter.
-            time.sleep(0.5)
-            print(self.s.read(128))
 
         self._is_homing = False
-        return success
+        return True
 
     def get_position(self):
         return self._position
@@ -154,9 +183,6 @@ class MP_789A_4_DUMMY:
         self.l_name = 'McPherson 789A-4 (DUMMY)'
 
         print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
-
-        # TODO: Change default.
-        self.steps_per_value = 1
 
         if port is not None:     
             print('McPherson model 789A-4 (DUMMY) Scan Controller generated.')

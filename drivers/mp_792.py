@@ -206,6 +206,18 @@ class MP_792:
             print('Not moving (0 steps).')
         self._position[axis] += steps
 
+        if block:
+            i=0
+            # moving = True
+            while i<3:
+                print('BLOCKING')
+                time.sleep(0.2)
+                if not self._is_moving(axis):
+                    print('Found to be NOT MOVING.')
+                    i+=1
+            print('FINISHED BLOCKING because moving is', i)
+        time.sleep(0.25)
+
     def short_name(self):
         return self.s_name
 
@@ -298,6 +310,13 @@ class MP_792_DUMMY:
         self.set_axis(axis)
 
         self._position[axis] += steps
+
+        if block:
+            while self._is_moving(axis):
+                print('BLOCKING')
+                time.sleep(0.5)
+            print('FINISHED BLOCKING')
+
 
     def short_name(self):
         return self.s_name

@@ -719,7 +719,7 @@ class MMC_Main(QMainWindow):
         self.homing_started = False
         if not dummy:
             self.homing_started = True
-            self.disable_movement_sensitive_buttons(True)
+            # self.disable_movement_sensitive_buttons(True)
             self.scan_status_update("HOMING")
             self.motion_controllers.main_drive_axis.home()
 
@@ -875,6 +875,9 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_da_collapse_qpb.clicked.connect(self.collapse_da)
         
         self.UIE_mgw_sm_scan_type_qcb: QComboBox = self.findChild(QComboBox, 'scan_type_combo')
+        self.UIE_mgw_sm_scan_type_qcb.addItem('Rotation')
+        self.UIE_mgw_sm_scan_type_qcb.addItem('Translation')
+        self.UIE_mgw_sm_scan_type_qcb.addItem('Theta2Theta')
         self.UIE_mgw_sm_start_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'start_set_spinbox_2')
         self.UIE_mgw_sm_end_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'end_set_spinbox_2')
         self.UIE_mgw_sm_step_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'step_set_spinbox_2')
@@ -933,14 +936,14 @@ class MMC_Main(QMainWindow):
         movement_sensitive_list.append(self.UIE_mgw_sm_scan_repeats_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_sm_begin_scan_qpb)
         movement_sensitive_list.append(self.UIE_mgw_sm_begin_scan_qpb)
-        movement_sensitive_list.append(self.UIE_mgw_sm_end_scan_qpb)
-        movement_sensitive_list.append(self.UIE_mgw_sm_end_scan_qpb)
+        # movement_sensitive_list.append(self.UIE_mgw_sm_end_scan_qpb)
+        # movement_sensitive_list.append(self.UIE_mgw_sm_end_scan_qpb)
         movement_sensitive_list.append(self.UIE_mgw_dm_start_set_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_dm_end_set_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_dm_step_set_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_dm_scan_repeats_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_dm_begin_scan_qpb)
-        movement_sensitive_list.append(self.UIE_mgw_dm_end_scan_qpb)
+        # movement_sensitive_list.append(self.UIE_mgw_dm_end_scan_qpb)
 
         self.movement_sensitive_metalist = []
         self.movement_sensitive_metalist.append(movement_sensitive_list)
@@ -1406,13 +1409,13 @@ class MMC_Main(QMainWindow):
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
-            self.scan_sm.start()
+            self.sm_scan.start()
 
     def scan_dm_button_pressed(self):
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
-            self.scan_dm.start()
+            self.dm_scan.start()
 
     def stop_scan_button_pressed(self):
         if self.scanRunning:
@@ -2138,7 +2141,7 @@ class ScanSM(QThread):
                     continue
                     pass
                 try:
-                    self.other.motion_controllers.sample_rotation_axis.move_to(dpos, True)
+                    self.other.motion_controllers.detector_rotation_axis.move_to(dpos * 2, True)
                 except Exception as e:
                     self.SIGNAL_error.emit('Move Failure', 'Detector rotation axis failed to move: %s'%(e))
                     continue

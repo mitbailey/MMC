@@ -140,18 +140,9 @@ def new_motion_controller(dummy: bool, dev_model: str, man_port: str = None):
     return devs
 
 class MotionController:
-
-
-
-    # TODO: If the device has more than one axis, then somehow we must present MMC with n-MotionControllers.
-
-
-
-
     SupportedDevices = ['TL KST101', 'MP 789A-4', 'MP 792']
 
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None, axis: int = 0, parent = None):
-        # TODO: Come up with a proper way of setting the detector, ie as an argument.
         self.model = dev_model
         self._steps_per_value = 0
         self._is_dummy = dummy
