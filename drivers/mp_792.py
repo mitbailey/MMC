@@ -57,9 +57,6 @@ class MP_792:
         else:
             raise RuntimeError('Invalid response.')
 
-        # self.s.write(b'C1\r')
-        # time.sleep(0.1)
-
         print('Checking axes...')
         for i in range(4):
             print('WR:', MP_792.AXES[i] + b'\r')
@@ -74,7 +71,6 @@ class MP_792:
             alivestat = self.s.read(128).decode('utf-8')
             print('RD:', alivestat)
             time.sleep(0.1)
-
 
             if '192' in alivestat:
                 print('Axis %d is dead.'%(i))
@@ -112,10 +108,6 @@ class MP_792:
         success = True
         while True:
             current_time = time.time()
-
-            # self.s.write(b'^\r')
-            # movstat = self.s.read(128).decode('utf-8')
-            # print('movstat:', movstat)
 
             moving = self._is_moving(axis)
             time.sleep(0.1)
@@ -250,6 +242,9 @@ class MP_792_DUMMY:
             time.sleep(0.1)
 
             print('WR:', b']\r')
+            
+            time.sleep(1.5)
+            
             print('RD:', 'Dummy - Axes Always Alive')
             time.sleep(0.1)
 
@@ -279,7 +274,9 @@ class MP_792_DUMMY:
         start_time = time.time()
         retries = 3
         success = True
-
+        
+        # The standard is for the device drivers to read 0 when homed if the controller does not itself provide a value.
+        # It is up to the middleware to handle zero- and home-offsets.
         self._position[axis] = 0
         self._is_homing[axis] = False
         return True

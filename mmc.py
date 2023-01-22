@@ -55,7 +55,7 @@ from PyQt5 import uic
 from PyQt5.Qt import QTextOption
 from PyQt5.QtCore import (pyqtSignal, pyqtSlot, Q_ARG, QAbstractItemModel,
                           QFileInfo, qFuzzyCompare, QMetaObject, QModelIndex, QObject, Qt,
-                          QThread, QTime, QUrl, QSize, QEvent, QCoreApplication, QFile, QIODevice, QMutex, QWaitCondition)
+                          QThread, QTime, QUrl, QSize, QEvent, QCoreApplication, QFile, QIODevice, QMutex, QWaitCondition, QTimer, QPropertyAnimation, QPoint, QEasingCurve)
 from PyQt5.QtGui import QColor, qGray, QImage, QPainter, QPalette, QIcon, QKeyEvent, QMouseEvent, QFontDatabase, QFont
 from PyQt5.QtMultimedia import (QAbstractVideoBuffer, QMediaContent,
                                 QMediaMetaData, QMediaPlayer, QMediaPlaylist, QVideoFrame, QVideoProbe)
@@ -167,6 +167,9 @@ class ScanSM(QThread):
 class ScanDM(QThread):
     pass
 
+class ConnectDevices(QThread):
+    pass
+
 # The main MMC program and GUI class.
 class MMC_Main(QMainWindow):
     # STARTUP PROCEDURE
@@ -198,6 +201,12 @@ class MMC_Main(QMainWindow):
     # Constructor
     def __init__(self, application, uiresource = None):
         # Handles the initial showing of the UI.
+        self.mtn_ctrls = []
+        self.detectors = []
+
+        self.connect_devices_thread = ConnectDevices(weakref.proxy(self))
+        self.connecting_devices = False
+
         self.application: QApplication = application
         self._startup_args = self.application.arguments()
         super(MMC_Main, self).__init__()
@@ -228,7 +237,7 @@ class MMC_Main(QMainWindow):
         self.zero_ofst = 37.8461 # nm
 
         # Other settings' default values.
-        self.main_axis_index = 1
+        self.main_axis_index = 0
         self.filter_axis_index = 0
         self.rsamp_axis_index = 0
         self.tsamp_axis_index = 0
@@ -369,9 +378,11 @@ class MMC_Main(QMainWindow):
 
             self.UIE_dmw_detector_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "detector_combo_layout")
             self.UIE_dmw_mtn_ctrl_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
+            self.UIE_dmw_load_bar_qpb: QProgressBar = self.dmw.findChild(QProgressBar, "loading_bar")
 
             self.devman_list_devices()
 
+            # 
             self.dmw.show()
 
         self.application.processEvents()
@@ -382,6 +393,12 @@ class MMC_Main(QMainWindow):
             self.device_timer = QTimer()
             self.device_timer.timeout.connect(self.devman_list_devices)
             self.device_timer.start(1000)
+
+    def closeEvent(self, event):
+        answer = self.QMessageBoxQuestion('Exit Confirmation', "Are you sure you want to exit?")
+        event.ignore()
+        if answer == QtWidgets.QMessageBox.Yes:
+            event.accept()
 
     def update_num_detectors_ui(self):
         if self.num_detectors != self.UIE_dmw_num_detectors_qsb.value():
@@ -453,77 +470,39 @@ class MMC_Main(QMainWindow):
         print('new mtn ctrls combo list len: %d'%(len(self.UIEL_dmw_mtn_ctrl_qcb)))
 
     def connect_devices(self):
-        print('\n\n')
-        print("connect_devices")
-
-        self.UIE_dmw_accept_qpb.setEnabled(False)
-
-        self.application.processEvents()
-
-        self.dummy = self.UIE_dmw_dummy_qckbx.isChecked()
-        print("Dummy Mode: " + str(self.dummy))
-
-        # Motion Controller and Detector initialization.
-        # Note that, for now, the Keithley 6485 and KST101 are the defaults.
-        detectors_connected = [False] * self.num_detectors
-        mtn_ctrls_connected = [False] * self.num_motion_controllers
-
-        self.detectors = [None] * self.num_detectors
-        self.mtn_ctrls = []
-
-        print('Detectors: %d'%(self.num_detectors))
-        print('Motion controllers: %d'%(self.num_motion_controllers))
-
+        # application.setQuitOnLastWindowClosed(False)
         for i in range(self.num_detectors):
-            print('Instantiation attempt for detector #%d.'%(i))
-            try:
-                if self.UIEL_dmw_detector_qcb[i].currentIndex() != 0:
-                    print("Using manual port: %s"%(self.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0]))
-                    self.detectors[i] = Detector(self.dummy, self.UIEL_dmw_detector_model_qcb[i].currentText(), self.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0])
-                else:
-                    # Auto-Connect
-                    print('currentIndex', self.UIEL_dmw_detector_qcb[i].currentIndex(), self.UIEL_dmw_detector_qcb[i].currentText())
-                    print(len(self.UIEL_dmw_detector_qcb))
-                    print('NO DEVICE SELECTED!')
-                    QMessageBox.information(self.dmw, 'Connection Failure', 'No device was selected.') 
-
-            except Exception as e:
-                print(e)
-                print("Failed to find detector (%s)."%(e))
-                QMessageBox.warning(self.dmw, 'Connection Failure', 'Failed to find detector (%s).'%(e)) 
-                self.detectors[i] = None
-                detectors_connected[i] = False
-            if self.detectors[i] is None:
-                detectors_connected[i] = False
-            else:
-                detectors_connected[i] = True
-
-        # for i, combo in self.dm_detector_combos:
+            if self.UIEL_dmw_detector_qcb[i].currentIndex() == 0:
+                self.QMessageBoxInformation('Connection Failure', 'No detector was selected for entry #%d.'%(i))
+                # application.setQuitOnLastWindowClosed(True)
+                return
         for i in range(self.num_motion_controllers):
-            print('Instantiation attempt for motion controller #%d.'%(i))
-            try:
-                if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() != 0:
-                    print("Using manual port: %s"%(self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
-                    print(self.dummy, self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
-                    new_mtn_ctrls = mw.new_motion_controller(self.dummy, self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
-                    for ctrlr in new_mtn_ctrls:
-                        print('New axis:', ctrlr)
-                        self.mtn_ctrls.append(ctrlr)
-
-            except Exception as e:
-                print("Failed to find motion controller (%s)."%(e))
-                QMessageBox.warning(self.dmw, 'Connection Failure', 'Failed to find motion controller (%s).'%(e)) 
-                self.mtn_ctrls[-1] = None
-                mtn_ctrls_connected[i] = False
-            if len(self.mtn_ctrls) == 0 or self.mtn_ctrls[-1] is None:
-                mtn_ctrls_connected[i] = False
-            else:
-                mtn_ctrls_connected[i] = True
-
-        # Emits a success or fail or whatever signals here so that device manager can react accordingly. If successes, then just boot the GUI. If failure then the device manager needs to allow the selection of device(s).
+            if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() == 0:
+                self.QMessageBoxInformation('Connection Failure', 'No motion controller was selected for entry #%d.'%(i))
+                # application.setQuitOnLastWindowClosed(True)
+                return
         
+        if not self.connecting_devices:
+            self.connect_devices = True
+
+            self.UIE_dmw_accept_qpb.setEnabled(False)
+            self.application.processEvents()
+            self.dummy = self.UIE_dmw_dummy_qckbx.isChecked()
+
+            self.connect_devices_thread.start()
+
+    def _connect_devices(self, detectors_connected, mtn_ctrls_connected):
+        self.connecting_devices = False
         self.UIE_dmw_accept_qpb.setEnabled(True)
         self.SIGNAL_devices_connection_check.emit(self.dummy, detectors_connected, mtn_ctrls_connected)
+
+    def _connect_devices_progress_anim(self, value):
+        self.anim = QPropertyAnimation(targetObject=self.UIE_dmw_load_bar_qpb, propertyName=b"value")
+        self.anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self.anim.setStartValue(self.UIE_dmw_load_bar_qpb.value())
+        self.anim.setEndValue(value)
+        self.anim.setDuration(5000)
+        self.anim.start()
 
     # If things are connected, boot main GUI.
     # If somethings wrong, enable advanced dev man functions.
@@ -543,7 +522,8 @@ class MMC_Main(QMainWindow):
             if self.device_timer is not None:
                 print('WARNING: STOPPING DEVICE TIMER!')
                 self.device_timer.stop()
-            self.dmw.close()
+            # self.dmw.close()
+            # self.anim.stop()
             self._show_main_gui(dummy)
             return
         
@@ -936,14 +916,11 @@ class MMC_Main(QMainWindow):
         movement_sensitive_list.append(self.UIE_mgw_sm_scan_repeats_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_sm_begin_scan_qpb)
         movement_sensitive_list.append(self.UIE_mgw_sm_begin_scan_qpb)
-        # movement_sensitive_list.append(self.UIE_mgw_sm_end_scan_qpb)
-        # movement_sensitive_list.append(self.UIE_mgw_sm_end_scan_qpb)
         movement_sensitive_list.append(self.UIE_mgw_dm_start_set_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_dm_end_set_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_dm_step_set_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_dm_scan_repeats_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_dm_begin_scan_qpb)
-        # movement_sensitive_list.append(self.UIE_mgw_dm_end_scan_qpb)
 
         self.movement_sensitive_metalist = []
         self.movement_sensitive_metalist.append(movement_sensitive_list)
@@ -959,9 +936,9 @@ class MMC_Main(QMainWindow):
         for uie in uiel:
             uie.installEventFilter(self)
 
-        self.dmw.close()
         self.main_gui_booted = True
         self.show()  
+        self.dmw.close()
 
     def config_import(self):
         pass
@@ -1794,10 +1771,134 @@ class MMC_Main(QMainWindow):
 
     def calculate_conversion_slope(self):
         self.conversion_slope = ((self.arm_length * self.diff_order * self.grating_density)/(2 * (m.cos(m.radians(self.tangent_ang))) * (m.cos(m.radians(self.incidence_ang))) * 1e6))
+    
+    def QMessageBoxQuestion(self, title: str, msg: str):
+        application.setQuitOnLastWindowClosed(False)
+        print('QMessageBoxInformation:', title, msg)
+        retval = QMessageBox.question(self, title, msg,
+        QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        application.setQuitOnLastWindowClosed(True)
+        return retval
 
-    def qmsg_crit(self, title: str, msg: str):
-        print('qmsg_crit')
-        QMessageBox.critical(self, title, msg)
+    def QMessageBoxInformation(self, title: str, msg: str):
+        application.setQuitOnLastWindowClosed(False)
+        print('QMessageBoxInformation:', title, msg)
+        retval = QMessageBox.information(self, title, msg)
+        application.setQuitOnLastWindowClosed(True)
+        return retval
+
+    def QMessageBoxWarning(self, title: str, msg: str):
+        application.setQuitOnLastWindowClosed(False)
+        print('QMessageBoxWarning:', title, msg)
+        retval = QMessageBox.warning(self, title, msg)
+        application.setQuitOnLastWindowClosed(True)
+        return retval
+
+    def QMessageBoxCritical(self, title: str, msg: str):
+        application.setQuitOnLastWindowClosed(False)
+        print('QMessageBoxCritical:', title, msg)
+        retval = QMessageBox.critical(self, title, msg)
+        application.setQuitOnLastWindowClosed(True)
+        return retval
+
+class ConnectDevices(QThread):
+    SIGNAL_complete = pyqtSignal(list, list)
+    SIGNAL_load_bar = pyqtSignal(int)
+    SIGNAL_qmsg_info = pyqtSignal(str, str)
+    SIGNAL_qmsg_warn = pyqtSignal(str, str)
+    SIGNAL_qmsg_crit = pyqtSignal(str, str)
+
+    def __init__(self, parent: QMainWindow):
+        super(ConnectDevices, self).__init__()
+        self.other: MMC_Main = parent
+        self.SIGNAL_complete.connect(self.other._connect_devices)
+        self.SIGNAL_load_bar.connect(self.other._connect_devices_progress_anim)
+        self.SIGNAL_qmsg_info.connect(self.other.QMessageBoxInformation)
+        self.SIGNAL_qmsg_warn.connect(self.other.QMessageBoxWarning)
+        self.SIGNAL_qmsg_crit.connect(self.other.QMessageBoxCritical)
+        print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
+        self._last_scan = -1
+
+    def run(self):
+        print('\n\n')
+        print("connect_devices")
+
+        self.dummy = self.other.dummy
+        print("Dummy Mode: " + str(self.dummy))
+
+        self.num_detectors = self.other.num_detectors
+        self.num_motion_controllers = self.other.num_motion_controllers
+
+        # Motion Controller and Detector initialization.
+        # Note that, for now, the Keithley 6485 and KST101 are the defaults.
+        detectors_connected = [False] * self.num_detectors
+        mtn_ctrls_connected = [False] * self.num_motion_controllers
+
+        self.detectors = [None] * self.num_detectors
+        self.mtn_ctrls = []
+
+        print('Detectors: %d'%(self.num_detectors))
+        print('Motion controllers: %d'%(self.num_motion_controllers))
+
+        load_increment = (10000 / (self.num_detectors + self.num_motion_controllers - 1)) * 0.8
+        load = 10
+        self.SIGNAL_load_bar.emit(load)
+
+        for i in range(self.num_detectors):
+            print('Instantiation attempt for detector #%d.'%(i))
+            try:
+                if self.other.UIEL_dmw_detector_qcb[i].currentIndex() != 0:
+                    print("Using manual port: %s"%(self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0]))
+                    self.detectors[i] = Detector(self.dummy, self.other.UIEL_dmw_detector_model_qcb[i].currentText(), self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0])
+
+            except Exception as e:
+                print(e)
+                print("Failed to find detector (%s)."%(e))
+                self.SIGNAL_qmsg_warn.emit('Connection Failure', 'Failed to find detector (%s).'%(e))
+                self.detectors[i] = None
+                detectors_connected[i] = False
+                return
+            if self.detectors[i] is None:
+                detectors_connected[i] = False
+            else:
+                detectors_connected[i] = True
+
+            load+=load_increment
+            self.SIGNAL_load_bar.emit(load)
+
+        # for i, combo in self.dm_detector_combos:
+        for i in range(self.num_motion_controllers):
+            print('Instantiation attempt for motion controller #%d.'%(i))
+            try:
+                if self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() != 0:
+                    print("Using manual port: %s"%(self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
+                    print(self.dummy, self.other.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
+                    new_mtn_ctrls = mw.new_motion_controller(self.dummy, self.other.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
+                    for ctrlr in new_mtn_ctrls:
+                        print('New axis:', ctrlr)
+                        self.mtn_ctrls.append(ctrlr)
+
+            except Exception as e:
+                print("Failed to find motion controller (%s)."%(e))
+                self.SIGNAL_qmsg_warn.emit('Connection Failure', 'Failed to find motion controller (%s).'%(e)) 
+                self.mtn_ctrls[-1] = None
+                mtn_ctrls_connected[i] = False
+                return
+            if len(self.mtn_ctrls) == 0 or self.mtn_ctrls[-1] is None:
+                mtn_ctrls_connected[i] = False
+            else:
+                mtn_ctrls_connected[i] = True
+
+            load+=load_increment
+            self.SIGNAL_load_bar.emit(load)
+
+        print('detectors_connected:', detectors_connected)
+        print('mtn_ctrls_connected:', mtn_ctrls_connected)
+
+        self.other.detectors = self.detectors
+        self.other.mtn_ctrls = self.mtn_ctrls
+        self.SIGNAL_complete.emit(detectors_connected, mtn_ctrls_connected)
+
 
 class Scan(QThread):
     SIGNAL_status_update = pyqtSignal(str)
@@ -1819,7 +1920,7 @@ class Scan(QThread):
         self.SIGNAL_data_begin.connect(self.other.scan_data_begin)
         self.SIGNAL_data_update.connect(self.other.scan_data_update)
         self.SIGNAL_data_complete.connect(self.other.scan_data_complete)
-        self.SIGNAL_error.connect(self.other.qmsg_crit)
+        self.SIGNAL_error.connect(self.other.QMessageBoxCritical)
         print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
 
@@ -1973,7 +2074,7 @@ class ScanSM(QThread):
         self.SIGNAL_data_begin.connect(self.other.scan_data_begin)
         self.SIGNAL_data_update.connect(self.other.scan_data_update)
         self.SIGNAL_data_complete.connect(self.other.scan_data_complete)
-        self.SIGNAL_error.connect(self.other.qmsg_crit)
+        self.SIGNAL_error.connect(self.other.QMessageBoxCritical)
         print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
 
@@ -2231,7 +2332,7 @@ class ScanDM(QThread):
         self.SIGNAL_data_begin.connect(self.other.scan_data_begin)
         self.SIGNAL_data_update.connect(self.other.scan_data_update)
         self.SIGNAL_data_complete.connect(self.other.scan_data_complete)
-        self.SIGNAL_error.connect(self.other.qmsg_crit)
+        self.SIGNAL_error.connect(self.other.QMessageBoxCritical)
         print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
 
@@ -2377,8 +2478,18 @@ if __name__ == '__main__':
     # 1. Initialization loading screen, where devices are being searched for and the current status and tasks are displayed. If none are found, display an error and an exit button.
     # 2. The device selection display, where devices can be selected and their settings can be changed prior to entering the control program.
     # 3. The control GUI (mainwindow.ui), where the user has control over what the device(s) do.
+
+    sys._excepthook = sys.excepthook 
+    def exception_hook(exctype, value, traceback):
+        print('\n\n\nEXCEPTION HOOK')
+        print(exctype, value, traceback)
+        print('EXCEPTION HOOK\n\n')
+        sys._excepthook(exctype, value, traceback) 
+        sys.exit(1) 
+    sys.excepthook = exception_hook 
     
     application = QApplication(sys.argv)
+    # application.setQuitOnLastWindowClosed(False)
 
     # Finding and setting of fonts.
     try:
@@ -2430,4 +2541,5 @@ if __name__ == '__main__':
     print('Exiting program...')
 
     os._exit(exit_code)
+
 # %%

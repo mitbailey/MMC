@@ -21,7 +21,7 @@ class MP_789A_4:
         self.s_name = 'MP789'
         self.l_name = 'McPherson 789A-4'
         self._is_homing = False
-        self._is_moving = False
+        self._is_moving_l = False
 
         print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
@@ -50,9 +50,6 @@ class MP_789A_4:
             print('McPherson model 789A-4 Scan Controller already initialized.')
         else:
             raise RuntimeError('Invalid response.')
-
-        # self.s.write(b'C1\r')
-        # time.sleep(0.1)
 
         if self.s is None:
             raise RuntimeError('self.s is None')
@@ -83,8 +80,11 @@ class MP_789A_4:
                 self.s.write(b']\r')
                 time.sleep(0.1)     
                 rx = self.s.read(128).decode('utf-8')
-                if '0' in rx:
+                if '0' in rx or '2' in rx: # Not-on-a-limit-switch status is 0 when stationary, 2 when in motion.
                     break
+                elif '64' in rx or '128' in rx: # If we have hit either of the extreme limit switches and stopped.
+                    print('Hit edge limit switch when homing. Does this device have a home sensor?')
+                    raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
                 time.sleep(0.7)
             # Soft stop when homing flag is located.
             self.s.write(b'@\r')
@@ -107,7 +107,7 @@ class MP_789A_4:
             time.sleep(0.1) 
             pass
         elif '0' in rx:
-            # Home switch blocked.
+            # Home switch not blocked.
             # Move at constant velocity (23 KHz).
             self.s.write(b'M-23000\r')
             time.sleep(0.1)
@@ -116,8 +116,11 @@ class MP_789A_4:
                 self.s.write(b']\r')
                 time.sleep(0.1)     
                 rx = self.s.read(128).decode('utf-8')
-                if '0' in rx:
+                if '32' in rx or '34' in rx: # Home-switch-blocked status is 32 when stationary, 34 when in motion.
                     break
+                elif '64' in rx or '128' in rx: # If we have hit either of the extreme limit switches and stopped.
+                    print('Hit edge limit switch when homing. Does this device have a home sensor?')
+                    raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
                 time.sleep(0.7)
             # Soft stop when homing flag is located.
             self.s.write(b'@\r')
@@ -143,20 +146,27 @@ class MP_789A_4:
             print('Unknown position to home from.')
             raise RuntimeError('Unknown position to home from.')
 
-
+        # The standard is for the device drivers to read 0 when homed if the controller does not itself provide a value.
+        # It is up to the middleware to handle zero- and home-offsets.
+        self._position = 0
         self._is_homing = False
         return True
 
     def get_position(self):
         return self._position
 
+    def _is_moving(self):
+        return self._is_moving_l
+    
     def is_moving(self):
         self.s.write(b'^\r')
         status = self.s.read(128).decode('utf-8').rstrip()
         print('789a-4 status:', status)
         if '0' in status:
+            self._is_moving_l = False
             return False
         else:
+            self._is_moving_l = True
             return True
 
     def is_homing(self):
