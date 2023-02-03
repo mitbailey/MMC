@@ -17,6 +17,7 @@ def reset_config(path: str | pathlib.Path):
     os.remove(path + '/config.ini')
     save_config(path, False, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999)
 
+# TODO: Change this to taking a dictionary or something, this many arguments is ridiculous.
 def save_config(path: str | pathlib.Path, is_export: bool, mes_sign: int, autosave_data: bool, data_save_directory: str, grating_combo_lstr: list(str), current_grating_idx: int, diff_order: int, zero_ofst: float, inc_ang: float, tan_ang: float, arm_len: float, max_pos: float, min_pos: float, main_axis_index: int, filter_axis_index: int, rsamp_axis_index: int, tsamp_axis_index: int, detector_axis_index: int, main_axis_dev_name: str, filter_axis_dev_name: str, rsamp_axis_dev_name: str, tsamp_axis_dev_name: str, detector_axis_dev_name: str, num_axes: int, fw_max_pos: float, fw_min_pos: float, smr_max_pos: float, smr_min_pos: float, smt_max_pos: float, smt_min_pos: float, dr_max_pos: float, dr_min_pos: float) -> bool:
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
@@ -69,8 +70,13 @@ def save_config(path: str | pathlib.Path, is_export: bool, mes_sign: int, autosa
         with open(path, 'w') as confFile:
             save_config.write(confFile)
 
-def load_config(path: str | pathlib.Path, is_import: bool) -> dict:
-    if not os.path.exists(path + '/config.ini'):
+def load_config(path: str, is_import: bool) -> dict:
+    print('Beginning load for %s.'%(path))
+
+    if not is_import:
+        path = path + '/config.ini'
+
+    if not os.path.exists(path):
         if is_import:
             raise RuntimeError("File doesn't exist.")
         print("No config.ini file found, creating one...")
@@ -82,12 +88,9 @@ def load_config(path: str | pathlib.Path, is_import: bool) -> dict:
 
         save_config(path, False, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999)
 
-    while os.path.exists(path + '/config.ini'):
+    while os.path.exists(path):
         config = confp.ConfigParser()
-        if not is_import:
-            config.read(path + '/config.ini')
-        else:
-            config.read(path)
+        config.read(path)
 
         print(config)
         error = False

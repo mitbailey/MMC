@@ -259,54 +259,7 @@ class MMC_Main(QMainWindow):
         self.dr_max_pos = 9999
         self.dr_min_pos = -9999
 
-        # Replaces default grating equation values with the values found in the config.ini file.
-        try:
-            load_dict = load_config(appDir, False)
-        except Exception as e:
-            print("The following exception occurred while attempting to load configuration file: %s"%(e))
-            try:
-                reset_config(appDir)
-                load_dict = load_config(appDir, False)
-            except Exception as e2:
-                print("Configuration file recovery failed (exception: %s). Unable to load configuration file. Exiting."%(e2))
-                exit(43)
-                
-        self.mes_sign = load_dict['measurementSign']
-        self.autosave_data_bool = load_dict['autosaveData']
-        self.data_save_directory = load_dict['dataSaveDirectory']
-        self.grating_combo_lstr = load_dict["gratingDensities"]
-        self.current_grating_idx = load_dict["gratingDensityIndex"]
-        self.diff_order = load_dict["diffractionOrder"]
-        self.zero_ofst = load_dict["zeroOffset"]
-        self.incidence_ang = load_dict["incidenceAngle"]
-        self.tangent_ang = load_dict["tangentAngle"]
-        self.arm_length = load_dict["armLength"]
-        self.max_pos = load_dict["maxPosition"]
-        self.min_pos = load_dict["minPosition"]
-        self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
-
-        self.main_axis_index = load_dict['mainAxisIndex']
-        print('LOADED MAIN_AXIS_INDEX VALUE OF:', self.main_axis_index)
-        self.filter_axis_index = load_dict['filterAxisIndex']
-        self.rsamp_axis_index = load_dict['rsampAxisIndex']
-        self.tsamp_axis_index = load_dict['tsampAxisIndex']
-        self.detector_axis_index = load_dict['detectorAxisIndex']
-
-        self.main_axis_dev_name = load_dict['mainAxisName']
-        self.filter_axis_dev_name = load_dict['filterAxisName']
-        self.rsamp_axis_dev_name = load_dict['rsampAxisName']
-        self.tsamp_axis_dev_name = load_dict['tsampAxisName']
-        self.detector_axis_dev_name = load_dict['detectorAxisName']
-        self.num_axes_at_time_of_save = load_dict['numAxes']
-
-        self.fw_max_pos = load_dict['fwMax']
-        self.fw_min_pos = load_dict['fwMin']
-        self.smr_max_pos = load_dict['smrMax']
-        self.smr_min_pos = load_dict['smrMin']
-        self.smt_max_pos = load_dict['smrMax']
-        self.smt_min_pos = load_dict['smrMin']
-        self.dr_max_pos = load_dict['drMax']
-        self.dr_min_pos = load_dict['drMin']
+        self.load_config(appDir, False)
 
         # Sets the conversion slope based on the found (or default) values.
         self.calculate_conversion_slope()
@@ -941,7 +894,9 @@ class MMC_Main(QMainWindow):
         self.dmw.close()
 
     def config_import(self):
-        pass
+        loadFileName, _ = QFileDialog.getOpenFileName(self, "Load CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv', filter='*.csv')
+        fileInfo = QFileInfo(loadFileName)
+        self.load_config(fileInfo.absoluteFilePath(), True)
 
     def config_export(self):
         savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv', filter='*.csv')
@@ -950,6 +905,63 @@ class MMC_Main(QMainWindow):
         
     def save_config(self, path: str, is_export: bool):
         save_config(path, is_export, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.grating_combo_lstr, self.current_grating_idx, self.diff_order, self.zero_ofst, self.incidence_ang, self.tangent_ang, self.arm_length, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos)
+
+    def load_config(self, path: str, is_import: bool):
+        # Replaces default grating equation values with the values found in the config.ini file.
+        try:
+            load_dict = load_config(path, is_import)
+        except Exception as e:
+            print("The following exception occurred while attempting to load configuration file: %s"%(e))
+            if not is_import:
+                print("Attempting config file default reset.")
+                try:
+                    reset_config(path)
+                    load_dict = load_config(path, is_import)
+                except Exception as e2:
+                    print("Configuration file recovery failed (exception: %s). Unable to load configuration file. Exiting."%(e2))
+                    exit(43)
+            else:
+                print("Config import failure.")
+                
+        self.mes_sign = load_dict['measurementSign']
+        self.autosave_data_bool = load_dict['autosaveData']
+        self.data_save_directory = load_dict['dataSaveDirectory']
+        self.grating_combo_lstr = load_dict["gratingDensities"]
+        self.current_grating_idx = load_dict["gratingDensityIndex"]
+        self.diff_order = load_dict["diffractionOrder"]
+        self.zero_ofst = load_dict["zeroOffset"]
+        self.incidence_ang = load_dict["incidenceAngle"]
+        self.tangent_ang = load_dict["tangentAngle"]
+        self.arm_length = load_dict["armLength"]
+        self.max_pos = load_dict["maxPosition"]
+        self.min_pos = load_dict["minPosition"]
+        self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
+
+        self.main_axis_index = load_dict['mainAxisIndex']
+        print('LOADED MAIN_AXIS_INDEX VALUE OF:', self.main_axis_index)
+        self.filter_axis_index = load_dict['filterAxisIndex']
+        self.rsamp_axis_index = load_dict['rsampAxisIndex']
+        self.tsamp_axis_index = load_dict['tsampAxisIndex']
+        self.detector_axis_index = load_dict['detectorAxisIndex']
+
+        self.main_axis_dev_name = load_dict['mainAxisName']
+        self.filter_axis_dev_name = load_dict['filterAxisName']
+        self.rsamp_axis_dev_name = load_dict['rsampAxisName']
+        self.tsamp_axis_dev_name = load_dict['tsampAxisName']
+        self.detector_axis_dev_name = load_dict['detectorAxisName']
+        self.num_axes_at_time_of_save = load_dict['numAxes']
+
+        self.fw_max_pos = load_dict['fwMax']
+        self.fw_min_pos = load_dict['fwMin']
+        self.smr_max_pos = load_dict['smrMax']
+        self.smr_min_pos = load_dict['smrMin']
+        self.smt_max_pos = load_dict['smrMax']
+        self.smt_min_pos = load_dict['smrMin']
+        self.dr_max_pos = load_dict['drMax']
+        self.dr_min_pos = load_dict['drMin']
+
+        # Sets the conversion slope based on the found (or default) values.
+        self.calculate_conversion_slope()
 
     def collapse_mda(self):
         print('collapse_mda:', self.mda_collapsed)
