@@ -151,6 +151,9 @@ class MP_792:
     def get_position(self, axis: int):
         return self._position[axis]
 
+    def is_moving(self, axis: int):
+        return self._is_moving_l[axis]
+
     def _is_moving(self, axis: int):
         self.set_axis(axis)
 
@@ -165,9 +168,6 @@ class MP_792:
         else:
             self._is_moving_l[axis] = True
             return True
-
-    def is_moving(self, axis: int):
-        return self._is_moving_l[axis]
 
     def is_homing(self, axis: int):
         return self._is_homing[axis]

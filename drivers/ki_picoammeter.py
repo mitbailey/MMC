@@ -74,6 +74,8 @@ class KI_Picoammeter:
         self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
         print('Init complete')
 
+    def pinger(self):
+        self.s.write(b'*IDN?\r')
 
     def set_samples(self, samples: int):
         if samples < 2:

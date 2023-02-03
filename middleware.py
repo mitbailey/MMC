@@ -140,26 +140,46 @@ def new_motion_controller(dummy: bool, dev_model: str, man_port: str = None):
     return devs
 
 class MotionController:
+    """Provides a layer of abstraction for communication with motion controller drivers.
+    """
     SupportedDevices = ['TL KST101', 'MP 789A-4', 'MP 792']
 
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None, axis: int = 0, parent = None):
-        self.model = dev_model
-        self._steps_per_value = 0
-        self._is_dummy = dummy
-        self.motor_ctrl = None
-        self.port = None
-        self.axis = 0
-        self.multi_axis = False
+        """_summary_
 
-        self.max_pos = 9999
-        self.min_pos = -9999
+        Args:
+            dummy (bool): Is this a fake device? If no, it must be connected hardware.
+            dev_model (str): Name of the device; i.e., 'MP 789A-4'.
+            man_port (str, optional): A manually defined port. Defaults to None.
+            axis (int, optional): Which axis this is for, if this is for a multi-axis device. Defaults to 0.
+            parent (_type_, optional): _description_. Defaults to None.
+
+        Raises:
+            RuntimeError: _description_
+            RuntimeError: _description_
+            Exception: _description_
+            RuntimeError: _description_
+        """
+        self._model = dev_model
+        self._steps_per_value = 0.0
+        self._is_dummy = dummy
+        self._motor_ctrl = None
+        self._port = None
+        self._axis = 0
+        self._multi_axis = False
+
+        self._max_pos = 9999
+        self._min_pos = -9999
+
+        self._homing = False
+        self._moving = False
 
         # Initializes our motor_ctrl stuff depending on what hardware we're using.
-        if self.model == MotionController.SupportedDevices[0]:
+        if self._model == MotionController.SupportedDevices[0]:
             if dummy:
                 serials = tlkt.Thorlabs.KSTDummy._ListDevices()
-                self.motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
-                self.motor_ctrl.set_stage('ZST25')
+                self._motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
+                self._motor_ctrl.set_stage('ZST25')
             else:
                 print("Trying...")
                 serials = tlkt.Thorlabs.ListDevicesAny()
@@ -167,96 +187,170 @@ class MotionController:
                 if len(serials) == 0:
                     print("No KST101 controller found.")
                     raise RuntimeError('No KST101 controller found')
-                self.motor_ctrl = tlkt.Thorlabs.KST101(serials[0])
-                if (self.motor_ctrl._CheckConnection() == False):
+                self._motor_ctrl = tlkt.Thorlabs.KST101(serials[0])
+                if (self._motor_ctrl._CheckConnection() == False):
                     print("Connection with motor controller failed.")
                     raise RuntimeError('Connection with motor controller failed.')
-                self.motor_ctrl.set_stage('ZST25')
-        elif self.model == MotionController.SupportedDevices[1]:
+                self._motor_ctrl.set_stage('ZST25')
+        elif self._model == MotionController.SupportedDevices[1]:
             if dummy:
-                self.motor_ctrl = mp789.MP_789A_4_DUMMY(man_port)
+                self._motor_ctrl = mp789.MP_789A_4_DUMMY(man_port)
                 pass
             else:
-                self.motor_ctrl = mp789.MP_789A_4(man_port)
-        elif self.model.startswith('MP_792_AXIS_'):
-            self.motor_ctrl = parent
-            self.axis = axis
-            self.multi_axis = True
+                self._motor_ctrl = mp789.MP_789A_4(man_port)
+        elif self._model.startswith('MP_792_AXIS_'):
+            self._motor_ctrl = parent
+            self._axis = axis
+            self._multi_axis = True
         else:
             print('Motion controller device model "%s" is not supported.'%(dev_model))
             raise Exception
 
-        if self.motor_ctrl is None:
+        if self._motor_ctrl is None:
             raise RuntimeError('self.motor_ctrl is None')
 
-        # Why would the motor controller know the steps per value?!
-        # self.steps_per_value = self.motor_ctrl.steps_per_value
+        self._port = man_port
 
-        self.port = man_port
+    # Setters.
+    def set_limits(self, max_pos, min_pos) -> tuple[float, float]:
+        """Set the software-defined movement limits of this axis.
 
-    def set_limits(self, max_pos, min_pos):
-        self.max_pos = max_pos
-        self.min_pos = min_pos
+        Args:
+            max_pos (_type_): _description_
+            min_pos (_type_): _description_
+
+        Returns:
+            tuple[float, float]: _description_
+        """
+        self._max_pos = max_pos
+        self._min_pos = min_pos
+
+        return self._max_pos, self._min_pos
 
     # The number of steps per input value. Could be steps per millimeter, nanometer, or degree.
-    def set_steps_per_value(self, steps):
+    def set_steps_per_value(self, steps) -> float:
+        """Sets the conversion factor from hardware steps to real-world units.
+
+        Args:
+            steps (_type_): _description_
+
+        Returns:
+            float: _description_
+        """
         if steps > 0:
             self._steps_per_value = steps
 
-    def get_steps_per_value(self):
         return self._steps_per_value
 
-    def is_dummy(self):
+    # Getters.
+    def get_steps_per_value(self) -> float:
+        """Gets the conversion factor from hardware steps to real-world units.
+
+        Returns:
+            float: _description_
+        """
+        return self._steps_per_value
+
+    def is_dummy(self) -> bool:
+        """Is this a dummy device? If False, it is real hardware.
+
+        Returns:
+            bool: _description_
+        """
         return self.is_dummy
 
-    def home(self):
-        if self.multi_axis:
-            return self.motor_ctrl.home(self.axis)
-        else:
-            return self.motor_ctrl.home()
+    # Commands.    
+    def home(self, blocking: bool = False) -> None:
+        """Sends a home command to the device. Optional blocking.
 
-    def get_position(self):
+        Args:
+            blocking (bool, optional): Whether to block or not; will spawn a thread if blocking is False. Defaults to False.
+        """
+        if self._homing:
+            raise Exception("Already homing!")
+        self._homing = True
+        if blocking:
+            self._home()
+        else:
+            self._homing_thread_active = True
+            home_th = threading.Thread(target=self._home())
+            home_th.start()
+
+        return
+
+    def _home(self) -> None:
+        if self._multi_axis:
+            self._motor_ctrl.home(self._axis)
+        else:
+            self._motor_ctrl.home()
+        self._homing = False
+
+    def get_position(self) -> float:
+        """Returns the current position of the machine in real-world units.
+
+        Returns:
+            float: _description_
+        """
         if self._steps_per_value == 0:
             return 0
 
-        if self.multi_axis:
-            return self.motor_ctrl.get_position(self.axis) / self._steps_per_value
+        if self._multi_axis:
+            return self._motor_ctrl.get_position(self._axis) / self._steps_per_value
         else:
-            return self.motor_ctrl.get_position() / self._steps_per_value
+            return self._motor_ctrl.get_position() / self._steps_per_value
 
-    def is_homing(self):
-        if self.multi_axis:
-            return self.motor_ctrl.is_homing(self.axis)
-        else:
-            return self.motor_ctrl.is_homing()
+    def is_homing(self) -> bool:
+        """Returns whether the device is currently homing.
 
-    def is_moving(self):
-        if self.multi_axis:
-            return self.motor_ctrl.is_moving(self.axis)
+        Returns:
+            bool: _description_
+        """
+        if self._multi_axis:
+            return self._motor_ctrl.is_homing(self._axis)
         else:
-            return self.motor_ctrl.is_moving()
+            return self._motor_ctrl.is_homing()
+
+    def is_moving(self) -> bool:
+        if self._multi_axis:
+            return self._motor_ctrl.is_moving(self._axis)
+        else:
+            return self._motor_ctrl.is_moving()
 
     def move_to(self, position, block):
+        if self._moving:
+            raise Exception("Already moving!")
+        self._moving = True
+        if block:
+            return self._move_to(position, block)
+        else:
+            home_th = threading.Thread(target=self.home(), args=(position, block))
+            home_th.start()
+            return
+
+    def _move_to(self, position, block):
         if self._steps_per_value == 0:
-            raise Exception('Steps-per value has not been set for this axis. This value can be set in the Machine Configuration window.')
-        if position > self.max_pos:
+            raise Exception('Steps-per value has not been set for this axis. This value must be set in the Machine Configuration window.')
+        if position > self._max_pos:
             raise Exception('Position is beyond the upper limit of this axis.')
-        if position < self.min_pos:
+        if position < self._min_pos:
             raise Exception('Position is beyond the lower limit of this axis.')
 
-        if self.multi_axis:
-            return self.motor_ctrl.move_to(position * self._steps_per_value, block, self.axis)
+        if self._multi_axis:
+            retval = self._motor_ctrl.move_to(position * self._steps_per_value, block, self._axis)
         else:
-            return self.motor_ctrl.move_to(position * self._steps_per_value, block)
+            retval = self._motor_ctrl.move_to(position * self._steps_per_value, block)
 
-    def port_name(self):
-        return self.port
+        self._moving = False
+        return retval
 
-    def short_name(self):
-        return self.motor_ctrl.short_name() + '_' + str(self.axis)
+    def port_name(self) -> str:
+        return self._port
 
-    def long_name(self):
-        return self.motor_ctrl.long_name() + ' Axis ' + str(self.axis)
+    def short_name(self) -> str:
+        return self._motor_ctrl.short_name() + '_' + str(self._axis)
+
+    def long_name(self) -> str:
+        return self._motor_ctrl.long_name() + ' Axis ' + str(self._axis)
 
     pass
 
@@ -267,7 +361,6 @@ class Detector:
     SupportedDevices = ['KI 6485']
 
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None):
-        # TODO: Come up with a proper way of setting the detector, ie as an argument.
         self.model = dev_model
         self.pa = None
         self._is_dummy = False
@@ -284,6 +377,8 @@ class Detector:
         else:
             print('Detector device model "%s" is not supported.'%(dev_model))
             raise Exception
+
+    # TODO: Need a pinger to keep the ComPort open... here or in the drivers? Probably drivers.
 
     # Only function used in mmc.py (.pa.detect())
     def detect(self):

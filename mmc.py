@@ -35,6 +35,9 @@ QCheckBox = qckbx
 QProgressBar = qpbar
 """
 
+# TODO: Set up each model's unique configuration and export them to files. Then run the machines with these setups and see if it works. This will also be a handy test of the import/export system.
+
+# TODO: Probably remove the grating equation UI and system. Replace it just with the steps-to-units converter.
 
 # %% OS and SYS Imports
 import os
@@ -170,6 +173,9 @@ class ScanDM(QThread):
 class ConnectDevices(QThread):
     pass
 
+class UpdatePositionDisplays(QThread):
+    pass
+
 # The main MMC program and GUI class.
 class MMC_Main(QMainWindow):
     # STARTUP PROCEDURE
@@ -206,6 +212,8 @@ class MMC_Main(QMainWindow):
 
         self.connect_devices_thread = ConnectDevices(weakref.proxy(self))
         self.connecting_devices = False
+
+        self.update_position_displays_thread = UpdatePositionDisplays(weakref.proxy(self))
 
         self.application: QApplication = application
         self._startup_args = self.application.arguments()
@@ -449,6 +457,10 @@ class MMC_Main(QMainWindow):
         self.UIE_dmw_accept_qpb.setEnabled(True)
         self.SIGNAL_devices_connection_check.emit(self.dummy, detectors_connected, mtn_ctrls_connected)
 
+    def _connect_devices_failure_cleanup(self):
+        self.connecting_devices = False
+        self.UIE_dmw_accept_qpb.setEnabled(True)
+
     def _connect_devices_progress_anim(self, value):
         self.anim = QPropertyAnimation(targetObject=self.UIE_dmw_load_bar_qpb, propertyName=b"value")
         self.anim.setEasingCurve(QEasingCurve.Type.OutCubic)
@@ -655,6 +667,7 @@ class MMC_Main(QMainWindow):
             # self.disable_movement_sensitive_buttons(True)
             self.scan_status_update("HOMING")
             self.motion_controllers.main_drive_axis.home()
+        self.current_position = -1900
 
         # Get and set the palette.
         palette = self.UIE_mgw_currpos_nm_disp_ql.palette()
@@ -707,9 +720,10 @@ class MMC_Main(QMainWindow):
         self.sm_scan = ScanSM(weakref.proxy(self))
         self.dm_scan = ScanDM(weakref.proxy(self))
 
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_position_displays)
-        self.timer.start(1000)
+        # self.timer = QTimer()
+        # self.timer.timeout.connect(self.update_position_displays_thread.start())
+        # self.timer.start(1000)
+        self.update_position_displays_thread.start()
 
         # Set up the status bar.
         self.statusBar = QStatusBar()
@@ -1357,35 +1371,6 @@ class MMC_Main(QMainWindow):
                 print('ERROR: Unknown scan class %s.'%(scan_class))
 
     def update_position_displays(self):
-        self.current_position = self.motion_controllers.main_drive_axis.get_position()
-        
-        if self.homing_started: # set this to True at __init__ because we are homing, and disable everything. same goes for 'Home' button
-            home_status = self.motion_controllers.main_drive_axis.is_homing() # explore possibility of replacing this with is_homed()
-
-            if home_status:
-                # Detect if the device is saying its homing, but its not actually moving.
-                if self.current_position == self.previous_position:
-                    self.immobile_count += 1
-                if self.immobile_count >= 3:
-                    self.motion_controllers.main_drive_axis.home()
-                    self.immobile_count = 0
-
-            if not home_status:
-                # enable stuff here
-                print(home_status)
-                self.immobile_count = 0
-                self.scan_status_update("IDLE")
-                self.disable_movement_sensitive_buttons(False)
-                self.homing_started = False
-                pass
-        move_status = self.motion_controllers.main_drive_axis.is_moving()
-        
-        if not move_status and self.moving and not self.scanRunning:
-            self.disable_movement_sensitive_buttons(False)
-
-        self.moving = move_status
-        self.previous_position = self.current_position
-
         self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position) / self.conversion_slope) - self.zero_ofst))
 
     def scan_button_pressed(self):
@@ -1813,8 +1798,65 @@ class MMC_Main(QMainWindow):
         application.setQuitOnLastWindowClosed(True)
         return retval
 
+class UpdatePositionDisplays(QThread):
+    SIGNAL_update_main_axis_display = pyqtSignal(str)
+    SIGNAL_qmsg_info = pyqtSignal(str, str)
+    SIGNAL_qmsg_warn = pyqtSignal(str, str)
+    SIGNAL_qmsg_crit = pyqtSignal(str, str)
+
+    def __init__(self, parent: QMainWindow):
+        super(UpdatePositionDisplays, self).__init__()
+        self.other: MMC_Main = parent
+        self.SIGNAL_update_main_axis_display.connect(self.other.update_position_displays)
+        self.SIGNAL_qmsg_info.connect(self.other.QMessageBoxInformation)
+        self.SIGNAL_qmsg_warn.connect(self.other.QMessageBoxWarning)
+        self.SIGNAL_qmsg_crit.connect(self.other.QMessageBoxCritical)
+        print("Update worker init'd.")
+
+    def run(self):
+        print("Update worker started.")
+        def update():
+            print("Updating position displays...")
+            self.other.current_position = self.other.motion_controllers.main_drive_axis.get_position()
+            
+            if self.other.homing_started: # set this to True at __init__ because we are homing, and disable everything. same goes for 'Home' button
+                home_status = self.other.motion_controllers.main_drive_axis.is_homing() # explore possibility of replacing this with is_homed()
+
+                if home_status:
+                    # Detect if the device is saying its homing, but its not actually moving.
+                    if self.other.current_position == self.other.previous_position:
+                        self.other.immobile_count += 1
+                    if self.other.immobile_count >= 3:
+                        self.other.motion_controllers.main_drive_axis.home()
+                        self.other.immobile_count = 0
+
+                if not home_status:
+                    # enable stuff here
+                    print(home_status)
+                    self.other.immobile_count = 0
+                    self.other.scan_status_update("IDLE")
+                    self.other.disable_movement_sensitive_buttons(False)
+                    self.other.homing_started = False
+                    pass
+            move_status = self.other.motion_controllers.main_drive_axis.is_moving()
+            
+            if not move_status and self.other.moving and not self.other.scanRunning:
+                self.other.disable_movement_sensitive_buttons(False)
+
+            self.other.moving = move_status
+            self.other.previous_position = self.other.current_position
+
+            self.SIGNAL_update_main_axis_display.emit('<b><i>%3.4f</i></b>'%(((self.other.current_position) / self.other.conversion_slope) - self.other.zero_ofst))
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(update)
+        self.timer.start(1000)
+        self.exec()
+
+
 class ConnectDevices(QThread):
     SIGNAL_complete = pyqtSignal(list, list)
+    SIGNAL_failure = pyqtSignal()
     SIGNAL_load_bar = pyqtSignal(int)
     SIGNAL_qmsg_info = pyqtSignal(str, str)
     SIGNAL_qmsg_warn = pyqtSignal(str, str)
@@ -1824,6 +1866,7 @@ class ConnectDevices(QThread):
         super(ConnectDevices, self).__init__()
         self.other: MMC_Main = parent
         self.SIGNAL_complete.connect(self.other._connect_devices)
+        self.SIGNAL_failure.connect(self.other._connect_devices_failure_cleanup)
         self.SIGNAL_load_bar.connect(self.other._connect_devices_progress_anim)
         self.SIGNAL_qmsg_info.connect(self.other.QMessageBoxInformation)
         self.SIGNAL_qmsg_warn.connect(self.other.QMessageBoxWarning)
@@ -1869,6 +1912,7 @@ class ConnectDevices(QThread):
                 self.SIGNAL_qmsg_warn.emit('Connection Failure', 'Failed to find detector (%s).'%(e))
                 self.detectors[i] = None
                 detectors_connected[i] = False
+                self.SIGNAL_failure.emit()
                 return
             if self.detectors[i] is None:
                 detectors_connected[i] = False
@@ -1895,6 +1939,7 @@ class ConnectDevices(QThread):
                 self.SIGNAL_qmsg_warn.emit('Connection Failure', 'Failed to find motion controller (%s).'%(e)) 
                 self.mtn_ctrls[-1] = None
                 mtn_ctrls_connected[i] = False
+                self.SIGNAL_failure.emit()
                 return
             if len(self.mtn_ctrls) == 0 or self.mtn_ctrls[-1] is None:
                 mtn_ctrls_connected[i] = False

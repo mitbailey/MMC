@@ -21,7 +21,9 @@ class MP_789A_4:
         self.s_name = 'MP789'
         self.l_name = 'McPherson 789A-4'
         self._is_homing = False
-        self._is_moving_l = False
+        self._moving = False
+
+        self._position = 0
 
         print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
@@ -29,7 +31,6 @@ class MP_789A_4:
             print('Port is none type.')
             raise RuntimeError('Port is none type.')
             
-        self._position = 0
 
         ser_ports = ports_finder.find_serial_ports()
         if port not in ser_ports:
@@ -119,6 +120,7 @@ class MP_789A_4:
                 if '32' in rx or '34' in rx: # Home-switch-blocked status is 32 when stationary, 34 when in motion.
                     break
                 elif '64' in rx or '128' in rx: # If we have hit either of the extreme limit switches and stopped.
+                    # TODO: Some 789s don't have a limit switch. In this case, we will need to home using the lower limit switch... ?
                     print('Hit edge limit switch when homing. Does this device have a home sensor?')
                     raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
                 time.sleep(0.7)
@@ -155,18 +157,15 @@ class MP_789A_4:
     def get_position(self):
         return self._position
 
-    def _is_moving(self):
-        return self._is_moving_l
-    
     def is_moving(self):
         self.s.write(b'^\r')
         status = self.s.read(128).decode('utf-8').rstrip()
-        print('789a-4 status:', status)
+        
         if '0' in status:
-            self._is_moving_l = False
+            self._moving = False
             return False
         else:
-            self._is_moving_l = True
+            self._moving = True
             return True
 
     def is_homing(self):
@@ -198,6 +197,7 @@ class MP_789A_4_DUMMY:
             print('McPherson model 789A-4 (DUMMY) Scan Controller generated.')
         
         self._position = 0
+        self._moving = False
         self.home()
 
     def home(self)->bool:
@@ -214,11 +214,12 @@ class MP_789A_4_DUMMY:
         return self._position
 
     def is_moving(self):
-        return False
+        return self._moving
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, block: bool):
         steps = position - self._position
+        # Stops the moving updater from starting more than once.
         self.move_relative(steps, block)
 
     def move_relative(self, steps: int, block: bool):
