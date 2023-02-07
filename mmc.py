@@ -1407,7 +1407,7 @@ class MMC_Main(QMainWindow):
         try:
             self.motion_controllers.main_drive_axis.move_to(pos, False)
         except Exception as e:
-            QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
+            QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s.'%(e))
             pass
 
     def move_to_position_button_pressed_sr(self):
