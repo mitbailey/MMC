@@ -206,6 +206,9 @@ class MMC_Main(QMainWindow):
 
     # Constructor
     def __init__(self, application, uiresource = None):
+
+        # application.setQuitOnLastWindowClosed(False)
+
         # Handles the initial showing of the UI.
         self.mtn_ctrls = []
         self.detectors = []
@@ -933,7 +936,7 @@ class MMC_Main(QMainWindow):
                     load_dict = load_config(path, is_import)
                 except Exception as e2:
                     print("Configuration file recovery failed (exception: %s). Unable to load configuration file. Exiting."%(e2))
-                    exit(43)
+                    sys.exit(43)
             else:
                 print("Config import failure.")
                 

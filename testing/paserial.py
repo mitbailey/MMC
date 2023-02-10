@@ -1,6 +1,7 @@
 # Test program for communication with the Picoammeter.
 
 import serial
+import sys
 
 f = open("data.txt", 'w')
 
@@ -16,7 +17,7 @@ if 'KEITHLEY INSTRUMENTS INC.,MODEL 6485' in buf:
     print("Keithley Model 6485 found.")
 else:
     print("Keithley Model 6485 not found.")
-    exit()
+    sys.exit()
 
 s.write(b'ARM:COUN 10\r')
 buf = s.read(128).decode('utf-8').rstrip()

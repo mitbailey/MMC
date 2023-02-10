@@ -13,8 +13,8 @@ def reset_config(path: str | pathlib.Path):
     data_save_dir += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
     if not os.path.exists(data_save_dir):
         os.makedirs(data_save_dir)
-
-    os.remove(path + '/config.ini')
+    if os.path.exists(path + '/config.ini'):
+        os.remove(path + '/config.ini')
     save_config(path, False, 1, True, data_save_dir, temp_gratings, 0, 1, 37.8461, 32.0, 0.0, 56.54, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999)
 
 # TODO: Change this to taking a dictionary or something, this many arguments is ridiculous.

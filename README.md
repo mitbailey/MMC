@@ -1,4 +1,4 @@
-# McPherson Monochromator Controller
+# McPherson Monochromator Controller Software
 
 ## Usage
 ### via Executable
@@ -27,5 +27,23 @@ GUI <-> Middleware <-> Drivers <-> Hardware
 - The middleware allows the GUI to be agnostic to specific hardware and hardware implementations, providing the GUI layer with consistent functions to interface with across all forms of Motion Control and Sampling. The Middleware determines which drivers must be used.
 - The drivers interact directly with the Motion Controller and Sampler and are specific to their model / type.
 
-# Executable Compilation
-`pyinstaller mmc.spec`
+# Compilation (One Directory - Fast Startup, 1 GB)
+## Prerequisites
+PyQtWebEngine, pipenv
+
+`pip install PyQtWebEngine`  
+`pip install pipenv`
+
+## Pipenv Setup
+`cd MMC`  
+`pipenv install requests`  
+
+## Compilation
+`pipenv run pyinstaller mmc.spec`
+
+Outputs MMC/dist/MMCS/MMCS.exe
+
+# Compilation (One File - Slow Startup, 400 MB)
+`pyinstaller mmc_onefile.spec`  
+
+Outputs MMC/dist/mmc.exe

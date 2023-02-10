@@ -212,7 +212,7 @@ class MotionController:
         self._port = man_port
 
     # Setters.
-    def set_limits(self, max_pos, min_pos) -> tuple[float, float]:
+    def set_limits(self, max_pos, min_pos):
         """Set the software-defined movement limits of this axis.
 
         Args:
