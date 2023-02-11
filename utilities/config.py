@@ -1,14 +1,36 @@
+#
+# @file config.py
+# @author Mit Bailey (mitbailey@outlook.com)
+# @brief 
+# @version See Git tags for version information.
+# @date 2022.08.22
+# 
+# @copyright Copyright (c) 2022
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#
+
 from __future__ import annotations
 
 import configparser as confp
-import pathlib
 import os
 import datetime as dt
 
 def reset_config(path: str):
     print("Resetting configuration file...")
     
-    temp_gratings = ['1200', '2400', '* New Entry']
     data_save_dir = os.path.expanduser('~/Documents')
     data_save_dir += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
     if not os.path.exists(data_save_dir):
@@ -19,13 +41,10 @@ def reset_config(path: str):
 
 # TODO: Change this to taking a dictionary or something, this many arguments is ridiculous.
 def save_config(path: str, is_export: bool = False, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 0.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'none', filter_axis_dev_name: str = 'none', rsamp_axis_dev_name: str = 'none', tsamp_axis_dev_name: str = 'none', detector_axis_dev_name: str = 'none', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0) -> bool:
+    
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
-    # grating_lstr = grating_combo_lstr[:-1]
-    # gratingDensityStr = ''
-    # for obj in grating_lstr:
-    #     gratingDensityStr += obj + ','
-    # gratingDensityStr = gratingDensityStr.rstrip(',')
+    
     if autosave_data:
         autosave_data_str = 'True'
     else:
@@ -92,36 +111,6 @@ def load_config(path: str, is_import: bool) -> dict:
         error = False
 
         if len(config.sections()) and 'INSTRUMENT' in config.sections():
-            # gratingDensityStr = config['INSTRUMENT']['gratingDensities']
-            # gratingDensityList = gratingDensityStr.split(',')
-            # for d in gratingDensityList:
-            #     try:
-            #         _ = float(d)
-            #     except Exception:
-            #         print('Error getting grating densities')
-            #         # show a window here or something
-            #         error = True
-            #         break
-            # if error:
-            #     break
-            # grating_combo_lstr = gratingDensityList + ['* New Entry']
-            # try:
-            #     idx = int(config['INSTRUMENT']['gratingDensityIndex'])
-            # except Exception as e:
-            #     print('Error getting grating index, %s'%(e.what()))
-            #     idx = 0
-            # if idx >= len(grating_combo_lstr) - 1:
-            #     print('Invalid initial grating index')
-            #     idx = 0
-            # current_grating_idx = idx
-            # grating_density = float(grating_combo_lstr[current_grating_idx])
-            # try:
-            #     diff_order = int(config['INSTRUMENT']['diffractionOrder'])
-            # except Exception as e:
-            #     print('Invalid diffraction order, %s'%(e.what()))
-            # if diff_order < 1:
-            #     print('Diffraction order can not be zero or negative')
-            #     diff_order = 1
             try:
                 current_grating_density = float(config['INSTRUMENT']['gratingDensity'])
             except Exception as e:
@@ -136,29 +125,6 @@ def load_config(path: str, is_import: bool) -> dict:
             if not -90 < zero_ofst < 90:
                 print('Invalid incidence angle %f'%(zero_ofst))
                 zero_ofst = 0
-            # try:
-            #     inc_ang = float(config['INSTRUMENT']['incidenceAngle'])
-            # except Exception as e:
-            #     print('Invalid incidence angle, %s'%(e.what()))
-            # if not -90 < inc_ang < 90:
-            #     print('Invalid incidence angle %f'%(inc_ang))
-            #     inc_ang = 0
-            
-            # try:
-            #     tan_ang = float(config['INSTRUMENT']['tangentAngle'])
-            # except Exception as e:
-            #     print('Invalid tangent angle, %s'%(e.what()))
-            # if not -90 < tan_ang < 90:
-            #     print('Invalid tangent angle %f'%(tan_ang))
-            #     tan_ang = 0
-
-            # try:
-            #     arm_len = float(config['INSTRUMENT']['armLength'])
-            # except Exception as e:
-            #     print('Invalid arm length, %s'%(e.what()))
-            # if not 0 < arm_len < 1e6: # 1 km
-            #     print('Invalid arm length %f'%(arm_len))
-            #     arm_len = 100
 
             max_pos = float(config['INSTRUMENT']['maxPosition'])
             min_pos = float(config['INSTRUMENT']['minPosition'])

@@ -7,6 +7,19 @@
 # 
 # @copyright Copyright (c) 2022
 # 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 #
 
 """ 
@@ -36,8 +49,6 @@ QProgressBar = qpbar
 """
 
 # TODO: Set up each model's unique configuration and export them to files. Then run the machines with these setups and see if it works. This will also be a handy test of the import/export system.
-
-# TODO: Probably remove the grating equation UI and system. Replace it just with the steps-to-units converter.
 
 # %% OS and SYS Imports
 import os
@@ -72,17 +83,11 @@ from PyQt5.QtCore import QTimer
 from PyQt5 import QtCore, QtWidgets
 
 #%% More Standard Imports
-import configparser as confp
-from email.charset import QP
 from time import sleep
 import weakref
-from io import TextIOWrapper
-import math as m
 import numpy as np
 import datetime as dt
 from functools import partial
-# import serial.tools.list_ports
-# from utilities import ports_finder
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -99,7 +104,6 @@ import motion_controller_list as mcl
 import middleware as mw
 from middleware import MotionController#, list_all_devices
 from middleware import Detector
-from middleware import DevFinder
 
 # %% Fonts
 digital_7_italic_22 = None
