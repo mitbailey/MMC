@@ -26,7 +26,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -164,6 +164,20 @@
          <property name="bottomMargin">
           <number>5</number>
          </property>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_15">
+           <property name="text">
+            <string>Minimum Allowed Position</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLabel" name="label_14">
+           <property name="text">
+            <string>nm</string>
+           </property>
+          </widget>
+         </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_35">
            <property name="text">
@@ -171,37 +185,10 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="2">
-          <widget class="QLabel" name="label_38">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QDoubleSpinBox" name="steps_per_nm">
-           <property name="minimum">
-            <double>1.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>999999999.000000000000000</double>
-           </property>
-           <property name="value">
-            <double>2184560.640000000130385</double>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_13">
            <property name="text">
             <string>Maximum Allowed Position</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_15">
-           <property name="text">
-            <string>Minimum Allowed Position</string>
            </property>
           </widget>
          </item>
@@ -218,6 +205,13 @@
            </property>
           </widget>
          </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_38">
+           <property name="text">
+            <string>steps/nm</string>
+           </property>
+          </widget>
+         </item>
          <item row="2" column="1">
           <widget class="QDoubleSpinBox" name="min_pos_sbox">
            <property name="minimum">
@@ -231,13 +225,6 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
-          <widget class="QLabel" name="label_14">
-           <property name="text">
-            <string>nm</string>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_16">
            <property name="text">
@@ -245,66 +232,12 @@
            </property>
           </widget>
          </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <property name="leftMargin">
-          <number>5</number>
-         </property>
-         <property name="topMargin">
-          <number>5</number>
-         </property>
-         <property name="rightMargin">
-          <number>5</number>
-         </property>
-         <property name="bottomMargin">
-          <number>5</number>
-         </property>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <item>
-            <spacer name="horizontalSpacer_3">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_12">
-             <property name="font">
-              <font>
-               <family>Times New Roman</family>
-               <pointsize>12</pointsize>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>&lt;i&gt;m&lt;/i&gt;(&lt;i&gt;&amp;lambda;&amp;#8211;&amp;lambda;&lt;/i&gt;&lt;sub&gt;0&lt;/sub&gt;) = 2 &amp;times; (1/&lt;i&gt;G&lt;/i&gt;) &amp;times; (cos&lt;i&gt;&amp;theta;&lt;/i&gt;&lt;sub&gt;inc&lt;/sub&gt; cos&lt;i&gt;&amp;theta;&lt;/i&gt;&lt;sub&gt;tan&lt;/sub&gt; / &lt;i&gt;L&lt;/i&gt;) &lt;i&gt;x&lt;/i&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_4">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
+         <item row="0" column="1">
+          <widget class="QLabel" name="steps_per_nm">
+           <property name="text">
+            <string>NOT CALCULATED</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -319,7 +252,28 @@
             <enum>QFrame::Raised</enum>
            </property>
            <layout class="QGridLayout" name="gridLayout_2">
-            <item row="1" column="1">
+            <item row="1" column="2">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>lines/mm</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0" colspan="3">
+             <widget class="Line" name="line">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1">
+             <widget class="QPushButton" name="update_conf_btn">
+              <property name="text">
+               <string>Calculate Steps per Nanometer</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="zero_offset_in">
               <property name="decimals">
                <number>4</number>
@@ -332,133 +286,49 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="1">
-             <widget class="QDoubleSpinBox" name="diff_order_in">
-              <property name="decimals">
-               <number>0</number>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="2">
-             <widget class="QLabel" name="label_11">
-              <property name="text">
-               <string>degrees</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="0">
-             <widget class="QLabel" name="label_5">
-              <property name="text">
-               <string>Diffraction Order (&lt;i&gt;m&lt;/i&gt;)</string>
-              </property>
-             </widget>
-            </item>
             <item row="2" column="2">
-             <widget class="QLabel" name="label_8">
-              <property name="text">
-               <string>degrees</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="2">
              <widget class="QLabel" name="label_7">
               <property name="text">
                <string>nm</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QComboBox" name="grating_combo_2"/>
-            </item>
-            <item row="10" column="1">
-             <widget class="QPushButton" name="update_conf_btn">
-              <property name="text">
-               <string>Update Configuration</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_3">
-              <property name="text">
-               <string>Incidence Angle (&lt;i&gt;&amp;theta;&lt;/i&gt;&lt;sub&gt;inc&lt;/sub&gt;)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_10">
-              <property name="text">
-               <string>Tangent Angle (&lt;i&gt;&amp;theta;&lt;/i&gt;&lt;sub&gt;tan&lt;/sub&gt;)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QDoubleSpinBox" name="incidence_angle_in">
-              <property name="minimum">
-               <double>-90.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>90.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QDoubleSpinBox" name="tangent_angle_in">
-              <property name="minimum">
-               <double>-90.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>90.000000000000000</double>
-              </property>
-             </widget>
-            </item>
             <item row="1" column="0">
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>Zero Order Offset (&lt;i&gt;&amp;lambda;&lt;/i&gt;&lt;sub&gt;0&lt;/sub&gt;)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="label_4">
-              <property name="text">
-               <string>Arm Length (&lt;i&gt;L&lt;/i&gt;)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="2">
-             <widget class="QLabel" name="label_9">
-              <property name="text">
-               <string>mm</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0">
              <widget class="QLabel" name="label">
               <property name="text">
                <string>Grating Density (&lt;i&gt;G&lt;/i&gt;)</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="1">
-             <widget class="QDoubleSpinBox" name="arm_length_in">
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_2">
+              <property name="text">
+               <string>Zero Order Offset (&lt;i&gt;&amp;lambda;&lt;/i&gt;&lt;sub&gt;0&lt;/sub&gt;)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="grating_density">
+              <property name="decimals">
+               <number>4</number>
+              </property>
+              <property name="minimum">
+               <double>0.000000000000000</double>
+              </property>
               <property name="maximum">
                <double>500000.000000000000000</double>
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="label_6">
-              <property name="text">
-               <string>lines/mm</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="0" colspan="3">
-             <widget class="Line" name="line">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
+            <item row="0" column="1">
+             <widget class="QComboBox" name="models"/>
             </item>
            </layout>
           </widget>

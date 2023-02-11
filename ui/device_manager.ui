@@ -68,7 +68,7 @@
       </font>
      </property>
      <property name="text">
-      <string>As of v0.5 this Device Manager window is only viewable at program startup. Later this window will be accessible during runtime.</string>
+      <string>As of v0.5 this Device Manager window is only viewable at program startup.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -103,7 +103,7 @@
            <x>0</x>
            <y>0</y>
            <width>758</width>
-           <height>159</height>
+           <height>170</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -239,7 +239,7 @@
            <x>0</x>
            <y>0</y>
            <width>758</width>
-           <height>159</height>
+           <height>169</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">

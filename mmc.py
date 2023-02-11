@@ -93,6 +93,7 @@ from matplotlib.figure import Figure
 from utilities.config import load_config, save_config, reset_config
 import webbrowser
 from utilities.datatable import DataTableWidget
+from instruments.mcpherson import McPherson
 
 import motion_controller_list as mcl
 import middleware as mw
@@ -234,17 +235,12 @@ class MMC_Main(QMainWindow):
         self.motion_controllers = mcl.MotionControllerList()
 
         # Load Configuration File
-        self.grating_combo_lstr = ['1200', '2400', '* New Entry']
-        self.current_grating_idx = 0
 
         # Default grating equation values.
-        self.arm_length = 56.53654 # mm
-        self.diff_order = 1
         self.max_pos = 600.0
         self.min_pos = -40.0
-        self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx]) # grooves/mm
-        self.tangent_ang = 0 # deg
-        self.incidence_ang = 32 # deg
+        self.model_index = 0
+        self.grating_density = 0 # grooves/mm
         self.zero_ofst = 37.8461 # nm
 
         # Other settings' default values.
@@ -271,11 +267,6 @@ class MMC_Main(QMainWindow):
         self.dr_min_pos = -9999
 
         self.load_config(appDir, False)
-
-        # Sets the conversion slope based on the found (or default) values.
-        self.calculate_conversion_slope()
-
-        print('\n\nConversion constant: %f\n'%(self.conversion_slope))
 
         self.manual_position = 0 # 0 nm
         self.startpos = 0
@@ -359,7 +350,7 @@ class MMC_Main(QMainWindow):
             self.device_timer.start(1000)
 
     def closeEvent(self, event):
-        answer = self.QMessageBoxQuestion('Exit Confirmation', "Are you sure you want to exit?")
+        answer = self.QMessageBoxQuestion('Exit Confirmation', "Are you sure you want to exit? All settings and values will be saved.")
         event.ignore()
         if answer == QtWidgets.QMessageBox.Yes:
             event.accept()
@@ -523,13 +514,13 @@ class MMC_Main(QMainWindow):
         self.machine_conf_win: QDialog = None
         self.grating_conf_win: QDialog = None
         self.grating_density_in: QDoubleSpinBox = None
-        self.UIE_mcw_diff_order_in_qdsb: QDoubleSpinBox = None
+        # self.UIE_mcw_diff_order_in_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_max_pos_in_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_min_pos_in_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_zero_ofst_in_qdsb: QDoubleSpinBox = None
-        self.UIE_mcw_arm_length_in_qdsb: QDoubleSpinBox = None
-        self.UIE_mcw_incidence_ang_in_qdsb: QDoubleSpinBox = None
-        self.UIE_mcw_tangent_ang_in_qdsb: QDoubleSpinBox = None
+        # self.UIE_mcw_arm_length_in_qdsb: QDoubleSpinBox = None
+        # self.UIE_mcw_incidence_ang_in_qdsb: QDoubleSpinBox = None
+        # self.UIE_mcw_tangent_ang_in_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_machine_conf_qpb: QPushButton = None
 
         self.UIE_mcw_steps_per_nm_qdsb: QDoubleSpinBox = None
@@ -731,25 +722,28 @@ class MMC_Main(QMainWindow):
         # Set up the status bar.
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
-        self.sb_grating_density: QLabel = QLabel()
-        self.sb_zero_offset: QLabel = QLabel()
-        self.sb_inc_ang: QLabel = QLabel()
-        self.sb_tan_ang: QLabel = QLabel()
-        self.sb_arm_len: QLabel = QLabel()
-        self.sb_diff_order: QLabel = QLabel()
-        self.sb_conv_slope: QLabel = QLabel()
-        self.statusBar.addPermanentWidget(self.sb_grating_density)
-        self.statusBar.addPermanentWidget(self.sb_zero_offset)
-        self.statusBar.addPermanentWidget(self.sb_inc_ang)
-        self.statusBar.addPermanentWidget(self.sb_tan_ang)
-        self.statusBar.addPermanentWidget(self.sb_arm_len)
-        self.statusBar.addPermanentWidget(self.sb_diff_order)
-        self.statusBar.addPermanentWidget(self.sb_conv_slope)
-        self.update_status_bar_grating_equation_values()
+        self.UIE_mgw_copyright_ql: QLabel = QLabel()
+        self.UIE_mgw_copyright_ql.setText('Copyright (c) Mit Bailey 2023')
+        # self.sb_grating_density: QLabel = QLabel()
+        # self.sb_zero_offset: QLabel = QLabel()
+        # self.sb_inc_ang: QLabel = QLabel()
+        # self.sb_tan_ang: QLabel = QLabel()
+        # self.sb_arm_len: QLabel = QLabel()
+        # self.sb_diff_order: QLabel = QLabel()
+        # self.sb_conv_slope: QLabel = QLabel()
+        # self.statusBar.addPermanentWidget(self.sb_grating_density)
+        # self.statusBar.addPermanentWidget(self.sb_zero_offset)
+        # self.statusBar.addPermanentWidget(self.sb_inc_ang)
+        # self.statusBar.addPermanentWidget(self.sb_tan_ang)
+        # self.statusBar.addPermanentWidget(self.sb_arm_len)
+        # self.statusBar.addPermanentWidget(self.sb_diff_order)
+        # self.statusBar.addPermanentWidget(self.sb_conv_slope)
+        self.statusBar.addPermanentWidget(self.UIE_mgw_copyright_ql)
+        # self.update_status_bar_grating_equation_values()
 
-        self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope
-        self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst) * self.conversion_slope
-        self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst) * self.conversion_slope
+        self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst)
+        self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst)
+        self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst)
 
         self.UIE_mgw_fw_mancon_position_set_qsb: QSpinBox = self.findChild(QSpinBox, 'filter_wheel_pos_set_spinbox')
         self.UIE_mgw_fw_mancon_move_pos_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_move_pos_button')
@@ -906,6 +900,10 @@ class MMC_Main(QMainWindow):
         for uie in uiel:
             uie.installEventFilter(self)
 
+        # Setup the steps_per_nm of the main axis.
+        self.UIE_mcw_steps_per_nm_ql = None
+        self.calculate_and_apply_steps_per_nm()
+
         self.main_gui_booted = True
         self.show()  
         self.dmw.close()
@@ -921,7 +919,7 @@ class MMC_Main(QMainWindow):
         self.save_config(fileInfo.absoluteFilePath(), True) 
         
     def save_config(self, path: str, is_export: bool):
-        save_config(path, is_export, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.grating_combo_lstr, self.current_grating_idx, self.diff_order, self.zero_ofst, self.incidence_ang, self.tangent_ang, self.arm_length, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos)
+        save_config(path, is_export, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos)
 
     def load_config(self, path: str, is_import: bool):
         # Replaces default grating equation values with the values found in the config.ini file.
@@ -943,16 +941,17 @@ class MMC_Main(QMainWindow):
         self.mes_sign = load_dict['measurementSign']
         self.autosave_data_bool = load_dict['autosaveData']
         self.data_save_directory = load_dict['dataSaveDirectory']
-        self.grating_combo_lstr = load_dict["gratingDensities"]
-        self.current_grating_idx = load_dict["gratingDensityIndex"]
-        self.diff_order = load_dict["diffractionOrder"]
+        # self.grating_combo_lstr = load_dict["gratingDensities"]
+        self.model_index = load_dict["modelIndex"]
+        self.grating_density = load_dict["gratingDensity"]
+        # self.diff_order = load_dict["diffractionOrder"]
         self.zero_ofst = load_dict["zeroOffset"]
-        self.incidence_ang = load_dict["incidenceAngle"]
-        self.tangent_ang = load_dict["tangentAngle"]
-        self.arm_length = load_dict["armLength"]
+        # self.incidence_ang = load_dict["incidenceAngle"]
+        # self.tangent_ang = load_dict["tangentAngle"]
+        # self.arm_length = load_dict["armLength"]
         self.max_pos = load_dict["maxPosition"]
         self.min_pos = load_dict["minPosition"]
-        self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
+        # self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
 
         self.main_axis_index = load_dict['mainAxisIndex']
         print('LOADED MAIN_AXIS_INDEX VALUE OF:', self.main_axis_index)
@@ -976,9 +975,6 @@ class MMC_Main(QMainWindow):
         self.smt_min_pos = load_dict['smrMin']
         self.dr_max_pos = load_dict['drMax']
         self.dr_min_pos = load_dict['drMin']
-
-        # Sets the conversion slope based on the found (or default) values.
-        self.calculate_conversion_slope()
 
     def collapse_mda(self):
         print('collapse_mda:', self.mda_collapsed)
@@ -1321,15 +1317,6 @@ class MMC_Main(QMainWindow):
     def pop_out_plot_toggled(self, state):
         self.pop_out_plot = state
 
-    def update_status_bar_grating_equation_values(self):
-        self.sb_grating_density.setText("  <i>G</i> " + str(self.grating_density) + " grooves/mm    ")
-        self.sb_zero_offset.setText("  <i>&lambda;</i><sub>0</sub> " + str(self.zero_ofst) + " nm    ")
-        self.sb_inc_ang.setText("  <i>&theta;</i><sub>inc</sub> " + str(self.incidence_ang) + " deg    ")
-        self.sb_tan_ang.setText("  <i>&theta;</i><sub>tan</sub> " + str(self.tangent_ang) + " deg    ")
-        self.sb_arm_len.setText("  <i>L</i> " + str(self.arm_length) + " mm    ")
-        self.sb_diff_order.setText("  <i>m</i> " + str(self.diff_order) + "    ")
-        self.sb_conv_slope.setText("   %.06f slope    "%(self.conversion_slope))
-
     def update_plots(self, data: list):
         if self.plotCanvas is None:
             return
@@ -1374,7 +1361,7 @@ class MMC_Main(QMainWindow):
                 print('ERROR: Unknown scan class %s.'%(scan_class))
 
     def update_position_displays(self):
-        self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position) / self.conversion_slope) - self.zero_ofst))
+        self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position)) - self.zero_ofst))
 
     def scan_button_pressed(self):
         if not self.scanRunning:
@@ -1402,10 +1389,10 @@ class MMC_Main(QMainWindow):
         self.moving = True
         self.disable_movement_sensitive_buttons(True)
 
-        print("Conversion slope: " + str(self.conversion_slope))
+        print("Steps per nm: " + str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
         print("Manual position: " + str(self.manual_position))
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
-        pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope)
+        pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst))
 
         try:
             self.motion_controllers.main_drive_axis.move_to(pos, False)
@@ -1464,83 +1451,28 @@ class MMC_Main(QMainWindow):
 
     def start_changed(self):
         print("Start changed to: %s mm"%(self.UIE_mgw_start_qdsb.value()))
-        self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst) * self.conversion_slope
+        self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst)
         print(self.startpos)
 
     def stop_changed(self):
         print("Stop changed to: %s mm"%(self.UIE_mgw_stop_qdsb.value()))
-        self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst) * self.conversion_slope
+        self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst)
         print(self.stoppos)
 
     def step_changed(self):
         print("Step changed to: %s mm"%(self.UIE_mgw_step_qdsb.value()))
-        self.steppos = (self.UIE_mgw_step_qdsb.value()) * self.conversion_slope
+        self.steppos = (self.UIE_mgw_step_qdsb.value())
         print(self.steppos)
 
     def manual_pos_changed(self):
         print("Manual position changed to: %s mm"%(self.UIE_mgw_pos_qdsb.value()))
-        self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst) * self.conversion_slope
+        self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst)
 
     def manual_pos_changed_sr(self):
         print('Manual position (SR) changed to: %d steps'%(self.UIE_mgw_sm_rpos))
 
-    def show_window_grating_config(self):
-        print('show_window_grating_config')
-        if self.grating_conf_win is None: 
-            self.grating_conf_win = QDialog(self)
-
-            self.grating_conf_win.setWindowTitle('Grating Density Input')
-            self.grating_conf_win.setMinimumSize(320, 320)
-
-            # self.grating_spinbox: SelectAllDoubleSpinBox = SelectAllDoubleSpinBox()
-            self.grating_spinbox: QDoubleSpinBox = QDoubleSpinBox()
-            self.grating_spinbox.setMinimum(0)
-            self.grating_spinbox.setMaximum(50000)
-            self.grating_spinbox.setButtonSymbols(QAbstractSpinBox.NoButtons)
-            self.grating_spinbox.setDecimals(4)
-
-            apply_button = QPushButton('Add Entry')
-            apply_button.clicked.connect(self.apply_grating_input)
-
-            layout = QVBoxLayout()
-            layout.addWidget(self.grating_spinbox)
-            layout.addStretch(1)
-            layout2 = QHBoxLayout()
-            layout2.addStretch(1)
-            layout2.addWidget(apply_button)
-            layout2.addStretch(1)
-            layout.addLayout(layout2)
-
-            self.grating_conf_win.setLayout(layout)
-
-        self.grating_spinbox.setFocus() # Automatically sets this as focus.
-        self.grating_spinbox.selectAll()
-        self.grating_conf_win.exec()
-
-    def apply_grating_input(self):
-        val = self.grating_spinbox.value()
-        exists = False
-        for v in self.grating_combo_lstr[:-1]:
-            if float(v) == val:
-                exists = True
-                break
-        if not exists:
-            out = str(self.grating_spinbox.value())
-            if int(float(out)) == float(out):
-                out = out.split('.')[0]
-            self.grating_combo_lstr.insert(-1, out)
-            self.UIE_mcw_grating_qcb.insertItem(self.UIE_mcw_grating_qcb.count() - 1, self.grating_combo_lstr[-2])
-            self.UIE_mcw_grating_qcb.setCurrentIndex(self.UIE_mcw_grating_qcb.count() - 2)
-        self.grating_conf_win.close()    
-
-    def new_grating_item(self, idx: int):
-        slen = len(self.grating_combo_lstr) # old length
-        if idx == slen - 1:
-            self.show_window_grating_config()
-            if len(self.grating_combo_lstr) != slen: # new length is different, new entry has been added
-                self.current_grating_idx = self.UIE_mcw_grating_qcb.setCurrentIndex(idx)
-            else: # new entry has not been added
-                self.UIE_mcw_grating_qcb.setCurrentIndex(self.current_grating_idx)
+    def update_model_index(self):
+        self.model_index = self.UIE_mcw_model_qcb.currentIndex()
 
     def show_window_machine_config(self):
         if self.machine_conf_win is None:
@@ -1555,26 +1487,34 @@ class MMC_Main(QMainWindow):
 
             self.machine_conf_win.setWindowTitle('Monochromator Configuration')
 
-            self.UIE_mcw_grating_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'grating_combo_2')
-            self.UIE_mcw_grating_qcb.addItems(self.grating_combo_lstr)
-            print(self.current_grating_idx)
-            self.UIE_mcw_grating_qcb.setCurrentIndex(self.current_grating_idx)
-            self.UIE_mcw_grating_qcb.activated.connect(self.new_grating_item)
+            self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'models')
+            self.UIE_mcw_model_qcb.addItems(McPherson.MONO_MODELS)
+            self.UIE_mcw_model_qcb.setCurrentIndex(self.model_index)
+            self.UIE_mcw_model_qcb.currentIndexChanged.connect(self.update_model_index)
+            # print(self.current_grating_idx)
+            # self.UIE_mcw_grating_qdsb.setCurrentIndex(self.current_grating_idx)
+
+            self.UIE_mcw_grating_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'grating_density')
+            self.UIE_mcw_grating_qdsb.setValue(self.grating_density)
+            # self.UIE_mcw_grating_qdsb.addItems(self.grating_combo_lstr)
+            # print(self.current_grating_idx)
+            # self.UIE_mcw_grating_qdsb.setCurrentIndex(self.current_grating_idx)
+            # self.UIE_mcw_grating_qdsb.activated.connect(self.new_grating_item)
             
             self.UIE_mcw_zero_ofst_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'zero_offset_in')
             self.UIE_mcw_zero_ofst_in_qdsb.setValue(self.zero_ofst)
             
-            self.UIE_mcw_incidence_ang_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'incidence_angle_in')
-            self.UIE_mcw_incidence_ang_in_qdsb.setValue(self.incidence_ang)
+            # self.UIE_mcw_incidence_ang_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'incidence_angle_in')
+            # self.UIE_mcw_incidence_ang_in_qdsb.setValue(self.incidence_ang)
             
-            self.UIE_mcw_tangent_ang_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'tangent_angle_in')
-            self.UIE_mcw_tangent_ang_in_qdsb.setValue(self.tangent_ang)
+            # self.UIE_mcw_tangent_ang_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'tangent_angle_in')
+            # self.UIE_mcw_tangent_ang_in_qdsb.setValue(self.tangent_ang)
 
-            self.UIE_mcw_arm_length_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'arm_length_in')
-            self.UIE_mcw_arm_length_in_qdsb.setValue(self.arm_length)
+            # self.UIE_mcw_arm_length_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'arm_length_in')
+            # self.UIE_mcw_arm_length_in_qdsb.setValue(self.arm_length)
 
-            self.UIE_mcw_diff_order_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'diff_order_in')
-            self.UIE_mcw_diff_order_in_qdsb.setValue(self.diff_order)
+            # self.UIE_mcw_diff_order_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'diff_order_in')
+            # self.UIE_mcw_diff_order_in_qdsb.setValue(self.diff_order)
 
             self.UIE_mcw_max_pos_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'max_pos_sbox')
             self.UIE_mcw_max_pos_in_qdsb.setValue(self.max_pos)
@@ -1585,7 +1525,12 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_machine_conf_qpb = self.machine_conf_win.findChild(QPushButton, 'update_conf_btn')
             self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
 
-            self.UIE_mcw_steps_per_nm_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'steps_per_nm')
+            self.UIE_mcw_steps_per_nm_ql = self.machine_conf_win.findChild(QLabel, 'steps_per_nm')
+            steps_per_nm = self.motion_controllers.main_drive_axis.get_steps_per_value()
+            if steps_per_nm == 0.0:
+                self.UIE_mcw_steps_per_nm_ql.setText('NOT CALCULATED')
+            else:
+                self.UIE_mcw_steps_per_nm_ql.setText(str(steps_per_nm))
 
             self.UIE_mcw_accept_qpb = self.machine_conf_win.findChild(QPushButton, 'mcw_accept')
             self.UIE_mcw_accept_qpb.clicked.connect(self.accept_mcw)
@@ -1597,7 +1542,7 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_sample_translation_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "sample_translation_axis_combo")
             self.UIE_mcw_detector_rotation_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "detector_rotation_axis_combo")
 
-            self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'model_combo')
+            # self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'model_combo')
 
             none = 'No Device Selected'
             self.UIE_mcw_main_drive_axis_qcb.addItem('%s'%(none))
@@ -1650,9 +1595,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_dr_min_qdsb.setValue(self.dr_min_pos)
 
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
-        print('Exec done', self.current_grating_idx, self.UIE_mcw_grating_qcb.currentIndex())
-        if self.current_grating_idx != self.UIE_mcw_grating_qcb.currentIndex():
-            self.UIE_mcw_grating_qcb.setCurrentIndex(self.current_grating_idx)
+        print('Exec done')
 
     def update_movement_limits(self):
         self.motion_controllers.main_drive_axis.set_limits(self.max_pos, self.min_pos)
@@ -1667,25 +1610,34 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_stop_qdsb.setMinimum(self.min_pos)
 
     def apply_machine_conf(self):
-        idx = self.UIE_mcw_grating_qcb.currentIndex()
-        if idx < len(self.grating_combo_lstr) - 1:
-            self.current_grating_idx = idx
-        self.grating_density = float(self.grating_combo_lstr[self.current_grating_idx])
+        # idx = self.UIE_mcw_grating_qdsb.currentIndex()
+        # if idx < len(self.grating_combo_lstr) - 1:
+            # self.current_grating_idx = idx
+        self.grating_density = self.UIE_mcw_grating_qdsb.value()
         print(self.grating_density)
-        self.diff_order = int(self.UIE_mcw_diff_order_in_qdsb.value())
+        # self.diff_order = int(self.UIE_mcw_diff_order_in_qdsb.value())
         # self.max_pos = self.UIE_mcw_max_pos_in_qdsb.value()
         # self.min_pos = self.UIE_mcw_min_pos_in_qdsb.value()
 
         self.update_movement_limits()
 
         self.zero_ofst = self.UIE_mcw_zero_ofst_in_qdsb.value()
-        self.incidence_ang = self.UIE_mcw_incidence_ang_in_qdsb.value()
-        self.tangent_ang = self.UIE_mcw_tangent_ang_in_qdsb.value()
-        self.arm_length = self.UIE_mcw_arm_length_in_qdsb.value()
 
-        self.calculate_conversion_slope()
+        self.calculate_and_apply_steps_per_nm()
 
-        self.update_status_bar_grating_equation_values()
+    def calculate_and_apply_steps_per_nm(self):
+        steps_per_rev = McPherson.MONO_STEPS_PER_REV[McPherson.MONO_MODELS[self.model_index]]
+
+        try:
+            steps_per_value = McPherson.get_steps_per_nm(steps_per_rev, McPherson.MONO_MODELS[self.model_index], self.grating_density)
+        except Exception as e:
+            print(e)
+            print('Failed to update values. Please keep in mind that Models 272 and Model 608 Pre-Disperser only accepts specific grating densities.')
+            pass
+
+        print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.set_steps_per_value(steps_per_value))
+        if self.UIE_mcw_steps_per_nm_ql is not None:
+            self.UIE_mcw_steps_per_nm_ql.setText(str(steps_per_value))
 
     def mgw_axis_change_main(self):
         self.main_axis_index = self.UIE_mgw_main_drive_axis_qcb.currentIndex()
@@ -1761,16 +1713,18 @@ class MMC_Main(QMainWindow):
         self.motion_controllers.detector_rotation_axis.set_limits(self.dr_max_pos, self.dr_min_pos)
 
         # Set conversion factors.
-        self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_qdsb.value())
+        self.calculate_and_apply_steps_per_nm()
+
+        # self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_qdsb.value())
         self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())
         self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_rot_qdsb.value())
         self.motion_controllers.sample_translation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans_qdsb.value())
         self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per_qdsb.value())
 
-        self.machine_conf_win.close()
+        print('APPLIED GRAT DENSITY:', self.grating_density)
+        print('APPLIED STEPS PER NM:', self.motion_controllers.main_drive_axis.get_steps_per_value())
 
-    def calculate_conversion_slope(self):
-        self.conversion_slope = ((self.arm_length * self.diff_order * self.grating_density)/(2 * (m.cos(m.radians(self.tangent_ang))) * (m.cos(m.radians(self.incidence_ang))) * 1e6))
+        self.machine_conf_win.close()
     
     def QMessageBoxQuestion(self, title: str, msg: str):
         application.setQuitOnLastWindowClosed(False)
@@ -1849,7 +1803,7 @@ class UpdatePositionDisplays(QThread):
             self.other.moving = move_status
             self.other.previous_position = self.other.current_position
 
-            self.SIGNAL_update_main_axis_display.emit('<b><i>%3.4f</i></b>'%(((self.other.current_position) / self.other.conversion_slope) - self.other.zero_ofst))
+            self.SIGNAL_update_main_axis_display.emit('<b><i>%3.4f</i></b>'%(((self.other.current_position)) - self.other.zero_ofst))
 
         self.timer = QTimer()
         self.timer.timeout.connect(update)
@@ -2008,9 +1962,9 @@ class Scan(QThread):
         print("SCAN QTHREAD")
         print("Start | Stop | Step")
         print(self.other.startpos, self.other.stoppos, self.other.steppos)
-        self.other.startpos = (self.other.UIE_mgw_start_qdsb.value() + self.other.zero_ofst) * self.other.conversion_slope
-        self.other.stoppos = (self.other.UIE_mgw_stop_qdsb.value() + self.other.zero_ofst) * self.other.conversion_slope
-        self.other.steppos = (self.other.UIE_mgw_step_qdsb.value()) * self.other.conversion_slope
+        self.other.startpos = (self.other.UIE_mgw_start_qdsb.value() + self.other.zero_ofst)
+        self.other.stoppos = (self.other.UIE_mgw_stop_qdsb.value() + self.other.zero_ofst)
+        self.other.steppos = (self.other.UIE_mgw_step_qdsb.value())
         if self.other.steppos == 0 or self.other.startpos == self.other.stoppos:
             for f in sav_files:
                 if (f is not None):
@@ -2022,8 +1976,7 @@ class Scan(QThread):
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
         self.SIGNAL_status_update.emit("ZEROING")
-        # prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.motion_controllers.main_drive_axis.steps_per_value)
-        prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope)
+        prep_pos = int((0 + self.other.zero_ofst))
         try:
             self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
         except Exception as e:
@@ -2042,7 +1995,7 @@ class Scan(QThread):
             self._ydata.append([])
 
         self._scan_id = self.other.table.scanId
-        metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.main_drive_axis.get_steps_per_value(), 'mm_per_nm': self.other.conversion_slope, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+        metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.main_drive_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
         self.SIGNAL_data_begin.emit(self.scanId,  metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
         while self.scanId == self.other.table.scanId: # spin until that happens
             continue
@@ -2073,8 +2026,8 @@ class Scan(QThread):
                     err = int(float(words[2])) # skip timestamp
                 except Exception:
                     continue
-                # self._xdata[i].append((((pos / self.other.motion_controllers.main_drive_axis.steps_per_value) / self.other.conversion_slope)) - self.other.zero_ofst)
-                self._xdata[i].append((((pos) / self.other.conversion_slope)) - self.other.zero_ofst)
+
+                self._xdata[i].append((((pos))) - self.other.zero_ofst)
                 self._ydata[i].append(self.other.mes_sign * mes * 1e12)
                 self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
 
@@ -2083,12 +2036,12 @@ class Scan(QThread):
                     if idx == 0:
                         sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
                         sav_files[i].write('# Steps/mm: %f\n'%(self.other.motion_controllers.main_drive_axis.get_steps_per_value()))
-                        sav_files[i].write('# mm/nm: %e; lambda_0 (nm): %e\n'%(self.other.conversion_slope, self.other.zero_ofst))
+                        sav_files[i].write('# mm/nm: %e; lambda_0 (nm): %e\n'%(0, self.other.zero_ofst))
                         sav_files[i].write('# Position (step),Position (nm),Mean Current(A),Status/Error Code\n')
                     # process buf
                     # 1. split by \n
-                    # buf = '%d,%e,%e,%d\n'%(pos, ((pos / self.other.motion_controllers.main_drive_axis.steps_per_value) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
-                    buf = '%d,%e,%e,%d\n'%(pos, ((pos) / self.other.conversion_slope) - self.other.zero_ofst, self.other.mes_sign * mes, err)
+
+                    buf = '%d,%e,%e,%d\n'%(pos, ((pos)) - self.other.zero_ofst, self.other.mes_sign * mes, err)
                     sav_files[i].write(buf)
 
                 i += 1
@@ -2173,9 +2126,7 @@ class ScanSM(QThread):
         print("SCAN QTHREAD")
         print("Start | Stop | Step")
         print(start, stop, step)
-        # self.other.startpos = (self.other.UIE_mgw_start_qdsb.value() + self.other.zero_ofst) * self.other.conversion_slope
-        # self.other.stoppos = (self.other.UIE_mgw_stop_qdsb.value() + self.other.zero_ofst) * self.other.conversion_slope
-        # self.other.steppos = (self.other.UIE_mgw_step_qdsb.value()) * self.other.conversion_slope
+
         if step == 0 or start == stop:
             for f in sav_files:
                 if (f is not None):
@@ -2187,8 +2138,7 @@ class ScanSM(QThread):
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
         self.SIGNAL_status_update.emit("ZEROING")
-        # prep_pos = int((0 + self.other.zero_ofst) * self.other.conversion_slope * self.other.motion_controllers.main_drive_axis.steps_per_value)
-        prep_pos = 0#int((0 + self.other.zero_ofst) * self.other.conversion_slope)
+        prep_pos = 0
 
         if scan_type == 0: # Rotation
             try:
@@ -2441,7 +2391,7 @@ class ScanDM(QThread):
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
         self.SIGNAL_status_update.emit("ZEROING")
-        prep_pos = 0#int((0 + self.other.zero_ofst) * self.other.conversion_slope)
+        prep_pos = 0
 
         try:
             self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos, True)
