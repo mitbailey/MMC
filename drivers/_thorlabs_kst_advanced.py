@@ -22,7 +22,7 @@
 #
 #
 
-# %% Imports
+# Imports
 from __future__ import annotations
 from asyncore import poll
 import sys
@@ -41,11 +41,10 @@ def __funcname__():
     import inspect
     return inspect.stack()[1][3]
 
-#%%
+#
 ################################################################################ 
 ############### Level 3 Wrapper (final stage) begin ############################
 
-# %%
 class Thorlabs: # Wrapper class for TLI methods
     TYPE_KST101 = 26
     @staticmethod
@@ -346,20 +345,7 @@ class Thorlabs: # Wrapper class for TLI methods
             """
             if not self.open:
                 self.Open()
-            # ffi = FFI()
-            # ffi.cdef("""
-            # struct TLI_HardwareInformation
-            # {
-            #     DWORD serialNumber;
-            #     char modelNumber[8];
-            #     WORD type;
-            #     DWORD firmwareVersion;
-            #     char notes[48];
-            #     unsigned char deviceDependantData[12];
-            #     WORD hardwareVersion;
-            #     WORD modificationState;
-            #     short numChannels;};
-            # """)
+
             ser_buf = package_ffi.new('struct TLI_HardwareInformation *')
             ret = TLI_KST.GetHardwareInfoBlock(self.serial, ser_buf)
             if ret:
@@ -831,21 +817,6 @@ class Thorlabs: # Wrapper class for TLI methods
             retdict['hardwareVersion'] = None
             retdict['modificationState'] = None
             retdict['numChannels'] = None
-
-            # ffi = FFI()
-            # ffi.cdef("""
-            # struct TLI_HardwareInformation
-            # {
-            #     DWORD serialNumber;
-            #     char modelNumber[8];
-            #     WORD type;
-            #     DWORD firmwareVersion;
-            #     char notes[48];
-            #     unsigned char deviceDependantData[12];
-            #     WORD hardwareVersion;
-            #     WORD modificationState;
-            #     short numChannels;};
-            # """)
             
             return retdict
 
@@ -1078,7 +1049,6 @@ class Thorlabs: # Wrapper class for TLI methods
         def long_name(self):
             return 'ThorLabs KST-101 Dummy'
 
-# %%
 if __name__ == '__main__':
     from pprint import pprint
 
@@ -1099,15 +1069,8 @@ if __name__ == '__main__':
     print(motor_ctrl._ListDevices())
     sleep(1)    
 
-    # print(motor_ctrl.Open())
-    # print(motor_ctrl.GetHardwareInfo())
-    # motor_ctrl.Identify()
-    
     print('Connection status: ' + str(motor_ctrl._CheckConnection()))
     sleep(1)
-
-    # print('Backlight on device should now blink for 5 seconds...')
-    # motor_ctrl._Identify()
 
     print('Current position: ' + str(motor_ctrl.get_position()))
     sleep(1)
@@ -1143,33 +1106,10 @@ if __name__ == '__main__':
 
     # DESIRED_POSITION_NM = 0
 
-    # order = 1
-    # zero_order_offset = 1
-    # L = 550
-    # grating_density = 0.0012
-    # dX = DESIRED_POSITION_NM
-    # a = ((2) * (1 / grating_density) * dcos(32) * ((dX + zero_order_offset)/(L)) * (MM_TO_NM)) / (order)
-    # print("a: " + str(a))
-
     DESIRED_POSITION_MM = 5
 
-    # DESIRED_POSITION_MM = int((DESIRED_POSITION_NM  ) + 1)
     DESIRED_POSITION_IDX = int(DESIRED_POSITION_MM * STEPS_PER_VALUE)
-    # retval = motor_ctrl.move_to(DESIRED_POSITION_IDX, True)
     retval = motor_ctrl.move_to(DESIRED_POSITION_IDX, True)
-    # sleep(1)
-
-    # if (retval == 0):
-    #     while True:
-    #         currpos = int(motor_ctrl.get_position())
-    #         if (currpos == DESIRED_POSITION_IDX):
-    #             print("At desired position.")
-    #             break
-    #         else:
-    #             print("Moving... (" + str(currpos) + ")")
-    #         sleep(1)
-    # else:
-    #     print("Moving error (" + str(retval) + ").")
 
     print('Final position: ' + str(motor_ctrl.get_position()))
     print("Press any key for next move...")
@@ -1178,7 +1118,4 @@ if __name__ == '__main__':
     print("Press any key to exit...")
     input()
 
-    # print('Move by retval: ' + str(motor_ctrl.move_by(100)))
-
     del motor_ctrl
-# %%

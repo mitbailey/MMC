@@ -129,7 +129,7 @@ class Scan(QThread):
             if not self.other.scanRunning:
                 break
             self.SIGNAL_status_update.emit("MOVING")
-            # self.other.motion_controllers.main_drive_axis.move_to(dpos * self.other.motion_controllers.main_drive_axis.steps_per_value, True)
+            
             try:
                 self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
             except Exception as e:

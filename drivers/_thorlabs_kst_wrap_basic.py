@@ -22,7 +22,7 @@
 #
 #
 
-# %% Imports
+# Imports
 from __future__ import annotations
 from nicelib import load_lib, NiceLib, Sig, NiceObject, RetHandler, ret_ignore, LibInfo
 from cffi import FFI
@@ -30,19 +30,18 @@ from inspect import getmembers
 import warnings
 from time import sleep
 import math as m
-import threading
-# import _thorlabs_kst_lib
+
 from . import _thorlabs_kst_lib
 
 def dcos(deg):
     return m.degrees((m.cos(m.radians(32))))
     
-# %% Get current function name
+# Get current function name
 def __funcname__():
     import inspect
     return inspect.stack()[1][3]
 
-# %% Return value strings
+# Return value strings
 err_codes = [
     'Success',
     'FT_InvalidHandle - The FTDI functions have not been initialized',
@@ -214,12 +213,12 @@ KST_MessageId = {
 }
 
 
-# %% Return Handler Example
+# Return Handler Example
 @RetHandler(num_retvals=0)
 def ret_errcode(retval):
     return retval
 
-# %% Converting struct to Dictionary
+# Converting struct to Dictionary
 def cdata_dict(cd, ffi: FFI):
     if isinstance(cd, ffi.CData):
         try:
@@ -232,7 +231,7 @@ def cdata_dict(cd, ffi: FFI):
     else:
         return cd
 
-# %% Struct definitions.
+# Struct definitions.
 package_ffi = FFI()
 
 # Define enums.
@@ -411,7 +410,7 @@ typedef struct tagSAFEARRAY
 } SAFEARRAY;
 """, packed=1) # Defines struct, with packing.
 
-# %% TLI Functions
+# TLI Functions
 class TLIBase(NiceLib): # this would be the base of the Thorlabs namespace, which would provide static methods common across all Thorlabs sub APIs
     _info_ = LibInfo(_thorlabs_kst_lib) # load_lib('thorlabs_kst_')
     _ret_ = ret_errcode
@@ -430,7 +429,6 @@ class TLIBase(NiceLib): # this would be the base of the Thorlabs namespace, whic
     InitializeSimulations = Sig(ret=ret_ignore)
     UninitializeSimulations = Sig(ret=ret_ignore)
 
-# %%
 class TLI_KST(NiceLib): # This would be KST101, a subclass of Thorlabs
     _info_ = LibInfo(_thorlabs_kst_lib) # load_lib('thorlabs_kst_')
     _prefix_ = 'SCC_'

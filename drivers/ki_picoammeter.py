@@ -68,8 +68,6 @@ class KI_Picoammeter:
 
         self.s.write(b'SYST:ZCH ON\r')
         sleep(0.1)
-        # buf = s.read(128).decode('utf-8').rstrip()
-        # print('SYST:ZCH ON: %s'%(buf))
 
         self.s.write(b'RANG 2e-9\r')
         sleep(0.1)
@@ -149,28 +147,9 @@ class KI_Picoammeter_Dummy:
         self.s = None
         self.found = False
         self.port = -1
-        # for port in serial_ports():
-        #     s = serial.Serial(port, 9600, timeout=1)
-        #     print('Beginning search for Keithley Model 6485...')
-        #     print('Trying port %s.'%(port))
-        #     s.write(b'*RST\r')
-        #     sleep(0.5)
-        #     s.write(b'*IDN?\r')
-        #     buf = s.read(128).decode('utf-8').rstrip()
-        #     print(buf)
 
-        #     if 'KEITHLEY INSTRUMENTS INC.,MODEL 6485' in buf:
-        #         print("Keithley Model 6485 found.")
-        #         self.found = True
-        #         self.port = port
-        #         self.s = s
-        #     else:
-        #         # print("Keithley Model 6485 not found.")
-        #         s.close()
         print("Picodummy; no port search necessary.")
 
-        # if self.found == False:
-        #     raise RuntimeError('Could not find Keithley Model 6485!')
         print('Using port %s.'%(self.port))
 
         print('Init complete')
@@ -186,28 +165,9 @@ class KI_Picoammeter_Dummy:
         import numpy as np
         out = np.random.random(2)
         return '%eA,%e,0'%(out[0], out[1])
-        # self.s.write(b'READ?\r')
-        # retry = 10
-        # while retry:
-        #     buf = self.s.read(128).decode('utf-8').rstrip()
-        #     if len(buf):
-        #         break
-        #     retry -= 1
-        # if not retry and len(buf) == 0:
-        #     return out
-        # out = buf
-        # spbuf = buf.split(',')
-        # try:
-        #     if int(float(spbuf[2])) != 2:
-        #         print("ERROR #%d"%(int(float(spbuf[2]))))
-        # except Exception:
-        #     print('Error: %s invalid output'%(buf))
-        return out
 
     def __del__(self):
         pass
-        # if self.s is not None:
-            # self.s.close()
 
     def short_name(self):
         return 'KI6485DUM'

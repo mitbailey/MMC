@@ -22,7 +22,7 @@
 #
 #
 
-# %% OS and SYS Imports
+# OS and SYS Imports
 import os
 import sys
 
@@ -36,7 +36,7 @@ if getattr(sys, 'frozen', False):
 elif __file__:
     appDir = os.path.dirname(__file__)
 
-# %% More Standard Imports
+# More Standard Imports
 import configparser as confp
 from email.charset import QP
 from time import sleep
@@ -52,7 +52,7 @@ matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
-# %% Custom Imports
+# Custom Imports
 from drivers import _thorlabs_kst_advanced as tlkt
 from drivers import ki_picoammeter as ki_pico
 from drivers import mp_789a_4 as mp789
@@ -68,7 +68,6 @@ from utilities import ports_finder
 
 # TODO: Need to implement external triggers when certain actions occur. Should also consider adding a trigger-only faux 'device.'
 
-#%%
 class DevFinder:
     def __init__(self):
         self.done = False
@@ -122,7 +121,6 @@ class DevFinder:
             sleep(0.5)
             raw = s.read(128)
             if b'KEITHLEY INSTRUMENTS INC.,MODEL 6485' in raw:
-                # print('Keithley 6485 detected!')
                 s.close()
                 return '(KI 6485)'
         
@@ -132,7 +130,7 @@ class DevFinder:
 def find_all_ports():
     return ports_finder.find_all_ports()
 
-#%% MotionController
+# MotionController
 # Genericizes the type of motor controller.
 def new_motion_controller(dummy: bool, dev_model: str, man_port: str = None):
     devs = []
@@ -368,7 +366,7 @@ class MotionController:
     pass
 
 
-#%% Detector
+# Detector
 # Genericizes the type of detector.
 class Detector:
     SupportedDevices = ['KI 6485']
