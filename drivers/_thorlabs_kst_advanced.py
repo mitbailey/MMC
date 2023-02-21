@@ -1,4 +1,28 @@
-# %% Imports
+#
+# @file _thorlabs_kst_advanced.py
+# @author Mit Bailey (mitbailey@outlook.com)
+# @brief 
+# @version See Git tags for version information.
+# @date 2022.08.18
+# 
+# @copyright Copyright (c) 2022
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#
+
+# Imports
 from __future__ import annotations
 from asyncore import poll
 import sys
@@ -17,11 +41,10 @@ def __funcname__():
     import inspect
     return inspect.stack()[1][3]
 
-#%%
+#
 ################################################################################ 
 ############### Level 3 Wrapper (final stage) begin ############################
 
-# %%
 class Thorlabs: # Wrapper class for TLI methods
     TYPE_KST101 = 26
     @staticmethod
@@ -214,6 +237,7 @@ class Thorlabs: # Wrapper class for TLI methods
                 RuntimeError: Instance of KST101 exists with this serial number
                 RuntimeError: Serial number not in device list
             """
+            self.num_axes = 1
             self.poll_thread = None
             if str(serialNumber)[:2] != str(Thorlabs.TYPE_KST101):
                 raise ValueError('Invalid serial %d: KST101 Serial starts with %s'%(serialNumber, str(Thorlabs.TYPE_KST101)))
@@ -227,7 +251,7 @@ class Thorlabs: # Wrapper class for TLI methods
             self.moving = False
             self.homed = False
             self.homing = False
-            self._mm_to_idx = 0 # this will cause errors unless a stage is set
+            self._steps_per_value = 0 # this will cause errors unless a stage is set
             self.keep_polling = True
             self.poll_interval = pollingIntervalMs * 0.001
             self.mutex = threading.Lock()
@@ -321,20 +345,7 @@ class Thorlabs: # Wrapper class for TLI methods
             """
             if not self.open:
                 self.Open()
-            # ffi = FFI()
-            # ffi.cdef("""
-            # struct TLI_HardwareInformation
-            # {
-            #     DWORD serialNumber;
-            #     char modelNumber[8];
-            #     WORD type;
-            #     DWORD firmwareVersion;
-            #     char notes[48];
-            #     unsigned char deviceDependantData[12];
-            #     WORD hardwareVersion;
-            #     WORD modificationState;
-            #     short numChannels;};
-            # """)
+
             ser_buf = package_ffi.new('struct TLI_HardwareInformation *')
             ret = TLI_KST.GetHardwareInfoBlock(self.serial, ser_buf)
             if ret:
@@ -377,13 +388,13 @@ class Thorlabs: # Wrapper class for TLI methods
         def set_stage(self, stype: str):
             if stype not in KST_Stages:
                 raise RuntimeError('%s not a valid stage type'%(stype))
-            self._mm_to_idx = Thorlabs.KST101.avail_stages[stype]
+            self._steps_per_value = Thorlabs.KST101.avail_stages[stype]
             ret = TLI_KST.SetStageType(self.serial, KST_Stages.index(stype))
             return ret
 
         @property
-        def mm_to_idx(self):
-            return self._mm_to_idx
+        def steps_per_value(self):
+            return self._steps_per_value
 
         def wait_for(self, mtype: str, mid: str) -> bool:
             if mtype not in KST_MessageType.keys():
@@ -634,6 +645,12 @@ class Thorlabs: # Wrapper class for TLI methods
         def setup_kcube_trigpos(self):
             pass
 
+        def short_name(self):
+            return 'KST101'
+
+        def long_name(self):
+            return 'ThorLabs KST-101'
+
     class KSTDummy: # Subclass for KST101 devices
         # API calls; possible examples.
         """
@@ -699,11 +716,12 @@ class Thorlabs: # Wrapper class for TLI methods
                 RuntimeError: Instance of KST101 exists with this serial number
                 RuntimeError: Serial number not in device list
             """
+            self.num_axes = 1
             self.poll_thread = None
             if str(serialNumber)[:2] != str(Thorlabs.TYPE_KST101):
                 raise ValueError('Invalid serial %d: KST101 Serial starts with %s'%(serialNumber, str(Thorlabs.TYPE_KST101)))
-            elif serialNumber in Thorlabs.KSTDummy.open_devices:
-                raise RuntimeError('Serial %d already in use.'%(serialNumber))
+            # elif serialNumber in Thorlabs.KSTDummy.open_devices:
+                # raise RuntimeError('Serial %d already in use.'%(serialNumber))
             elif serialNumber not in Thorlabs.KSTDummy._ListDevices():
                 raise RuntimeError('Serial %d not in device list.'%(serialNumber))
             self.serial = str(serialNumber)
@@ -713,7 +731,7 @@ class Thorlabs: # Wrapper class for TLI methods
             self.moving = False
             self.homed = False
             self.homing = False
-            self._mm_to_idx = 0
+            self._steps_per_value = 0
             self.keep_polling = True
             self.poll_interval = pollingIntervalMs * 0.001
             self.mutex = threading.Lock()
@@ -735,8 +753,8 @@ class Thorlabs: # Wrapper class for TLI methods
             Returns:
                 bool: _description_
             """
-            if int(self.serial) in Thorlabs.KSTDummy.open_devices:
-                raise RuntimeError('Device %d is already open.'%(int(self.serial)))
+            # if int(self.serial) in Thorlabs.KSTDummy.open_devices:
+                # raise RuntimeError('Device %d is already open.'%(int(self.serial)))
             Thorlabs.KSTDummy.open_devices.append(int(self.serial))
             self.open = True
             # Run self connection test.
@@ -749,8 +767,8 @@ class Thorlabs: # Wrapper class for TLI methods
                 with self.cond:
                     self.cond.notify_all()
                 self.poll_thread.join()
-            if self.open:
-                self._Close()
+            # if self.open:
+                # self._Close()
         
         def _Close(self) -> None:
             """Close connection to the KST101 Controller.
@@ -799,21 +817,6 @@ class Thorlabs: # Wrapper class for TLI methods
             retdict['hardwareVersion'] = None
             retdict['modificationState'] = None
             retdict['numChannels'] = None
-
-            # ffi = FFI()
-            # ffi.cdef("""
-            # struct TLI_HardwareInformation
-            # {
-            #     DWORD serialNumber;
-            #     char modelNumber[8];
-            #     WORD type;
-            #     DWORD firmwareVersion;
-            #     char notes[48];
-            #     unsigned char deviceDependantData[12];
-            #     WORD hardwareVersion;
-            #     WORD modificationState;
-            #     short numChannels;};
-            # """)
             
             return retdict
 
@@ -833,12 +836,12 @@ class Thorlabs: # Wrapper class for TLI methods
         # API calls; possible examples.
 
         def set_stage(self, stype: str):
-            self._mm_to_idx = Thorlabs.KST101.avail_stages[stype]
+            self._steps_per_value = Thorlabs.KST101.avail_stages[stype]
             return True
 
         @property
-        def mm_to_idx(self):
-            return self._mm_to_idx
+        def steps_per_value(self):
+            return self._steps_per_value
 
         def wait_for(self, mtype: str, mid: str) -> bool:
             return True
@@ -1040,7 +1043,12 @@ class Thorlabs: # Wrapper class for TLI methods
         def setup_kcube_trigpos(self):
             pass
 
-# %%
+        def short_name(self):
+            return 'KST101DUM'
+
+        def long_name(self):
+            return 'ThorLabs KST-101 Dummy'
+
 if __name__ == '__main__':
     from pprint import pprint
 
@@ -1061,15 +1069,8 @@ if __name__ == '__main__':
     print(motor_ctrl._ListDevices())
     sleep(1)    
 
-    # print(motor_ctrl.Open())
-    # print(motor_ctrl.GetHardwareInfo())
-    # motor_ctrl.Identify()
-    
     print('Connection status: ' + str(motor_ctrl._CheckConnection()))
     sleep(1)
-
-    # print('Backlight on device should now blink for 5 seconds...')
-    # motor_ctrl._Identify()
 
     print('Current position: ' + str(motor_ctrl.get_position()))
     sleep(1)
@@ -1100,38 +1101,15 @@ if __name__ == '__main__':
     print("ATTEMPTING TO MOVE")
 
     # MM_TO_NM = 10e6
-    # MM_TO_IDX = 2184532 # Based on motor/stage...
-    MM_TO_IDX = 2184560.64 # 7471104
+    # STEPS_PER_VALUE = 2184532 # Based on motor/stage...
+    STEPS_PER_VALUE = 2184560.64 # 7471104
 
     # DESIRED_POSITION_NM = 0
 
-    # order = 1
-    # zero_order_offset = 1
-    # L = 550
-    # grating_density = 0.0012
-    # dX = DESIRED_POSITION_NM
-    # a = ((2) * (1 / grating_density) * dcos(32) * ((dX + zero_order_offset)/(L)) * (MM_TO_NM)) / (order)
-    # print("a: " + str(a))
-
     DESIRED_POSITION_MM = 5
 
-    # DESIRED_POSITION_MM = int((DESIRED_POSITION_NM  ) + 1)
-    DESIRED_POSITION_IDX = int(DESIRED_POSITION_MM * MM_TO_IDX)
-    # retval = motor_ctrl.move_to(DESIRED_POSITION_IDX, True)
+    DESIRED_POSITION_IDX = int(DESIRED_POSITION_MM * STEPS_PER_VALUE)
     retval = motor_ctrl.move_to(DESIRED_POSITION_IDX, True)
-    # sleep(1)
-
-    # if (retval == 0):
-    #     while True:
-    #         currpos = int(motor_ctrl.get_position())
-    #         if (currpos == DESIRED_POSITION_IDX):
-    #             print("At desired position.")
-    #             break
-    #         else:
-    #             print("Moving... (" + str(currpos) + ")")
-    #         sleep(1)
-    # else:
-    #     print("Moving error (" + str(retval) + ").")
 
     print('Final position: ' + str(motor_ctrl.get_position()))
     print("Press any key for next move...")
@@ -1140,7 +1118,4 @@ if __name__ == '__main__':
     print("Press any key to exit...")
     input()
 
-    # print('Move by retval: ' + str(motor_ctrl.move_by(100)))
-
     del motor_ctrl
-# %%

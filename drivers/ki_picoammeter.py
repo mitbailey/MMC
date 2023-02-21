@@ -1,3 +1,27 @@
+#
+# @file ki_picoammeter.py
+# @author Mit Bailey (mitbailey@outlook.com)
+# @brief Driver for the KI Picoammeter.
+# @version See Git tags for version information.
+# @date 2022.08.18
+# 
+# @copyright Copyright (c) 2022
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#
+
 from io import TextIOWrapper
 import sys
 import glob
@@ -5,7 +29,7 @@ import serial
 from time import sleep
 from utilities import ports_finder
 
-class Picoammeter:
+class KI_Picoammeter:
     def __init__(self, samples: int, man_port: str = None):
         if samples < 2:
             samples = 2
@@ -44,8 +68,6 @@ class Picoammeter:
 
         self.s.write(b'SYST:ZCH ON\r')
         sleep(0.1)
-        # buf = s.read(128).decode('utf-8').rstrip()
-        # print('SYST:ZCH ON: %s'%(buf))
 
         self.s.write(b'RANG 2e-9\r')
         sleep(0.1)
@@ -74,6 +96,8 @@ class Picoammeter:
         self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
         print('Init complete')
 
+    def pinger(self):
+        self.s.write(b'*IDN?\r')
 
     def set_samples(self, samples: int):
         if samples < 2:
@@ -83,7 +107,7 @@ class Picoammeter:
         self.samples = samples
         self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
 
-    def sample_data(self):
+    def detect(self):
         out = ''
         self.s.write(b'READ?\r')
         retry = 10
@@ -107,7 +131,13 @@ class Picoammeter:
         if self.s is not None:
             self.s.close()
 
-class Picodummy:
+    def short_name(self):
+        return 'KI6485'
+
+    def long_name(self):
+        return 'Keithley 6485 Picoammeter'
+
+class KI_Picoammeter_Dummy:
     def __init__(self, samples: int):
         if samples < 2:
             samples = 2
@@ -117,28 +147,9 @@ class Picodummy:
         self.s = None
         self.found = False
         self.port = -1
-        # for port in serial_ports():
-        #     s = serial.Serial(port, 9600, timeout=1)
-        #     print('Beginning search for Keithley Model 6485...')
-        #     print('Trying port %s.'%(port))
-        #     s.write(b'*RST\r')
-        #     sleep(0.5)
-        #     s.write(b'*IDN?\r')
-        #     buf = s.read(128).decode('utf-8').rstrip()
-        #     print(buf)
 
-        #     if 'KEITHLEY INSTRUMENTS INC.,MODEL 6485' in buf:
-        #         print("Keithley Model 6485 found.")
-        #         self.found = True
-        #         self.port = port
-        #         self.s = s
-        #     else:
-        #         # print("Keithley Model 6485 not found.")
-        #         s.close()
         print("Picodummy; no port search necessary.")
 
-        # if self.found == False:
-        #     raise RuntimeError('Could not find Keithley Model 6485!')
         print('Using port %s.'%(self.port))
 
         print('Init complete')
@@ -150,32 +161,19 @@ class Picodummy:
         if samples > 20:
             samples = 20
         self.samples = samples
-    def sample_data(self):
+    def detect(self):
         import numpy as np
         out = np.random.random(2)
         return '%eA,%e,0'%(out[0], out[1])
-        # self.s.write(b'READ?\r')
-        # retry = 10
-        # while retry:
-        #     buf = self.s.read(128).decode('utf-8').rstrip()
-        #     if len(buf):
-        #         break
-        #     retry -= 1
-        # if not retry and len(buf) == 0:
-        #     return out
-        # out = buf
-        # spbuf = buf.split(',')
-        # try:
-        #     if int(float(spbuf[2])) != 2:
-        #         print("ERROR #%d"%(int(float(spbuf[2]))))
-        # except Exception:
-        #     print('Error: %s invalid output'%(buf))
-        return out
 
     def __del__(self):
         pass
-        # if self.s is not None:
-            # self.s.close()
+
+    def short_name(self):
+        return 'KI6485DUM'
+
+    def long_name(self):
+        return 'Keithley 6485 Picoammeter Dummy'
 
 # test code
 
@@ -192,9 +190,9 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    pa = Picoammeter(3)
+    pa = KI_Picoammeter(3)
     while not done:
-        print(pa.sample_data())
+        print(pa.detect())
 
     sys.exit(0)
 
