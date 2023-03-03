@@ -334,16 +334,20 @@ class MotionController:
         if block:
             return self._move_to(position, block)
         else:
-            home_th = threading.Thread(target=self.home(), args=(position, block))
-            home_th.start()
+            # move_th = threading.Thread(target=self._move_to(), args=(position, block))
+            move_th = threading.Thread(target=lambda: self._move_to(position, block))
+            move_th.start()
             return
 
     def _move_to(self, position, block):
         if self._steps_per_value == 0:
+            self._moving = False
             raise Exception('Steps-per value has not been set for this axis. This value must be set in the Machine Configuration window.')
         if position > self._max_pos:
+            self._moving = False
             raise Exception('Position is beyond the upper limit of this axis.')
         if position < self._min_pos:
+            self._moving = False
             raise Exception('Position is beyond the lower limit of this axis.')
 
         if self._multi_axis:

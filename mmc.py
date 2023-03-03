@@ -507,9 +507,9 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_steps_per_nm_qdsb: QDoubleSpinBox = None
 
         if dummy:
-            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.5")
+            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.5.1")
         else:
-            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.5")
+            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.5.1")
 
         self.is_conv_set = False # Use this flag to set conversion
 
@@ -1183,6 +1183,7 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_home_qpb.setDisabled(disable)
 
     def manual_home(self):
+        print('Manual home pressed!')
         self.scan_status_update("HOMING")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)

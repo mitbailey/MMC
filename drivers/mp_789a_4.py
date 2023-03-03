@@ -82,7 +82,11 @@ class MP_789A_4:
         # Check Limit Status
         self.s.write(b']\r')
         time.sleep(0.1)
-        rx = self.s.read(128).decode('utf-8')
+        rx_raw = self.s.read(128)
+        rx = rx_raw.decode('utf-8')
+        # rx = self.s.read(128).decode('utf-8')
+
+        print('RECEIVED (raw):', rx_raw)
 
         if '32' in rx:
             # Home switch blocked.
@@ -158,7 +162,7 @@ class MP_789A_4:
             time.sleep(0.1) 
             pass
         else:
-            print('Unknown position to home from.')
+            print('Unknown position to home from.', rx)
             raise RuntimeError('Unknown position to home from.')
 
         # The standard is for the device drivers to read 0 when homed if the controller does not itself provide a value.
@@ -190,8 +194,41 @@ class MP_789A_4:
         self.move_relative(steps, block)
 
     def move_relative(self, steps: int, block: bool):
-        self.s.write(b'+%d\r', steps)
+        print('Being told to move %d steps.'%(steps))
+
+        if steps > 0:
+            print('Moving...')
+            print(b'+%d\r'%(steps))
+            self.s.write(b'+%d\r'%(steps))
+            time.sleep(0.1)
+        elif steps < 0:
+            print('Moving...')
+            print(b'-%d\r'%(steps * -1))
+            self.s.write(b'-%d\r'%(steps * -1))
+            time.sleep(0.1)
+        else:
+            print('Not moving (0 steps).')
+            return
+        
+        if block:
+            i=0
+            # moving = True
+            while i<3:
+                print('BLOCKING')
+                time.sleep(0.5)
+                if not self.is_moving():
+                    print('Found to be NOT MOVING.',i)
+                    i+=1
+                else:
+                    print('Found to be MOVING',i)
+                    i=0
+            print('FINISHED BLOCKING because moving is', i)
+        time.sleep(0.25)
+
         self._position += steps
+        
+        # self.s.write(b'+%d\r'%(steps))
+        # self._position += steps
 
     def short_name(self):
         return self.s_name
@@ -238,6 +275,22 @@ class MP_789A_4_DUMMY:
     def move_relative(self, steps: int, block: bool):
         print(b'+%d\r', steps)
         self._position += steps
+
+        if block:
+            i=0
+            # moving = True
+            while i<15:
+                print('BLOCKING')
+                time.sleep(0.5)
+                if not self.is_moving():
+                    print('Found to be NOT MOVING.',i)
+                    i+=1
+                else:
+                    print('Found to be MOVING',i)
+                    i=0
+            print('FINISHED BLOCKING because moving is', i)
+        time.sleep(0.25)
+
 
     def short_name(self):
         return self.s_name
