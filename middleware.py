@@ -331,10 +331,12 @@ class MotionController:
         if self._moving:
             raise Exception("Already moving!")
         self._moving = True
+        print('Moving to position:', position, 'with blocking:', block)
         if block:
+            print('Blocking.')
             return self._move_to(position, block)
         else:
-            # move_th = threading.Thread(target=self._move_to(), args=(position, block))
+            print('Non-blocking.')
             move_th = threading.Thread(target=lambda: self._move_to(position, block))
             move_th.start()
             return

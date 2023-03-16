@@ -414,10 +414,15 @@ class MMC_Main(QMainWindow):
         print('new mtn ctrls combo list len: %d'%(len(self.UIEL_dmw_mtn_ctrl_qcb)))
 
     def connect_devices(self):
-        for i in range(self.num_detectors):
-            if self.UIEL_dmw_detector_qcb[i].currentIndex() == 0:
-                self.QMessageBoxInformation('Connection Failure', 'No detector was selected for entry #%d.'%(i))
-                return
+        if self.num_detectors == 1 and self.UIEL_dmw_detector_qcb[0].currentIndex() == 0:
+            self.QMessageBoxInformation('No Detectors Selected', 'No detectors selected: will run without a detector.')
+            self.detectors = [] # This should allow for loops to auto-skip.
+            self.num_detectors = 0
+        else:
+            for i in range(self.num_detectors):
+                if self.UIEL_dmw_detector_qcb[i].currentIndex() == 0:
+                    self.QMessageBoxInformation('Connection Failure', 'No detector was selected for entry #%d.'%(i))
+                    return
         for i in range(self.num_motion_controllers):
             if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() == 0:
                 self.QMessageBoxInformation('Connection Failure', 'No motion controller was selected for entry #%d.'%(i))
@@ -639,7 +644,7 @@ class MMC_Main(QMainWindow):
         if not dummy:
             self.homing_started = True
             self.scan_status_update("HOMING")
-            self.motion_controllers.main_drive_axis.home()
+            # self.motion_controllers.main_drive_axis.home() # Handled individually by driver.
         self.current_position = -1900
 
         # Get and set the palette.
@@ -1320,10 +1325,12 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position)) - self.zero_ofst))
 
     def scan_button_pressed(self):
+        print('SCAN_BUTTON_PRESSED FUNCTION START!')
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
             self.scan.start()
+            print('SCAN_BUTTON_PRESSED FUNCTION END!')
 
     def scan_sm_button_pressed(self):
         if not self.scanRunning:
@@ -1701,54 +1708,59 @@ if __name__ == '__main__':
         sys.exit(1) 
     sys.excepthook = exception_hook 
     
-    application = QApplication(sys.argv)
-
-    # Finding and setting of fonts.
     try:
-        fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono italic).ttf')
+        application = QApplication(sys.argv)
+
+        # Finding and setting of fonts.
+        try:
+            fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono italic).ttf')
+        except Exception as e:
+            print(e.what())
+
+        try:
+            fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono).ttf')
+        except Exception as e:
+            print(e.what())
+
+        # Main GUI and child-window setup.
+        ui_file_name = exeDir + '/ui/machine_config.ui'
+        ui_file = QFile(ui_file_name)
+        if not ui_file.open(QIODevice.ReadOnly):
+            print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+            sys.exit(-1)
+
+        ui_file_name = exeDir + '/ui/device_manager.ui'
+        ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
+        if not ui_file.open(QIODevice.ReadOnly):
+            print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+            sys.exit(-1)
+
+        ui_file_name = exeDir + '/ui/main_window.ui'
+        ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
+        if not ui_file.open(QIODevice.ReadOnly):
+            print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+            sys.exit(-1)
+
+        exit_code = MMC_Main.EXIT_CODE_REBOOT
+        while exit_code == MMC_Main.EXIT_CODE_REBOOT:
+            exit_code = MMC_Main.EXIT_CODE_FINISHED
+
+            # Initializes the GUI / Main GUI bootup.
+            mainWindow = MMC_Main(application, ui_file)
+            
+            # Wait for the Qt loop to exit before exiting.
+            exit_code = application.exec() # block until
+
+            # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
+            if mainWindow.main_gui_booted:
+                mainWindow.save_config(appDir, False) 
+
+            # Cleanup.
+            del mainWindow
+
     except Exception as e:
+        print('A GLOBAL EXCEPTION HAS BEEN DETECTED:')
         print(e.what())
-
-    try:
-        fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono).ttf')
-    except Exception as e:
-        print(e.what())
-
-    # Main GUI and child-window setup.
-    ui_file_name = exeDir + '/ui/machine_config.ui'
-    ui_file = QFile(ui_file_name)
-    if not ui_file.open(QIODevice.ReadOnly):
-        print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
-        sys.exit(-1)
-
-    ui_file_name = exeDir + '/ui/device_manager.ui'
-    ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
-    if not ui_file.open(QIODevice.ReadOnly):
-        print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
-        sys.exit(-1)
-
-    ui_file_name = exeDir + '/ui/main_window.ui'
-    ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
-    if not ui_file.open(QIODevice.ReadOnly):
-        print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
-        sys.exit(-1)
-
-    exit_code = MMC_Main.EXIT_CODE_REBOOT
-    while exit_code == MMC_Main.EXIT_CODE_REBOOT:
-        exit_code = MMC_Main.EXIT_CODE_FINISHED
-
-        # Initializes the GUI / Main GUI bootup.
-        mainWindow = MMC_Main(application, ui_file)
-        
-        # Wait for the Qt loop to exit before exiting.
-        exit_code = application.exec() # block until
-
-        # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
-        if mainWindow.main_gui_booted:
-            mainWindow.save_config(appDir, False) 
-
-        # Cleanup.
-        del mainWindow
 
     print('Exiting program...')
 

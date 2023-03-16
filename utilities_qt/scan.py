@@ -105,7 +105,7 @@ class Scan(QThread):
         prep_pos = int((0 + self.other.zero_ofst))
         try:
             print('107: Moving to', prep_pos)
-            self.other.motion_controllers.main_drive_axis.move_to(prep_pos, False)
+            self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
             print('109: Done with', prep_pos)
         except Exception as e:
             print('Exception!')
@@ -115,9 +115,6 @@ class Scan(QThread):
         self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
 
-        while self.other.motion_controllers.main_drive_axis.is_moving():
-            print('Scan is waiting because the device is in motion.')
-            sleep(0.5)
             
 
         self._xdata = []
@@ -138,8 +135,9 @@ class Scan(QThread):
             self.SIGNAL_status_update.emit("MOVING")
             
             try:
-                print('135: Moving to', dpos)
+                print('138: Moving to', dpos)
                 self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
+                print('140: Done with', dpos)
             except Exception as e:
                 QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
                 pass
