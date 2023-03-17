@@ -25,6 +25,7 @@
 import serial
 import time
 from utilities import ports_finder
+from threading import Lock
 
 # Driver class for the McPherson 789A-4.
 # This class is also used by the 792, since the 792 is essentially four 789A-4s addressed separately.
@@ -35,6 +36,7 @@ class MP_789A_4:
         self.l_name = 'McPherson 789A-4'
         self._is_homing = False
         self._moving = False
+        self.moving_poll_mutex = Lock()
 
         self._position = 0
 
@@ -71,6 +73,7 @@ class MP_789A_4:
         self.home()
 
     def home(self)->bool:
+        print('func: home')
         print('Beginning home.')
         self._is_homing = True
 
@@ -82,7 +85,11 @@ class MP_789A_4:
         # Check Limit Status
         self.s.write(b']\r')
         time.sleep(0.1)
-        rx = self.s.read(128).decode('utf-8')
+        rx_raw = self.s.read(128)
+        rx = rx_raw.decode('utf-8')
+        # rx = self.s.read(128).decode('utf-8')
+
+        print('RECEIVED (raw):', rx_raw)
 
         if '32' in rx:
             # Home switch blocked.
@@ -158,8 +165,8 @@ class MP_789A_4:
             time.sleep(0.1) 
             pass
         else:
-            print('Unknown position to home from.')
-            raise RuntimeError('Unknown position to home from.')
+            print('Unknown position to home from.', rx)
+            raise RuntimeError('Unknown position to home from (%s).'%(rx))
 
         # The standard is for the device drivers to read 0 when homed if the controller does not itself provide a value.
         # It is up to the middleware to handle zero- and home-offsets.
@@ -168,12 +175,18 @@ class MP_789A_4:
         return True
 
     def get_position(self):
+        print('func: get_position')
         return self._position
 
     def is_moving(self):
+        print('func: is_moving')
+        self.moving_poll_mutex.acquire()
         self.s.write(b'^\r')
+        time.sleep(0.1)
         status = self.s.read(128).decode('utf-8').rstrip()
-        
+        time.sleep(0.1)
+        self.moving_poll_mutex.release()
+
         if '0' in status:
             self._moving = False
             return False
@@ -182,21 +195,55 @@ class MP_789A_4:
             return True
 
     def is_homing(self):
+        print('func: is_homing')
         return self._is_homing
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, block: bool):
+        print('func: move_to')
         steps = position - self._position
         self.move_relative(steps, block)
 
-    def move_relative(self, steps: int, block: bool):
-        self.s.write(b'+%d\r', steps)
-        self._position += steps
+        if block:
+            while self.is_moving():
+                print('BLOCKING')
+                time.sleep(1)
+            print('FINISHED BLOCKING')
 
+    def move_relative(self, steps: int, block: bool):
+        print('func: move_relative')
+        print('Being told to move %d steps.'%(steps))
+
+        if steps > 0:
+            print('Moving...')
+            print(b'+%d\r'%(steps))
+            self.s.write(b'+%d\r'%(steps))
+            time.sleep(0.1)
+        elif steps < 0:
+            print('Moving...')
+            print(b'-%d\r'%(steps * -1))
+            self.s.write(b'-%d\r'%(steps * -1))
+            time.sleep(0.1)
+        else:
+            print('Not moving (0 steps).')
+            return
+        
+        if block:
+            while self.is_moving():
+                print('BLOCKING')
+                time.sleep(0.5)
+            print('FINISHED BLOCKING')
+
+        time.sleep(0.25)
+
+        self._position += steps
+        
     def short_name(self):
+        print('func: short_name')
         return self.s_name
 
     def long_name(self):
+        print('func: long_name')
         return self.l_name
 
 class MP_789A_4_DUMMY:
@@ -214,6 +261,7 @@ class MP_789A_4_DUMMY:
         self.home()
 
     def home(self)->bool:
+        print('func: home')
         print('Beginning home.')
         print('Finished homing.')
         success = True
@@ -224,25 +272,47 @@ class MP_789A_4_DUMMY:
         return success
 
     def get_position(self):
+        print('func: get_position')
         return self._position
 
     def is_moving(self):
+        print('func: is_moving')
         return self._moving
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, block: bool):
+        print('func: move_to')
         steps = position - self._position
         # Stops the moving updater from starting more than once.
         self.move_relative(steps, block)
 
     def move_relative(self, steps: int, block: bool):
+        print('func: move_relative')
         print(b'+%d\r', steps)
         self._position += steps
 
+        if block:
+            i=0
+            # moving = True
+            while i<15:
+                print('BLOCKING')
+                time.sleep(0.5)
+                if not self.is_moving():
+                    print('Found to be NOT MOVING.',i)
+                    i+=1
+                else:
+                    print('Found to be MOVING',i)
+                    i=0
+            print('FINISHED BLOCKING because moving is', i)
+        time.sleep(0.25)
+
+
     def short_name(self):
+        print('func: short_name')
         return self.s_name
 
     def long_name(self):
+        print('func: long_name')
         return self.l_name
 
 """ 

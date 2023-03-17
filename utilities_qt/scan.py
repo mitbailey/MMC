@@ -104,7 +104,9 @@ class Scan(QThread):
         self.SIGNAL_status_update.emit("ZEROING")
         prep_pos = int((0 + self.other.zero_ofst))
         try:
+            print('107: Moving to', prep_pos)
             self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
+            print('109: Done with', prep_pos)
         except Exception as e:
             print('Exception!')
             self.SIGNAL_error.emit('Move Failure', 'Main drive axis failed to move: %s'%(e))
@@ -112,6 +114,8 @@ class Scan(QThread):
             return
         self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
+
+            
 
         self._xdata = []
         self._ydata = []
@@ -131,7 +135,9 @@ class Scan(QThread):
             self.SIGNAL_status_update.emit("MOVING")
             
             try:
+                print('138: Moving to', dpos)
                 self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
+                print('140: Done with', dpos)
             except Exception as e:
                 QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
                 pass
@@ -268,6 +274,7 @@ class ScanSM(QThread):
 
         if scan_type == 0: # Rotation
             try:
+                print('273: Moving to', prep_pos)
                 self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
             except Exception as e:
                 self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
@@ -294,6 +301,7 @@ class ScanSM(QThread):
                     break
                 self.SIGNAL_status_update.emit('MOVING')
                 try:
+                    print('300: Moving to', dpos)
                     self.other.motion_controllers.sample_rotation_axis.move_to(dpos, True)
                 except Exception as e:
                     self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
@@ -340,12 +348,14 @@ class ScanSM(QThread):
             pass
         elif scan_type == 2: # Theta2Theta
             try:
+                print('347: Moving to', prep_pos)
                 self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
             except Exception as e:
                 self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
                 self.SIGNAL_complete.emit()
                 return
             try:
+                print('354: Moving to', prep_pos)
                 self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos * 2, True)
             except Exception as e:
                 self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
@@ -372,12 +382,14 @@ class ScanSM(QThread):
                     break
                 self.SIGNAL_status_update.emit('MOVING')
                 try:
+                    print('381: Moving to', dpos)
                     self.other.motion_controllers.sample_rotation_axis.move_to(dpos, True)
                 except Exception as e:
                     self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
                     continue
                     pass
                 try:
+                    print('388: Moving to', dpos)
                     self.other.motion_controllers.detector_rotation_axis.move_to(dpos * 2, True)
                 except Exception as e:
                     self.SIGNAL_error.emit('Move Failure', 'Detector rotation axis failed to move: %s'%(e))
@@ -520,6 +532,7 @@ class ScanDM(QThread):
         prep_pos = 0
 
         try:
+            print('531: Moving to', prep_pos)
             self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos, True)
         except Exception as e:
             self.SIGNAL_error.emit('Move Failure', 'Detector rotation axis failed to move: %s'%(e))
@@ -546,6 +559,7 @@ class ScanDM(QThread):
                 break
             self.SIGNAL_status_update.emit('MOVING')
             try:
+                print('549: Moving to', dpos)
                 self.other.motion_controllers.detector_rotation_axis.move_to(dpos, True)
             except Exception as e:
                 self.SIGNAL_error.emit('Move Failure', 'Detector rotation axis failed to move: %s'%(e))
