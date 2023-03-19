@@ -44,7 +44,7 @@ from io import TextIOWrapper
 import math as m
 import numpy as np
 import datetime as dt
-import serial
+from utilities import safe_serial
 import threading
 
 import matplotlib
@@ -98,7 +98,7 @@ class DevFinder:
         return self._master_dev_list
 
     def discern_comport(self, comport: str):
-        s = serial.Serial(comport, 9600, timeout=1)
+        s = safe_serial.SafeSerial(comport, 9600, timeout=1)
         sleep(0.5)
 
         # For each serial port, since they're likely KEYSPAN devices, we will need to figure out what device is on the other end. 
