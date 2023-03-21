@@ -1572,6 +1572,12 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'st_offset')
             self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_offset')
 
+            self.UIE_mcw_zero_ofst_in_qdsb.valueChanged.connect(update_offsets)
+            self.UIE_mcw_fw_offset_qdsb.valueChanged.connect(update_offsets)
+            self.UIE_mcw_sr_offset_qdsb.valueChanged.connect(update_offsets)
+            self.UIE_mcw_st_offset_qdsb.valueChanged.connect(update_offsets)
+            self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(update_offsets)
+
             self.UIE_mcw_fw_offset_qdsb.setValue(self.fw_offset)
             self.UIE_mcw_sr_offset_qdsb.setValue(self.st_offset)
             self.UIE_mcw_st_offset_qdsb.setValue(self.sr_offset)
@@ -1596,6 +1602,18 @@ class MMC_Main(QMainWindow):
 
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         print('Exec done')
+
+    def update_offsets(self):
+        if self.motion_controllers.main_drive_axis is not None:
+            self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
     def update_movement_limits(self):
         self.motion_controllers.main_drive_axis.set_limits(self.max_pos, self.min_pos)
