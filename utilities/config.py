@@ -40,7 +40,7 @@ def reset_config(path: str):
     save_config(path, data_save_directory=data_save_dir)
 
 # TODO: Change this to taking a dictionary or something, this many arguments is ridiculous.
-def save_config(path: str, is_export: bool = False, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 0.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'none', filter_axis_dev_name: str = 'none', rsamp_axis_dev_name: str = 'none', tsamp_axis_dev_name: str = 'none', detector_axis_dev_name: str = 'none', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0) -> bool:
+def save_config(path: str, is_export: bool = False, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 0.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'none', filter_axis_dev_name: str = 'none', rsamp_axis_dev_name: str = 'none', tsamp_axis_dev_name: str = 'none', detector_axis_dev_name: str = 'none', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0, fw_offset: float = 0.0, st_offset: float = 0.0, sr_offset: float = 0.0, dr_offset: float = 0.0) -> bool:
     
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
@@ -77,6 +77,10 @@ def save_config(path: str, is_export: bool = False, mes_sign: int = 1, autosave_
                                   'smtMin': smt_min_pos,
                                   'drMax': dr_max_pos,
                                   'drMin': dr_min_pos}
+    save_config['OFFSETS'] = {'fwOffset': fw_offset,
+                              'stOffset': st_offset,
+                              'srOffset': sr_offset,
+                              'drOffset': dr_offset}
     
     if not is_export:
         with open(path + '/config.ini', 'w') as confFile:
@@ -101,7 +105,8 @@ def load_config(path: str, is_import: bool) -> dict:
         if not os.path.exists(data_save_dir):
             os.makedirs(data_save_dir)
 
-        save_config(path, False, 1, True, data_save_dir, 0.0, 1, 37.8461, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999)
+        save_config(path, False, 1, True, data_save_dir, 0.0, 1, 37.8461, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999, 0.0, 0.0, 0.0, 0.0)
+        # save_config(..?)
 
     while os.path.exists(path):
         config = confp.ConfigParser()
@@ -182,6 +187,11 @@ def load_config(path: str, is_import: bool) -> dict:
             dr_max_pos = float(config['AXIS LIMITS']['drMax'])
             dr_min_pos = float(config['AXIS LIMITS']['drMin'])
 
+            fw_offset = float(config['OFFSETS']['fwOffset'])
+            st_offset = float(config['OFFSETS']['stOffset'])
+            sr_offset = float(config['OFFSETS']['srOffset'])
+            dr_offset = float(config['OFFSETS']['drOffset'])
+
             break
 
     ret_dict = {
@@ -211,7 +221,11 @@ def load_config(path: str, is_import: bool) -> dict:
         'smtMax': smt_max_pos,
         'smtMin': smt_min_pos,
         'drMax': dr_max_pos,
-        'drMin': dr_min_pos
+        'drMin': dr_min_pos,
+        'fwOffset': fw_offset,
+        'stOffset': st_offset,
+        'srOffset': sr_offset,
+        'drOffset': dr_offset
     }
 
     print(ret_dict)

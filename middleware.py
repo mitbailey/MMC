@@ -173,6 +173,7 @@ class MotionController:
         """
         self._model = dev_model
         self._steps_per_value = 0.0
+        self._offset = 0.0
         self._is_dummy = dummy
         self._motor_ctrl = None
         self._port = None
@@ -237,6 +238,13 @@ class MotionController:
         self._min_pos = min_pos
 
         return self._max_pos, self._min_pos
+
+    def set_offset(self, offset):
+        self._offset = offset
+        return self._offset
+    
+    def get_offset(self):
+        return self._offset
 
     # The number of steps per input value. Could be steps per millimeter, nanometer, or degree.
     def set_steps_per_value(self, steps) -> float:
@@ -303,12 +311,12 @@ class MotionController:
             float: _description_
         """
         if self._steps_per_value == 0:
-            return 0
+            return 0 + self._offset
 
         if self._multi_axis:
-            return self._motor_ctrl.get_position(self._axis) / self._steps_per_value
+            return (self._motor_ctrl.get_position(self._axis) / self._steps_per_value) + self._offset
         else:
-            return self._motor_ctrl.get_position() / self._steps_per_value
+            return (self._motor_ctrl.get_position() / self._steps_per_value) + self._offset
 
     def is_homing(self) -> bool:
         """Returns whether the device is currently homing.
@@ -353,9 +361,9 @@ class MotionController:
             raise Exception('Position is beyond the lower limit of this axis.')
 
         if self._multi_axis:
-            retval = self._motor_ctrl.move_to(position * self._steps_per_value, block, self._axis)
+            retval = self._motor_ctrl.move_to((position * self._steps_per_value) + self._offset, block, self._axis)
         else:
-            retval = self._motor_ctrl.move_to(position * self._steps_per_value, block)
+            retval = self._motor_ctrl.move_to((position * self._steps_per_value) + self._offset, block)
 
         self._moving = False
         return retval
