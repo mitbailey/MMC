@@ -22,9 +22,10 @@
 #
 #
 
-import serial
+# import serial
 import time
 from utilities import ports_finder
+from utilities import safe_serial
 from threading import Lock
 
 # Driver class for the McPherson 789A-4.
@@ -52,7 +53,7 @@ class MP_789A_4:
             print('Port not valid. Is another program using the port?')
             raise RuntimeError('Port not valid. Is another program using the port?')
 
-        self.s = serial.Serial(port, 9600, timeout=1)
+        self.s = safe_serial.SafeSerial(port, 9600, timeout=1)
         self.s.write(b' \r')
         time.sleep(0.1)
         rx = self.s.read(128)#.decode('utf-8').rstrip()
@@ -259,6 +260,7 @@ class MP_789A_4_DUMMY:
         self._position = 0
         self._moving = False
         self.home()
+        time.sleep(5)
 
     def home(self)->bool:
         print('func: home')

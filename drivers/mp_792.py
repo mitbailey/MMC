@@ -25,6 +25,7 @@
 import serial
 import time
 from utilities import ports_finder
+from utilities import safe_serial
 
 from drivers.mp_789a_4 import MP_789A_4
 from drivers.mp_789a_4 import MP_789A_4_DUMMY
@@ -55,7 +56,7 @@ class MP_792:
             print('%s\nnot found in\n%s'%(port, ser_ports))
             raise RuntimeError('Port not valid. Is another program using the port?')
 
-        self.s = serial.Serial(port, 9600, timeout=1)
+        self.s = safe_serial.SafeSerial(port, 9600, timeout=1)
         self.s.write(b' \r')
         time.sleep(0.1)
         rx = self.s.read(128)#.decode('utf-8').rstrip()
@@ -266,6 +267,8 @@ class MP_792_DUMMY:
             self.axis_alive[i] = True
 
             self.home(i)
+
+        time.sleep(5)
 
         print('McPherson 792 initialization complete.')
 

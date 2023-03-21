@@ -741,6 +741,8 @@ class Thorlabs: # Wrapper class for TLI methods
             retval = self.home(False) # TODO: Remove blocking while homing in INIT
             if retval != 0 and retval != 39:
                 raise RuntimeError('Motor %s: Could not home, error %s'%(self.serial, err_codes[retval]))
+            
+            sleep(5)
 
         # SCC Methods
         def _Open(self, pollingIntervalMs: int = 100) -> bool:

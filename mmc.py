@@ -232,7 +232,12 @@ class MMC_Main(QMainWindow):
         self.min_pos = -40.0
         self.model_index = 0
         self.grating_density = 0 # grooves/mm
+
         self.zero_ofst = 37.8461 # nm
+        self.fw_offset = 0.0
+        self.st_offset = 0.0
+        self.sr_offset = 0.0
+        self.dr_offset = 0.0
 
         # Other settings' default values.
         self.main_axis_index = 0
@@ -512,9 +517,9 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_steps_per_nm_qdsb: QDoubleSpinBox = None
 
         if dummy:
-            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.5.1")
+            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.6")
         else:
-            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.5.1")
+            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.6")
 
         self.is_conv_set = False # Use this flag to set conversion
 
@@ -640,6 +645,17 @@ class MMC_Main(QMainWindow):
 
         self.motion_controllers.main_drive_axis = self.mtn_ctrls[0]
 
+        if self.motion_controllers.main_drive_axis is not None:
+            self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
+
         self.homing_started = False
         if not dummy:
             self.homing_started = True
@@ -707,9 +723,12 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_copyright_ql.setText('Copyright (c) Mit Bailey 2023')
         self.statusBar.addPermanentWidget(self.UIE_mgw_copyright_ql)
 
-        self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst)
-        self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst)
-        self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst)
+        self.manual_position = (self.UIE_mgw_pos_qdsb.value())
+        self.startpos = (self.UIE_mgw_start_qdsb.value())
+        self.stoppos = (self.UIE_mgw_stop_qdsb.value())
+        # self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst)
+        # self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst)
+        # self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst)
 
         self.UIE_mgw_fw_mancon_position_set_qsb: QSpinBox = self.findChild(QSpinBox, 'filter_wheel_pos_set_spinbox')
         self.UIE_mgw_fw_mancon_move_pos_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_move_pos_button')
@@ -885,7 +904,7 @@ class MMC_Main(QMainWindow):
         self.save_config(fileInfo.absoluteFilePath(), True) 
         
     def save_config(self, path: str, is_export: bool):
-        save_config(path, is_export, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos)
+        save_config(path, is_export, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.dr_offset)
 
     def load_config(self, path: str, is_import: bool):
         # Replaces default grating equation values with the values found in the config.ini file.
@@ -935,6 +954,22 @@ class MMC_Main(QMainWindow):
         self.smt_min_pos = load_dict['smrMin']
         self.dr_max_pos = load_dict['drMax']
         self.dr_min_pos = load_dict['drMin']
+
+        self.fw_offset = load_dict['fwOffset']
+        self.st_offset = load_dict['stOffset']
+        self.sr_offset = load_dict['srOffset']
+        self.dr_offset = load_dict['drOffset']
+
+        if self.motion_controllers.main_drive_axis is not None:
+            self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
     def collapse_mda(self):
         print('collapse_mda:', self.mda_collapsed)
@@ -1322,7 +1357,8 @@ class MMC_Main(QMainWindow):
                 print('ERROR: Unknown scan class %s.'%(scan_class))
 
     def update_position_displays(self):
-        self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position)) - self.zero_ofst))
+        self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position))))
+        # self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position)) - self.zero_ofst))
 
     def scan_button_pressed(self):
         print('SCAN_BUTTON_PRESSED FUNCTION START!')
@@ -1355,7 +1391,8 @@ class MMC_Main(QMainWindow):
         print("Steps per nm: " + str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
         print("Manual position: " + str(self.manual_position))
         print("Move to position button pressed, moving to %d nm"%(self.manual_position))
-        pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst))
+        pos = int((self.UIE_mgw_pos_qdsb.value()))
+        # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst))
 
         try:
             self.motion_controllers.main_drive_axis.move_to(pos, False)
@@ -1414,12 +1451,14 @@ class MMC_Main(QMainWindow):
 
     def start_changed(self):
         print("Start changed to: %s mm"%(self.UIE_mgw_start_qdsb.value()))
-        self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst)
+        self.startpos = (self.UIE_mgw_start_qdsb.value())
+        # self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst)
         print(self.startpos)
 
     def stop_changed(self):
         print("Stop changed to: %s mm"%(self.UIE_mgw_stop_qdsb.value()))
-        self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst)
+        self.stoppos = (self.UIE_mgw_stop_qdsb.value())
+        # self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst)
         print(self.stoppos)
 
     def step_changed(self):
@@ -1429,7 +1468,8 @@ class MMC_Main(QMainWindow):
 
     def manual_pos_changed(self):
         print("Manual position changed to: %s mm"%(self.UIE_mgw_pos_qdsb.value()))
-        self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst)
+        self.manual_position = (self.UIE_mgw_pos_qdsb.value())
+        # self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst)
 
     def manual_pos_changed_sr(self):
         print('Manual position (SR) changed to: %d steps'%(self.UIE_mgw_sm_rpos))
@@ -1476,6 +1516,13 @@ class MMC_Main(QMainWindow):
                 self.UIE_mcw_steps_per_nm_ql.setText('NOT CALCULATED')
             else:
                 self.UIE_mcw_steps_per_nm_ql.setText(str(steps_per_nm))
+            
+            self.UIE_mcw_steps_per_nm_override_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'steps_per_nm_override')
+            self.UIE_mcw_override_steps_per_nm_qckbx = self.machine_conf_win.findChild(QCheckBox, 'override_steps_per_nm')
+            self.UIE_mcw_override_steps_per_nm_qckbx.stateChanged.connect(self.update_override_button)
+            self.UIE_mcw_enact_override_qpb = self.machine_conf_win.findChild(QPushButton, 'enact_override')
+            self.UIE_mcw_enact_override_qpb.setEnabled(False)
+            self.UIE_mcw_enact_override_qpb.clicked.connect(self.override_steps_per_nm)
 
             self.UIE_mcw_accept_qpb = self.machine_conf_win.findChild(QPushButton, 'mcw_accept')
             self.UIE_mcw_accept_qpb.clicked.connect(self.accept_mcw)
@@ -1520,6 +1567,22 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_dr_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_max')
             self.UIE_mcw_dr_min_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_min')
 
+            self.UIE_mcw_fw_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_offset')
+            self.UIE_mcw_sr_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'sr_offset')
+            self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'st_offset')
+            self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_offset')
+
+            self.UIE_mcw_zero_ofst_in_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_fw_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_sr_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
+
+            self.UIE_mcw_fw_offset_qdsb.setValue(self.fw_offset)
+            self.UIE_mcw_sr_offset_qdsb.setValue(self.st_offset)
+            self.UIE_mcw_st_offset_qdsb.setValue(self.sr_offset)
+            self.UIE_mcw_dr_offset_qdsb.setValue(self.dr_offset)
+
         self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
         self.UIE_mcw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
         self.UIE_mcw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
@@ -1540,6 +1603,18 @@ class MMC_Main(QMainWindow):
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         print('Exec done')
 
+    def update_offsets(self):
+        if self.motion_controllers.main_drive_axis is not None:
+            self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
+
     def update_movement_limits(self):
         self.motion_controllers.main_drive_axis.set_limits(self.max_pos, self.min_pos)
 
@@ -1559,22 +1634,51 @@ class MMC_Main(QMainWindow):
         self.update_movement_limits()
 
         self.zero_ofst = self.UIE_mcw_zero_ofst_in_qdsb.value()
+        self.fw_offset = self.UIE_mcw_fw_offset_qdsb.value()
+        self.st_offset = self.UIE_mcw_st_offset_qdsb.value()
+        self.sr_offset = self.UIE_mcw_sr_offset_qdsb.value()
+        self.dr_offset = self.UIE_mcw_dr_offset_qdsb.value()
+
+        if self.motion_controllers.main_drive_axis is not None:
+            self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
+
 
         self.calculate_and_apply_steps_per_nm()
+
+    def update_override_button(self):
+        self.UIE_mcw_enact_override_qpb.setEnabled(self.UIE_mcw_override_steps_per_nm_qckbx.isChecked())
+
+    def override_steps_per_nm(self):
+        if self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
+            print('Desired override value is:', self.UIE_mcw_steps_per_nm_override_qdsb.value())
+            self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_override_qdsb.value())
+
+            print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
+            if self.UIE_mcw_steps_per_nm_ql is not None:
+                self.UIE_mcw_steps_per_nm_ql.setText(str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
 
     def calculate_and_apply_steps_per_nm(self):
         steps_per_rev = McPherson.MONO_STEPS_PER_REV[McPherson.MONO_MODELS[self.model_index]]
 
         try:
             steps_per_value = McPherson.get_steps_per_nm(steps_per_rev, McPherson.MONO_MODELS[self.model_index], self.grating_density)
+            self.motion_controllers.main_drive_axis.set_steps_per_value(steps_per_value)
         except Exception as e:
             print(e)
             print('Failed to update values. Please keep in mind that Models 272 and Model 608 Pre-Disperser only accepts specific grating densities.')
             pass
 
-        print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.set_steps_per_value(steps_per_value))
+        print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
         if self.UIE_mcw_steps_per_nm_ql is not None:
-            self.UIE_mcw_steps_per_nm_ql.setText(str(steps_per_value))
+            self.UIE_mcw_steps_per_nm_ql.setText(str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
 
     def mgw_axis_change_main(self):
         self.main_axis_index = self.UIE_mgw_main_drive_axis_qcb.currentIndex()
@@ -1650,7 +1754,8 @@ class MMC_Main(QMainWindow):
         self.motion_controllers.detector_rotation_axis.set_limits(self.dr_max_pos, self.dr_min_pos)
 
         # Set conversion factors.
-        self.calculate_and_apply_steps_per_nm()
+        if not self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
+            self.calculate_and_apply_steps_per_nm()
 
         # self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_qdsb.value())
         self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())
@@ -1715,12 +1820,12 @@ if __name__ == '__main__':
         try:
             fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono italic).ttf')
         except Exception as e:
-            print(e.what())
+            print(e)
 
         try:
             fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono).ttf')
         except Exception as e:
-            print(e.what())
+            print(e)
 
         # Main GUI and child-window setup.
         ui_file_name = exeDir + '/ui/machine_config.ui'

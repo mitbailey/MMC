@@ -25,9 +25,10 @@
 from io import TextIOWrapper
 import sys
 import glob
-import serial
+# import serial
 from time import sleep
 from utilities import ports_finder
+from utilities import safe_serial
 
 class KI_Picoammeter:
     def __init__(self, samples: int, man_port: str = None):
@@ -44,7 +45,7 @@ class KI_Picoammeter:
                 if port != man_port:
                     continue
 
-            s = serial.Serial(port, 9600, timeout=1)
+            s = safe_serial.SafeSerial(port, 9600, timeout=1)
             print('Beginning search for Keithley Model 6485...')
             print('Trying port %s.'%(port))
             s.write(b'*RST\r')
