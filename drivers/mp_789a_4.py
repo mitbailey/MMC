@@ -260,6 +260,7 @@ class MP_789A_4_DUMMY:
         self._position = 0
         self._moving = False
         self.home()
+        time.sleep(5)
 
     def home(self)->bool:
         print('func: home')

@@ -1476,6 +1476,13 @@ class MMC_Main(QMainWindow):
                 self.UIE_mcw_steps_per_nm_ql.setText('NOT CALCULATED')
             else:
                 self.UIE_mcw_steps_per_nm_ql.setText(str(steps_per_nm))
+            
+            self.UIE_mcw_steps_per_nm_override_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'steps_per_nm_override')
+            self.UIE_mcw_override_steps_per_nm_qckbx = self.machine_conf_win.findChild(QCheckBox, 'override_steps_per_nm')
+            self.UIE_mcw_override_steps_per_nm_qckbx.stateChanged.connect(self.update_override_button)
+            self.UIE_mcw_enact_override_qpb = self.machine_conf_win.findChild(QPushButton, 'enact_override')
+            self.UIE_mcw_enact_override_qpb.setEnabled(False)
+            self.UIE_mcw_enact_override_qpb.clicked.connect(self.override_steps_per_nm)
 
             self.UIE_mcw_accept_qpb = self.machine_conf_win.findChild(QPushButton, 'mcw_accept')
             self.UIE_mcw_accept_qpb.clicked.connect(self.accept_mcw)
@@ -1562,19 +1569,32 @@ class MMC_Main(QMainWindow):
 
         self.calculate_and_apply_steps_per_nm()
 
+    def update_override_button(self):
+        self.UIE_mcw_enact_override_qpb.setEnabled(self.UIE_mcw_override_steps_per_nm_qckbx.isChecked())
+
+    def override_steps_per_nm(self):
+        if self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
+            print('Desired override value is:', self.UIE_mcw_steps_per_nm_override_qdsb.value())
+            self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_override_qdsb.value())
+
+            print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
+            if self.UIE_mcw_steps_per_nm_ql is not None:
+                self.UIE_mcw_steps_per_nm_ql.setText(str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
+
     def calculate_and_apply_steps_per_nm(self):
         steps_per_rev = McPherson.MONO_STEPS_PER_REV[McPherson.MONO_MODELS[self.model_index]]
 
         try:
             steps_per_value = McPherson.get_steps_per_nm(steps_per_rev, McPherson.MONO_MODELS[self.model_index], self.grating_density)
+            self.motion_controllers.main_drive_axis.set_steps_per_value(steps_per_value)
         except Exception as e:
             print(e)
             print('Failed to update values. Please keep in mind that Models 272 and Model 608 Pre-Disperser only accepts specific grating densities.')
             pass
 
-        print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.set_steps_per_value(steps_per_value))
+        print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
         if self.UIE_mcw_steps_per_nm_ql is not None:
-            self.UIE_mcw_steps_per_nm_ql.setText(str(steps_per_value))
+            self.UIE_mcw_steps_per_nm_ql.setText(str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
 
     def mgw_axis_change_main(self):
         self.main_axis_index = self.UIE_mgw_main_drive_axis_qcb.currentIndex()
@@ -1650,7 +1670,8 @@ class MMC_Main(QMainWindow):
         self.motion_controllers.detector_rotation_axis.set_limits(self.dr_max_pos, self.dr_min_pos)
 
         # Set conversion factors.
-        self.calculate_and_apply_steps_per_nm()
+        if not self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
+            self.calculate_and_apply_steps_per_nm()
 
         # self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_qdsb.value())
         self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())

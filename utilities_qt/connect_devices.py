@@ -80,7 +80,7 @@ class ConnectDevices(QThread):
         print('Motion controllers: %d'%(self.num_motion_controllers))
 
         load_increment = (10000 / (self.num_detectors + self.num_motion_controllers)) * 0.8
-        load = 10
+        load = load_increment
         self.SIGNAL_load_bar.emit(load)
 
         for i in range(self.num_detectors):

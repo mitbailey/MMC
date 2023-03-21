@@ -268,6 +268,8 @@ class MP_792_DUMMY:
 
             self.home(i)
 
+        time.sleep(5)
+
         print('McPherson 792 initialization complete.')
 
     def set_axis(self, axis: int):

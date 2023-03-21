@@ -25,7 +25,7 @@
 import time
 import serial
 from threading import Lock
-from _typeshed import ReadableBuffer
+# from _typeshed import ReadableBuffer
 
 safe_ports = {}
 
@@ -44,16 +44,16 @@ class _SafeSerial:
         self._m = Lock()
 
     # Mutex-protected.
-    def write(self, buf: ReadableBuffer):
+    def write(self, buf):
         self._m.acquire()
         retval = self._s.write(buf)
         self._m.release()
         return retval
 
     # Prefixed with a small delay.
-    def read(self):
+    def read(self, size: int = READ_SIZE):
         time.sleep(_SafeSerial.READ_DELAY)
-        retval = self._s.read(_SafeSerial.READ_SIZE)
+        retval = self._s.read(size)
         return retval
     
     def _lock_override(self):
