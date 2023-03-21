@@ -517,9 +517,9 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_steps_per_nm_qdsb: QDoubleSpinBox = None
 
         if dummy:
-            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.5.1")
+            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.6")
         else:
-            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.5.1")
+            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.6")
 
         self.is_conv_set = False # Use this flag to set conversion
 
@@ -1572,11 +1572,11 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'st_offset')
             self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_offset')
 
-            self.UIE_mcw_zero_ofst_in_qdsb.valueChanged.connect(update_offsets)
-            self.UIE_mcw_fw_offset_qdsb.valueChanged.connect(update_offsets)
-            self.UIE_mcw_sr_offset_qdsb.valueChanged.connect(update_offsets)
-            self.UIE_mcw_st_offset_qdsb.valueChanged.connect(update_offsets)
-            self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(update_offsets)
+            self.UIE_mcw_zero_ofst_in_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_fw_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_sr_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
 
             self.UIE_mcw_fw_offset_qdsb.setValue(self.fw_offset)
             self.UIE_mcw_sr_offset_qdsb.setValue(self.st_offset)
