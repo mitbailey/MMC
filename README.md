@@ -18,8 +18,9 @@ Boot in debug mode, no real connections to hardware will be attempted:
 3. Mid level wrapper: `python _thorlabs_kst_wrap_basic.py`
 
 ## Compatible Hardware
-- KST101 (Motor Controller)  
-- KM6485 (Picoammeter)  
+This version is tested and confirmed to work with the following hardware:  
+- ThorLabs KST101 Controller with ZFS25 Stage 
+- Keithley 6485 Picoammeter
 
 ## Hierarchy
 GUI <-> Middleware <-> Drivers <-> Hardware

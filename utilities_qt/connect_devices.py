@@ -75,6 +75,7 @@ class ConnectDevices(QThread):
 
         self.detectors = [None] * self.num_detectors
         self.mtn_ctrls = []
+        self.mtn_ctrls.append(None) # Add a blank to the start so it matches the drop-downs.
 
         print('Detectors: %d'%(self.num_detectors))
         print('Motion controllers: %d'%(self.num_motion_controllers))

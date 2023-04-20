@@ -203,6 +203,7 @@ class MMC_Main(QMainWindow):
 
         # Handles the initial showing of the UI.
         self.mtn_ctrls = []
+        # self.mtn_ctrls.append(None) # Add a blank to the start so it matches the drop-downs.
         self.detectors = []
 
         self.connect_devices_thread = connect_devices.ConnectDevices(weakref.proxy(self))
@@ -604,7 +605,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_detector_rotation_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_detector)
 
         # If anything has changed, we must use default values.
-        if len(self.mtn_ctrls) != self.num_axes_at_time_of_save or self.mtn_ctrls[self.main_axis_index - 1].short_name() != self.main_axis_dev_name or self.mtn_ctrls[self.filter_axis_index - 1].short_name() != self.filter_axis_dev_name or self.mtn_ctrls[self.rsamp_axis_index - 1].short_name() != self.rsamp_axis_dev_name or self.mtn_ctrls[self.tsamp_axis_index - 1].short_name() != self.tsamp_axis_dev_name or self.mtn_ctrls[self.detector_axis_index - 1].short_name() != self.detector_axis_dev_name:
+        if len(self.mtn_ctrls) != self.num_axes_at_time_of_save or self.mtn_ctrls[self.main_axis_index].short_name() != self.main_axis_dev_name or self.mtn_ctrls[self.filter_axis_index].short_name() != self.filter_axis_dev_name or self.mtn_ctrls[self.rsamp_axis_index].short_name() != self.rsamp_axis_dev_name or self.mtn_ctrls[self.tsamp_axis_index].short_name() != self.tsamp_axis_dev_name or self.mtn_ctrls[self.detector_axis_index].short_name() != self.detector_axis_dev_name:
 
                 print('Using default CONNECTIONS values.')
                 self.main_axis_index = 1
@@ -619,13 +620,14 @@ class MMC_Main(QMainWindow):
         # Populate axes combos.
         print('Bmain axis idx:', self.main_axis_index)
         for dev in self.mtn_ctrls:
-            print('Adding %s to config list.'%(dev))
+            if dev is not None:
+                print('Adding %s to config list.'%(dev))
 
-            self.UIE_mgw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
-            self.UIE_mgw_filter_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
-            self.UIE_mgw_sample_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
-            self.UIE_mgw_sample_translation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
-            self.UIE_mgw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
+                self.UIE_mgw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
+                self.UIE_mgw_filter_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
+                self.UIE_mgw_sample_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
+                self.UIE_mgw_sample_translation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
+                self.UIE_mgw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
 
         # Set the combo boxes to display the correct axes.
         print('Cmain axis idx:', self.main_axis_index)
@@ -643,7 +645,7 @@ class MMC_Main(QMainWindow):
         self.mgw_axis_change_tsamp()
         self.mgw_axis_change_detector()
 
-        self.motion_controllers.main_drive_axis = self.mtn_ctrls[0]
+        self.motion_controllers.main_drive_axis = self.mtn_ctrls[1]
 
         if self.motion_controllers.main_drive_axis is not None:
             self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
@@ -1544,15 +1546,16 @@ class MMC_Main(QMainWindow):
             # Populate axes combos.
             print(self.mtn_ctrls)
             for dev in self.mtn_ctrls:
-                print('Adding %s to config list.'%(dev))
+                if dev is not None:
+                    print('Adding %s to config list.'%(dev))
 
-                self.UIE_mcw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
-                self.UIE_mcw_filter_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
-                self.UIE_mcw_sample_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
-                self.UIE_mcw_sample_translation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
-                self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                    self.UIE_mcw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                    self.UIE_mcw_filter_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                    self.UIE_mcw_sample_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                    self.UIE_mcw_sample_translation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
+                    self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
 
-                self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
+                    self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
 
             self.UIE_mcw_fw_steps_per_rot_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_steps_per_deg')
             self.UIE_mcw_fw_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_max')
@@ -1616,7 +1619,8 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
     def update_movement_limits(self):
-        self.motion_controllers.main_drive_axis.set_limits(self.max_pos, self.min_pos)
+        if self.motion_controllers.main_drive_axis is not None:
+            self.motion_controllers.main_drive_axis.set_limits(self.max_pos, self.min_pos)
 
         self.UIE_mgw_pos_qdsb.setMaximum(self.max_pos)
         self.UIE_mgw_pos_qdsb.setMinimum(self.min_pos)
@@ -1659,9 +1663,12 @@ class MMC_Main(QMainWindow):
     def override_steps_per_nm(self):
         if self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
             print('Desired override value is:', self.UIE_mcw_steps_per_nm_override_qdsb.value())
-            self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_override_qdsb.value())
+            if self.motion_controllers.main_drive_axis is not None:
+                self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_override_qdsb.value())
+                print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
+            else:
+                print('Main drive axis is None.')
 
-            print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
             if self.UIE_mcw_steps_per_nm_ql is not None:
                 self.UIE_mcw_steps_per_nm_ql.setText(str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
 
@@ -1673,7 +1680,7 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.main_drive_axis.set_steps_per_value(steps_per_value)
         except Exception as e:
             print(e)
-            print('Failed to update values. Please keep in mind that Models 272 and Model 608 Pre-Disperser only accepts specific grating densities.')
+            print('Failed to update values. Please keep in mind that Models 272 and Model 608 Pre-Disperser only accept specific grating densities.')
             pass
 
         print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
@@ -1682,28 +1689,33 @@ class MMC_Main(QMainWindow):
 
     def mgw_axis_change_main(self):
         self.main_axis_index = self.UIE_mgw_main_drive_axis_qcb.currentIndex()
-        self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.main_axis_index - 1]
-        self.main_axis_dev_name = self.motion_controllers.main_drive_axis.short_name()
+        self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.main_axis_index]
+        if self.motion_controllers.main_drive_axis is not None:
+            self.main_axis_dev_name = self.motion_controllers.main_drive_axis.short_name()
 
     def mgw_axis_change_filter(self):
         self.filter_axis_index = self.UIE_mgw_filter_wheel_axis_qcb.currentIndex()
-        self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.filter_axis_index - 1]
-        self.filter_axis_dev_name = self.motion_controllers.filter_wheel_axis.short_name()
+        self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.filter_axis_index]
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.filter_axis_dev_name = self.motion_controllers.filter_wheel_axis.short_name()
 
     def mgw_axis_change_rsamp(self):
         self.rsamp_axis_index = self.UIE_mgw_sample_rotation_axis_qcb.currentIndex()
-        self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.rsamp_axis_index - 1]
-        self.rsamp_axis_dev_name = self.motion_controllers.sample_rotation_axis.short_name()
+        self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.rsamp_axis_index]
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.rsamp_axis_dev_name = self.motion_controllers.sample_rotation_axis.short_name()
 
     def mgw_axis_change_tsamp(self):
         self.tsamp_axis_index = self.UIE_mgw_sample_translation_axis_qcb.currentIndex()
-        self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.tsamp_axis_index - 1]
-        self.tsamp_axis_dev_name = self.motion_controllers.sample_translation_axis.short_name()
+        self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.tsamp_axis_index]
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.tsamp_axis_dev_name = self.motion_controllers.sample_translation_axis.short_name()
 
     def mgw_axis_change_detector(self):
         self.detector_axis_index = self.UIE_mgw_detector_rotation_axis_qcb.currentIndex()
-        self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index - 1]
-        self.detector_axis_dev_name = self.motion_controllers.detector_rotation_axis.short_name()
+        self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index]
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.detector_axis_dev_name = self.motion_controllers.detector_rotation_axis.short_name()
 
     def accept_mcw(self):
         print('~~MACHINE CONFIGURATION ACCEPT CALLED:')
@@ -1730,11 +1742,11 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
         self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
 
-        self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.main_axis_index - 1]
-        self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.filter_axis_index - 1]
-        self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.rsamp_axis_index - 1]
-        self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.tsamp_axis_index - 1]
-        self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index - 1]
+        self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.main_axis_index]
+        self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.filter_axis_index]
+        self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.rsamp_axis_index]
+        self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.tsamp_axis_index]
+        self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index]
 
         # Set limits.
         self.max_pos = self.UIE_mcw_min_pos_in_qdsb.value()
@@ -1747,24 +1759,39 @@ class MMC_Main(QMainWindow):
         self.smt_min_pos = self.UIE_mcw_smt_min_qdsb.value()
         self.dr_max_pos = self.UIE_mcw_dr_max_qdsb.value()
         self.dr_min_pos = self.UIE_mcw_dr_min_qdsb.value()
-        self.motion_controllers.main_drive_axis.set_limits(self.max_pos, self.min_pos)
-        self.motion_controllers.filter_wheel_axis.set_limits(self.fw_max_pos, self.fw_min_pos)
-        self.motion_controllers.sample_rotation_axis.set_limits(self.smr_max_pos, self.smr_min_pos)
-        self.motion_controllers.sample_translation_axis.set_limits(self.smt_max_pos, self.smt_min_pos)
-        self.motion_controllers.detector_rotation_axis.set_limits(self.dr_max_pos, self.dr_min_pos)
+
+        if self.motion_controllers.main_drive_axis is not None:
+            self.motion_controllers.main_drive_axis.set_limits(self.max_pos, self.min_pos)
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.motion_controllers.filter_wheel_axis.set_limits(self.fw_max_pos, self.fw_min_pos)
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.motion_controllers.sample_rotation_axis.set_limits(self.smr_max_pos, self.smr_min_pos)
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.motion_controllers.sample_translation_axis.set_limits(self.smt_max_pos, self.smt_min_pos)
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.motion_controllers.detector_rotation_axis.set_limits(self.dr_max_pos, self.dr_min_pos)
 
         # Set conversion factors.
         if not self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
             self.calculate_and_apply_steps_per_nm()
 
         # self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_qdsb.value())
-        self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())
-        self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_rot_qdsb.value())
-        self.motion_controllers.sample_translation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans_qdsb.value())
-        self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per_qdsb.value())
+        # print("DEBUG PRINTOUT")
+        # print(self.motion_controllers.filter_wheel_axis.long_name())
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_rot_qdsb.value())
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.motion_controllers.sample_translation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans_qdsb.value())
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per_qdsb.value())
 
         print('APPLIED GRAT DENSITY:', self.grating_density)
-        print('APPLIED STEPS PER NM:', self.motion_controllers.main_drive_axis.get_steps_per_value())
+        if self.motion_controllers.main_drive_axis is not None:
+            print('APPLIED STEPS PER NM:', self.motion_controllers.main_drive_axis.get_steps_per_value())
+        else:
+            print('APPLIED STEPS PER NM: Unable due to main_drive_axis being NoneType.')
 
         self.machine_conf_win.close()
     

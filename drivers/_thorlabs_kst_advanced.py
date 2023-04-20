@@ -237,6 +237,7 @@ class Thorlabs: # Wrapper class for TLI methods
                 RuntimeError: Instance of KST101 exists with this serial number
                 RuntimeError: Serial number not in device list
             """
+            self.open = False
             self.num_axes = 1
             self.poll_thread = None
             if str(serialNumber)[:2] != str(Thorlabs.TYPE_KST101):
@@ -246,7 +247,6 @@ class Thorlabs: # Wrapper class for TLI methods
             elif serialNumber not in Thorlabs.KST101._ListDevices():
                 raise RuntimeError('Serial %d not in device list.'%(serialNumber))
             self.serial = str(serialNumber)
-            self.open = False
             self._Open(pollingIntervalMs)
             self.moving = False
             self.homed = False
@@ -519,6 +519,7 @@ class Thorlabs: # Wrapper class for TLI methods
         def get_position(self):
             # TLI_KST.RequestPosition(self.serial)
             retval = TLI_KST.GetPosition(self.serial)
+            print("Raw position reported as:", retval)
             return retval
 
         # set_position_reference
