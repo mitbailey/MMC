@@ -605,8 +605,26 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_detector_rotation_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_detector)
 
         # If anything has changed, we must use default values.
-        if len(self.mtn_ctrls) != self.num_axes_at_time_of_save or self.mtn_ctrls[self.main_axis_index].short_name() != self.main_axis_dev_name or self.mtn_ctrls[self.filter_axis_index].short_name() != self.filter_axis_dev_name or self.mtn_ctrls[self.rsamp_axis_index].short_name() != self.rsamp_axis_dev_name or self.mtn_ctrls[self.tsamp_axis_index].short_name() != self.tsamp_axis_dev_name or self.mtn_ctrls[self.detector_axis_index].short_name() != self.detector_axis_dev_name:
+        changes = 0
+        if len(self.mtn_ctrls) != self.num_axes_at_time_of_save:
+            changes += 1
+        if self.mtn_ctrls[self.main_axis_index] is not None:
+            if self.mtn_ctrls[self.main_axis_index].short_name() != self.main_axis_dev_name:
+                changes += 1
+        if self.mtn_ctrls[self.filter_axis_index] is not None:
+            if self.mtn_ctrls[self.filter_axis_index].short_name() != self.filter_axis_dev_name:
+                changes += 1
+        if self.mtn_ctrls[self.rsamp_axis_index] is not None:
+            if self.mtn_ctrls[self.rsamp_axis_index].short_name() != self.rsamp_axis_dev_name:
+                changes += 1
+        if self.mtn_ctrls[self.tsamp_axis_index] is not None:
+            if self.mtn_ctrls[self.tsamp_axis_index].short_name() != self.tsamp_axis_dev_name:
+                changes += 1
+        if self.mtn_ctrls[self.detector_axis_index] is not None:
+            if self.mtn_ctrls[self.detector_axis_index].short_name() != self.detector_axis_dev_name:
+                changes += 1
 
+        if changes > 0:
                 print('Using default CONNECTIONS values.')
                 self.main_axis_index = 1
                 print('AA', self.main_axis_index)
@@ -1229,25 +1247,37 @@ class MMC_Main(QMainWindow):
         self.scan_status_update("HOMING")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
-        self.motion_controllers.main_drive_axis.home()
+        try:
+            self.motion_controllers.main_drive_axis.home()
+        except Exception as e:
+            self.QMessageBoxWarning('Homing Failed', e)
 
     def manual_home_smr(self):
         self.scan_status_update("HOMING SR")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
-        self.motion_controllers.sample_rotation_axis.home()
+        try:
+            self.motion_controllers.sample_rotation_axis.home()
+        except Exception as e:
+            self.QMessageBoxWarning('Homing Failed', e)
 
     def manual_home_smt(self):
         self.scan_status_update("HOMING ST")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
-        self.motion_controllers.sample_translation_axis.home()
+        try:
+            self.motion_controllers.sample_translation_axis.home()
+        except Exception as e:
+            self.QMessageBoxWarning('Homing Failed', e)
 
     def manual_home_dmr(self):
         self.scan_status_update("HOMING DR")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
-        self.motion_controllers.detector_rotation_axis.home()
+        try:
+            self.motion_controllers.detector_rotation_axis.home()
+        except Exception as e:
+            self.QMessageBoxWarning('Homing Failed', e)
 
     def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
         self.scan_number += 1
@@ -1400,7 +1430,11 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.main_drive_axis.move_to(pos, False)
         except Exception as e:
             QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s.'%(e))
+            self.moving = False
+            self.disable_movement_sensitive_buttons(False)
             pass
+        self.moving = False
+        self.disable_movement_sensitive_buttons(False)
 
     def move_to_position_button_pressed_sr(self):
         if (self.moving):
@@ -1416,7 +1450,12 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.sample_rotation_axis.move_to(pos, False)
         except Exception as e:
             QMessageBox.critical(self, 'Move Failure', 'Sample rotation axis failed to move: %s'%(e))
+            self.moving = False
+            self.disable_movement_sensitive_buttons(False)
             pass
+        self.moving = False
+        self.disable_movement_sensitive_buttons(False)
+
 
     def move_to_position_button_pressed_st(self):
         if (self.moving):
@@ -1432,7 +1471,12 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.sample_translation_axis.move_to(pos, False)
         except Exception as e:
             QMessageBox.critical(self, 'Move Failure', 'Sample translation axis failed to move: %s'%(e))
+            self.moving = False
+            self.disable_movement_sensitive_buttons(False)
             pass
+        self.moving = False
+        self.disable_movement_sensitive_buttons(False)
+
 
     def move_to_position_button_pressed_dr(self):
         if (self.moving):
@@ -1449,7 +1493,11 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.detector_rotation_axis.move_to(pos, False)
         except Exception as e:
             QMessageBox.critical(self, 'Move Failure', 'Detector rotation axis failed to move: %s'%(e))
+            self.moving = False
+            self.disable_movement_sensitive_buttons(False)
             pass
+        self.moving = False
+        self.disable_movement_sensitive_buttons(False)
 
     def start_changed(self):
         print("Start changed to: %s mm"%(self.UIE_mgw_start_qdsb.value()))

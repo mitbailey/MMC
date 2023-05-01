@@ -747,10 +747,10 @@
          <item row="5" column="1">
           <widget class="QDoubleSpinBox" name="smt_steps_per_deg">
            <property name="minimum">
-            <double>-360.000000000000000</double>
+            <double>-9999999.000000000000000</double>
            </property>
            <property name="maximum">
-            <double>360.000000000000000</double>
+            <double>9999999.000000000000000</double>
            </property>
            <property name="value">
             <double>1.000000000000000</double>
@@ -777,10 +777,10 @@
          <item row="0" column="1">
           <widget class="QDoubleSpinBox" name="smr_steps_per_deg">
            <property name="minimum">
-            <double>1.000000000000000</double>
+            <double>-9999999.000000000000000</double>
            </property>
            <property name="maximum">
-            <double>999999999.000000000000000</double>
+            <double>9999999.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -974,10 +974,10 @@
          <item row="0" column="1">
           <widget class="QDoubleSpinBox" name="dr_steps_per_deg">
            <property name="minimum">
-            <double>1.000000000000000</double>
+            <double>-9999999.000000000000000</double>
            </property>
            <property name="maximum">
-            <double>999999999.000000000000000</double>
+            <double>9999999.000000000000000</double>
            </property>
           </widget>
          </item>

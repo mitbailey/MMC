@@ -92,7 +92,8 @@ class MP_789A_4:
 
         print('RECEIVED (raw):', rx_raw)
 
-        if '32' in rx:
+        if ('32' in rx) and ('+' not in rx and '-' not in rx):
+            print('Home switch blocked.')
             # Home switch blocked.
             # Move at constant velocity (23 KHz).
             self.s.write(b'M+23000\r')
@@ -102,9 +103,9 @@ class MP_789A_4:
                 self.s.write(b']\r')
                 time.sleep(0.1)     
                 rx = self.s.read(128).decode('utf-8')
-                if '0' in rx or '2' in rx: # Not-on-a-limit-switch status is 0 when stationary, 2 when in motion.
+                if ('0' in rx or '2' in rx) and ('+' not in rx and '-' not in rx): # Not-on-a-limit-switch status is 0 when stationary, 2 when in motion.
                     break
-                elif '64' in rx or '128' in rx: # If we have hit either of the extreme limit switches and stopped.
+                elif ('64' in rx or '128' in rx) and ('+' not in rx and '-' not in rx): # If we have hit either of the extreme limit switches and stopped.
                     print('Hit edge limit switch when homing. Does this device have a home sensor?')
                     raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
                 time.sleep(0.7)
@@ -128,7 +129,8 @@ class MP_789A_4:
             self.s.write(b'A0\r')
             time.sleep(0.1) 
             pass
-        elif '0' in rx:
+        elif ('0' in rx) and ('+' not in rx and '-' not in rx):
+            print('Home switch not blocked.')
             # Home switch not blocked.
             # Move at constant velocity (23 KHz).
             self.s.write(b'M-23000\r')
@@ -138,9 +140,9 @@ class MP_789A_4:
                 self.s.write(b']\r')
                 time.sleep(0.1)     
                 rx = self.s.read(128).decode('utf-8')
-                if '32' in rx or '34' in rx: # Home-switch-blocked status is 32 when stationary, 34 when in motion.
+                if ('32' in rx or '34' in rx) and ('+' not in rx and '-' not in rx): # Home-switch-blocked status is 32 when stationary, 34 when in motion.
                     break
-                elif '64' in rx or '128' in rx: # If we have hit either of the extreme limit switches and stopped.
+                elif ('64' in rx or '128' in rx) and ('+' not in rx and '-' not in rx): # If we have hit either of the extreme limit switches and stopped.
                     # TODO: Some 789s don't have a limit switch. In this case, we will need to home using the lower limit switch... ?
                     print('Hit edge limit switch when homing. Does this device have a home sensor?')
                     raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
@@ -171,6 +173,21 @@ class MP_789A_4:
 
         # The standard is for the device drivers to read 0 when homed if the controller does not itself provide a value.
         # It is up to the middleware to handle zero- and home-offsets.
+        if (self.is_moving()):
+            print('Post-home movement detected. Entering movement remediation.')
+            self.s.write(b'@\r')
+            time.sleep(1)
+        stop_waits = 0
+        while(self.is_moving()):
+            if stop_waits > 3:
+                stop_waits = 0
+                print('Re-commanding that device ceases movement.')
+                self.s.write(b'@\r')
+            stop_waits += 1
+            print('Waiting for device to cease movement.')
+            time.sleep(1)
+
+
         self._position = 0
         self._is_homing = False
         return True
@@ -186,12 +203,18 @@ class MP_789A_4:
         time.sleep(0.1)
         status = self.s.read(128).decode('utf-8').rstrip()
         time.sleep(0.1)
+        self.s.write(b'^\r')
+        time.sleep(0.1)
+        status2 = self.s.read(128).decode('utf-8').rstrip()
+        time.sleep(0.1)
         self.moving_poll_mutex.release()
 
-        if '0' in status:
+        if ('0' in status and '0' in status2) and ('+' not in status and '+' not in status2 and '-' not in status and '-' not in status2):
+            print('MOVING STATUS >>>%s<<< >>>%s<<<; INDICATES STOPPED.'%(status, status2))
             self._moving = False
             return False
         else:
+            print('MOVING STATUS: >>>%s<<<; INDICATES MOVING.'%(status))
             self._moving = True
             return True
 

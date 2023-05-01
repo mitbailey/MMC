@@ -47,6 +47,8 @@ class _SafeSerial:
     def write(self, buf):
         self._m.acquire()
         retval = self._s.write(buf)
+        print('ssTx:', buf)
+        print(buf)
         self._m.release()
         return retval
 
@@ -54,6 +56,7 @@ class _SafeSerial:
     def read(self, size: int = READ_SIZE):
         time.sleep(_SafeSerial.READ_DELAY)
         retval = self._s.read(size)
+        print('ssRx:', retval)
         return retval
     
     def _lock_override(self):

@@ -158,6 +158,20 @@ class MP_792:
 
             time.sleep(0.5)
 
+        if (self.is_moving(axis)):
+            print('Post-home movement detected. Entering movement remediation.')
+            self.s.write(b'@\r')
+            time.sleep(1)
+        stop_waits = 0
+        while(self.is_moving(axis)):
+            if stop_waits > 3:
+                stop_waits = 0
+                print('Re-commanding that device ceases movement.')
+                self.s.write(b'@\r')
+            stop_waits += 1
+            print('Waiting for device to cease movement.')
+            time.sleep(1)
+
         self._position[axis] = 0
         self._is_homing[axis] = False
         return True
@@ -175,8 +189,13 @@ class MP_792:
         time.sleep(0.1)
         status = self.s.read(128).decode('utf-8').rstrip()
         print('792 _status:', status)
+        time.sleep(0.1)
+        self.s.write(b'^\r')
+        time.sleep(0.1)
+        status2 = self.s.read(128).decode('utf-8').rstrip()
+        print('792 _status2:', status2)
 
-        if '0' in status:
+        if ('0' in status and '0' in status2) and ('+' not in status and '+' not in status2 and '-' not in status and '-' not in status2):
             self._is_moving_l[axis] = False
             return False
         else:
