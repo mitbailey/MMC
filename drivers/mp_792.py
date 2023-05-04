@@ -72,7 +72,7 @@ class MP_792:
             raise RuntimeError('Invalid response.')
 
         print('Checking axes...')
-        for i in range(4):
+        for i in [0, 3, 2, 1]:
             print('WR:', MP_792.AXES[i] + b'\r')
             self.s.write(MP_792.AXES[i] + b'\r')
             time.sleep(0.1)
@@ -92,7 +92,7 @@ class MP_792:
             else:
                 print('Axis %d is alive.'%(i))
                 self.axis_alive[i] = True
-
+                
                 self.home(i)
 
         print('McPherson 792 initialization complete.')
@@ -109,19 +109,30 @@ class MP_792:
     def home(self, axis: int)->bool:
         self.set_axis(axis)
 
+        HOME_TIME = 15
+
         print('Beginning home for 792 axis %d.'%(axis))
         self._is_homing[axis] = True
 
-        print('WR:', b'M-10000\r')
-        self.s.write(b'M-10000\r')
+        # print('WR:', b'M-10000\r')
+
+        if axis == 2:
+            home_cmd = b'M-5000\r'
+        else:
+            home_cmd = b'M-10000\r'
+
+        self.s.write(home_cmd)
         time.sleep(0.1)
-        print('RD:', self.s.read(128))
+        # print('RD:', self.s.read(128))
+        self.s.read(128)
 
         start_time = time.time()
         retries = 3
         success = True
         while True:
             current_time = time.time()
+
+            print('Time spent homing:', current_time - start_time)
 
             moving = self._is_moving(axis)
             time.sleep(0.1)
@@ -139,20 +150,20 @@ class MP_792:
             if not moving and '128' in limstat:
                 print('Moving has completed - homing successful.')
                 break
-            elif (not moving and '128' not in limstat) or (current_time - start_time > 60):
+            elif (not moving and '128' not in limstat) or (current_time - start_time > HOME_TIME):
                 print('Moving has completed - homing failed.')
                 if retries == 0:
                     print('Homing failed.')
+                    self.s.write(b'@\r')
                     self._is_homing[axis] = False
                     return False
                 else:
                     print('Retrying homing...')
                     retries -= 1
-
-                    print('WR:', b'M-10000\r')
-                    self.s.write(b'M-10000\r')
+                    self.s.write(b'@\r')
+                    self.s.write(home_cmd)
                     time.sleep(0.1)
-                    print('RD:', self.s.read(128))
+                    self.s.read(128)
 
                     start_time = time.time()
 
@@ -168,6 +179,7 @@ class MP_792:
                 stop_waits = 0
                 print('Re-commanding that device ceases movement.')
                 self.s.write(b'@\r')
+                    
             stop_waits += 1
             print('Waiting for device to cease movement.')
             time.sleep(1)

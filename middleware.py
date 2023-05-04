@@ -303,6 +303,7 @@ class MotionController:
         else:
             self._motor_ctrl.home()
         self._homing = False
+        self._homing_thread_active = False
 
     def get_position(self) -> float:
         """Returns the current position of the machine in real-world units.
@@ -355,10 +356,10 @@ class MotionController:
             raise Exception('Steps-per value has not been set for this axis. This value must be set in the Machine Configuration window.')
         if position > self._max_pos:
             self._moving = False
-            raise Exception('Position is beyond the upper limit of this axis.')
+            raise Exception('Position is beyond the upper limit of this axis [%f > A > %f].'%(self._max_pos, self._min_pos))
         if position < self._min_pos:
             self._moving = False
-            raise Exception('Position is beyond the lower limit of this axis.')
+            raise Exception('Position is beyond the lower limit of this axis [%f > A > %f].'%(self._max_pos, self._min_pos))
 
         if self._multi_axis:
             retval = self._motor_ctrl.move_to((position * self._steps_per_value) + (self._offset * self._steps_per_value), block, self._axis)

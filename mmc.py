@@ -608,21 +608,37 @@ class MMC_Main(QMainWindow):
         changes = 0
         if len(self.mtn_ctrls) != self.num_axes_at_time_of_save:
             changes += 1
-        if self.mtn_ctrls[self.main_axis_index] is not None:
-            if self.mtn_ctrls[self.main_axis_index].short_name() != self.main_axis_dev_name:
-                changes += 1
-        if self.mtn_ctrls[self.filter_axis_index] is not None:
-            if self.mtn_ctrls[self.filter_axis_index].short_name() != self.filter_axis_dev_name:
-                changes += 1
-        if self.mtn_ctrls[self.rsamp_axis_index] is not None:
-            if self.mtn_ctrls[self.rsamp_axis_index].short_name() != self.rsamp_axis_dev_name:
-                changes += 1
-        if self.mtn_ctrls[self.tsamp_axis_index] is not None:
-            if self.mtn_ctrls[self.tsamp_axis_index].short_name() != self.tsamp_axis_dev_name:
-                changes += 1
-        if self.mtn_ctrls[self.detector_axis_index] is not None:
-            if self.mtn_ctrls[self.detector_axis_index].short_name() != self.detector_axis_dev_name:
-                changes += 1
+        print('Length of self.mtn_ctrls: %d'%(len(self.mtn_ctrls)))
+        if self.main_axis_index < len(self.mtn_ctrls):
+            if self.mtn_ctrls[self.main_axis_index] is not None:
+                if self.mtn_ctrls[self.main_axis_index].short_name() != self.main_axis_dev_name:
+                    changes += 1
+        else:
+            changes += 1
+        if self.filter_axis_index < len(self.mtn_ctrls):
+            if self.mtn_ctrls[self.filter_axis_index] is not None:
+                if self.mtn_ctrls[self.filter_axis_index].short_name() != self.filter_axis_dev_name:
+                    changes += 1
+        else:
+            changes += 1
+        if self.rsamp_axis_index < len(self.mtn_ctrls):
+            if self.mtn_ctrls[self.rsamp_axis_index] is not None:
+                if self.mtn_ctrls[self.rsamp_axis_index].short_name() != self.rsamp_axis_dev_name:
+                    changes += 1
+        else:
+            changes += 1
+        if self.tsamp_axis_index < len(self.mtn_ctrls):
+            if self.mtn_ctrls[self.tsamp_axis_index] is not None:
+                if self.mtn_ctrls[self.tsamp_axis_index].short_name() != self.tsamp_axis_dev_name:
+                    changes += 1
+        else:
+            changes += 1
+        if self.detector_axis_index < len(self.mtn_ctrls):
+            if self.mtn_ctrls[self.detector_axis_index] is not None:
+                if self.mtn_ctrls[self.detector_axis_index].short_name() != self.detector_axis_dev_name:
+                    changes += 1
+        else:
+            changes += 1
 
         if changes > 0:
                 print('Using default CONNECTIONS values.')
@@ -799,7 +815,7 @@ class MMC_Main(QMainWindow):
         else:
             self.UIE_mgw_autosave_data_qa.setChecked(False)
 
-        self.update_movement_limits()
+        self.update_movement_limits_gui()
 
         self.table.updatePlots()
 
@@ -1251,6 +1267,7 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.main_drive_axis.home()
         except Exception as e:
             self.QMessageBoxWarning('Homing Failed', e)
+            pass
 
     def manual_home_smr(self):
         self.scan_status_update("HOMING SR")
@@ -1640,8 +1657,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
         self.UIE_mcw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
 
-        self.UIE_mcw_min_pos_in_qdsb.setValue(self.max_pos)
-        self.UIE_mcw_max_pos_in_qdsb.setValue(self.min_pos)
+        self.UIE_mcw_max_pos_in_qdsb.setValue(self.max_pos)
+        self.UIE_mcw_min_pos_in_qdsb.setValue(self.min_pos)
         self.UIE_mcw_fw_max_qdsb.setValue(self.fw_max_pos)
         self.UIE_mcw_fw_min_qdsb.setValue(self.fw_min_pos)
         self.UIE_mcw_smr_max_qdsb.setValue(self.smr_max_pos)
@@ -1666,10 +1683,7 @@ class MMC_Main(QMainWindow):
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
-    def update_movement_limits(self):
-        if self.motion_controllers.main_drive_axis is not None:
-            self.motion_controllers.main_drive_axis.set_limits(self.max_pos, self.min_pos)
-
+    def update_movement_limits_gui(self):
         self.UIE_mgw_pos_qdsb.setMaximum(self.max_pos)
         self.UIE_mgw_pos_qdsb.setMinimum(self.min_pos)
 
@@ -1683,7 +1697,7 @@ class MMC_Main(QMainWindow):
         self.grating_density = self.UIE_mcw_grating_qdsb.value()
         print(self.grating_density)
 
-        self.update_movement_limits()
+        self.update_movement_limits_gui()
 
         self.zero_ofst = self.UIE_mcw_zero_ofst_in_qdsb.value()
         self.fw_offset = self.UIE_mcw_fw_offset_qdsb.value()
@@ -1797,8 +1811,8 @@ class MMC_Main(QMainWindow):
         self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index]
 
         # Set limits.
-        self.max_pos = self.UIE_mcw_min_pos_in_qdsb.value()
-        self.min_pos = self.UIE_mcw_max_pos_in_qdsb.value()
+        self.max_pos = self.UIE_mcw_max_pos_in_qdsb.value()
+        self.min_pos = self.UIE_mcw_min_pos_in_qdsb.value()
         self.fw_max_pos = self.UIE_mcw_fw_max_qdsb.value()
         self.fw_min_pos = self.UIE_mcw_fw_min_qdsb.value()
         self.smr_max_pos = self.UIE_mcw_smr_max_qdsb.value()
@@ -1818,6 +1832,8 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.sample_translation_axis.set_limits(self.smt_max_pos, self.smt_min_pos)
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_limits(self.dr_max_pos, self.dr_min_pos)
+
+        self.update_movement_limits_gui()
 
         # Set conversion factors.
         if not self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
