@@ -795,7 +795,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sm_rmove_qpb: QPushButton = self.findChild(QPushButton, 'sample_rotate_move_button')
         self.UIE_mgw_sm_rmove_qpb.clicked.connect(self.move_to_position_button_pressed_sr)
         self.UIE_mgw_sm_tmove_qpb: QPushButton = self.findChild(QPushButton, 'sample_trans_move_button')
-        self.UIE_mgw_sm_rmove_qpb.clicked.connect(self.move_to_position_button_pressed_st)
+        self.UIE_mgw_sm_tmove_qpb.clicked.connect(self.move_to_position_button_pressed_st)
 
         # Detector Movement UI
         self.UIE_mgw_dm_rpos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'detector_rotate_spin')

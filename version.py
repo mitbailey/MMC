@@ -1,1 +1,1 @@
-__MMC_VERSION__ = '0.7.1'
+__MMC_VERSION__ = '0.7.2'
