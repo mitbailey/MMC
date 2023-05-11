@@ -2,7 +2,7 @@
 
 ## Usage
 ### via Executable
-See the appropriate [releases page](https://github.com/mitbailey/MMC/releases) for details.  
+The executable is available within the MMCS zip archive included with each release. Download and extract the archive to access and run MMCS.exe. See the [releases page](https://github.com/mitbailey/MMC/releases) for details.  
 
 ### via Source Code
 Boot in normal mode, attempting connections and failing if devices not found:  
@@ -29,6 +29,9 @@ GUI <-> Middleware <-> Drivers <-> Hardware
 - The drivers interact directly with the Motion Controller and Sampler and are specific to their model / type.
 
 # Compilation (One Directory - Fast Startup, 1 GB)
+
+The One Directory compilation method produces a larger set of files but starts up significantly faster than the One File method. For software versions 0.7.1 and newer, this method is used to compile the zip archive and executable available on the [releases page](https://github.com/mitbailey/MMC/releases).
+
 ## Prerequisites
 PyQtWebEngine, pipenv
 
@@ -45,6 +48,9 @@ PyQtWebEngine, pipenv
 Outputs MMC/dist/MMCS/MMCS.exe
 
 # Compilation (One File - Slow Startup, 400 MB)
+
+The One File compilation method produces a smaller file but starts up significantly slower than the One Directory method. For software versions 0.7 and older, this method is used to compile the executable available on the [releases page](https://github.com/mitbailey/MMC/releases).
+
 `pyinstaller mmc_onefile.spec`  
 
 Outputs MMC/dist/mmc.exe
