@@ -107,6 +107,7 @@ from utilities import motion_controller_list as mcl
 import middleware as mw
 from middleware import MotionController#, list_all_devices
 from middleware import Detector
+import version
 
 # Fonts
 digital_7_italic_22 = None
@@ -289,7 +290,7 @@ class MMC_Main(QMainWindow):
             self.dmw = QDialog(self) # pass parent window
             uic.loadUi(ui_file, self.dmw)
 
-            self.dmw.setWindowTitle('Device Manager')
+            self.dmw.setWindowTitle('Device Manager (MMCv%s)'%(version.__MMC_VERSION__))
             self.dmw_list = ''
 
 
@@ -518,9 +519,9 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_steps_per_nm_qdsb: QDoubleSpinBox = None
 
         if dummy:
-            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) v0.6")
+            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) (MMCv%s)"%(version.__MMC_VERSION__))
         else:
-            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) v0.6")
+            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) (MMCv%s)"%(version.__MMC_VERSION__))
 
         self.is_conv_set = False # Use this flag to set conversion
 
@@ -1201,6 +1202,7 @@ class MMC_Main(QMainWindow):
         except Exception:
             print('Could not open file %s'%(fileInfo.fileName()))
             return
+        ofile.write('# DATA RECORDED IN SOFTWARE VERSION: MMCv%s\n'%(version.__MMC_VERSION__))
         ofile.write('# %s\n'%(tstamp.strftime('%Y-%m-%d %H:%M:%S')))
         try:
             ofile.write('# Steps/mm: %f\n'%(metadata['steps_per_value']))
@@ -1555,7 +1557,7 @@ class MMC_Main(QMainWindow):
             self.machine_conf_win = QDialog(self) # pass parent window
             uic.loadUi(ui_file, self.machine_conf_win)
 
-            self.machine_conf_win.setWindowTitle('Monochromator Configuration')
+            self.machine_conf_win.setWindowTitle('Monochromator Configuration (MMCv%s)'%(version.__MMC_VERSION__))
 
             self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'models')
             self.UIE_mcw_model_qcb.addItems(McPherson.MONO_MODELS)
@@ -1956,7 +1958,7 @@ if __name__ == '__main__':
 
     except Exception as e:
         print('A GLOBAL EXCEPTION HAS BEEN DETECTED:')
-        print(e.what())
+        print(e)
 
     print('Exiting program...')
 
