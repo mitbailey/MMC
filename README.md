@@ -1,32 +1,29 @@
 # McPherson Monochromator Controller Software
 
-## Usage
-### via Executable
+PyQt-based GUI program to control monochromators and adjacent hardware. 
+
+# Pre-Requisites
+
+- ThorLabs' Kinesis drivers package. 
+- Windows 10 (may work on other Windows versions, but untested).
+- Python 3.9.7 (ONLY if running directly via source code).
+
+# Compatible Hardware
+## Motion Controllers
+- ThorLabs KST101 (verified with ZFS25 stage)
+- McPherson 789
+- McPherson 792
+
+## Detectors
+- Keithley 6485
+
+# Usage
+## via Executable
 The executable is available within the MMCS zip archive included with each release. Download and extract the archive to access and run MMCS.exe. See the [releases page](https://github.com/mitbailey/MMC/releases) for details.  
 
-### via Source Code
-Boot in normal mode, attempting connections and failing if devices not found:  
-`python mmc.py`   
-   
-Boot in debug mode, no real connections to hardware will be attempted:  
-`python mmc.py 1`
+## via Source Code
+Run: `python mmc.py`   
 
-# NiceLib Conversion for Thorlabs Kinesis Stepper Motor Driver
-(_From mitbailey/driver_converter/runnable/README.MD_)
-1. Required packages: Thorlabs Kinesis (installed in C:\Program Files..), NiceLib, CFFI
-2. To build the CFFI symbol table: `python _build_kst.py`
-3. Mid level wrapper: `python _thorlabs_kst_wrap_basic.py`
-
-## Compatible Hardware
-This version is tested and confirmed to work with the following hardware:  
-- ThorLabs KST101 Controller with ZFS25 Stage 
-- Keithley 6485 Picoammeter
-
-## Hierarchy
-GUI <-> Middleware <-> Drivers <-> Hardware
-- The GUI calls Middleware functions and is the layer the user directly interacts with. The GUI simply knows that it exists above some Monochromator with some type of Motion Controller and Sampling device.
-- The middleware allows the GUI to be agnostic to specific hardware and hardware implementations, providing the GUI layer with consistent functions to interface with across all forms of Motion Control and Sampling. The Middleware determines which drivers must be used.
-- The drivers interact directly with the Motion Controller and Sampler and are specific to their model / type.
 
 # Compilation (One Directory - Fast Startup, 1 GB)
 
@@ -54,3 +51,32 @@ The One File compilation method produces a smaller file but starts up significan
 `pyinstaller mmc_onefile.spec`  
 
 Outputs MMC/dist/mmc.exe
+
+# Licensing
+
+    Copyright (C) 2023  Mit Bailey
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# NiceLib Conversion for Thorlabs Kinesis Stepper Motor Driver
+(_From mitbailey/driver_converter/runnable/README.MD_)
+1. Required packages: Thorlabs Kinesis (installed in C:\Program Files..), NiceLib, CFFI
+2. To build the CFFI symbol table: `python _build_kst.py`
+3. Mid level wrapper: `python _thorlabs_kst_wrap_basic.py`
+
+## Hierarchy
+GUI <-> Middleware <-> Drivers <-> Hardware
+- The GUI calls Middleware functions and is the layer the user directly interacts with. The GUI simply knows that it exists above some Monochromator with some type of Motion Controller and Sampling device.
+- The middleware allows the GUI to be agnostic to specific hardware and hardware implementations, providing the GUI layer with consistent functions to interface with across all forms of Motion Control and Sampling. The Middleware determines which drivers must be used.
+- The drivers interact directly with the Motion Controller and Sampler and are specific to their model / type.
