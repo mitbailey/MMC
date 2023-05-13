@@ -27,6 +27,7 @@ import time
 from utilities import ports_finder
 from utilities import safe_serial
 from threading import Lock
+from utilities import log
 
 # Driver class for the McPherson 789A-4.
 # This class is also used by the 792, since the 792 is essentially four 789A-4s addressed separately.
@@ -41,30 +42,30 @@ class MP_789A_4:
 
         self._position = 0
 
-        print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
+        log.info('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
         if port is None:
-            print('Port is none type.')
+            log.error('Port is none type.')
             raise RuntimeError('Port is none type.')
             
 
         ser_ports = ports_finder.find_serial_ports()
         if port not in ser_ports:
-            print('Port not valid. Is another program using the port?')
+            log.error('Port not valid. Is another program using the port?')
             raise RuntimeError('Port not valid. Is another program using the port?')
 
         self.s = safe_serial.SafeSerial(port, 9600, timeout=1)
         self.s.write(b' \r')
         time.sleep(0.1)
         rx = self.s.read(128)#.decode('utf-8').rstrip()
-        print(rx)
+        log.debug(rx)
 
         if rx is None or rx == b'':
             raise RuntimeError('Response timed out.')
         elif rx == b' v2.55\r\n#\r\n':
-            print('McPherson model 789A-4 Scan Controller found.')
+            log.info('McPherson model 789A-4 Scan Controller found.')
         elif rx == b' #\r\n':
-            print('McPherson model 789A-4 Scan Controller already initialized.')
+            log.info('McPherson model 789A-4 Scan Controller already initialized.')
         else:
             raise RuntimeError('Invalid response.')
 
@@ -74,8 +75,8 @@ class MP_789A_4:
         self.home()
 
     def home(self)->bool:
-        print('func: home')
-        print('Beginning home.')
+        log.debug('func: home')
+        log.info('Beginning home.')
         self._is_homing = True
 
         # Enable Home Circuit
@@ -90,10 +91,10 @@ class MP_789A_4:
         rx = rx_raw.decode('utf-8')
         # rx = self.s.read(128).decode('utf-8')
 
-        print('RECEIVED (raw):', rx_raw)
+        log.debug('RECEIVED (raw):', rx_raw)
 
         if ('32' in rx) and ('+' not in rx and '-' not in rx):
-            print('Home switch blocked.')
+            log.info('Home switch blocked.')
             # Home switch blocked.
             # Move at constant velocity (23 KHz).
             self.s.write(b'M+23000\r')
@@ -106,7 +107,7 @@ class MP_789A_4:
                 if ('0' in rx or '2' in rx) and ('+' not in rx and '-' not in rx): # Not-on-a-limit-switch status is 0 when stationary, 2 when in motion.
                     break
                 elif ('64' in rx or '128' in rx) and ('+' not in rx and '-' not in rx): # If we have hit either of the extreme limit switches and stopped.
-                    print('Hit edge limit switch when homing. Does this device have a home sensor?')
+                    log.error('Hit edge limit switch when homing. Does this device have a home sensor?')
                     raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
                 time.sleep(0.7)
             # Soft stop when homing flag is located.
@@ -130,7 +131,7 @@ class MP_789A_4:
             time.sleep(0.1) 
             pass
         elif ('0' in rx) and ('+' not in rx and '-' not in rx):
-            print('Home switch not blocked.')
+            log.info('Home switch not blocked.')
             # Home switch not blocked.
             # Move at constant velocity (23 KHz).
             self.s.write(b'M-23000\r')
@@ -144,7 +145,7 @@ class MP_789A_4:
                     break
                 elif ('64' in rx or '128' in rx) and ('+' not in rx and '-' not in rx): # If we have hit either of the extreme limit switches and stopped.
                     # TODO: Some 789s don't have a limit switch. In this case, we will need to home using the lower limit switch... ?
-                    print('Hit edge limit switch when homing. Does this device have a home sensor?')
+                    log.error('Hit edge limit switch when homing. Does this device have a home sensor?')
                     raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
                 time.sleep(0.7)
             # Soft stop when homing flag is located.
@@ -168,23 +169,23 @@ class MP_789A_4:
             time.sleep(0.1) 
             pass
         else:
-            print('Unknown position to home from.', rx)
+            log.error('Unknown position to home from.', rx)
             raise RuntimeError('Unknown position to home from (%s).'%(rx))
 
         # The standard is for the device drivers to read 0 when homed if the controller does not itself provide a value.
         # It is up to the middleware to handle zero- and home-offsets.
         if (self.is_moving()):
-            print('Post-home movement detected. Entering movement remediation.')
+            log.warn('Post-home movement detected. Entering movement remediation.')
             self.s.write(b'@\r')
             time.sleep(1)
         stop_waits = 0
         while(self.is_moving()):
             if stop_waits > 3:
                 stop_waits = 0
-                print('Re-commanding that device ceases movement.')
+                log.warn('Re-commanding that device ceases movement.')
                 self.s.write(b'@\r')
             stop_waits += 1
-            print('Waiting for device to cease movement.')
+            log.warn('Waiting for device to cease movement.')
             time.sleep(1)
 
 
@@ -193,11 +194,11 @@ class MP_789A_4:
         return True
 
     def get_position(self):
-        print('func: get_position')
+        log.debug('func: get_position')
         return self._position
 
     def is_moving(self):
-        print('func: is_moving')
+        log.debug('func: is_moving')
         self.moving_poll_mutex.acquire()
         self.s.write(b'^\r')
         time.sleep(0.1)
@@ -210,64 +211,64 @@ class MP_789A_4:
         self.moving_poll_mutex.release()
 
         if ('0' in status and '0' in status2) and ('+' not in status and '+' not in status2 and '-' not in status and '-' not in status2):
-            print('MOVING STATUS >>>%s<<< >>>%s<<<; INDICATES STOPPED.'%(status, status2))
+            log.info('MOVING STATUS >>>%s<<< >>>%s<<<; INDICATES STOPPED.'%(status, status2))
             self._moving = False
             return False
         else:
-            print('MOVING STATUS: >>>%s<<<; INDICATES MOVING.'%(status))
+            log.info('MOVING STATUS: >>>%s<<<; INDICATES MOVING.'%(status))
             self._moving = True
             return True
 
     def is_homing(self):
-        print('func: is_homing')
+        log.debug('func: is_homing')
         return self._is_homing
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, block: bool):
-        print('func: move_to')
+        log.debug('func: move_to')
         steps = position - self._position
         self.move_relative(steps, block)
 
         if block:
             while self.is_moving():
-                print('BLOCKING')
+                log.debug('BLOCKING')
                 time.sleep(1)
-            print('FINISHED BLOCKING')
+            log.debug('FINISHED BLOCKING')
 
     def move_relative(self, steps: int, block: bool):
-        print('func: move_relative')
-        print('Being told to move %d steps.'%(steps))
+        log.debug('func: move_relative')
+        log.info('Being told to move %d steps.'%(steps))
 
         if steps > 0:
-            print('Moving...')
-            print(b'+%d\r'%(steps))
+            log.info('Moving...')
+            log.debug(b'+%d\r'%(steps))
             self.s.write(b'+%d\r'%(steps))
             time.sleep(0.1)
         elif steps < 0:
-            print('Moving...')
-            print(b'-%d\r'%(steps * -1))
+            log.info('Moving...')
+            log.debug(b'-%d\r'%(steps * -1))
             self.s.write(b'-%d\r'%(steps * -1))
             time.sleep(0.1)
         else:
-            print('Not moving (0 steps).')
+            log.info('Not moving (0 steps).')
             return
         
         if block:
             while self.is_moving():
-                print('BLOCKING')
+                log.debug('BLOCKING')
                 time.sleep(0.5)
-            print('FINISHED BLOCKING')
+            log.debug('FINISHED BLOCKING')
 
         time.sleep(0.25)
 
         self._position += steps
         
     def short_name(self):
-        print('func: short_name')
+        log.debug('func: short_name')
         return self.s_name
 
     def long_name(self):
-        print('func: long_name')
+        log.debug('func: long_name')
         return self.l_name
 
 class MP_789A_4_DUMMY:
@@ -275,10 +276,10 @@ class MP_789A_4_DUMMY:
         self.s_name = 'MP789_DUMMY'
         self.l_name = 'McPherson 789A-4 (DUMMY)'
 
-        print('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
+        log.info('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
         if port is not None:     
-            print('McPherson model 789A-4 (DUMMY) Scan Controller generated.')
+            log.info('McPherson model 789A-4 (DUMMY) Scan Controller generated.')
         
         self._position = 0
         self._moving = False
@@ -286,9 +287,9 @@ class MP_789A_4_DUMMY:
         time.sleep(5)
 
     def home(self)->bool:
-        print('func: home')
-        print('Beginning home.')
-        print('Finished homing.')
+        log.debug('func: home')
+        log.info('Beginning home.')
+        log.info('Finished homing.')
         success = True
 
         if success:
@@ -297,47 +298,47 @@ class MP_789A_4_DUMMY:
         return success
 
     def get_position(self):
-        print('func: get_position')
+        log.debug('func: get_position')
         return self._position
 
     def is_moving(self):
-        print('func: is_moving')
+        log.debug('func: is_moving')
         return self._moving
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, block: bool):
-        print('func: move_to')
+        log.debug('func: move_to')
         steps = position - self._position
         # Stops the moving updater from starting more than once.
         self.move_relative(steps, block)
 
     def move_relative(self, steps: int, block: bool):
-        print('func: move_relative')
-        print(b'+%d\r', steps)
+        log.debug('func: move_relative')
+        log.debug(b'+%d\r', steps)
         self._position += steps
 
         if block:
             i=0
             # moving = True
             while i<15:
-                print('BLOCKING')
+                log.debug('BLOCKING')
                 time.sleep(0.5)
                 if not self.is_moving():
-                    print('Found to be NOT MOVING.',i)
+                    log.info('Found to be NOT MOVING.',i)
                     i+=1
                 else:
-                    print('Found to be MOVING',i)
+                    log.info('Found to be MOVING',i)
                     i=0
-            print('FINISHED BLOCKING because moving is', i)
+            log.debug('FINISHED BLOCKING because moving is', i)
         time.sleep(0.25)
 
 
     def short_name(self):
-        print('func: short_name')
+        log.debug('func: short_name')
         return self.s_name
 
     def long_name(self):
-        print('func: long_name')
+        log.debug('func: long_name')
         return self.l_name
 
 """ 

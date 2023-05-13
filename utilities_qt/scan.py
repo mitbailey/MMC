@@ -41,6 +41,7 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 
 import version
+from utilities import log
 
 class Scan(QThread):
     SIGNAL_status_update = pyqtSignal(str)
@@ -63,33 +64,33 @@ class Scan(QThread):
         self.SIGNAL_data_update.connect(self.other.scan_data_update)
         self.SIGNAL_data_complete.connect(self.other.scan_data_complete)
         self.SIGNAL_error.connect(self.other.QMessageBoxCritical)
-        print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
+        log.debug('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
 
     def __del__(self):
         self.wait()
 
     def run(self):
-        print('\n\n\n')
+        # print('\n\n\n')
         self.other.disable_movement_sensitive_buttons(True)
 
-        print(self.other)
-        print("Save to file? " + str(self.other.autosave_data_bool))
+        log.debug(self.other)
+        log.info("Save to file? " + str(self.other.autosave_data_bool))
 
         self.SIGNAL_status_update.emit("PREPARING")
         sav_files = []
         tnow = dt.datetime.now()
         if (self.other.autosave_data_bool):
-            print('Autosaving')
+            log.info('Autosaving')
             filetime = tnow.strftime('%Y%m%d%H%M%S')
             for detector in self.other.detectors:
                 filename = '%s%s_%s_data.csv'%(self.other.data_save_directory, filetime, detector.short_name())
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 sav_files.append(open(filename, 'w'))
 
-        print("SCAN QTHREAD")
-        print("Start | Stop | Step")
-        print(self.other.startpos, self.other.stoppos, self.other.steppos)
+        log.info("SCAN QTHREAD")
+        log.info("Start | Stop | Step")
+        log.info(self.other.startpos, self.other.stoppos, self.other.steppos)
         self.other.startpos = (self.other.UIE_mgw_start_qdsb.value() + self.other.zero_ofst)
         self.other.stoppos = (self.other.UIE_mgw_stop_qdsb.value() + self.other.zero_ofst)
         self.other.steppos = (self.other.UIE_mgw_step_qdsb.value())
@@ -106,11 +107,11 @@ class Scan(QThread):
         self.SIGNAL_status_update.emit("ZEROING")
         prep_pos = int((0 + self.other.zero_ofst))
         try:
-            print('107: Moving to', prep_pos)
+            log.info('107: Moving to', prep_pos)
             self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
-            print('109: Done with', prep_pos)
+            log.info('109: Done with', prep_pos)
         except Exception as e:
-            print('Exception!')
+            log.error('Exception!')
             self.SIGNAL_error.emit('Move Failure', 'Main drive axis failed to move: %s'%(e))
             self.SIGNAL_complete.emit()
             return
@@ -137,10 +138,11 @@ class Scan(QThread):
             self.SIGNAL_status_update.emit("MOVING")
             
             try:
-                print('138: Moving to', dpos)
+                log.info('138: Moving to', dpos)
                 self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
-                print('140: Done with', dpos)
+                log.info('140: Done with', dpos)
             except Exception as e:
+                log.error('QMessageBox.Critical: Move Failure - Main drive axis failed to move: %s'%(e))
                 QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
                 pass
             pos = self.other.motion_controllers.main_drive_axis.get_position()
@@ -149,7 +151,7 @@ class Scan(QThread):
             i=0
             for detector in self.other.detectors:
                 buf = detector.detect()
-                print(buf)
+                log.debug(buf)
                 self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
                 # process buf
                 words = buf.split(',') # split at comma
@@ -165,7 +167,7 @@ class Scan(QThread):
                 self._ydata[i].append(self.other.mes_sign * mes * 1e12)
                 self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
 
-                print(sav_files)
+                log.debug(sav_files)
                 if len(sav_files) > 0 and sav_files[i] is not None:
                     if idx == 0:
                         sav_files[i].write('# DATA RECORDED IN SOFTWARE VERSION: MMCv%s\n'%(version.__MMC_VERSION__))
@@ -188,7 +190,7 @@ class Scan(QThread):
 
         self.SIGNAL_complete.emit()
         self.SIGNAL_data_complete.emit(self.scanId, 'main')
-        print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
+        log.debug('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
 
     @property
     def xdata(self, which_detector: int):
@@ -223,7 +225,7 @@ class ScanSM(QThread):
         self.SIGNAL_data_update.connect(self.other.scan_data_update)
         self.SIGNAL_data_complete.connect(self.other.scan_data_complete)
         self.SIGNAL_error.connect(self.other.QMessageBoxCritical)
-        print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
+        log.debug('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
 
     def __del__(self):
@@ -241,26 +243,26 @@ class ScanSM(QThread):
         # 2 = Theta2Theta (slaved detector axis) 
 
 
-        print('\n\n\n')
+        # print('\n\n\n')
         self.other.disable_movement_sensitive_buttons(True)
 
-        print(self.other)
-        print("Save to file? " + str(autosave_data))
+        log.debug(self.other)
+        log.info("Save to file? " + str(autosave_data))
 
         self.SIGNAL_status_update.emit("PREPARING")
         sav_files = []
         tnow = dt.datetime.now()
         if (autosave_data):
-            print('Autosaving')
+            log.info('Autosaving')
             filetime = tnow.strftime('%Y%m%d%H%M%S')
             for detector in self.other.detectors:
                 filename = '%s%s_%s_data.csv'%(self.other.data_save_directory, filetime, detector.short_name())
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 sav_files.append(open(filename, 'w'))
 
-        print("SCAN QTHREAD")
-        print("Start | Stop | Step")
-        print(start, stop, step)
+        log.info("SCAN QTHREAD")
+        log.info("Start | Stop | Step")
+        log.info(start, stop, step)
 
         if step == 0 or start == stop:
             for f in sav_files:
@@ -277,7 +279,7 @@ class ScanSM(QThread):
 
         if scan_type == 0: # Rotation
             try:
-                print('273: Moving to', prep_pos)
+                log.info('273: Moving to', prep_pos)
                 self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
             except Exception as e:
                 self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
@@ -304,7 +306,7 @@ class ScanSM(QThread):
                     break
                 self.SIGNAL_status_update.emit('MOVING')
                 try:
-                    print('300: Moving to', dpos)
+                    log.info('300: Moving to', dpos)
                     self.other.motion_controllers.sample_rotation_axis.move_to(dpos, True)
                 except Exception as e:
                     self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
@@ -318,7 +320,7 @@ class ScanSM(QThread):
                 i=0
                 for detector in self.other.detectors:
                     buf = detector.detect()
-                    print(buf)
+                    log.debug(buf)
                     self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
 
                     words = buf.split(',')
@@ -348,18 +350,18 @@ class ScanSM(QThread):
                     i += 1
             pass
         elif scan_type == 1: # Translation
-            print('Scan type 1 not implemented.')
+            log.warn('Scan type 1 not implemented.')
             pass
         elif scan_type == 2: # Theta2Theta
             try:
-                print('347: Moving to', prep_pos)
+                log.info('347: Moving to', prep_pos)
                 self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
             except Exception as e:
                 self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
                 self.SIGNAL_complete.emit()
                 return
             try:
-                print('354: Moving to', prep_pos)
+                log.info('354: Moving to', prep_pos)
                 self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos * 2, True)
             except Exception as e:
                 self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
@@ -386,14 +388,14 @@ class ScanSM(QThread):
                     break
                 self.SIGNAL_status_update.emit('MOVING')
                 try:
-                    print('381: Moving to', dpos)
+                    log.info('381: Moving to', dpos)
                     self.other.motion_controllers.sample_rotation_axis.move_to(dpos, True)
                 except Exception as e:
                     self.SIGNAL_error.emit('Move Failure', 'Sample rotation axis failed to move: %s'%(e))
                     continue
                     pass
                 try:
-                    print('388: Moving to', dpos)
+                    log.info('388: Moving to', dpos)
                     self.other.motion_controllers.detector_rotation_axis.move_to(dpos * 2, True)
                 except Exception as e:
                     self.SIGNAL_error.emit('Move Failure', 'Detector rotation axis failed to move: %s'%(e))
@@ -407,7 +409,7 @@ class ScanSM(QThread):
                 i=0
                 for detector in self.other.detectors:
                     buf = detector.detect()
-                    print(buf)
+                    log.debug(buf)
                     self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
 
                     words = buf.split(',')
@@ -437,7 +439,7 @@ class ScanSM(QThread):
                     i += 1
             pass
         else:
-            print('Unknown scan type requested.')
+            log.error('Unknown scan type requested.')
             for f in sav_files:
                 if (f is not None):
                     f.close()
@@ -451,7 +453,7 @@ class ScanSM(QThread):
 
         self.SIGNAL_complete.emit()
         self.SIGNAL_data_complete.emit(self.scanId, 'sample')
-        print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
+        log.debug('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
 
     @property
     def xdata(self, which_detector: int):
@@ -486,7 +488,7 @@ class ScanDM(QThread):
         self.SIGNAL_data_update.connect(self.other.scan_data_update)
         self.SIGNAL_data_complete.connect(self.other.scan_data_complete)
         self.SIGNAL_error.connect(self.other.QMessageBoxCritical)
-        print('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
+        log.debug('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
 
     def __del__(self):
@@ -503,26 +505,26 @@ class ScanDM(QThread):
         # 2 = Theta2Theta (slaved detector axis) 
 
 
-        print('\n\n\n')
+        # print('\n\n\n')
         self.other.disable_movement_sensitive_buttons(True)
 
-        print(self.other)
-        print("Save to file? " + str(autosave_data))
+        log.debug(self.other)
+        log.info("Save to file? " + str(autosave_data))
 
         self.SIGNAL_status_update.emit("PREPARING")
         sav_files = []
         tnow = dt.datetime.now()
         if (autosave_data):
-            print('Autosaving')
+            log.info('Autosaving')
             filetime = tnow.strftime('%Y%m%d%H%M%S')
             for detector in self.other.detectors:
                 filename = '%s%s_%s_data.csv'%(self.other.data_save_directory, filetime, detector.short_name())
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 sav_files.append(open(filename, 'w'))
 
-        print("SCAN QTHREAD")
-        print("Start | Stop | Step")
-        print(start, stop, step)
+        log.info("SCAN QTHREAD")
+        log.info("Start | Stop | Step")
+        log.info(start, stop, step)
         if step == 0 or start == stop:
             for f in sav_files:
                 if (f is not None):
@@ -537,7 +539,7 @@ class ScanDM(QThread):
         prep_pos = 0
 
         try:
-            print('531: Moving to', prep_pos)
+            log.info('531: Moving to', prep_pos)
             self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos, True)
         except Exception as e:
             self.SIGNAL_error.emit('Move Failure', 'Detector rotation axis failed to move: %s'%(e))
@@ -564,7 +566,7 @@ class ScanDM(QThread):
                 break
             self.SIGNAL_status_update.emit('MOVING')
             try:
-                print('549: Moving to', dpos)
+                log.info('549: Moving to', dpos)
                 self.other.motion_controllers.detector_rotation_axis.move_to(dpos, True)
             except Exception as e:
                 self.SIGNAL_error.emit('Move Failure', 'Detector rotation axis failed to move: %s'%(e))
@@ -578,7 +580,7 @@ class ScanDM(QThread):
             i=0
             for detector in self.other.detectors:
                 buf = detector.detect()
-                print(buf)
+                log.info(buf)
                 self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
 
                 words = buf.split(',')
@@ -614,7 +616,7 @@ class ScanDM(QThread):
 
         self.SIGNAL_complete.emit()
         self.SIGNAL_data_complete.emit(self.scanId, 'detector')
-        print('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
+        log.debug('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
 
     @property
     def xdata(self, which_detector: int):

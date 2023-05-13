@@ -27,9 +27,10 @@ from __future__ import annotations
 import configparser as confp
 import os
 import datetime as dt
+from utilities import log
 
 def reset_config(path: str):
-    print("Resetting configuration file...")
+    log.warn("Resetting configuration file...")
     
     data_save_dir = os.path.expanduser('~/Documents')
     data_save_dir += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
@@ -90,15 +91,16 @@ def save_config(path: str, is_export: bool = False, mes_sign: int = 1, autosave_
             save_config.write(confFile)
 
 def load_config(path: str, is_import: bool) -> dict:
-    print('Beginning load for %s.'%(path))
+    log.info('Beginning load for %s.'%(path))
 
     if not is_import:
         path = path + '/config.ini'
 
     if not os.path.exists(path):
         if is_import:
+            log.error("File doesn't exist.")
             raise RuntimeError("File doesn't exist.")
-        print("No config.ini file found, creating one...")
+        log.warn("No config.ini file found, creating one...")
         temp_gratings = ['1200', '2400', '* New Entry']
         data_save_dir = os.path.expanduser('~/Documents')
         data_save_dir += '/mcpherson_mmc/%s/'%(dt.datetime.now().strftime('%Y%m%d'))
@@ -112,23 +114,23 @@ def load_config(path: str, is_import: bool) -> dict:
         config = confp.ConfigParser()
         config.read(path)
 
-        print(config)
+        log.debug(config)
         error = False
 
         if len(config.sections()) and 'INSTRUMENT' in config.sections():
             try:
                 current_grating_density = float(config['INSTRUMENT']['gratingDensity'])
             except Exception as e:
-                print('Invalid grating density, %s'%(e.what()))
+                log.error('Invalid grating density, %s'%(e.what()))
             if current_grating_density < 0:
-                print('Invalid grating density %f'%(current_grating_density))
+                log.error('Invalid grating density %f'%(current_grating_density))
                 current_grating_density = 0
             try:
                 zero_ofst = float(config['INSTRUMENT']['zeroOffset'])
             except Exception as e:
-                print('Invalid incidence angle, %s'%(e.what()))
+                log.error('Invalid incidence angle, %s'%(e.what()))
             if not -90 < zero_ofst < 90:
-                print('Invalid incidence angle %f'%(zero_ofst))
+                log.error('Invalid incidence angle %f'%(zero_ofst))
                 zero_ofst = 0
 
             max_pos = float(config['INSTRUMENT']['maxPosition'])
@@ -137,17 +139,17 @@ def load_config(path: str, is_import: bool) -> dict:
             try:
                 mes_sign = int(config['INTERFACE']['measurementSign'])
             except Exception as e:
-                print('Invalid measurement sign, %s'%(e.what()))
+                log.error('Invalid measurement sign, %s'%(e.what()))
             if mes_sign != 1 and mes_sign != -1:
-                print('Invalid measurement sign, %s'%(e.what()))
+                log.error('Invalid measurement sign, %s'%(e.what()))
                 mes_sign = 1
             
             try:
                 model_index = int(config['INSTRUMENT']['modelIndex'])
             except Exception as e:
-                print('Invalid model index, %s'%(e.what()))
+                log.error('Invalid model index, %s'%(e.what()))
             if model_index < 0:
-                print('Invalid model index, %s'%(e.what()))
+                log.error('Invalid model index, %s'%(e.what()))
                 model_index = 0
 
             try:
@@ -157,12 +159,12 @@ def load_config(path: str, is_import: bool) -> dict:
                 else:
                     autosave_data = False
             except Exception as e:
-                print('Invalid auto-save data boolean, %s'%(e.what()))
+                log.error('Invalid auto-save data boolean, %s'%(e.what()))
 
             try:
                 data_save_directory = config['INTERFACE']['dataSaveDirectory']
             except Exception as e:
-                print('Invalid directory, %s'%(e.what()))
+                log.error('Invalid directory, %s'%(e.what()))
             
             main_axis_index = int(config['CONNECTIONS']['mainAxisIndex'])
             filter_axis_index = int(config['CONNECTIONS']['filterAxisIndex'])
@@ -228,5 +230,5 @@ def load_config(path: str, is_import: bool) -> dict:
         'drOffset': dr_offset
     }
 
-    print(ret_dict)
+    log.debug(ret_dict)
     return ret_dict

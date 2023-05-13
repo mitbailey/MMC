@@ -25,6 +25,7 @@
 # OS and SYS Imports
 import os
 import sys
+from utilities import log
 
 try:
     exeDir = sys._MEIPASS
@@ -110,7 +111,6 @@ class DevFinder:
         raw = s.read(128)
 
         if raw == b' v2.55\r\n#\r\n' or raw == b' #\r\n':
-            # print('MP 789A-4  or MP 792 detected!')
             s.close()
             return '(MP 789A-4 or MP 792)'
         else:
@@ -143,7 +143,7 @@ def new_motion_controller(dummy: bool, dev_model: str, man_port: str = None):
         # Creates a motion controller for each axis while also not enabling dead axes.
         for i, status in enumerate(parent.axis_alive):
             if status:
-                print('Creating motion controller for axis ', i)
+                log.info('Creating motion controller for axis ', i)
                 devs.append(MotionController(dummy, 'MP_792_AXIS_%d'%(i), man_port, i, parent))
     else:
         # Single-axis device.
@@ -193,15 +193,15 @@ class MotionController:
                 self._motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
                 self._motor_ctrl.set_stage('ZST25')
             else:
-                print("Trying...")
+                log.info("Trying...")
                 serials = tlkt.Thorlabs.ListDevicesAny()
-                print(serials)
+                log.info(serials)
                 if len(serials) == 0:
-                    print("No KST101 controller found.")
+                    log.error("No KST101 controller found.")
                     raise RuntimeError('No KST101 controller found')
                 self._motor_ctrl = tlkt.Thorlabs.KST101(serials[0])
                 if (self._motor_ctrl._CheckConnection() == False):
-                    print("Connection with motor controller failed.")
+                    log.error("Connection with motor controller failed.")
                     raise RuntimeError('Connection with motor controller failed.')
                 self._motor_ctrl.set_stage('ZST25')
         elif self._model == MotionController.SupportedDevices[1]:
@@ -215,10 +215,11 @@ class MotionController:
             self._axis = axis
             self._multi_axis = True
         else:
-            print('Motion controller device model "%s" is not supported.'%(dev_model))
+            log.error('Motion controller device model "%s" is not supported.'%(dev_model))
             raise Exception
 
         if self._motor_ctrl is None:
+            log.error('self.motor_ctrl is None')
             raise RuntimeError('self.motor_ctrl is None')
 
         self._port = man_port
@@ -340,12 +341,12 @@ class MotionController:
         if self._moving:
             raise Exception("Already moving!")
         self._moving = True
-        print('Moving to position:', position, 'with blocking:', block)
+        log.info('Moving to position:', position, 'with blocking:', block)
         if block:
-            print('Blocking.')
+            log.info('Blocking.')
             return self._move_to(position, block)
         else:
-            print('Non-blocking.')
+            log.info('Non-blocking.')
             move_th = threading.Thread(target=lambda: self._move_to(position, block))
             move_th.start()
             return
@@ -401,7 +402,7 @@ class Detector:
                 else:
                     self.pa = ki_pico.KI_Picoammeter(3)
         else:
-            print('Detector device model "%s" is not supported.'%(dev_model))
+            log.error('Detector device model "%s" is not supported.'%(dev_model))
             raise Exception
 
     # TODO: Need a pinger to keep the ComPort open... here or in the drivers? Probably drivers.

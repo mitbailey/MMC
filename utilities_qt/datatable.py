@@ -30,6 +30,7 @@ import numpy as np
 from typing import TypedDict
 import weakref
 import datetime as dt
+from utilities import log
 
 class CustomQLineEdit(QLineEdit):
     def __init__(self, id, contents, parent = None):
@@ -160,15 +161,15 @@ class DataTableWidget(QTableWidget):
                     namedIds.append(idx)
             self.rowMap += namedIds
             self.rowMap += unnamedIds
-            print("Row Map:", self.rowMap)
+            log.debug("Row Map:", self.rowMap)
 
             if len(self.rowMap) > self.num_rows:
-                print('Allocating rows:', len(self.rowMap), self.num_rows)
+                log.debug('Allocating rows:', len(self.rowMap), self.num_rows)
                 for ii in range(self.num_rows, len(self.rowMap)):
                     self.insertRow(ii)
-                    print("Adding new row for row_idx %d."%(ii))
+                    log.debug("Adding new row for row_idx %d."%(ii))
                     self.num_rows += 1
-                print('After allocation:', self.num_rows, len(self.rowMap))
+                log.debug('After allocation:', self.num_rows, len(self.rowMap))
             
             for row_idx, scan_idx in enumerate(self.rowMap):
                 text = 'Scan #%d'%(scan_idx + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx)
@@ -221,9 +222,9 @@ class DataTableWidget(QTableWidget):
         src: CustomQCheckBox = self.sender()
         state = src.checkState()
         scanId = src.id
-        print(state, scanId)
+        log.debug(state, scanId)
         self.recordedData[scanId]['plotted'] = state == Qt.Checked
-        print(self.recordedData[scanId]['plotted'])
+        log.debug(self.recordedData[scanId]['plotted'])
         self.updatePlots()
 
     def saveDataCb(self) -> tuple: # just return the data and the metadata, let main handle the saving
@@ -249,20 +250,20 @@ class DataTableWidget(QTableWidget):
             return (data, metadata)
 
     def delDataCb(self):
-        print('Delete called')
+        log.debug('Delete called')
         if self.selectedItem is None:
             return
         row = self.selectedItem
         if row >= len(self.rowMap):
-            print('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
+            log.debug('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
             return
         try:
             scanIdx = self.rowMap[row]
         except Exception:
-            print('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
+            log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
             return
         if scanIdx not in self.recordedData.keys():
-            print('%d is not in recorded data! :O ... '%(scanIdx), self.recordedData.keys())
+            log.error('%d is not in recorded data! :O ... '%(scanIdx), self.recordedData.keys())
             self.__deleteRow(row)
             return
         try:
@@ -270,12 +271,12 @@ class DataTableWidget(QTableWidget):
             if not plotCb.isEnabled():
                 return
         except Exception:
-            print('Could not recover plotCb for %d! :O ... '%(scanIdx, self.recordedData.keys()))
+            log.error('Could not recover plotCb for %d! :O ... '%(scanIdx, self.recordedData.keys()))
         self.__delete_item_confirm = False
         # spawn confirmation window here
         self.__showDelConfirmWin(row, scanIdx)
         if self.__delete_item_confirm: # actually delete?
-            print('\n\nGOING TO DELETE %d... '%(scanIdx), end = '')
+            log.info('\n\nGOING TO DELETE %d... '%(scanIdx), end = '')
             try:
                 del self.recordedData[scanIdx]
             except Exception:
@@ -285,7 +286,7 @@ class DataTableWidget(QTableWidget):
             except Exception:
                 pass
             self.__deleteRow(row)
-            print('DONE\n')
+            log.debug('DONE\n')
         self.__delete_item_confirm = False
         self.updatePlots()
 
@@ -374,7 +375,7 @@ class DataTableWidget(QTableWidget):
         try:
             scanId = self.rowMap.index(row)
         except ValueError:
-            print('Row %d invalid, len(rows) = %d?'%(row, len(self.rowMap)))
+            log.error('Row %d invalid, len(rows) = %d?'%(row, len(self.rowMap)))
         if scanId in self.recordedData.keys():
             del self.recordedData[scanId]
             if scanId in self.recordedMetaData:
@@ -389,7 +390,7 @@ class DataTableWidget(QTableWidget):
         if key == Qt.Key_Delete and self.selectedItem is not None:
             # delete data
             row = self.selectedItem
-            print('Delete:', row)
+            log.info('Delete:', row)
             self.__deleteItem(row)
         else:
             super(DataTableWidget, self).keyPressEvent(event) # propagate elsewhere
@@ -398,17 +399,17 @@ class DataTableWidget(QTableWidget):
         selset = []
         deselset = []
 
-        print('Deselected Cell Location(s):', end='')
+        log.debug('Deselected Cell Location(s):', end='')
         for ix in deselected.indexes():
-            print('({0}, {1}) '.format(ix.row(), ix.column()), end='')
+            log.debug('({0}, {1}) '.format(ix.row(), ix.column()), end='')
             deselset.append(ix.row())
-        print('')
+        log.debug('')
 
-        print('Deselected Cell Location(s):', end='')
+        log.debug('Deselected Cell Location(s):', end='')
         for ix in selected.indexes():
-            print('({0}, {1}) '.format(ix.row(), ix.column()), end='')
+            log.debug('({0}, {1}) '.format(ix.row(), ix.column()), end='')
             selset.append(ix.row())
-        print('')
+        log.debug('')
         
         selset = list(set(selset))
         deselset = list(set(deselset))

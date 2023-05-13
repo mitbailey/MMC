@@ -26,6 +26,7 @@
 from PyQt5.QtCore import (pyqtSignal, QThread)
 from PyQt5.QtWidgets import (QMainWindow)
 from PyQt5.QtCore import QTimer
+from utilities import log
 
 # More Standard Imports
 import matplotlib
@@ -44,12 +45,12 @@ class UpdatePositionDisplays(QThread):
         self.SIGNAL_qmsg_info.connect(self.other.QMessageBoxInformation)
         self.SIGNAL_qmsg_warn.connect(self.other.QMessageBoxWarning)
         self.SIGNAL_qmsg_crit.connect(self.other.QMessageBoxCritical)
-        print("Update worker init'd.")
+        log.debug("Update worker init'd.")
 
     def run(self):
-        print("Update worker started.")
+        log.debug("Update worker started.")
         def update():
-            print("Updating position displays...")
+            log.debug("Updating position displays...")
             self.other.current_position = self.other.motion_controllers.main_drive_axis.get_position()
             
             if self.other.homing_started: # set this to True at __init__ because we are homing, and disable everything. same goes for 'Home' button
@@ -65,7 +66,7 @@ class UpdatePositionDisplays(QThread):
 
                 if not home_status:
                     # enable stuff here
-                    print(home_status)
+                    log.debug(home_status)
                     self.other.immobile_count = 0
                     self.other.scan_status_update("IDLE")
                     self.other.disable_movement_sensitive_buttons(False)

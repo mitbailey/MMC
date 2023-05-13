@@ -106,6 +106,7 @@ import middleware as mw
 from middleware import MotionController#, list_all_devices
 from middleware import Detector
 import version
+from utilities import log
 
 # Fonts
 digital_7_italic_22 = None
@@ -290,7 +291,7 @@ class MMC_Main(QMainWindow):
             ui_file_name = exeDir + '/ui/device_manager.ui'
             ui_file = QFile(ui_file_name)
             if not ui_file.open(QIODevice.ReadOnly):
-                print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+                log.error(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
                 raise RuntimeError('Could not load grating input UI file')
 
             self.dmw = QDialog(self) # pass parent window
@@ -394,7 +395,7 @@ class MMC_Main(QMainWindow):
                 self.UIEL_dmw_detector_model_qcb.append(m_combo)
                 self.UIEL_dmw_detector_qhbl.append(layout)
 
-        print('new detectors combo list len: %d'%(len(self.UIEL_dmw_detector_qcb)))
+        log.debug('new detectors combo list len: %d'%(len(self.UIEL_dmw_detector_qcb)))
 
     def update_num_motion_controllers_ui(self):
         if self.num_motion_controllers != self.UIE_dmw_num_motion_controllers_qsb.value():
@@ -429,7 +430,7 @@ class MMC_Main(QMainWindow):
                 self.UIEL_dmw_mtn_ctrl_model_qcb.append(m_combo)
                 self.UIEL_dmw_mtn_ctrl_qhbl.append(layout)
 
-        print('new mtn ctrls combo list len: %d'%(len(self.UIEL_dmw_mtn_ctrl_qcb)))
+        log.debug('new mtn ctrls combo list len: %d'%(len(self.UIEL_dmw_mtn_ctrl_qcb)))
 
     def connect_devices(self):
         if self.num_detectors == 1 and self.UIEL_dmw_detector_qcb[0].currentIndex() == 0:
@@ -492,7 +493,7 @@ class MMC_Main(QMainWindow):
 
         if connected:
             if self.device_timer is not None:
-                print('WARNING: STOPPING DEVICE TIMER!')
+                log.warn('WARNING: STOPPING DEVICE TIMER!')
                 self.device_timer.stop()
             self._show_main_gui(dummy)
             return
@@ -500,6 +501,7 @@ class MMC_Main(QMainWindow):
         # If we are here, then we have not automatically connected to all required devices. We must now enable the device manager.
 
         QMessageBox.warning(self.dmw, 'Connection Failure', 'Connection attempt has failed!\n%s'%(mtn_ctrls)) 
+        log.warn('QMessageBox.Warning: Connection Failure - Connection attempt has failed! %s'%(mtn_ctrls))
 
     def _show_main_gui(self, dummy: bool):
         # Set this via the QMenu QAction Edit->Change Auto-log Directory
@@ -627,7 +629,7 @@ class MMC_Main(QMainWindow):
         changes = 0
         if len(self.mtn_ctrls) != self.num_axes_at_time_of_save:
             changes += 1
-        print('Length of self.mtn_ctrls: %d'%(len(self.mtn_ctrls)))
+        log.debug('Length of self.mtn_ctrls: %d'%(len(self.mtn_ctrls)))
         if self.main_axis_index < len(self.mtn_ctrls):
             if self.mtn_ctrls[self.main_axis_index] is not None:
                 if self.mtn_ctrls[self.main_axis_index].short_name() != self.main_axis_dev_name:
@@ -660,21 +662,21 @@ class MMC_Main(QMainWindow):
             changes += 1
 
         if changes > 0:
-                print('Using default CONNECTIONS values.')
+                log.info('Using default CONNECTIONS values.')
                 self.main_axis_index = 1
-                print('AA', self.main_axis_index)
+                log.debug('AA', self.main_axis_index)
                 self.filter_axis_index = 0
                 self.rsamp_axis_index = 0
                 self.tsamp_axis_index = 0
                 self.detector_axis_index = 0
             
-        print('Amain axis idx:', self.main_axis_index)
+        log.debug('Amain axis idx:', self.main_axis_index)
 
         # Populate axes combos.
-        print('Bmain axis idx:', self.main_axis_index)
+        log.debug('Bmain axis idx:', self.main_axis_index)
         for dev in self.mtn_ctrls:
             if dev is not None:
-                print('Adding %s to config list.'%(dev))
+                log.info('Adding %s to config list.'%(dev))
 
                 self.UIE_mgw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
                 self.UIE_mgw_filter_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
@@ -683,7 +685,7 @@ class MMC_Main(QMainWindow):
                 self.UIE_mgw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
 
         # Set the combo boxes to display the correct axes.
-        print('Cmain axis idx:', self.main_axis_index)
+        log.debug('Cmain axis idx:', self.main_axis_index)
         self.UIE_mgw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
         self.UIE_mgw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
         self.UIE_mgw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
@@ -691,7 +693,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
         
         # Update the actual axes pointers.
-        print('Dmain axis idx:', self.main_axis_index)
+        log.debug('Dmain axis idx:', self.main_axis_index)
         self.mgw_axis_change_main()
         self.mgw_axis_change_filter()
         self.mgw_axis_change_rsamp()
@@ -988,17 +990,17 @@ class MMC_Main(QMainWindow):
         try:
             load_dict = load_config(path, is_import)
         except Exception as e:
-            print("The following exception occurred while attempting to load configuration file: %s"%(e))
+            log.error("The following exception occurred while attempting to load configuration file: %s"%(e))
             if not is_import:
-                print("Attempting config file default reset.")
+                log.error("Attempting config file default reset.")
                 try:
                     reset_config(path)
                     load_dict = load_config(path, is_import)
                 except Exception as e2:
-                    print("Configuration file recovery failed (exception: %s). Unable to load configuration file. Exiting."%(e2))
+                    log.fatal("Configuration file recovery failed (exception: %s). Unable to load configuration file. Exiting."%(e2))
                     sys.exit(43)
             else:
-                print("Config import failure.")
+                log.error("Config import failure.")
                 
         self.mes_sign = load_dict['measurementSign']
         self.autosave_data_bool = load_dict['autosaveData']
@@ -1010,7 +1012,7 @@ class MMC_Main(QMainWindow):
         self.min_pos = load_dict["minPosition"]
 
         self.main_axis_index = load_dict['mainAxisIndex']
-        print('LOADED MAIN_AXIS_INDEX VALUE OF:', self.main_axis_index)
+        log.info('LOADED MAIN_AXIS_INDEX VALUE OF:', self.main_axis_index)
         self.filter_axis_index = load_dict['filterAxisIndex']
         self.rsamp_axis_index = load_dict['rsampAxisIndex']
         self.tsamp_axis_index = load_dict['tsampAxisIndex']
@@ -1049,9 +1051,9 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
     def collapse_mda(self):
-        print('collapse_mda:', self.mda_collapsed)
+        log.debug('collapse_mda:', self.mda_collapsed)
         self.mda_collapsed = not self.mda_collapsed
-        print('collapse_mda:', self.mda_collapsed)
+        log.debug('collapse_mda:', self.mda_collapsed)
         self.UIE_mgw_mda_qw.setVisible(not self.mda_collapsed)
         if self.mda_collapsed:
             self.UIE_mgw_mda_collapse_qpb.setText('<')
@@ -1059,9 +1061,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_mda_collapse_qpb.setText('v')
 
     def collapse_fwa(self):
-        print('collapse_fwa:', self.fwa_collapsed)
+        log.debug('collapse_fwa:', self.fwa_collapsed)
         self.fwa_collapsed = not self.fwa_collapsed
-        print('collapse_fwa:', self.fwa_collapsed)
+        log.debug('collapse_fwa:', self.fwa_collapsed)
         self.UIE_mgw_fwa_qw.setVisible(not self.fwa_collapsed)
         if self.fwa_collapsed:
             self.UIE_mgw_fwa_collapse_qpb.setText('<')
@@ -1069,9 +1071,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_fwa_collapse_qpb.setText('v')
 
     def collapse_sa(self):
-        print('collapse_sa:', self.sa_collapsed)
+        log.debug('collapse_sa:', self.sa_collapsed)
         self.sa_collapsed = not self.sa_collapsed
-        print('collapse_sa:', self.sa_collapsed)
+        log.debug('collapse_sa:', self.sa_collapsed)
         self.UIE_mgw_sa_qw.setVisible(not self.sa_collapsed)
         if self.sa_collapsed:
             self.UIE_mgw_sa_collapse_qpb.setText('<')
@@ -1079,9 +1081,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_sa_collapse_qpb.setText('v')
 
     def collapse_da(self):
-        print('collapse_da:', self.da_collapsed)
+        log.debug('collapse_da:', self.da_collapsed)
         self.da_collapsed = not self.da_collapsed
-        print('collapse_da:', self.da_collapsed)
+        log.debug('collapse_da:', self.da_collapsed)
         self.UIE_mgw_da_qw.setVisible(not self.da_collapsed)
         if self.da_collapsed:
             self.UIE_mgw_da_collapse_qpb.setText('<')
@@ -1114,7 +1116,7 @@ class MMC_Main(QMainWindow):
         remove_button.setMaximumHeight(29)
         self.UIEL_mgw_fw_rules_remove_qpb.append(remove_button)
         remove_button.clicked.connect(partial(self.del_filter_wheel_rule, self.UIEL_mgw_fw_rules_enact_qpb[-1]))
-        print('RULE ADDED AT INDEX:', len(self.UIEL_mgw_fw_rules_remove_qpb) - 1)
+        log.info('RULE ADDED AT INDEX:', len(self.UIEL_mgw_fw_rules_remove_qpb) - 1)
 
         rule_set_spinbox: QDoubleSpinBox = QDoubleSpinBox()
         rule_set_spinbox.setRange(0, 9999)
@@ -1140,7 +1142,7 @@ class MMC_Main(QMainWindow):
         layout.addItem(hspacer)
         layout.addWidget(remove_button)
 
-        print(layout.spacing())
+        log.debug(layout.spacing())
 
         self.UIEL_mgw_fw_misc_tuples_ql.append([geq_label, goto_label])
 
@@ -1155,30 +1157,30 @@ class MMC_Main(QMainWindow):
                 sidx = i
                 break
         if sidx < 0:
-            print('FAILED TO FIND SENDER INDEX!')
+            log.error('FAILED TO FIND SENDER INDEX!')
             return
 
         # sender.
-        print('SENDER:')
-        print(sender)
+        log.debug('SENDER:')
+        log.debug(sender)
 
         dspin = self.UIEL_mgw_fw_rules_set_qdsb[sidx]
         spin = self.UIEL_mgw_fw_rules_step_qsb[sidx]
 
-        print(dspin)
-        print(spin)
-        print('Values are %f and %d.'%(dspin.value(), spin.value()))
+        log.debug(dspin)
+        log.debug(spin)
+        log.info('Values are %f and %d.'%(dspin.value(), spin.value()))
 
     def del_filter_wheel_rule(self, index_finder):
         index = self.UIEL_mgw_fw_rules_enact_qpb.index(index_finder)
 
-        print('RULE REMOVAL AT INDEX:', index)
+        log.info('RULE REMOVAL AT INDEX:', index)
 
         self.UIEL_mgw_fw_rules_enact_qpb[index].setParent(None)
         del self.UIEL_mgw_fw_rules_enact_qpb[index]
 
-        print('len', len(self.UIEL_mgw_fw_rules_remove_qpb))
-        print('index', index)
+        log.debug('len', len(self.UIEL_mgw_fw_rules_remove_qpb))
+        log.debug('index', index)
         self.UIEL_mgw_fw_rules_remove_qpb[index].setParent(None)
         del self.UIEL_mgw_fw_rules_remove_qpb[index]
 
@@ -1225,7 +1227,7 @@ class MMC_Main(QMainWindow):
         if self.table is None:
             return
         data, metadata = self.table.saveDataCb()
-        print(data, metadata)
+        log.debug(data, metadata)
         if data is None:
             return
         if metadata is not None:
@@ -1240,7 +1242,7 @@ class MMC_Main(QMainWindow):
         try:
             ofile = open(fileInfo.absoluteFilePath(), 'w', encoding='utf-8')
         except Exception:
-            print('Could not open file %s'%(fileInfo.fileName()))
+            log.error('Could not open file %s'%(fileInfo.fileName()))
             return
         ofile.write('# DATA RECORDED IN SOFTWARE VERSION: MMCv%s\n'%(version.__MMC_VERSION__))
         ofile.write('# %s\n'%(tstamp.strftime('%Y-%m-%d %H:%M:%S')))
@@ -1301,7 +1303,7 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_home_qpb.setDisabled(disable)
 
     def manual_home(self):
-        print('Manual home pressed!')
+        log.info('Manual home pressed!')
         self.scan_status_update("HOMING")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
@@ -1355,17 +1357,17 @@ class MMC_Main(QMainWindow):
 
             # Add or update data entry.
             self.auto_data_dict.update({self.scan_number: data})
-            print(self.auto_data_dict)
+            log.debug(self.auto_data_dict)
 
         elif scan_type == 'Manual':
             if self.table_has_manual_entry:
                 self.table_manual_points += 1
-                print("TABLE MANUAL POINTS: " + str(self.table_manual_points))
+                log.info("TABLE MANUAL POINTS: " + str(self.table_manual_points))
                 self.table.setItem(self.table_manual_row, 2, QTableWidgetItem(str(self.table_manual_points)))
 
                 # Append to manual data CSV string.
                 self.man_data_str += data
-                print(self.man_data_str)
+                log.debug(self.man_data_str)
 
             else:
                 self.table_has_manual_entry = True
@@ -1379,7 +1381,7 @@ class MMC_Main(QMainWindow):
 
                 # Set manual data CSV string.
                 self.man_data_str = data
-                print(self.man_data_str)
+                log.debug(self.man_data_str)
 
     def autosave_dir_triggered(self):
         self.data_save_directory = QFileDialog.getExistingDirectory(self, 'Auto logging files location', self.data_save_directory, options=QFileDialog.ShowDirsOnly)
@@ -1425,7 +1427,7 @@ class MMC_Main(QMainWindow):
     def scan_data_begin(self, scan_idx: int, metadata: dict):
         n_scan_idx = self.table.insertData(None, None, metadata)
         if n_scan_idx != scan_idx:
-            print('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
+            log.warn('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
 
     def scan_data_update(self, scan_idx: int, which_detector: int, xdata: float, ydata: float):
         if which_detector == 0:
@@ -1445,19 +1447,19 @@ class MMC_Main(QMainWindow):
                 self.UIE_mgw_dm_scan_repeats_qdsb.setValue(self.UIE_mgw_dm_scan_repeats_qdsb.value() - 1)
                 self.scan_dm_button_pressed()
             else:
-                print('ERROR: Unknown scan class %s.'%(scan_class))
+                log.error('ERROR: Unknown scan class %s.'%(scan_class))
 
     def update_position_displays(self):
         self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position))))
         # self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position)) - self.zero_ofst))
 
     def scan_button_pressed(self):
-        print('SCAN_BUTTON_PRESSED FUNCTION START!')
+        log.debug('SCAN_BUTTON_PRESSED FUNCTION START!')
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
             self.scan.start()
-            print('SCAN_BUTTON_PRESSED FUNCTION END!')
+            log.debug('SCAN_BUTTON_PRESSED FUNCTION END!')
 
     def scan_sm_button_pressed(self):
         if not self.scanRunning:
@@ -1479,9 +1481,9 @@ class MMC_Main(QMainWindow):
         self.moving = True
         self.disable_movement_sensitive_buttons(True)
 
-        print("Steps per nm: " + str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
-        print("Manual position: " + str(self.manual_position))
-        print("Move to position button pressed, moving to %d nm"%(self.manual_position))
+        log.info("Steps per nm: " + str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
+        log.info("Manual position: " + str(self.manual_position))
+        log.info("Move to position button pressed, moving to %d nm"%(self.manual_position))
         pos = int((self.UIE_mgw_pos_qdsb.value()))
         # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst))
 
@@ -1489,6 +1491,7 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.main_drive_axis.move_to(pos, False)
         except Exception as e:
             QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s.'%(e))
+            log.error('QMessageBox.Critical: Move Failure - Main drive axis failed to move: %s'%(e))
             self.moving = False
             self.disable_movement_sensitive_buttons(False)
             pass
@@ -1497,18 +1500,19 @@ class MMC_Main(QMainWindow):
 
     def move_to_position_button_pressed_sr(self):
         if (self.moving):
-            print('ALREADY MOVING!')
+            log.warn('ALREADY MOVING!')
             return
         self.moving = True
         self.disable_movement_sensitive_buttons(True)
 
         pos = self.UIE_mgw_sm_rpos_qdsb.value()
 
-        print("Move to position button (SR) pressed, moving to step %d"%(pos))
+        log.info("Move to position button (SR) pressed, moving to step %d"%(pos))
         try:
             self.motion_controllers.sample_rotation_axis.move_to(pos, False)
         except Exception as e:
             QMessageBox.critical(self, 'Move Failure', 'Sample rotation axis failed to move: %s'%(e))
+            log.error('QMessageBox.Critical: Move Failure - Sample rotation axis failed to move: %s'%(e))
             self.moving = False
             self.disable_movement_sensitive_buttons(False)
             pass
@@ -1518,18 +1522,19 @@ class MMC_Main(QMainWindow):
 
     def move_to_position_button_pressed_st(self):
         if (self.moving):
-            print('ALREADY MOVING!')
+            log.warn('ALREADY MOVING!')
             return
         self.moving = True
         self.disable_movement_sensitive_buttons(True)
 
         pos = self.UIE_mgw_sm_tpos_qdsb.value()
 
-        print("Move to position button (ST) pressed, moving to step %d"%(pos))
+        log.info("Move to position button (ST) pressed, moving to step %d"%(pos))
         try:
             self.motion_controllers.sample_translation_axis.move_to(pos, False)
         except Exception as e:
             QMessageBox.critical(self, 'Move Failure', 'Sample translation axis failed to move: %s'%(e))
+            log.error('QMessageBox.Critical: Move Failure - Sample translation axis failed to move: %s'%(e))
             self.moving = False
             self.disable_movement_sensitive_buttons(False)
             pass
@@ -1539,7 +1544,7 @@ class MMC_Main(QMainWindow):
 
     def move_to_position_button_pressed_dr(self):
         if (self.moving):
-            print('ALREADY MOVING!')
+            log.warn('ALREADY MOVING!')
             return
 
         self.moving = True
@@ -1547,10 +1552,11 @@ class MMC_Main(QMainWindow):
 
         pos = self.UIE_mgw_dm_rpos_qdsb.value()
 
-        print("Move to position button (DR) pressed, moving to step %d"%(pos))
+        log.info("Move to position button (DR) pressed, moving to step %d"%(pos))
         try:
             self.motion_controllers.detector_rotation_axis.move_to(pos, False)
         except Exception as e:
+            log.error('QMessageBox.Critical: Move Failure - Detector rotation axis failed to move: %s'%(e))
             QMessageBox.critical(self, 'Move Failure', 'Detector rotation axis failed to move: %s'%(e))
             self.moving = False
             self.disable_movement_sensitive_buttons(False)
@@ -1559,29 +1565,29 @@ class MMC_Main(QMainWindow):
         self.disable_movement_sensitive_buttons(False)
 
     def start_changed(self):
-        print("Start changed to: %s mm"%(self.UIE_mgw_start_qdsb.value()))
+        log.info("Start changed to: %s mm"%(self.UIE_mgw_start_qdsb.value()))
         self.startpos = (self.UIE_mgw_start_qdsb.value())
         # self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst)
-        print(self.startpos)
+        log.debug(self.startpos)
 
     def stop_changed(self):
-        print("Stop changed to: %s mm"%(self.UIE_mgw_stop_qdsb.value()))
+        log.info("Stop changed to: %s mm"%(self.UIE_mgw_stop_qdsb.value()))
         self.stoppos = (self.UIE_mgw_stop_qdsb.value())
         # self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst)
-        print(self.stoppos)
+        log.debug(self.stoppos)
 
     def step_changed(self):
-        print("Step changed to: %s mm"%(self.UIE_mgw_step_qdsb.value()))
+        log.info("Step changed to: %s mm"%(self.UIE_mgw_step_qdsb.value()))
         self.steppos = (self.UIE_mgw_step_qdsb.value())
-        print(self.steppos)
+        log.debug(self.steppos)
 
     def manual_pos_changed(self):
-        print("Manual position changed to: %s mm"%(self.UIE_mgw_pos_qdsb.value()))
+        log.info("Manual position changed to: %s mm"%(self.UIE_mgw_pos_qdsb.value()))
         self.manual_position = (self.UIE_mgw_pos_qdsb.value())
         # self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst)
 
     def manual_pos_changed_sr(self):
-        print('Manual position (SR) changed to: %d steps'%(self.UIE_mgw_sm_rpos))
+        log.info('Manual position (SR) changed to: %d steps'%(self.UIE_mgw_sm_rpos))
 
     def update_model_index(self):
         self.model_index = self.UIE_mcw_model_qcb.currentIndex()
@@ -1592,7 +1598,7 @@ class MMC_Main(QMainWindow):
             ui_file_name = exeDir + '/ui/machine_config.ui'
             ui_file = QFile(ui_file_name)
             if not ui_file.open(QIODevice.ReadOnly):
-                print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+                log.error(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
                 raise RuntimeError('Could not load grating input UI file')
             
             self.machine_conf_win = QDialog(self) # pass parent window
@@ -1652,10 +1658,10 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s'%(none))
 
             # Populate axes combos.
-            print(self.mtn_ctrls)
+            log.debug(self.mtn_ctrls)
             for dev in self.mtn_ctrls:
                 if dev is not None:
-                    print('Adding %s to config list.'%(dev))
+                    log.info('Adding %s to config list.'%(dev))
 
                     self.UIE_mcw_main_drive_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
                     self.UIE_mcw_filter_wheel_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
@@ -1721,7 +1727,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_dr_min_qdsb.setValue(self.dr_min_pos)
 
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
-        print('Exec done')
+        log.debug('Exec done')
 
     def update_offsets(self):
         if self.motion_controllers.main_drive_axis is not None:
@@ -1747,7 +1753,7 @@ class MMC_Main(QMainWindow):
 
     def apply_machine_conf(self):
         self.grating_density = self.UIE_mcw_grating_qdsb.value()
-        print(self.grating_density)
+        log.debug(self.grating_density)
 
         self.update_movement_limits_gui()
 
@@ -1776,12 +1782,12 @@ class MMC_Main(QMainWindow):
 
     def override_steps_per_nm(self):
         if self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
-            print('Desired override value is:', self.UIE_mcw_steps_per_nm_override_qdsb.value())
+            log.info('Desired override value is:', self.UIE_mcw_steps_per_nm_override_qdsb.value())
             if self.motion_controllers.main_drive_axis is not None:
                 self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_override_qdsb.value())
-                print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
+                log.info('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
             else:
-                print('Main drive axis is None.')
+                log.info('Main drive axis is None.')
 
             if self.UIE_mcw_steps_per_nm_ql is not None:
                 self.UIE_mcw_steps_per_nm_ql.setText(str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
@@ -1793,11 +1799,11 @@ class MMC_Main(QMainWindow):
             steps_per_value = McPherson.get_steps_per_nm(steps_per_rev, McPherson.MONO_MODELS[self.model_index], self.grating_density)
             self.motion_controllers.main_drive_axis.set_steps_per_value(steps_per_value)
         except Exception as e:
-            print(e)
-            print('Failed to update values. Please keep in mind that Models 272 and Model 608 Pre-Disperser only accept specific grating densities.')
+            log.error(e)
+            log.error('Failed to update values. Please keep in mind that Models 272 and Model 608 Pre-Disperser only accept specific grating densities.')
             pass
 
-        print('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
+        log.info('Settings steps_per_value:', self.motion_controllers.main_drive_axis.get_steps_per_value())
         if self.UIE_mcw_steps_per_nm_ql is not None:
             self.UIE_mcw_steps_per_nm_ql.setText(str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
 
@@ -1832,17 +1838,17 @@ class MMC_Main(QMainWindow):
             self.detector_axis_dev_name = self.motion_controllers.detector_rotation_axis.short_name()
 
     def accept_mcw(self):
-        print('~~MACHINE CONFIGURATION ACCEPT CALLED:')
-        print('~Main Drive')
-        print(self.UIE_mcw_main_drive_axis_qcb.currentText())
-        print('~Color Wheel Axis')
-        print(self.UIE_mcw_filter_wheel_axis_qcb.currentText())
-        print('~Sample Axes')
-        print(self.UIE_mcw_sample_rotation_axis_qcb.currentText())
-        print(self.UIE_mcw_sample_translation_axis_qcb.currentText())
-        print('~Detector Rotation Axis')
-        print(self.UIE_mcw_detector_rotation_axis_qcb.currentText())
-        print('~~')
+        log.info('~~MACHINE CONFIGURATION ACCEPT CALLED:')
+        log.info('~Main Drive')
+        log.info(self.UIE_mcw_main_drive_axis_qcb.currentText())
+        log.info('~Color Wheel Axis')
+        log.info(self.UIE_mcw_filter_wheel_axis_qcb.currentText())
+        log.info('~Sample Axes')
+        log.info(self.UIE_mcw_sample_rotation_axis_qcb.currentText())
+        log.info(self.UIE_mcw_sample_translation_axis_qcb.currentText())
+        log.info('~Detector Rotation Axis')
+        log.info(self.UIE_mcw_detector_rotation_axis_qcb.currentText())
+        log.info('~~')
 
         self.main_axis_index = self.UIE_mcw_main_drive_axis_qcb.currentIndex()
         self.filter_axis_index = self.UIE_mcw_filter_wheel_axis_qcb.currentIndex()
@@ -1892,8 +1898,6 @@ class MMC_Main(QMainWindow):
             self.calculate_and_apply_steps_per_nm()
 
         # self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_qdsb.value())
-        # print("DEBUG PRINTOUT")
-        # print(self.motion_controllers.filter_wheel_axis.long_name())
         if self.motion_controllers.filter_wheel_axis is not None:
             self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())
         if self.motion_controllers.sample_rotation_axis is not None:
@@ -1903,17 +1907,17 @@ class MMC_Main(QMainWindow):
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per_qdsb.value())
 
-        print('APPLIED GRAT DENSITY:', self.grating_density)
+        log.info('APPLIED GRAT DENSITY:', self.grating_density)
         if self.motion_controllers.main_drive_axis is not None:
-            print('APPLIED STEPS PER NM:', self.motion_controllers.main_drive_axis.get_steps_per_value())
+            log.info('APPLIED STEPS PER NM:', self.motion_controllers.main_drive_axis.get_steps_per_value())
         else:
-            print('APPLIED STEPS PER NM: Unable due to main_drive_axis being NoneType.')
+            log.info('APPLIED STEPS PER NM: Unable due to main_drive_axis being NoneType.')
 
         self.machine_conf_win.close()
     
     def QMessageBoxQuestion(self, title: str, msg: str):
         application.setQuitOnLastWindowClosed(False)
-        print('QMessageBoxInformation:', title, msg)
+        log.info('QMessageBoxInformation:', title, msg)
         retval = QMessageBox.question(self, title, msg,
         QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         application.setQuitOnLastWindowClosed(True)
@@ -1921,21 +1925,21 @@ class MMC_Main(QMainWindow):
 
     def QMessageBoxInformation(self, title: str, msg: str):
         application.setQuitOnLastWindowClosed(False)
-        print('QMessageBoxInformation:', title, msg)
+        log.info('QMessageBoxInformation:', title, msg)
         retval = QMessageBox.information(self, title, msg)
         application.setQuitOnLastWindowClosed(True)
         return retval
 
     def QMessageBoxWarning(self, title: str, msg: str):
         application.setQuitOnLastWindowClosed(False)
-        print('QMessageBoxWarning:', title, msg)
+        log.warn('QMessageBoxWarning:', title, msg)
         retval = QMessageBox.warning(self, title, msg)
         application.setQuitOnLastWindowClosed(True)
         return retval
 
     def QMessageBoxCritical(self, title: str, msg: str):
         application.setQuitOnLastWindowClosed(False)
-        print('QMessageBoxCritical:', title, msg)
+        log.error('QMessageBoxCritical:', title, msg)
         retval = QMessageBox.critical(self, title, msg)
         application.setQuitOnLastWindowClosed(True)
         return retval
@@ -1947,11 +1951,13 @@ if __name__ == '__main__':
     # 2. The device selection display, where devices can be selected and their settings can be changed prior to entering the control program.
     # 3. The control GUI (mainwindow.ui), where the user has control over what the device(s) do.
 
+    log.register()
+
     sys._excepthook = sys.excepthook 
     def exception_hook(exctype, value, traceback):
-        print('\n\n\nEXCEPTION HOOK')
-        print(exctype, value, traceback)
-        print('EXCEPTION HOOK\n\n')
+        log.error('\n\n\nEXCEPTION HOOK')
+        log.error(exctype, value, traceback)
+        log.error('EXCEPTION HOOK\n\n')
         sys._excepthook(exctype, value, traceback) 
         sys.exit(1) 
     sys.excepthook = exception_hook 
@@ -1963,30 +1969,30 @@ if __name__ == '__main__':
         try:
             fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono italic).ttf')
         except Exception as e:
-            print(e)
+            log.error(e)
 
         try:
             fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono).ttf')
         except Exception as e:
-            print(e)
+            log.error(e)
 
         # Main GUI and child-window setup.
         ui_file_name = exeDir + '/ui/machine_config.ui'
         ui_file = QFile(ui_file_name)
         if not ui_file.open(QIODevice.ReadOnly):
-            print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+            log.fatal(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
             sys.exit(-1)
 
         ui_file_name = exeDir + '/ui/device_manager.ui'
         ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
         if not ui_file.open(QIODevice.ReadOnly):
-            print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+            log.fatal(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
             sys.exit(-1)
 
         ui_file_name = exeDir + '/ui/main_window.ui'
         ui_file = QFile(ui_file_name) # workaround to load UI file with pyinstaller
         if not ui_file.open(QIODevice.ReadOnly):
-            print(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+            log.fatal(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
             sys.exit(-1)
 
         exit_code = MMC_Main.EXIT_CODE_REBOOT
@@ -2007,9 +2013,11 @@ if __name__ == '__main__':
             del mainWindow
 
     except Exception as e:
-        print('A GLOBAL EXCEPTION HAS BEEN DETECTED:')
-        print(e)
+        log.error('A GLOBAL EXCEPTION HAS BEEN DETECTED:')
+        log.error(e)
 
-    print('Exiting program...')
+    log.info('Exiting program...')
+
+    log.finish()
 
     os._exit(exit_code)

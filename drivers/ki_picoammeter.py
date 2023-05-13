@@ -29,6 +29,7 @@ import glob
 from time import sleep
 from utilities import ports_finder
 from utilities import safe_serial
+from utilities import log
 
 class KI_Picoammeter:
     def __init__(self, samples: int, man_port: str = None):
@@ -46,26 +47,26 @@ class KI_Picoammeter:
                     continue
 
             s = safe_serial.SafeSerial(port, 9600, timeout=1)
-            print('Beginning search for Keithley Model 6485...')
-            print('Trying port %s.'%(port))
+            log.info('Beginning search for Keithley Model 6485...')
+            log.info('Trying port %s.'%(port))
             s.write(b'*RST\r')
             sleep(0.5)
             s.write(b'*IDN?\r')
             buf = s.read(128).decode('utf-8').rstrip()
-            print(buf)
+            log.debug(buf)
 
             if 'KEITHLEY INSTRUMENTS INC.,MODEL 6485' in buf:
-                print("Keithley Model 6485 found.")
+                log.info("Keithley Model 6485 found.")
                 self.found = True
                 self.port = port
                 self.s = s
             else:
-                # print("Keithley Model 6485 not found.")
+                log.error("Keithley Model 6485 not found.")
                 s.close()
 
         if self.found == False:
             raise RuntimeError('Could not find Keithley Model 6485!')
-        print('Using port %s.'%(self.port))
+        log.debug('Using port %s.'%(self.port))
 
         self.s.write(b'SYST:ZCH ON\r')
         sleep(0.1)
@@ -95,7 +96,7 @@ class KI_Picoammeter:
         self.s.write(b'AVER ON\r')
         self.s.write(b'AVER:TCON REP\r')
         self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
-        print('Init complete')
+        log.debug('Init complete')
 
     def pinger(self):
         self.s.write(b'*IDN?\r')
@@ -123,9 +124,9 @@ class KI_Picoammeter:
         spbuf = buf.split(',')
         try:
             if int(float(spbuf[2])) != 2:
-                print("ERROR #%d"%(int(float(spbuf[2]))))
+                log.error("ERROR #%d"%(int(float(spbuf[2]))))
         except Exception:
-            print('Error: %s invalid output'%(buf))
+            log.error('Error: %s invalid output'%(buf))
         return out
 
     def __del__(self):
@@ -149,11 +150,11 @@ class KI_Picoammeter_Dummy:
         self.found = False
         self.port = -1
 
-        print("Picodummy; no port search necessary.")
+        log.debug("Picodummy; no port search necessary.")
 
-        print('Using port %s.'%(self.port))
+        log.debug('Using port %s.'%(self.port))
 
-        print('Init complete')
+        log.debug('Init complete')
 
 
     def set_samples(self, samples: int):

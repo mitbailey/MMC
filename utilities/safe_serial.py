@@ -25,6 +25,7 @@
 import time
 import serial
 from threading import Lock
+from utilities import log
 # from _typeshed import ReadableBuffer
 
 safe_ports = {}
@@ -47,7 +48,7 @@ class _SafeSerial:
     def write(self, buf):
         self._m.acquire()
         retval = self._s.write(buf)
-        print('Serial TX:', buf)
+        log.info('Serial TX:', buf)
         self._m.release()
         return retval
 
@@ -55,7 +56,7 @@ class _SafeSerial:
     def read(self, size: int = READ_SIZE):
         time.sleep(_SafeSerial.READ_DELAY)
         retval = self._s.read(size)
-        print('Serial RX:', retval)
+        log.info('Serial RX:', retval)
         return retval
     
     def _lock_override(self):

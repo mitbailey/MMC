@@ -34,6 +34,7 @@ import warnings
 from time import sleep
 import math as m
 import threading
+from utilities import log
 
 from ._thorlabs_kst_wrap_basic import *
 
