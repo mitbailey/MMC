@@ -48,8 +48,6 @@ QCheckBox = qckbx
 QProgressBar = qpbar
 """
 
-# TODO: Set up each model's unique configuration and export them to files. Then run the machines with these setups and see if it works. This will also be a handy test of the import/export system.
-
 # OS and SYS Imports
 import os
 import sys
@@ -77,7 +75,7 @@ from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBox, QDialog, QFileDialog,
                              QFormLayout, QHBoxLayout, QLabel, QListView, QMessageBox, QPushButton,
                              QSizePolicy, QSlider, QStyle, QToolButton, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QPlainTextEdit,
-                             QTableWidget, QTableWidgetItem, QSplitter, QAbstractItemView, QStyledItemDelegate, QHeaderView, QFrame, QProgressBar, QCheckBox, QToolTip, QGridLayout, QSpinBox,
+                             QTableWidget, QTabWidget, QTableWidgetItem, QSplitter, QAbstractItemView, QStyledItemDelegate, QHeaderView, QFrame, QProgressBar, QCheckBox, QToolTip, QGridLayout, QSpinBox,
                              QLCDNumber, QAbstractSpinBox, QStatusBar, QAction, QScrollArea, QSpacerItem)
 from PyQt5.QtCore import QTimer
 from PyQt5 import QtCore, QtWidgets
@@ -113,6 +111,12 @@ import version
 digital_7_italic_22 = None
 digital_7_16 = None
 
+# dev prefs
+SHOW_FILTER_WHEEL = os.path.isfile('enable.exp')
+SHOW_SAMPLE_MOVEMENT = os.path.isfile('enable.adv')
+SHOW_DETECTOR_ROTATION = os.path.isfile('enable.adv')
+ALLOW_DUMMY_MODE = os.path.isfile('enable.adv')
+
 # Classes
 class NavigationToolbar(NavigationToolbar2QT):
     def edit_parameters(self):
@@ -120,6 +124,8 @@ class NavigationToolbar(NavigationToolbar2QT):
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
+        matplotlib.rcParams['toolbar'] = 'None'
+
         fig = Figure(figsize=(width, height), dpi=dpi, tight_layout = True)
         self.parent = weakref.proxy(parent)
         self.axes = fig.add_subplot(111)
@@ -321,6 +327,11 @@ class MMC_Main(QMainWindow):
             self.UIE_dmw_dummy_qckbx: QCheckBox = self.dmw.findChild(QCheckBox, "dum_checkbox")
             self.UIE_dmw_dummy_qckbx.setChecked(len(self._startup_args) == 2)
 
+            if not ALLOW_DUMMY_MODE:
+                self.UIE_dmw_dummy_qckbx.hide()
+
+            self.UIE_dmw_loading_status_ql: QLabel = self.dmw.findChild(QLabel, 'current_loading_status')
+
             self.UIE_dmw_num_detectors_qsb: QSpinBox = self.dmw.findChild(QSpinBox, "num_detectors")
             self.UIE_dmw_num_detectors_qsb.valueChanged.connect(self.update_num_detectors_ui)
             self.num_detectors = 1
@@ -450,8 +461,12 @@ class MMC_Main(QMainWindow):
         self.SIGNAL_devices_connection_check.emit(self.dummy, detectors_connected, mtn_ctrls_connected)
 
     def _connect_devices_failure_cleanup(self):
+        self._connect_devices_progress_anim(0)
         self.connecting_devices = False
         self.UIE_dmw_accept_qpb.setEnabled(True)
+
+    def _connect_devices_status(self, message):
+        self.UIE_dmw_loading_status_ql.setText(message)
 
     def _connect_devices_progress_anim(self, value):
         self.anim = QPropertyAnimation(targetObject=self.UIE_dmw_load_bar_qpb, propertyName=b"value")
@@ -518,10 +533,13 @@ class MMC_Main(QMainWindow):
 
         self.UIE_mcw_steps_per_nm_qdsb: QDoubleSpinBox = None
 
-        if dummy:
-            self.setWindowTitle("McPherson Monochromator Control (Debug Mode) (MMCv%s)"%(version.__MMC_VERSION__))
+        if ALLOW_DUMMY_MODE:
+            if dummy:
+                self.setWindowTitle("McPherson Monochromator Control (Debug Mode) (MMCv%s)"%(version.__MMC_VERSION__))
+            else:
+                self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) (MMCv%s)"%(version.__MMC_VERSION__))
         else:
-            self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) (MMCv%s)"%(version.__MMC_VERSION__))
+                self.setWindowTitle("McPherson Monochromator Control (MMCv%s)"%(version.__MMC_VERSION__))
 
         self.is_conv_set = False # Use this flag to set conversion
 
@@ -711,9 +729,9 @@ class MMC_Main(QMainWindow):
         self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
         self.plotCanvas.clear_plot_fcn()
         self.plotCanvas.set_table_clear_cb(self.table.plotsClearedCb)
-        toolbar = self.plotCanvas.get_toolbar(self)
+        # toolbar = self.plotCanvas.get_toolbar(self)
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(toolbar)
+        # layout.addWidget(toolbar)
         layout.addWidget(self.plotCanvas)
         self.UIE_mgw_plot_frame_qw.setLayout(layout)
 
@@ -839,7 +857,29 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_da_collapse_qpb: QPushButton = self.findChild(QPushButton, 'detector_area_collap')
         self.da_collapsed = False
         self.UIE_mgw_da_collapse_qpb.clicked.connect(self.collapse_da)
-        
+
+        self.collapse_fwa()
+        self.collapse_sa()
+        self.collapse_da()
+
+        # TEMPORARY DISABLING OF UI ELEMENT UNTIL FUTURE VERSION IMPLEMENTATION. 
+        if not SHOW_FILTER_WHEEL:
+            self.findChild(QLabel, 'label_9').setEnabled(False)
+            self.UIE_mgw_filter_wheel_axis_qcb.setMaxCount(0)
+            self.UIE_mgw_fwa_collapse_qpb.setText('X')
+            self.UIE_mgw_fwa_collapse_qpb.setEnabled(False)
+        if not SHOW_SAMPLE_MOVEMENT:
+            self.findChild(QLabel, 'label_10').setEnabled(False)
+            self.UIE_mgw_sample_rotation_axis_qcb.setMaxCount(0)
+            self.UIE_mgw_sample_translation_axis_qcb.setMaxCount(0)
+            self.UIE_mgw_sa_collapse_qpb.setText('X')
+            self.UIE_mgw_sa_collapse_qpb.setEnabled(False)
+        if not SHOW_DETECTOR_ROTATION:
+            self.findChild(QLabel, 'label_11').setEnabled(False)
+            self.UIE_mgw_detector_rotation_axis_qcb.setMaxCount(0)
+            self.UIE_mgw_da_collapse_qpb.setText('X')
+            self.UIE_mgw_da_collapse_qpb.setEnabled(False)
+    
         self.UIE_mgw_sm_scan_type_qcb: QComboBox = self.findChild(QComboBox, 'scan_type_combo')
         self.UIE_mgw_sm_scan_type_qcb.addItem('Rotation')
         self.UIE_mgw_sm_scan_type_qcb.addItem('Translation')
@@ -1548,6 +1588,7 @@ class MMC_Main(QMainWindow):
 
     def show_window_machine_config(self):
         if self.machine_conf_win is None:
+            
             ui_file_name = exeDir + '/ui/machine_config.ui'
             ui_file = QFile(ui_file_name)
             if not ui_file.open(QIODevice.ReadOnly):
@@ -1652,6 +1693,15 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_sr_offset_qdsb.setValue(self.st_offset)
             self.UIE_mcw_st_offset_qdsb.setValue(self.sr_offset)
             self.UIE_mcw_dr_offset_qdsb.setValue(self.dr_offset)
+
+            # TEMPORARY DISABLING OF UI ELEMENT UNTIL FUTURE VERSION IMPLEMENTATION. 
+            tabWidget = self.machine_conf_win.findChild(QTabWidget, "tabWidget")
+            if not SHOW_FILTER_WHEEL:
+                tabWidget.removeTab(tabWidget.indexOf(tabWidget.findChild(QWidget, 'filter_wheel_tab')))
+            if not SHOW_SAMPLE_MOVEMENT:
+                tabWidget.removeTab(tabWidget.indexOf(tabWidget.findChild(QWidget, 'sample_tab')))
+            if not SHOW_DETECTOR_ROTATION:
+                tabWidget.removeTab(tabWidget.indexOf(tabWidget.findChild(QWidget, 'detector_tab')))
 
         self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
         self.UIE_mcw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)

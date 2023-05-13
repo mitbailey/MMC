@@ -26,7 +26,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="main_drive_tab">
       <attribute name="title">
@@ -77,13 +77,6 @@
           </widget>
          </item>
         </layout>
-       </item>
-       <item>
-        <widget class="Line" name="line_3">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
        </item>
        <item>
         <layout class="QGridLayout" name="gridLayout_4">
@@ -243,6 +236,42 @@
         </layout>
        </item>
        <item>
+        <widget class="Line" name="line_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="2">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_57">
+           <property name="font">
+            <font>
+             <family>Segoe UI Semibold</family>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>System</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
           <widget class="QFrame" name="frame">
@@ -257,20 +286,6 @@
              <widget class="QLabel" name="label_6">
               <property name="text">
                <string>lines/mm</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0" colspan="3">
-             <widget class="Line" name="line">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="1">
-             <widget class="QPushButton" name="update_conf_btn">
-              <property name="text">
-               <string>Calculate Steps per Nanometer</string>
               </property>
              </widget>
             </item>
@@ -311,7 +326,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_3">
               <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;System Model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
              </widget>
             </item>
@@ -332,6 +347,75 @@
              <widget class="QComboBox" name="models"/>
             </item>
            </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_11">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+         <item>
+          <widget class="QFrame" name="frame_2">
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="update_conf_btn">
+           <property name="font">
+            <font>
+             <family>Segoe UI Semibold</family>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Calculate Steps per Nanometer</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="frame_3">
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
           </widget>
          </item>
         </layout>
@@ -418,14 +502,14 @@
          <item row="2" column="2">
           <widget class="QLabel" name="label_45">
            <property name="text">
-            <string>deg</string>
+            <string>degrees</string>
            </property>
           </widget>
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="label_41">
            <property name="text">
-            <string/>
+            <string>steps / degree</string>
            </property>
           </widget>
          </item>
@@ -483,7 +567,7 @@
          <item row="1" column="2">
           <widget class="QLabel" name="label_44">
            <property name="text">
-            <string>deg</string>
+            <string>degrees</string>
            </property>
           </widget>
          </item>
@@ -507,7 +591,7 @@
          <item row="3" column="2">
           <widget class="QLabel" name="label_5">
            <property name="text">
-            <string>deg</string>
+            <string>degrees</string>
            </property>
           </widget>
          </item>
@@ -534,7 +618,7 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_7">
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="2,3">
+        <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="100,203">
          <property name="leftMargin">
           <number>5</number>
          </property>
@@ -698,7 +782,7 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="2,3">
+        <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="1,2">
          <property name="leftMargin">
           <number>5</number>
          </property>
@@ -862,7 +946,7 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="2,3">
+        <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="100,202">
          <property name="leftMargin">
           <number>5</number>
          </property>
@@ -1147,14 +1231,14 @@
          <item row="1" column="2">
           <widget class="QLabel" name="label_36">
            <property name="text">
-            <string>deg</string>
+            <string>degrees</string>
            </property>
           </widget>
          </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_37">
            <property name="text">
-            <string>deg</string>
+            <string>degrees</string>
            </property>
           </widget>
          </item>
@@ -1178,7 +1262,7 @@
          <item row="3" column="2">
           <widget class="QLabel" name="label_39">
            <property name="text">
-            <string>deg</string>
+            <string>degrees</string>
            </property>
           </widget>
          </item>
@@ -1189,6 +1273,13 @@
            </property>
            <property name="maximum">
             <double>360.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_52">
+           <property name="text">
+            <string>steps / degree</string>
            </property>
           </widget>
          </item>

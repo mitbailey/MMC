@@ -5,6 +5,8 @@
 **/.csv
 **/.txt
 **/dist/
+enable.adv
+enable.exp
 
 # Ultimate .gitignore #
 #######################

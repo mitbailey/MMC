@@ -41,6 +41,7 @@ from middleware import Detector
 class ConnectDevices(QThread):
     SIGNAL_complete = pyqtSignal(list, list)
     SIGNAL_failure = pyqtSignal()
+    SIGNAL_status = pyqtSignal(str)
     SIGNAL_load_bar = pyqtSignal(int)
     SIGNAL_qmsg_info = pyqtSignal(str, str)
     SIGNAL_qmsg_warn = pyqtSignal(str, str)
@@ -51,6 +52,7 @@ class ConnectDevices(QThread):
         self.other: MMC_Main = parent
         self.SIGNAL_complete.connect(self.other._connect_devices)
         self.SIGNAL_failure.connect(self.other._connect_devices_failure_cleanup)
+        self.SIGNAL_status.connect(self.other._connect_devices_status)
         self.SIGNAL_load_bar.connect(self.other._connect_devices_progress_anim)
         self.SIGNAL_qmsg_info.connect(self.other.QMessageBoxInformation)
         self.SIGNAL_qmsg_warn.connect(self.other.QMessageBoxWarning)
@@ -61,6 +63,7 @@ class ConnectDevices(QThread):
     def run(self):
         print('\n\n')
         print("connect_devices")
+        self.SIGNAL_status.emit('Beginning device connection.')
 
         self.dummy = self.other.dummy
         print("Dummy Mode: " + str(self.dummy))
@@ -79,6 +82,7 @@ class ConnectDevices(QThread):
 
         print('Detectors: %d'%(self.num_detectors))
         print('Motion controllers: %d'%(self.num_motion_controllers))
+        self.SIGNAL_status.emit('Detectors: %d; Motion controllers: %d'%(self.num_detectors, self.num_motion_controllers))
 
         load_increment = (10000 / (self.num_detectors + self.num_motion_controllers)) * 0.8
         load = load_increment
@@ -86,14 +90,17 @@ class ConnectDevices(QThread):
 
         for i in range(self.num_detectors):
             print('Instantiation attempt for detector #%d.'%(i))
+            self.SIGNAL_status.emit('Instantiation attempts for detector #%d.'%(i))
             try:
                 if self.other.UIEL_dmw_detector_qcb[i].currentIndex() != 0:
                     print("Using manual port: %s"%(self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0]))
+                    self.SIGNAL_status.emit("Connecting and configuring detector #%d on port %s."%(i, self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0]))
                     self.detectors[i] = Detector(self.dummy, self.other.UIEL_dmw_detector_model_qcb[i].currentText(), self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0])
 
             except Exception as e:
                 print(e)
                 print("Failed to find detector (%s)."%(e))
+                self.SIGNAL_status.emit("Failed to find detector (%s)."%(e))
                 self.SIGNAL_qmsg_warn.emit('Connection Failure', 'Failed to find detector (%s).'%(e))
                 self.detectors[i] = None
                 detectors_connected[i] = False
@@ -110,9 +117,11 @@ class ConnectDevices(QThread):
         # for i, combo in self.dm_detector_combos:
         for i in range(self.num_motion_controllers):
             print('Instantiation attempt for motion controller #%d.'%(i))
+            self.SIGNAL_status.emit('Instantiation attempt for motion controller #%d.'%(i))
             try:
                 if self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() != 0:
                     print("Using manual port: %s"%(self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
+                    self.SIGNAL_status.emit("Connecting and homing motion controller #%d on port %s."%(i, self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
                     print(self.dummy, self.other.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
                     new_mtn_ctrls = mw.new_motion_controller(self.dummy, self.other.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
                     for ctrlr in new_mtn_ctrls:
@@ -121,6 +130,7 @@ class ConnectDevices(QThread):
 
             except Exception as e:
                 print("Failed to find motion controller (%s)."%(e))
+                self.SIGNAL_status.emit("Failed to find motion controller (%s)."%(e))
                 self.SIGNAL_qmsg_warn.emit('Connection Failure', 'Failed to find motion controller (%s).'%(e)) 
                 self.mtn_ctrls[-1] = None
                 mtn_ctrls_connected[i] = False
@@ -136,6 +146,7 @@ class ConnectDevices(QThread):
 
         print('detectors_connected:', detectors_connected)
         print('mtn_ctrls_connected:', mtn_ctrls_connected)
+        self.SIGNAL_status.emit('Detectors connected: %d; Motion controllers connected: %d'%(len(detectors_connected), len(mtn_ctrls_connected)))
 
         self.other.detectors = self.detectors
         self.other.mtn_ctrls = self.mtn_ctrls
