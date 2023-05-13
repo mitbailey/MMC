@@ -105,7 +105,7 @@ from utilities import motion_controller_list as mcl
 import middleware as mw
 from middleware import MotionController#, list_all_devices
 from middleware import Detector
-import version
+from utilities import version
 from utilities import log
 
 # Fonts

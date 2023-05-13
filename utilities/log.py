@@ -1,4 +1,4 @@
-import version
+from utilities import version
 import time
 import os
 import inspect

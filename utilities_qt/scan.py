@@ -40,7 +40,7 @@ from functools import partial
 import matplotlib
 matplotlib.use('Qt5Agg')
 
-import version
+from utilities import version
 from utilities import log
 
 class Scan(QThread):
