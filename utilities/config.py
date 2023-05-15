@@ -41,7 +41,7 @@ def reset_config(path: str):
     save_config(path, data_save_directory=data_save_dir)
 
 # TODO: Change this to taking a dictionary or something, this many arguments is ridiculous.
-def save_config(path: str, is_export: bool = False, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 0.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'Loaded Config Name Empty', filter_axis_dev_name: str = 'Loaded Config Name Empty', rsamp_axis_dev_name: str = 'Loaded Config Name Empty', tsamp_axis_dev_name: str = 'Loaded Config Name Empty', detector_axis_dev_name: str = 'Loaded Config Name Empty', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0, fw_offset: float = 0.0, st_offset: float = 0.0, sr_offset: float = 0.0, dr_offset: float = 0.0) -> bool:
+def save_config(path: str, is_export: bool = False, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 0.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, asamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'Loaded Config Name Empty', filter_axis_dev_name: str = 'Loaded Config Name Empty', rsamp_axis_dev_name: str = 'Loaded Config Name Empty', asamp_axis_dev_name: str = 'Loaded Config Name Empty', tsamp_axis_dev_name: str = 'Loaded Config Name Empty', detector_axis_dev_name: str = 'Loaded Config Name Empty', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0, fw_offset: float = 0.0, st_offset: float = 0.0, sr_offset: float = 0.0, dr_offset: float = 0.0) -> bool:
     
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
@@ -62,11 +62,13 @@ def save_config(path: str, is_export: bool = False, mes_sign: int = 1, autosave_
     save_config['CONNECTIONS'] = {'mainAxisIndex': main_axis_index,
                                   'filterAxisIndex': filter_axis_index,
                                   'rsampAxisIndex': rsamp_axis_index,
+                                  'asampAxisIndex': asamp_axis_index,
                                   'tsampAxisIndex': tsamp_axis_index,
                                   'detectorAxisIndex': detector_axis_index,
                                   'mainAxisName': main_axis_dev_name,
                                   'filterAxisName': filter_axis_dev_name,
                                   'rsampAxisName': rsamp_axis_dev_name,
+                                  'asampAxisName': asamp_axis_dev_name,
                                   'tsampAxisName': tsamp_axis_dev_name,
                                   'detectorAxisName': detector_axis_dev_name,
                                   'numAxes': num_axes}
@@ -169,12 +171,14 @@ def load_config(path: str, is_import: bool) -> dict:
             main_axis_index = int(config['CONNECTIONS']['mainAxisIndex'])
             filter_axis_index = int(config['CONNECTIONS']['filterAxisIndex'])
             rsamp_axis_index = int(config['CONNECTIONS']['rsampAxisIndex'])
+            asamp_axis_index = int(config['CONNECTIONS']['asampAxisIndex'])
             tsamp_axis_index = int(config['CONNECTIONS']['tsampAxisIndex'])
             detector_axis_index = int(config['CONNECTIONS']['detectorAxisIndex'])
 
             main_axis_dev_name = str(config['CONNECTIONS']['mainAxisName'])
             filter_axis_dev_name = str(config['CONNECTIONS']['filterAxisName'])
             rsamp_axis_dev_name = str(config['CONNECTIONS']['rsampAxisName'])
+            asamp_axis_dev_name = str(config['CONNECTIONS']['asampAxisName'])
             tsamp_axis_dev_name = str(config['CONNECTIONS']['tsampAxisName'])
             detector_axis_dev_name = str(config['CONNECTIONS']['detectorAxisName'])
 
@@ -208,11 +212,13 @@ def load_config(path: str, is_import: bool) -> dict:
         'mainAxisIndex': main_axis_index,
         'filterAxisIndex': filter_axis_index,
         'rsampAxisIndex': rsamp_axis_index,
+        'asampAxisIndex': asamp_axis_index,
         'tsampAxisIndex': tsamp_axis_index,
         'detectorAxisIndex': detector_axis_index,
         'mainAxisName': main_axis_dev_name,
         'filterAxisName': filter_axis_dev_name,
         'rsampAxisName': rsamp_axis_dev_name,
+        'asampAxisName': asamp_axis_dev_name,
         'tsampAxisName': tsamp_axis_dev_name,
         'detectorAxisName': detector_axis_dev_name,
         'numAxes': num_axes,

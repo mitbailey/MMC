@@ -111,14 +111,12 @@ class Scan(QThread):
             self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
             log.info('109: Done with', prep_pos)
         except Exception as e:
-            log.error('Exception!')
+            log.error('Exception: Move Failyre - Main drive axis failed to move: %s'%(e))
             self.SIGNAL_error.emit('Move Failure', 'Main drive axis failed to move: %s'%(e))
             self.SIGNAL_complete.emit()
             return
         self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
-
-            
 
         self._xdata = []
         self._ydata = []
