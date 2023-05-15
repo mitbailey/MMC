@@ -662,13 +662,13 @@ class MMC_Main(QMainWindow):
             changes += 1
 
         if changes > 0:
-                log.info('Using default CONNECTIONS values.')
-                self.main_axis_index = 1
-                log.debug('AA', self.main_axis_index)
-                self.filter_axis_index = 0
-                self.rsamp_axis_index = 0
-                self.tsamp_axis_index = 0
-                self.detector_axis_index = 0
+            log.info('Using default CONNECTIONS values.')
+            self.main_axis_index = 1
+            log.debug('AA', self.main_axis_index)
+            self.filter_axis_index = 0
+            self.rsamp_axis_index = 0
+            self.tsamp_axis_index = 0
+            self.detector_axis_index = 0
             
         log.debug('Amain axis idx:', self.main_axis_index)
 
@@ -694,6 +694,7 @@ class MMC_Main(QMainWindow):
         
         # Update the actual axes pointers.
         log.debug('Dmain axis idx:', self.main_axis_index)
+
         self.mgw_axis_change_main()
         self.mgw_axis_change_filter()
         self.mgw_axis_change_rsamp()
@@ -1601,8 +1602,18 @@ class MMC_Main(QMainWindow):
                 log.error(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
                 raise RuntimeError('Could not load grating input UI file')
             
+            log.error('self.machine_conf_win: ', self.machine_conf_win)
+            log.error('self.machine_conf_win: ', self.machine_conf_win)
+            log.error('self.machine_conf_win: ', self.machine_conf_win)
+            log.error('self.machine_conf_win: ', self.machine_conf_win)
+
             self.machine_conf_win = QDialog(self) # pass parent window
             uic.loadUi(ui_file, self.machine_conf_win)
+            
+            log.error('self.machine_conf_win: ', self.machine_conf_win)
+            log.error('self.machine_conf_win: ', self.machine_conf_win)
+            log.error('self.machine_conf_win: ', self.machine_conf_win)
+            log.error('self.machine_conf_win: ', self.machine_conf_win)
 
             self.machine_conf_win.setWindowTitle('Monochromator Configuration (MMCv%s)'%(version.__MMC_VERSION__))
 
@@ -1670,6 +1681,12 @@ class MMC_Main(QMainWindow):
                     self.UIE_mcw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.long_name()))
 
                     self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
+
+            self.UIE_mcw_main_drive_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_main)
+            self.UIE_mcw_filter_wheel_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_filter)
+            self.UIE_mcw_sample_rotation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_rsamp)
+            self.UIE_mcw_sample_translation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_tsamp)
+            self.UIE_mcw_detector_rotation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_detector)
 
             self.UIE_mcw_fw_steps_per_rot_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_steps_per_deg')
             self.UIE_mcw_fw_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_max')
@@ -1751,7 +1768,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_stop_qdsb.setMaximum(self.max_pos)
         self.UIE_mgw_stop_qdsb.setMinimum(self.min_pos)
 
-    def apply_machine_conf(self):
+    def apply_machine_conf(self): # 'Calculate Steps per Nanometer' button.
         self.grating_density = self.UIE_mcw_grating_qdsb.value()
         log.debug(self.grating_density)
 
@@ -1807,35 +1824,201 @@ class MMC_Main(QMainWindow):
         if self.UIE_mcw_steps_per_nm_ql is not None:
             self.UIE_mcw_steps_per_nm_ql.setText(str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
 
-    def mgw_axis_change_main(self):
-        self.main_axis_index = self.UIE_mgw_main_drive_axis_qcb.currentIndex()
+    def mcw_axis_change_main(self):
+        log.trace('mcw_axis_change_main')
+
+        if self.machine_conf_win is None:
+            log.warn('mcw_axis_change_main called but machine_conf_win is NoneType.')
+            return
+
+        self.mgw_axis_change_main(True)
+
+    def mgw_axis_change_main(self, mcw = False):
+        log.trace()
+        if mcw and self.machine_conf_win is None:
+            log.warn('mgw_axis_change_main called with mcw True but machine_conf_win is NoneType.')
+            mcw = False
+        if self.machine_conf_win is None:
+            mcw = False
+
+        if mcw:
+            self.main_axis_index = self.UIE_mcw_main_drive_axis_qcb.currentIndex()
+        else:
+            self.main_axis_index = self.UIE_mgw_main_drive_axis_qcb.currentIndex()
+        if self.main_axis_index < 0:
+            self.main_axis_index = 0
+
+        idx_list = [self.filter_axis_index, self.rsamp_axis_index, self.tsamp_axis_index, self.detector_axis_index]
+
+        if (self.main_axis_index != 0) and (self.main_axis_index in idx_list):
+            log.warn('Main axis index found to be duplicate. Resetting.')
+            self.QMessageBoxWarning('Invalid Configuration', 'The device selected for one or more axes was found to already be selected for another.')
+            self.main_axis_index = 0
+
         self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.main_axis_index]
         if self.motion_controllers.main_drive_axis is not None:
             self.main_axis_dev_name = self.motion_controllers.main_drive_axis.short_name()
+        else:
+            self.main_axis_dev_name = 'Loaded Config Name Empty'
 
-    def mgw_axis_change_filter(self):
-        self.filter_axis_index = self.UIE_mgw_filter_wheel_axis_qcb.currentIndex()
+        self.UIE_mgw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
+        if mcw:
+            self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
+
+        return self.main_axis_index
+
+    def mcw_axis_change_filter(self):
+        log.trace('mcw_axis_change_filter')
+        if self.machine_conf_win is None:
+            log.warn('mcw_axis_change_filter called but machine_conf_win is NoneType.')
+            return
+        self.mgw_axis_change_filter(True)
+
+    def mgw_axis_change_filter(self, mcw = False):
+        log.trace()
+        print(mcw)
+        if mcw and self.machine_conf_win is None:
+            log.warn('mgw_axis_change_filter called with mcw True but machine_conf_win is NoneType.')
+            mcw = False
+        if mcw:
+            self.filter_axis_index = self.UIE_mcw_filter_wheel_axis_qcb.currentIndex()
+        else:
+            self.filter_axis_index = self.UIE_mgw_filter_wheel_axis_qcb.currentIndex()
+        if self.filter_axis_index < 0:
+            self.filter_axis_index = 0
+
+        idx_list = [self.main_axis_index, self.rsamp_axis_index, self.tsamp_axis_index, self.detector_axis_index]
+
+        if (self.filter_axis_index != 0) and (self.filter_axis_index in idx_list):
+            log.warn('Main axis index found to be duplicate. Resetting.')
+            self.QMessageBoxWarning('Invalid Configuration', 'The device selected for one or more axes was found to already be selected for another.')
+            self.filter_axis_index = 0
+
         self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.filter_axis_index]
         if self.motion_controllers.filter_wheel_axis is not None:
             self.filter_axis_dev_name = self.motion_controllers.filter_wheel_axis.short_name()
+        else:
+            self.filter_axis_dev_name = 'Loaded Config Name Empty'
 
-    def mgw_axis_change_rsamp(self):
-        self.rsamp_axis_index = self.UIE_mgw_sample_rotation_axis_qcb.currentIndex()
+        self.UIE_mgw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
+        if mcw:
+            self.UIE_mcw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
+
+        return self.filter_axis_index
+
+    def mcw_axis_change_rsamp(self):
+        log.trace('mcw_axis_change_rsamp')
+        if self.machine_conf_win is None:
+            log.warn('mcw_axis_change_rsamp called but machine_conf_win is NoneType.')
+            return
+        self.mgw_axis_change_rsamp(True)
+
+    def mgw_axis_change_rsamp(self, mcw = False):
+        log.trace()
+        if mcw and self.machine_conf_win is None:
+            log.warn('mgw_axis_change_rsamp called with mcw True but machine_conf_win is NoneType.')
+            mcw = False
+        if mcw:
+            self.rsamp_axis_index = self.UIE_mcw_sample_rotation_axis_qcb.currentIndex()
+        else:
+            self.rsamp_axis_index = self.UIE_mgw_sample_rotation_axis_qcb.currentIndex()
+        if self.rsamp_axis_index < 0:
+            self.rsamp_axis_index = 0
+
+        idx_list = [self.main_axis_index, self.filter_axis_index, self.tsamp_axis_index, self.detector_axis_index]
+
+        if (self.rsamp_axis_index != 0) and (self.rsamp_axis_index in idx_list):
+            log.warn('Main axis index found to be duplicate. Resetting.')
+            self.QMessageBoxWarning('Invalid Configuration', 'The device selected for one or more axes was found to already be selected for another.')
+            self.rsamp_axis_index = 0
+
         self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.rsamp_axis_index]
         if self.motion_controllers.sample_rotation_axis is not None:
             self.rsamp_axis_dev_name = self.motion_controllers.sample_rotation_axis.short_name()
+        else:
+            self.rsamp_axis_dev_name = 'Loaded Config Name Empty'
+            
+        self.UIE_mgw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
+        if mcw:
+            self.UIE_mcw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
 
-    def mgw_axis_change_tsamp(self):
-        self.tsamp_axis_index = self.UIE_mgw_sample_translation_axis_qcb.currentIndex()
+        return self.rsamp_axis_index
+
+    def mcw_axis_change_tsamp(self):
+        log.trace('mcw_axis_change_tsamp')
+        if self.machine_conf_win is None:
+            log.warn('mcw_axis_change_tsamp called but machine_conf_win is NoneType.')
+            return
+        self.mgw_axis_change_tsamp(True)
+
+    def mgw_axis_change_tsamp(self, mcw = False):
+        log.trace()
+        if mcw and self.machine_conf_win is None:
+            log.warn('mgw_axis_change_tsamp called with mcw True but machine_conf_win is NoneType.')
+            mcw = False
+        if mcw:
+            self.tsamp_axis_index = self.UIE_mcw_sample_translation_axis_qcb.currentIndex()
+        else:
+            self.tsamp_axis_index = self.UIE_mgw_sample_translation_axis_qcb.currentIndex()
+        if self.tsamp_axis_index < 0:
+            self.tsamp_axis_index = 0
+
+        idx_list = [self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.detector_axis_index]
+
+        if (self.tsamp_axis_index != 0) and (self.tsamp_axis_index in idx_list):
+            log.warn('Main axis index found to be duplicate. Resetting.')
+            self.QMessageBoxWarning('Invalid Configuration', 'The device selected for one or more axes was found to already be selected for another.')
+            self.tsamp_axis_index = 0
+
         self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.tsamp_axis_index]
         if self.motion_controllers.sample_translation_axis is not None:
             self.tsamp_axis_dev_name = self.motion_controllers.sample_translation_axis.short_name()
+        else:
+            self.tsamp_axis_dev_name = 'Loaded Config Name Empty'
+            
+        self.UIE_mgw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
+        if mcw:
+            self.UIE_mcw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
 
-    def mgw_axis_change_detector(self):
-        self.detector_axis_index = self.UIE_mgw_detector_rotation_axis_qcb.currentIndex()
+        return self.tsamp_axis_index
+
+    def mcw_axis_change_detector(self):
+        log.trace('mcw_axis_change_detector')
+        if self.machine_conf_win is None:
+            log.warn('mcw_axis_change_detector called but machine_conf_win is NoneType.')
+            return
+        self.mgw_axis_change_detector(True)
+
+    def mgw_axis_change_detector(self, mcw = False):
+        log.trace()
+        if mcw and self.machine_conf_win is None:
+            log.warn('mgw_axis_change_detector called with mcw True but machine_conf_win is NoneType.')
+            mcw = False
+        if mcw:
+            self.detector_axis_index = self.UIE_mcw_detector_rotation_axis_qcb.currentIndex()
+        else:
+            self.detector_axis_index = self.UIE_mgw_detector_rotation_axis_qcb.currentIndex()
+        if self.detector_axis_index < 0:
+            self.detector_axis_index = 0
+
+        idx_list = [self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.tsamp_axis_index]
+
+        if (self.detector_axis_index != 0) and (self.detector_axis_index in idx_list):
+            log.warn('Main axis index found to be duplicate. Resetting.')
+            self.QMessageBoxWarning('Invalid Configuration', 'The device selected for one or more axes was found to already be selected for another.')
+            self.detector_axis_index = 0
+
         self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index]
         if self.motion_controllers.detector_rotation_axis is not None:
             self.detector_axis_dev_name = self.motion_controllers.detector_rotation_axis.short_name()
+        else:
+            self.detector_axis_dev_name = 'Loaded Config Name Empty'
+            
+        self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
+        if mcw:
+            self.UIE_mcw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
+
+        return self.detector_axis_index
 
     def accept_mcw(self):
         log.info('~~MACHINE CONFIGURATION ACCEPT CALLED:')
@@ -1850,11 +2033,66 @@ class MMC_Main(QMainWindow):
         log.info(self.UIE_mcw_detector_rotation_axis_qcb.currentText())
         log.info('~~')
 
-        self.main_axis_index = self.UIE_mcw_main_drive_axis_qcb.currentIndex()
-        self.filter_axis_index = self.UIE_mcw_filter_wheel_axis_qcb.currentIndex()
-        self.rsamp_axis_index = self.UIE_mcw_sample_rotation_axis_qcb.currentIndex()
-        self.tsamp_axis_index = self.UIE_mcw_sample_translation_axis_qcb.currentIndex()
-        self.detector_axis_index = self.UIE_mcw_detector_rotation_axis_qcb.currentIndex()
+        self.mgw_axis_change_main()
+        self.mgw_axis_change_filter()
+        self.mgw_axis_change_rsamp()
+        self.mgw_axis_change_tsamp()
+        self.mgw_axis_change_detector()
+
+        # self.main_axis_index = self.UIE_mcw_main_drive_axis_qcb.currentIndex()
+        # self.filter_axis_index = self.UIE_mcw_filter_wheel_axis_qcb.currentIndex()
+        # self.rsamp_axis_index = self.UIE_mcw_sample_rotation_axis_qcb.currentIndex()
+        # self.tsamp_axis_index = self.UIE_mcw_sample_translation_axis_qcb.currentIndex()
+        # self.detector_axis_index = self.UIE_mcw_detector_rotation_axis_qcb.currentIndex()
+
+        # # Handles negative indices.
+        # if self.main_axis_index < 0:
+        #     self.main_axis_index = 0
+        # if self.filter_axis_index < 0:
+        #     self.filter_axis_index = 0
+        # if self.rsamp_axis_index < 0:
+        #     self.rsamp_axis_index = 0
+        # if self.tsamp_axis_index < 0:
+        #     self.tsamp_axis_index = 0
+        # if self.detector_axis_index < 0:
+        #     self.detector_axis_index = 0
+
+        # # Code for handling duplicate axis selections.
+        # index_list = [self.main_axis_index]
+        
+        # if self.filter_axis_index not in index_list:
+        #     index_list.append(self.filter_axis_index)
+        # elif self.filter_axis_index > 0:
+        #     self.filter_axis_index = 0
+        #     log.warn('Filter axis index selection detected as duplicate, resetting.')
+        #     self.QMessageBoxWarning('Invalid Configuration', 'The device selected for the filter wheel axis is already selected for another axis.')
+        #     return
+
+        # if self.rsamp_axis_index not in index_list:
+        #     index_list.append(self.rsamp_axis_index)
+        # elif self.rsamp_axis_index > 0:
+        #     self.rsamp_axis_index = 0
+        #     log.warn('Sample rotation axis index selection detected as duplicate, resetting.')
+        #     self.QMessageBoxWarning('Invalid Configuration', 'The device selected for the sample rotation axis is already selected for another axis.')
+        #     return
+
+        # if self.tsamp_axis_index not in index_list:
+        #     index_list.append(self.tsamp_axis_index)
+        # elif self.tsamp_axis_index > 0:
+        #     self.tsamp_axis_index = 0
+        #     log.warn('Sample translation axis index selection detected as duplicate, resetting.')
+        #     self.QMessageBoxWarning('Invalid Configuration', 'The device selected for the sample translation axis is already selected for another axis.')
+        #     return
+
+        # if self.detector_axis_index not in index_list:
+        #     index_list.append(self.detector_axis_index)
+        # elif self.detector_axis_index > 0:
+        #     self.detector_axis_index = 0
+        #     log.warn('Detector axis index selection detected as duplicate, resetting.')
+        #     self.QMessageBoxWarning('Invalid Configuration', 'The device selected for the detector axis is already selected for another axis.')
+        #     return
+
+        # log.info('Index list: ', index_list)
 
         self.UIE_mgw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
         self.UIE_mgw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
@@ -1862,11 +2100,11 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
         self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
 
-        self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.main_axis_index]
-        self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.filter_axis_index]
-        self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.rsamp_axis_index]
-        self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.tsamp_axis_index]
-        self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index]
+        # self.motion_controllers.main_drive_axis = self.mtn_ctrls[self.main_axis_index]
+        # self.motion_controllers.filter_wheel_axis = self.mtn_ctrls[self.filter_axis_index]
+        # self.motion_controllers.sample_rotation_axis = self.mtn_ctrls[self.rsamp_axis_index]
+        # self.motion_controllers.sample_translation_axis = self.mtn_ctrls[self.tsamp_axis_index]
+        # self.motion_controllers.detector_rotation_axis = self.mtn_ctrls[self.detector_axis_index]
 
         # Set limits.
         self.max_pos = self.UIE_mcw_max_pos_in_qdsb.value()
@@ -1897,7 +2135,6 @@ class MMC_Main(QMainWindow):
         if not self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
             self.calculate_and_apply_steps_per_nm()
 
-        # self.motion_controllers.main_drive_axis.set_steps_per_value(self.UIE_mcw_steps_per_nm_qdsb.value())
         if self.motion_controllers.filter_wheel_axis is not None:
             self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())
         if self.motion_controllers.sample_rotation_axis is not None:
@@ -1906,6 +2143,12 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.sample_translation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans_qdsb.value())
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per_qdsb.value())
+
+        # log.info('Main Drive Axis:           [%f < %f < %f]'%(self.motion_controllers.))
+        # log.info('Filter Wheel Axis:         [%f < %f < %f]')
+        # log.info('Sample Rotation Axis:      [%f < %f < %f]')
+        # log.info('Sample Translation Axis:   [%f < %f < %f]')
+        # log.info('Detector Rotation Axis:    [%f < %f < %f]')
 
         log.info('APPLIED GRAT DENSITY:', self.grating_density)
         if self.motion_controllers.main_drive_axis is not None:

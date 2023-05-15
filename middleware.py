@@ -235,6 +235,8 @@ class MotionController:
         Returns:
             tuple[float, float]: _description_
         """
+        log.trace('Setting the limits of %s to [%f:%f].'%(self.short_name(), min_pos, max_pos))
+
         self._max_pos = max_pos
         self._min_pos = min_pos
 
@@ -354,13 +356,16 @@ class MotionController:
     def _move_to(self, position, block):
         if self._steps_per_value == 0:
             self._moving = False
+            log.error('Steps-per value has not been set for this axis. This value must be set in the Machine Configuration window.')
             raise Exception('Steps-per value has not been set for this axis. This value must be set in the Machine Configuration window.')
         if position > self._max_pos:
             self._moving = False
-            raise Exception('Position is beyond the upper limit of this axis [%f > A > %f].'%(self._max_pos, self._min_pos))
+            log.error('Position is beyond the upper limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
+            raise Exception('Position is beyond the upper limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
         if position < self._min_pos:
             self._moving = False
-            raise Exception('Position is beyond the lower limit of this axis [%f > A > %f].'%(self._max_pos, self._min_pos))
+            log.error('Position is beyond the lower limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
+            raise Exception('Position is beyond the lower limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
 
         if self._multi_axis:
             retval = self._motor_ctrl.move_to((position * self._steps_per_value) + (self._offset * self._steps_per_value), block, self._axis)

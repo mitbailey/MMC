@@ -27,7 +27,8 @@ import time
 import os
 import inspect
 
-LOG_LEVEL = 1
+LOG_LEVEL = 2
+TRACE = True
 
 def register():
     logdir = 'logs'
@@ -41,6 +42,10 @@ def register():
 def debug(*arg, **end):
     if LOG_LEVEL <= 0:
         _out('[DEBUG]', arg)
+
+def trace(*arg, **end):
+    if TRACE:
+        _out('[TRACE]', arg, True)
 
 def info(*arg, **end):
     if LOG_LEVEL <= 1:
@@ -58,11 +63,18 @@ def fatal(*arg, **end):
     if LOG_LEVEL <= 4:
         _out('[FATAL]', arg)
 
-def _out(_l, _m):
+def _out(_l, _m, _t = False):
     global __logfile
 
+    if _t:
+        callerframerecord = inspect.stack()[3]
+        __FILE__, __LINE__, __FUNC__ = inspect.getframeinfo(callerframerecord[0])[0:3]
+        __FILE__ = __FILE__.split(sep='\\')[-1]
+        __FLF__ = '[%s:%d | %s]'%(__FILE__, __LINE__, __FUNC__)
+        __logfile.write('Caller: %s, '%(__FLF__))
+        print('Caller: %s, '%(__FLF__), end='')
+
     callerframerecord = inspect.stack()[2]
-    # frame = callerframerecord[0]
     __FILE__, __LINE__, __FUNC__ = inspect.getframeinfo(callerframerecord[0])[0:3]
     __FILE__ = __FILE__.split(sep='\\')[-1]
 
