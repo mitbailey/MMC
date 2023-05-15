@@ -50,6 +50,10 @@ class UpdatePositionDisplays(QThread):
     def run(self):
         log.debug("Update worker started.")
         def update():
+            if self.other.motion_controllers.main_drive_axis is None:
+                log.debug("Main drive axis not selected.")
+                return
+
             log.debug("Updating position displays...")
             self.other.current_position = self.other.motion_controllers.main_drive_axis.get_position()
             
