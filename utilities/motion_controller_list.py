@@ -27,5 +27,6 @@ class MotionControllerList:
         self.main_drive_axis = None
         self.filter_wheel_axis = None
         self.sample_rotation_axis = None
+        self.sample_angle_axis = None
         self.sample_translation_axis = None
         self.detector_rotation_axis = None

@@ -144,8 +144,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>642</width>
-             <height>1158</height>
+             <width>635</width>
+             <height>1401</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -382,7 +382,7 @@
                        </size>
                       </property>
                       <property name="decimals">
-                       <number>2</number>
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>-50000.000000000000000</double>
@@ -518,7 +518,7 @@
                     <item>
                      <widget class="QDoubleSpinBox" name="start_set_spinbox">
                       <property name="decimals">
-                       <number>2</number>
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>-9999.000000000000000</double>
@@ -557,7 +557,7 @@
                     <item>
                      <widget class="QDoubleSpinBox" name="end_set_spinbox">
                       <property name="decimals">
-                       <number>2</number>
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>-9999.000000000000000</double>
@@ -599,7 +599,7 @@
                        <string/>
                       </property>
                       <property name="decimals">
-                       <number>4</number>
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>0.000100000000000</double>
@@ -892,6 +892,9 @@
                         <height>16777215</height>
                        </size>
                       </property>
+                      <property name="decimals">
+                       <number>6</number>
+                      </property>
                       <property name="minimum">
                        <double>0.000000000000000</double>
                       </property>
@@ -991,7 +994,7 @@
                       <rect>
                        <x>0</x>
                        <y>0</y>
-                       <width>599</width>
+                       <width>580</width>
                        <height>148</height>
                       </rect>
                      </property>
@@ -1287,6 +1290,9 @@
                         <height>16777215</height>
                        </size>
                       </property>
+                      <property name="decimals">
+                       <number>6</number>
+                      </property>
                       <property name="minimum">
                        <double>-16777215.000000000000000</double>
                       </property>
@@ -1329,6 +1335,117 @@
                     </item>
                     <item>
                      <widget class="QPushButton" name="sample_rotate_home_button">
+                      <property name="minimumSize">
+                       <size>
+                        <width>75</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>75</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>Home</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_30">
+                    <property name="leftMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>5</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_14">
+                      <property name="minimumSize">
+                       <size>
+                        <width>85</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>85</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>Angle:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDoubleSpinBox" name="sample_angle_spin">
+                      <property name="minimumSize">
+                       <size>
+                        <width>111</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>111</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="decimals">
+                       <number>6</number>
+                      </property>
+                      <property name="minimum">
+                       <double>-16777215.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>16777215.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="sample_angle_move_button">
+                      <property name="minimumSize">
+                       <size>
+                        <width>75</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>75</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>Move</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="horizontalSpacer_19">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="sample_angle_home_button">
                       <property name="minimumSize">
                        <size>
                         <width>75</width>
@@ -1394,6 +1511,9 @@
                         <width>111</width>
                         <height>16777215</height>
                        </size>
+                      </property>
+                      <property name="decimals">
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>-16777215.000000000000000</double>
@@ -1569,7 +1689,7 @@
                     <item>
                      <widget class="QDoubleSpinBox" name="start_set_spinbox_2">
                       <property name="decimals">
-                       <number>2</number>
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>-9999.000000000000000</double>
@@ -1608,7 +1728,7 @@
                     <item>
                      <widget class="QDoubleSpinBox" name="end_set_spinbox_2">
                       <property name="decimals">
-                       <number>2</number>
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>-9999.000000000000000</double>
@@ -1650,7 +1770,7 @@
                        <string/>
                       </property>
                       <property name="decimals">
-                       <number>4</number>
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>0.000100000000000</double>
@@ -1953,6 +2073,9 @@
                         <italic>false</italic>
                        </font>
                       </property>
+                      <property name="decimals">
+                       <number>6</number>
+                      </property>
                       <property name="minimum">
                        <double>-16777215.000000000000000</double>
                       </property>
@@ -2085,7 +2208,7 @@
                     <item>
                      <widget class="QDoubleSpinBox" name="start_set_spinbox_3">
                       <property name="decimals">
-                       <number>2</number>
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>-9999.000000000000000</double>
@@ -2124,7 +2247,7 @@
                     <item>
                      <widget class="QDoubleSpinBox" name="end_set_spinbox_3">
                       <property name="decimals">
-                       <number>2</number>
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>-9999.000000000000000</double>
@@ -2166,7 +2289,7 @@
                        <string/>
                       </property>
                       <property name="decimals">
-                       <number>4</number>
+                       <number>6</number>
                       </property>
                       <property name="minimum">
                        <double>0.000100000000000</double>
@@ -2697,7 +2820,7 @@
      <x>0</x>
      <y>0</y>
      <width>1363</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

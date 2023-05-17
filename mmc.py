@@ -108,6 +108,10 @@ from middleware import Detector
 from utilities import version
 from utilities import log
 
+import signal
+
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 # Fonts
 digital_7_italic_22 = None
 digital_7_16 = None
@@ -723,12 +727,46 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
         self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
         
+        self.UIE_mgw_fw_mancon_position_set_qsb: QSpinBox = self.findChild(QSpinBox, 'filter_wheel_pos_set_spinbox')
+        self.UIE_mgw_fw_mancon_move_pos_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_move_pos_button')
+        self.UIE_mgw_fw_mancon_home_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_home_button')
+        self.UIE_mgw_fw_add_rule_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_add_rule_button')
+        self.UIE_mgw_fw_add_rule_qpb.clicked.connect(self.new_filter_wheel_rule)
+
+        self.UIE_mgw_sm_rpos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sample_rotate_spin')
+        self.UIE_mgw_sm_tpos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sample_trans_spin')
+        self.UIE_mgw_sm_rhome_qpb: QPushButton = self.findChild(QPushButton, 'sample_rotate_home_button')
+        self.UIE_mgw_sm_thome_qpb: QPushButton = self.findChild(QPushButton, 'sample_trans_home_button')
+        self.UIE_mgw_sm_rmove_qpb: QPushButton = self.findChild(QPushButton, 'sample_rotate_move_button')
+        self.UIE_mgw_sm_tmove_qpb: QPushButton = self.findChild(QPushButton, 'sample_trans_move_button')
+        self.UIE_mgw_sm_apos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sample_angle_spin')
+        self.UIE_mgw_sm_amove_qpb: QPushButton = self.findChild(QPushButton, 'sample_angle_move_button')
+        self.UIE_mgw_sm_ahome_qpb: QPushButton = self.findChild(QPushButton, 'sample_angle_home_button')
+        self.UIE_mgw_dm_rpos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'detector_rotate_spin')
+        self.UIE_mgw_dm_rhome_qpb: QPushButton = self.findChild(QPushButton, 'detector_rotate_home_button')
+        self.UIE_mgw_dm_rmove_qpb: QPushButton = self.findChild(QPushButton, 'detector_rotate_move_button')
+
+        self.UIE_mgw_sm_scan_type_qcb: QComboBox = self.findChild(QComboBox, 'scan_type_combo')
+        self.UIE_mgw_sm_start_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'start_set_spinbox_2')
+        self.UIE_mgw_sm_end_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'end_set_spinbox_2')
+        self.UIE_mgw_sm_step_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'step_set_spinbox_2')
+        self.UIE_mgw_sm_scan_repeats_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'scan_repeats_3')
+        self.UIE_mgw_sm_begin_scan_qpb: QPushButton = self.findChild(QPushButton, 'begin_scan_button_3')
+        self.UIE_mgw_sm_end_scan_qpb: QPushButton = self.findChild(QPushButton, 'stop_scan_button_3')
+        self.UIE_mgw_dm_start_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'start_set_spinbox_3')
+        self.UIE_mgw_dm_end_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'end_set_spinbox_3')
+        self.UIE_mgw_dm_step_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'step_set_spinbox_3')
+        self.UIE_mgw_dm_scan_repeats_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'scan_repeats_4')
+        self.UIE_mgw_dm_begin_scan_qpb: QPushButton = self.findChild(QPushButton, 'begin_scan_button_4')
+        self.UIE_mgw_dm_end_scan_qpb: QPushButton = self.findChild(QPushButton, 'stop_scan_button_4')
+
         # Update the actual axes pointers.
         log.debug('Dmain axis idx:', self.main_axis_index)
 
         self.mgw_axis_change_main()
         self.mgw_axis_change_filter()
         self.mgw_axis_change_rsamp()
+        self.mgw_axis_change_asamp()
         self.mgw_axis_change_tsamp()
         self.mgw_axis_change_detector()
 
@@ -816,11 +854,6 @@ class MMC_Main(QMainWindow):
         self.startpos = (self.UIE_mgw_start_qdsb.value())
         self.stoppos = (self.UIE_mgw_stop_qdsb.value())
 
-        self.UIE_mgw_fw_mancon_position_set_qsb: QSpinBox = self.findChild(QSpinBox, 'filter_wheel_pos_set_spinbox')
-        self.UIE_mgw_fw_mancon_move_pos_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_move_pos_button')
-        self.UIE_mgw_fw_mancon_home_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_home_button')
-        self.UIE_mgw_fw_add_rule_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_add_rule_button')
-        self.UIE_mgw_fw_add_rule_qpb.clicked.connect(self.new_filter_wheel_rule)
         
         self.cw_rules = [] # List to hold the actual rules.
         self.UIEL_mgw_fw_rules_qvbl = []
@@ -833,26 +866,21 @@ class MMC_Main(QMainWindow):
         self.new_filter_wheel_rule()
 
         # Sample Movement UI
-        self.UIE_mgw_sm_rpos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sample_rotate_spin')
-        self.UIE_mgw_sm_tpos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'sample_trans_spin')
 
-        self.UIE_mgw_sm_rhome_qpb: QPushButton = self.findChild(QPushButton, 'sample_rotate_home_button')
+
         self.UIE_mgw_sm_rhome_qpb.clicked.connect(self.manual_home_smr)
-        self.UIE_mgw_sm_thome_qpb: QPushButton = self.findChild(QPushButton, 'sample_trans_home_button')
         self.UIE_mgw_sm_thome_qpb.clicked.connect(self.manual_home_smt)
 
-        self.UIE_mgw_sm_rmove_qpb: QPushButton = self.findChild(QPushButton, 'sample_rotate_move_button')
         self.UIE_mgw_sm_rmove_qpb.clicked.connect(self.move_to_position_button_pressed_sr)
-        self.UIE_mgw_sm_tmove_qpb: QPushButton = self.findChild(QPushButton, 'sample_trans_move_button')
         self.UIE_mgw_sm_tmove_qpb.clicked.connect(self.move_to_position_button_pressed_st)
 
-        # Detector Movement UI
-        self.UIE_mgw_dm_rpos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'detector_rotate_spin')
+        self.UIE_mgw_sm_amove_qpb.clicked.connect(self.move_to_position_button_pressed_sa)
+        self.UIE_mgw_sm_ahome_qpb.clicked.connect(self.manual_home_sma)
 
-        self.UIE_mgw_dm_rhome_qpb: QPushButton = self.findChild(QPushButton, 'detector_rotate_home_button')
+        # Detector Movement UI
+
         self.UIE_mgw_dm_rhome_qpb.clicked.connect(self.manual_home_dmr)
 
-        self.UIE_mgw_dm_rmove_qpb: QPushButton = self.findChild(QPushButton, 'detector_rotate_move_button')
         self.UIE_mgw_dm_rmove_qpb.clicked.connect(self.move_to_position_button_pressed_dr)
 
         if self.mes_sign == -1:
@@ -912,26 +940,13 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_da_collapse_qpb.setText('X')
             self.UIE_mgw_da_collapse_qpb.setEnabled(False)
     
-        self.UIE_mgw_sm_scan_type_qcb: QComboBox = self.findChild(QComboBox, 'scan_type_combo')
         self.UIE_mgw_sm_scan_type_qcb.addItem('Rotation')
         self.UIE_mgw_sm_scan_type_qcb.addItem('Translation')
         self.UIE_mgw_sm_scan_type_qcb.addItem('Theta2Theta')
-        self.UIE_mgw_sm_start_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'start_set_spinbox_2')
-        self.UIE_mgw_sm_end_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'end_set_spinbox_2')
-        self.UIE_mgw_sm_step_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'step_set_spinbox_2')
-        self.UIE_mgw_sm_scan_repeats_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'scan_repeats_3')
-        self.UIE_mgw_sm_begin_scan_qpb: QPushButton = self.findChild(QPushButton, 'begin_scan_button_3')
         self.UIE_mgw_sm_begin_scan_qpb.clicked.connect(self.scan_sm_button_pressed)
-        self.UIE_mgw_sm_end_scan_qpb: QPushButton = self.findChild(QPushButton, 'stop_scan_button_3')
         self.UIE_mgw_sm_end_scan_qpb.clicked.connect(self.stop_scan_button_pressed)
 
-        self.UIE_mgw_dm_start_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'start_set_spinbox_3')
-        self.UIE_mgw_dm_end_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'end_set_spinbox_3')
-        self.UIE_mgw_dm_step_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'step_set_spinbox_3')
-        self.UIE_mgw_dm_scan_repeats_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'scan_repeats_4')
-        self.UIE_mgw_dm_begin_scan_qpb: QPushButton = self.findChild(QPushButton, 'begin_scan_button_4')
         self.UIE_mgw_dm_begin_scan_qpb.clicked.connect(self.scan_dm_button_pressed)
-        self.UIE_mgw_dm_end_scan_qpb: QPushButton = self.findChild(QPushButton, 'stop_scan_button_4')
         self.UIE_mgw_dm_end_scan_qpb.clicked.connect(self.stop_scan_button_pressed)
 
         movement_sensitive_list = []
@@ -1355,6 +1370,15 @@ class MMC_Main(QMainWindow):
         except Exception as e:
             self.QMessageBoxWarning('Homing Failed', e)
 
+    def manual_home_sma(self):
+        self.scan_status_update("HOMING SA")
+        self.homing_started = True
+        self.disable_movement_sensitive_buttons(True)
+        try:
+            self.motion_controllers.sample_angle_axis.home()
+        except Exception as e:
+            self.QMessageBoxWarning('Homing Failed', e)
+
     def manual_home_smt(self):
         self.scan_status_update("HOMING ST")
         self.homing_started = True
@@ -1552,6 +1576,26 @@ class MMC_Main(QMainWindow):
         self.moving = False
         self.disable_movement_sensitive_buttons(False)
 
+    def move_to_position_button_pressed_sa(self):
+        if (self.moving):
+            log.warn('ALREADY MOVING!')
+            return
+        self.moving = True
+        self.disable_movement_sensitive_buttons(True)
+
+        pos = self.UIE_mgw_sm_apos_qdsb.value()
+
+        log.info("Move to position button (SA) pressed, moving to step %d"%(pos))
+        try:
+            self.motion_controllers.sample_angle_axis.move_to(pos, False)
+        except Exception as e:
+            QMessageBox.critical(self, 'Move Failure', 'Sample angle axis failed to move: %s'%(e))
+            log.error('QMessageBox.Critical: Move Failure - Sample angle axis failed to move: %s'%(e))
+            self.moving = False
+            self.disable_movement_sensitive_buttons(False)
+            pass
+        self.moving = False
+        self.disable_movement_sensitive_buttons(False)
 
     def move_to_position_button_pressed_st(self):
         if (self.moving):
@@ -1894,6 +1938,12 @@ class MMC_Main(QMainWindow):
         if mcw:
             self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
 
+        # Sets buttons which operate on this axis to enabled only if the selection index is non-zero.
+        is_zero = (self.UIE_mgw_main_drive_axis_qcb.currentIndex() != 0)
+        self.UIE_mgw_move_to_position_qpb.setEnabled(is_zero)
+        self.UIE_mgw_home_qpb.setEnabled(is_zero)
+        self.UIE_mgw_scan_qpb.setEnabled(is_zero)
+
         return self.main_axis_index
 
     def mcw_axis_change_filter(self):
@@ -1901,6 +1951,7 @@ class MMC_Main(QMainWindow):
         if self.machine_conf_win is None:
             log.warn('mcw_axis_change_filter called but machine_conf_win is NoneType.')
             return
+
         self.mgw_axis_change_filter(True)
 
     def mgw_axis_change_filter(self, mcw = False):
@@ -1932,6 +1983,10 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
         if mcw:
             self.UIE_mcw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
+
+        is_zero = (self.UIE_mgw_filter_wheel_axis_qcb.currentIndex() != 0)
+        self.UIE_mgw_fw_mancon_move_pos_qpb.setEnabled(is_zero)
+        self.UIE_mgw_fw_mancon_home_qpb.setEnabled(is_zero)
 
         return self.filter_axis_index
 
@@ -1971,6 +2026,10 @@ class MMC_Main(QMainWindow):
         if mcw:
             self.UIE_mcw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
 
+        is_zero = (self.UIE_mgw_sample_rotation_axis_qcb.currentIndex() != 0)
+        self.UIE_mgw_sm_rmove_qpb.setEnabled(is_zero)
+        self.UIE_mgw_sm_rhome_qpb.setEnabled(is_zero)
+
         return self.rsamp_axis_index
     
     def mcw_axis_change_asamp(self):
@@ -2008,6 +2067,10 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sample_angle_axis_qcb.setCurrentIndex(self.asamp_axis_index)
         if mcw:
             self.UIE_mcw_sample_angle_axis_qcb.setCurrentIndex(self.asamp_axis_index)
+
+        is_zero = (self.UIE_mgw_sample_angle_axis_qcb.currentIndex() != 0)
+        self.UIE_mgw_sm_amove_qpb.setEnabled(is_zero)
+        self.UIE_mgw_sm_ahome_qpb.setEnabled(is_zero)
 
         return self.asamp_axis_index
     
@@ -2047,6 +2110,10 @@ class MMC_Main(QMainWindow):
         if mcw:
             self.UIE_mcw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
 
+        is_zero = (self.UIE_mgw_sample_translation_axis_qcb.currentIndex() != 0)
+        self.UIE_mgw_sm_tmove_qpb.setEnabled(is_zero)
+        self.UIE_mgw_sm_thome_qpb.setEnabled(is_zero)
+
         return self.tsamp_axis_index
 
     def mcw_axis_change_detector(self):
@@ -2084,6 +2151,11 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
         if mcw:
             self.UIE_mcw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
+
+        is_zero = (self.UIE_mgw_detector_rotation_axis_qcb.currentIndex() != 0)
+        self.UIE_mgw_dm_rmove_qpb.setEnabled(is_zero)
+        self.UIE_mgw_dm_rhome_qpb.setEnabled(is_zero)
+        self.UIE_mgw_dm_begin_scan_qpb.setEnabled(is_zero)
 
         return self.detector_axis_index
 
@@ -2166,7 +2238,7 @@ class MMC_Main(QMainWindow):
             log.info('APPLIED STEPS PER NM: Unable due to main_drive_axis being NoneType.')
 
         self.machine_conf_win.close()
-    
+
     def QMessageBoxYNC(self, title: str, msg: str):
         application.setQuitOnLastWindowClosed(False)
         log.info('QMessageBoxYNC:', title, msg)
