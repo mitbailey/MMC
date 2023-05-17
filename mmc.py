@@ -327,6 +327,9 @@ class MMC_Main(QMainWindow):
 
             self.UIE_dmw_accept_qpb: QPushButton = self.dmw.findChild(QPushButton, "acc_button")
             self.UIE_dmw_accept_qpb.clicked.connect(self.connect_devices)
+            self.UIE_dmw_cancel_qpb: QPushButton = self.dmw.findChild(QPushButton, "cancel_button")
+            self.UIE_dmw_cancel_qpb.clicked.connect(self.cancel_connect_devices)
+            self.UIE_dmw_cancel_qpb.setEnabled(False)
             self.UIE_dmw_dummy_qckbx: QCheckBox = self.dmw.findChild(QCheckBox, "dum_checkbox")
             self.UIE_dmw_dummy_qckbx.setChecked(len(self._startup_args) == 2)
 
@@ -360,10 +363,17 @@ class MMC_Main(QMainWindow):
             self.device_timer.start(1000)
 
     def closeEvent(self, event):
-        answer = self.QMessageBoxQuestion('Exit Confirmation', "Are you sure you want to exit? All settings and values will be saved.")
+        answer = self.QMessageBoxYNC('Exit Confirmation', "Do you want to save all current settings and values?")
         event.ignore()
-        if answer == QtWidgets.QMessageBox.Yes:
+        if answer == 0:
+            log.info('Exiting program and saving current configuration.')
+            self.save_config(appDir + '/config.ini')
             event.accept()
+        elif answer == 1:
+            log.info('Exiting program without saving current configuration.')
+            event.accept()
+        else:
+            log.info('Canceling program exit.')
 
     def update_num_detectors_ui(self):
         if self.num_detectors != self.UIE_dmw_num_detectors_qsb.value():
@@ -444,6 +454,7 @@ class MMC_Main(QMainWindow):
                 if self.UIEL_dmw_detector_qcb[i].currentIndex() == 0:
                     self.QMessageBoxInformation('Connection Failure', 'No detector was selected for entry #%d.'%(i))
                     return
+                
         for i in range(self.num_motion_controllers):
             if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() == 0:
                 self.QMessageBoxInformation('Connection Failure', 'No motion controller was selected for entry #%d.'%(i))
@@ -452,20 +463,26 @@ class MMC_Main(QMainWindow):
         if not self.connecting_devices:
             self.connect_devices = True
 
+            self.UIE_dmw_cancel_qpb.setEnabled(True)
             self.UIE_dmw_accept_qpb.setEnabled(False)
             self.application.processEvents()
             self.dummy = self.UIE_dmw_dummy_qckbx.isChecked()
 
             self.connect_devices_thread.start()
+    
+    def cancel_connect_devices(self):
+        log.warn('Cancelling device connections (NOT YET IMPLEMENTED).')
 
     def _connect_devices(self, detectors_connected, mtn_ctrls_connected):
         self.connecting_devices = False
+        self.UIE_dmw_cancel_qpb.setEnabled(False)
         self.UIE_dmw_accept_qpb.setEnabled(True)
         self.SIGNAL_devices_connection_check.emit(self.dummy, detectors_connected, mtn_ctrls_connected)
 
     def _connect_devices_failure_cleanup(self):
         self._connect_devices_progress_anim(0)
         self.connecting_devices = False
+        self.UIE_dmw_cancel_qpb.setEnabled(False)
         self.UIE_dmw_accept_qpb.setEnabled(True)
 
     def _connect_devices_status(self, message):
@@ -994,10 +1011,10 @@ class MMC_Main(QMainWindow):
     def config_export(self):
         savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv', filter='*.csv')
         fileInfo = QFileInfo(savFileName)
-        self.save_config(fileInfo.absoluteFilePath(), True) 
+        self.save_config(fileInfo.absoluteFilePath()) 
         
-    def save_config(self, path: str, is_export: bool):
-        save_config(path, is_export, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.dr_offset)
+    def save_config(self, path: str):
+        save_config(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.dr_offset)
 
     def load_config(self, path: str, is_import: bool):
         # Replaces default grating equation values with the values found in the config.ini file.
@@ -2150,6 +2167,20 @@ class MMC_Main(QMainWindow):
 
         self.machine_conf_win.close()
     
+    def QMessageBoxYNC(self, title: str, msg: str):
+        application.setQuitOnLastWindowClosed(False)
+        log.info('QMessageBoxYNC:', title, msg)
+        msgbox = QMessageBox()
+        msgbox.setWindowTitle(title)
+        msgbox.setText(msg)
+        save_button = msgbox.addButton(QPushButton('Save'), QMessageBox.YesRole)
+        msgbox.addButton(QPushButton("Don't Save"), QMessageBox.NoRole)
+        msgbox.addButton(QPushButton('Cancel'), QMessageBox.RejectRole)
+        msgbox.setDefaultButton(save_button)
+        application.setQuitOnLastWindowClosed(True)
+        retval = msgbox.exec()
+        return retval
+
     def QMessageBoxQuestion(self, title: str, msg: str):
         application.setQuitOnLastWindowClosed(False)
         log.info('QMessageBoxInformation:', title, msg)
@@ -2241,8 +2272,8 @@ if __name__ == '__main__':
             exit_code = application.exec() # block until
 
             # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
-            if mainWindow.main_gui_booted:
-                mainWindow.save_config(appDir, False) 
+            # if mainWindow.main_gui_booted:
+            #     mainWindow.save_config(appDir, False) 
 
             # Cleanup.
             del mainWindow

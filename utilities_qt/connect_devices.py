@@ -64,7 +64,7 @@ class ConnectDevices(QThread):
     def run(self):
         log.debug("connect_devices")
         self.SIGNAL_status.emit('Beginning device connection.')
-
+        
         self.dummy = self.other.dummy
         log.info("Dummy Mode: " + str(self.dummy))
 
@@ -95,6 +95,7 @@ class ConnectDevices(QThread):
                 if self.other.UIEL_dmw_detector_qcb[i].currentIndex() != 0:
                     log.info("Using manual port: %s"%(self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0]))
                     self.SIGNAL_status.emit("Connecting and configuring detector #%d on port %s."%(i, self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0]))
+                    
                     self.detectors[i] = Detector(self.dummy, self.other.UIEL_dmw_detector_model_qcb[i].currentText(), self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0])
 
             except Exception as e:
@@ -123,7 +124,9 @@ class ConnectDevices(QThread):
                     log.info("Using manual port: %s"%(self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
                     self.SIGNAL_status.emit("Connecting and homing motion controller #%d on port %s."%(i, self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
                     log.info(self.dummy, self.other.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
+                    
                     new_mtn_ctrls = mw.new_motion_controller(self.dummy, self.other.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
+                    
                     for ctrlr in new_mtn_ctrls:
                         log.debug('New axis:', ctrlr)
                         self.mtn_ctrls.append(ctrlr)

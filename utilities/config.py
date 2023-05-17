@@ -29,6 +29,21 @@ import os
 import datetime as dt
 from utilities import log
 
+# Modules must have a report_config() function which returns a module name (str) and list of tuples (str, value) of settings. 
+def save_modules_config(path: str, modules: list):
+    save_config = confp.ConfigParser()
+
+    for module in modules:
+         module_name, settings = module.report_config()
+         for pair in settings:
+            save_config[module_name][pair[0]] = pair[1]
+
+    with open(path, 'w') as confFile:
+        save_config.write(confFile)
+
+# How?
+# def request_config()
+
 def reset_config(path: str):
     log.warn("Resetting configuration file...")
     
@@ -41,7 +56,7 @@ def reset_config(path: str):
     save_config(path, data_save_directory=data_save_dir)
 
 # TODO: Change this to taking a dictionary or something, this many arguments is ridiculous.
-def save_config(path: str, is_export: bool = False, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 0.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, asamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'Loaded Config Name Empty', filter_axis_dev_name: str = 'Loaded Config Name Empty', rsamp_axis_dev_name: str = 'Loaded Config Name Empty', asamp_axis_dev_name: str = 'Loaded Config Name Empty', tsamp_axis_dev_name: str = 'Loaded Config Name Empty', detector_axis_dev_name: str = 'Loaded Config Name Empty', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0, fw_offset: float = 0.0, st_offset: float = 0.0, sr_offset: float = 0.0, dr_offset: float = 0.0) -> bool:
+def save_config(path: str, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 0.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, asamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'Loaded Config Name Empty', filter_axis_dev_name: str = 'Loaded Config Name Empty', rsamp_axis_dev_name: str = 'Loaded Config Name Empty', asamp_axis_dev_name: str = 'Loaded Config Name Empty', tsamp_axis_dev_name: str = 'Loaded Config Name Empty', detector_axis_dev_name: str = 'Loaded Config Name Empty', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0, fw_offset: float = 0.0, st_offset: float = 0.0, sr_offset: float = 0.0, dr_offset: float = 0.0) -> bool:
     
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
@@ -85,12 +100,8 @@ def save_config(path: str, is_export: bool = False, mes_sign: int = 1, autosave_
                               'srOffset': sr_offset,
                               'drOffset': dr_offset}
     
-    if not is_export:
-        with open(path + '/config.ini', 'w') as confFile:
-            save_config.write(confFile)
-    else:
-        with open(path, 'w') as confFile:
-            save_config.write(confFile)
+    with open(path, 'w') as confFile:
+        save_config.write(confFile)
 
 def load_config(path: str, is_import: bool) -> dict:
     log.info('Beginning load for %s.'%(path))

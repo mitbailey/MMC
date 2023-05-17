@@ -366,7 +366,7 @@
      <item>
       <widget class="QLabel" name="current_loading_status">
        <property name="text">
-        <string>                    </string>
+        <string/>
        </property>
       </widget>
      </item>
@@ -406,6 +406,19 @@
        </property>
        <property name="text">
         <string>Accept</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="cancel_button">
+       <property name="font">
+        <font>
+         <family>Segoe UI Semibold</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Cancel</string>
        </property>
       </widget>
      </item>
