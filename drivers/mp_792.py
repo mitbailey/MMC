@@ -110,7 +110,7 @@ class MP_792:
     def home(self, axis: int)->bool:
         self.set_axis(axis)
 
-        HOME_TIME = 15
+        HOME_TIME = 9999999
 
         log.info('Beginning home for 792 axis %d.'%(axis))
         self._is_homing[axis] = True
@@ -128,7 +128,6 @@ class MP_792:
         self.s.read(128)
 
         start_time = time.time()
-        retries = 3
         success = True
         while True:
             current_time = time.time()
@@ -153,20 +152,20 @@ class MP_792:
                 break
             elif (not moving and '128' not in limstat) or (current_time - start_time > HOME_TIME):
                 log.warn('Moving has completed - homing failed.')
-                if retries == 0:
-                    log.error('Homing failed.')
-                    self.s.write(b'@\r')
-                    self._is_homing[axis] = False
-                    return False
-                else:
-                    log.warn('Retrying homing...')
-                    retries -= 1
-                    self.s.write(b'@\r')
-                    self.s.write(home_cmd)
-                    time.sleep(0.1)
-                    self.s.read(128)
 
-                    start_time = time.time()
+                log.error('Homing failed.')
+                self.s.write(b'@\r')
+                self._is_homing[axis] = False
+                return False
+                # else:
+                #     log.warn('Retrying homing...')
+                #     retries -= 1
+                #     self.s.write(b'@\r')
+                #     self.s.write(home_cmd)
+                #     time.sleep(0.1)
+                #     self.s.read(128)
+
+                #     start_time = time.time()
 
             time.sleep(0.5)
 

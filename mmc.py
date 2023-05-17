@@ -1820,6 +1820,10 @@ class MMC_Main(QMainWindow):
     def calculate_and_apply_steps_per_nm(self):
         steps_per_rev = McPherson.MONO_STEPS_PER_REV[McPherson.MONO_MODELS[self.model_index]]
 
+        if self.motion_controllers.main_drive_axis is None:
+            log.warn('The main drive axis motion controllers is NoneType. Did you forget to set the main drive axis device?')
+            return
+
         try:
             steps_per_value = McPherson.get_steps_per_nm(steps_per_rev, McPherson.MONO_MODELS[self.model_index], self.grating_density)
             self.motion_controllers.main_drive_axis.set_steps_per_value(steps_per_value)

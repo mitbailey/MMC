@@ -27,7 +27,7 @@ import time
 import os
 import inspect
 
-LOG_LEVEL = 2
+LOG_LEVEL = 0
 TRACE = True
 
 def register():
