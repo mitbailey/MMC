@@ -718,15 +718,6 @@ class MMC_Main(QMainWindow):
                 self.UIE_mgw_sample_translation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
                 self.UIE_mgw_detector_rotation_axis_qcb.addItem('%s: %s'%(dev.port_name(), dev.short_name()))
 
-        # Set the combo boxes to display the correct axes.
-        log.debug('Cmain axis idx:', self.main_axis_index)
-        self.UIE_mgw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
-        self.UIE_mgw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
-        self.UIE_mgw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
-        self.UIE_mgw_sample_angle_axis_qcb.setCurrentIndex(self.asamp_axis_index)
-        self.UIE_mgw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
-        self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
-        
         self.UIE_mgw_fw_mancon_position_set_qsb: QSpinBox = self.findChild(QSpinBox, 'filter_wheel_pos_set_spinbox')
         self.UIE_mgw_fw_mancon_move_pos_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_move_pos_button')
         self.UIE_mgw_fw_mancon_home_qpb: QPushButton = self.findChild(QPushButton, 'filter_wheel_home_button')
@@ -759,6 +750,15 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_dm_scan_repeats_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'scan_repeats_4')
         self.UIE_mgw_dm_begin_scan_qpb: QPushButton = self.findChild(QPushButton, 'begin_scan_button_4')
         self.UIE_mgw_dm_end_scan_qpb: QPushButton = self.findChild(QPushButton, 'stop_scan_button_4')
+
+        # Set the combo boxes to display the correct axes.
+        log.debug('Cmain axis idx:', self.main_axis_index)
+        self.UIE_mgw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
+        self.UIE_mgw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
+        self.UIE_mgw_sample_rotation_axis_qcb.setCurrentIndex(self.rsamp_axis_index)
+        self.UIE_mgw_sample_angle_axis_qcb.setCurrentIndex(self.asamp_axis_index)
+        self.UIE_mgw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
+        self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
 
         # Update the actual axes pointers.
         log.debug('Dmain axis idx:', self.main_axis_index)
@@ -1029,6 +1029,8 @@ class MMC_Main(QMainWindow):
         self.save_config(fileInfo.absoluteFilePath()) 
         
     def save_config(self, path: str):
+        log.debug(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.dr_offset)
+
         save_config(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.dr_offset)
 
     def load_config(self, path: str, is_import: bool):
