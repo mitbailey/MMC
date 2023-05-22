@@ -221,6 +221,7 @@ class MMC_Main(QMainWindow):
         self.connect_devices_thread = connect_devices.ConnectDevices(weakref.proxy(self))
         self.connecting_devices = False
 
+        log.debug('UpdatePositionDisplays: Object created.')
         self.update_position_displays_thread = update_position_displays.UpdatePositionDisplays(weakref.proxy(self))
 
         self.application: QApplication = application
@@ -772,16 +773,19 @@ class MMC_Main(QMainWindow):
 
         self.motion_controllers.main_drive_axis = self.mtn_ctrls[1]
 
-        if self.motion_controllers.main_drive_axis is not None:
-            self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
-        if self.motion_controllers.filter_wheel_axis is not None:
-            self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
-        if self.motion_controllers.sample_translation_axis is not None:
-            self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
-        if self.motion_controllers.sample_rotation_axis is not None:
-            self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
-        if self.motion_controllers.detector_rotation_axis is not None:
-            self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
+
+        # if self.motion_controllers.main_drive_axis is not None:
+        #     log.debug('Main drive offset before --- ', self.motion_controllers.main_drive_axis.get_offset(), self.motion_controllers.main_drive_axis._offset)
+        #     self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
+        #     log.debug('Main drive offset after ---- ', self.motion_controllers.main_drive_axis.get_offset(), self.motion_controllers.main_drive_axis._offset)
+        # if self.motion_controllers.filter_wheel_axis is not None:
+        #     self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
+        # if self.motion_controllers.sample_translation_axis is not None:
+        #     self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
+        # if self.motion_controllers.sample_rotation_axis is not None:
+        #     self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
+        # if self.motion_controllers.detector_rotation_axis is not None:
+        #     self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
         self.homing_started = False
         if not dummy:
@@ -841,6 +845,7 @@ class MMC_Main(QMainWindow):
         self.sm_scan = scan.ScanSM(weakref.proxy(self))
         self.dm_scan = scan.ScanDM(weakref.proxy(self))
 
+        log.debug('UpdatePositionDisplays: Thread start() called.')
         self.update_position_displays_thread.start()
 
         # Set up the status bar.
@@ -1002,6 +1007,13 @@ class MMC_Main(QMainWindow):
         self.movement_sensitive_metalist.append(self.UIEL_mgw_fw_rules_step_qsb)
         self.movement_sensitive_metalist.append(self.UIEL_mgw_fw_rules_remove_qpb)
         self.movement_sensitive_metalist.append(self.UIEL_mgw_fw_rules_enact_qpb)
+
+        self.UIE_mcw_fw_offset_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_sr_offset_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = None
+
+        self.update_offsets()
 
         # This is where we disable the scroll function for all spin and combo boxes, because its dumb.
         uiel = self.findChildren(QDoubleSpinBox)
@@ -1818,8 +1830,25 @@ class MMC_Main(QMainWindow):
         log.debug('Exec done')
 
     def update_offsets(self):
+        if self.UIE_mcw_zero_ofst_in_qdsb is not None:
+            self.zero_ofst = self.UIE_mcw_zero_ofst_in_qdsb.value()
+        if self.UIE_mcw_fw_offset_qdsb is not None:
+            self.fw_offset = self.UIE_mcw_fw_offset_qdsb.value()
+        if self.UIE_mcw_st_offset_qdsb is not None:
+            self.st_offset = self.UIE_mcw_st_offset_qdsb.value()
+        if self.UIE_mcw_sr_offset_qdsb is not None:
+            self.sr_offset = self.UIE_mcw_sr_offset_qdsb.value()
+        if self.UIE_mcw_dr_offset_qdsb is not None:
+            self.dr_offset = self.UIE_mcw_dr_offset_qdsb.value()
+
         if self.motion_controllers.main_drive_axis is not None:
+
+            log.debug('Main drive offset before --- ', self.motion_controllers.main_drive_axis.get_offset(), self.motion_controllers.main_drive_axis._offset)
+
             self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
+
+            log.debug('Main drive offset before --- ', self.motion_controllers.main_drive_axis.get_offset(), self.motion_controllers.main_drive_axis._offset)
+
         if self.motion_controllers.filter_wheel_axis is not None:
             self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
         if self.motion_controllers.sample_translation_axis is not None:
@@ -1845,22 +1874,30 @@ class MMC_Main(QMainWindow):
 
         self.update_movement_limits_gui()
 
-        self.zero_ofst = self.UIE_mcw_zero_ofst_in_qdsb.value()
-        self.fw_offset = self.UIE_mcw_fw_offset_qdsb.value()
-        self.st_offset = self.UIE_mcw_st_offset_qdsb.value()
-        self.sr_offset = self.UIE_mcw_sr_offset_qdsb.value()
-        self.dr_offset = self.UIE_mcw_dr_offset_qdsb.value()
+        self.update_offsets()
 
-        if self.motion_controllers.main_drive_axis is not None:
-            self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
-        if self.motion_controllers.filter_wheel_axis is not None:
-            self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
-        if self.motion_controllers.sample_translation_axis is not None:
-            self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
-        if self.motion_controllers.sample_rotation_axis is not None:
-            self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
-        if self.motion_controllers.detector_rotation_axis is not None:
-            self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
+        # self.zero_ofst = self.UIE_mcw_zero_ofst_in_qdsb.value()
+        # self.fw_offset = self.UIE_mcw_fw_offset_qdsb.value()
+        # self.st_offset = self.UIE_mcw_st_offset_qdsb.value()
+        # self.sr_offset = self.UIE_mcw_sr_offset_qdsb.value()
+        # self.dr_offset = self.UIE_mcw_dr_offset_qdsb.value()
+
+        # if self.motion_controllers.main_drive_axis is not None:
+
+        #     log.debug('Main drive offset before --- ', self.motion_controllers.main_drive_axis.get_offset(), self.motion_controllers.main_drive_axis._offset)
+
+        #     self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
+
+        #     log.debug('Main drive offset before --- ', self.motion_controllers.main_drive_axis.get_offset(), self.motion_controllers.main_drive_axis._offset)
+
+        # if self.motion_controllers.filter_wheel_axis is not None:
+        #     self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
+        # if self.motion_controllers.sample_translation_axis is not None:
+        #     self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
+        # if self.motion_controllers.sample_rotation_axis is not None:
+        #     self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
+        # if self.motion_controllers.detector_rotation_axis is not None:
+        #     self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
 
         self.calculate_and_apply_steps_per_nm()
@@ -2175,6 +2212,10 @@ class MMC_Main(QMainWindow):
         log.info(self.UIE_mcw_detector_rotation_axis_qcb.currentText())
         log.info('~~')
 
+        # Auto-apply the steps per nm unless user is overriding.
+        if not self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
+            self.calculate_and_apply_steps_per_nm()
+
         self.mgw_axis_change_main()
         self.mgw_axis_change_filter()
         self.mgw_axis_change_rsamp()
@@ -2188,6 +2229,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sample_angle_axis_qcb.setCurrentIndex(self.asamp_axis_index)
         self.UIE_mgw_sample_translation_axis_qcb.setCurrentIndex(self.tsamp_axis_index)
         self.UIE_mgw_detector_rotation_axis_qcb.setCurrentIndex(self.detector_axis_index)
+
+        self.update_offsets()
 
         # Set limits.
         self.max_pos = self.UIE_mcw_max_pos_in_qdsb.value()
@@ -2214,9 +2257,9 @@ class MMC_Main(QMainWindow):
 
         self.update_movement_limits_gui()
 
-        # Set conversion factors.
-        if not self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
-            self.calculate_and_apply_steps_per_nm()
+        # # Set conversion factors.
+        # if not self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
+        #     self.calculate_and_apply_steps_per_nm()
 
         if self.motion_controllers.filter_wheel_axis is not None:
             self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())

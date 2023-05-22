@@ -38,7 +38,9 @@ class UpdatePositionDisplays(QThread):
     SIGNAL_qmsg_warn = pyqtSignal(str, str)
     SIGNAL_qmsg_crit = pyqtSignal(str, str)
 
-    def __init__(self, parent: QMainWindow):
+    def __init__(self, parent: QMainWindow, cadence = 1000):
+        log.debug("Update worker init called.")
+        self.CADENCE = cadence
         super(UpdatePositionDisplays, self).__init__()
         self.other: MMC_Main = parent
         self.SIGNAL_update_main_axis_display.connect(self.other.update_position_displays)
@@ -88,5 +90,5 @@ class UpdatePositionDisplays(QThread):
 
         self.timer = QTimer()
         self.timer.timeout.connect(update)
-        self.timer.start(1000)
+        self.timer.start(self.CADENCE)
         self.exec()

@@ -30,16 +30,16 @@ import datetime as dt
 from utilities import log
 
 # Modules must have a report_config() function which returns a module name (str) and list of tuples (str, value) of settings. 
-def save_modules_config(path: str, modules: list):
-    save_config = confp.ConfigParser()
+# def save_modules_config(path: str, modules: list):
+#     save_config = confp.ConfigParser()
 
-    for module in modules:
-         module_name, settings = module.report_config()
-         for pair in settings:
-            save_config[module_name][pair[0]] = pair[1]
+#     for module in modules:
+#          module_name, settings = module.report_config()
+#          for pair in settings:
+#             save_config[module_name][pair[0]] = pair[1]
 
-    with open(path, 'w') as confFile:
-        save_config.write(confFile)
+#     with open(path, 'w') as confFile:
+#         save_config.write(confFile)
 
 # How?
 # def request_config()
@@ -122,7 +122,8 @@ def load_config(path: str, is_import: bool) -> dict:
         if not os.path.exists(data_save_dir):
             os.makedirs(data_save_dir)
 
-        save_config(path, False, 1, True, data_save_dir, 0.0, 1, 37.8461, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999, 0.0, 0.0, 0.0, 0.0)
+        save_config(path)
+        # save_config(path, 1, True, data_save_dir, 0.0, 1, 37.8461, 600.0, -40.0, 1, 0, 0, 0, 0, 'none', 'none', 'none', 'none', 'none', 0, 9999, -9999, 9999, -9999, 9999, -9999, 9999, -9999, 0.0, 0.0, 0.0, 0.0)
         # save_config(..?)
 
     while os.path.exists(path):
@@ -136,14 +137,14 @@ def load_config(path: str, is_import: bool) -> dict:
             try:
                 current_grating_density = float(config['INSTRUMENT']['gratingDensity'])
             except Exception as e:
-                log.error('Invalid grating density, %s'%(e.what()))
+                log.error('Invalid grating density, %s'%(e))
             if current_grating_density < 0:
                 log.error('Invalid grating density %f'%(current_grating_density))
                 current_grating_density = 0
             try:
                 zero_ofst = float(config['INSTRUMENT']['zeroOffset'])
             except Exception as e:
-                log.error('Invalid incidence angle, %s'%(e.what()))
+                log.error('Invalid incidence angle, %s'%(e))
             if not -90 < zero_ofst < 90:
                 log.error('Invalid incidence angle %f'%(zero_ofst))
                 zero_ofst = 0
@@ -154,17 +155,17 @@ def load_config(path: str, is_import: bool) -> dict:
             try:
                 mes_sign = int(config['INTERFACE']['measurementSign'])
             except Exception as e:
-                log.error('Invalid measurement sign, %s'%(e.what()))
+                log.error('Invalid measurement sign, %s'%(e))
             if mes_sign != 1 and mes_sign != -1:
-                log.error('Invalid measurement sign, %s'%(e.what()))
+                log.error('Invalid measurement sign, %s'%(e))
                 mes_sign = 1
             
             try:
                 model_index = int(config['INSTRUMENT']['modelIndex'])
             except Exception as e:
-                log.error('Invalid model index, %s'%(e.what()))
+                log.error('Invalid model index, %s'%(e))
             if model_index < 0:
-                log.error('Invalid model index, %s'%(e.what()))
+                log.error('Invalid model index, %s'%(e))
                 model_index = 0
 
             try:
@@ -174,12 +175,12 @@ def load_config(path: str, is_import: bool) -> dict:
                 else:
                     autosave_data = False
             except Exception as e:
-                log.error('Invalid auto-save data boolean, %s'%(e.what()))
+                log.error('Invalid auto-save data boolean, %s'%(e))
 
             try:
                 data_save_directory = config['INTERFACE']['dataSaveDirectory']
             except Exception as e:
-                log.error('Invalid directory, %s'%(e.what()))
+                log.error('Invalid directory, %s'%(e))
             
             main_axis_index = int(config['CONNECTIONS']['mainAxisIndex'])
             filter_axis_index = int(config['CONNECTIONS']['filterAxisIndex'])
