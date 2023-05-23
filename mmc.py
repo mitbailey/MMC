@@ -600,7 +600,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_ymin_in_qle: QLineEdit = self.findChild(QLineEdit, "ymin_in")
         self.UIE_mgw_xmax_in_qle: QLineEdit = self.findChild(QLineEdit, "xmax_in")
         self.UIE_mgw_ymax_in_qle: QLineEdit = self.findChild(QLineEdit, "ymax_in")
-        self.UIE_mgw_plot_autorange_qckbx: QCheckBox = self.findChild(QCheckBox, "autorange_checkbox")
+        # self.UIE_mgw_plot_autorange_qckbx: QCheckBox = self.findChild(QCheckBox, "autorange_checkbox")
         self.UIE_mgw_plot_clear_plots_qpb: QPushButton = self.findChild(QPushButton, "clear_plots_button")
 
         self.UIE_mgw_machine_conf_qa: QAction = self.findChild(QAction, "machine_configuration")
