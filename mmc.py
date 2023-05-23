@@ -129,10 +129,11 @@ class NavigationToolbar(NavigationToolbar2QT):
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
-        matplotlib.rcParams['toolbar'] = 'None'
+        # matplotlib.rcParams['toolbar'] = 'None'
 
         fig = Figure(figsize=(width, height), dpi=dpi, tight_layout = True)
-        self.parent = weakref.proxy(parent)
+        # self.parent = weakref.proxy(parent)
+        self._parent = parent
         self.axes = fig.add_subplot(111)
         self.axes.set_xlabel('Position (nm)')
         self.axes.set_ylabel('Current (pA)')
@@ -142,15 +143,15 @@ class MplCanvas(FigureCanvasQTAgg):
         self._tableClearCb = None
         super(MplCanvas, self).__init__(fig)
 
-    def get_toolbar(self, parent) -> NavigationToolbar:
-        self.toolbar = NavigationToolbar(self, parent)
+    def get_toolbar(self) -> NavigationToolbar:
+        self.toolbar = NavigationToolbar(self, self._parent)
         return self.toolbar
 
     def set_table_clear_cb(self, fcn):
         self._tableClearCb = fcn
 
     def clear_plot_fcn(self):
-        if not self.parent.scanRunning:
+        if not self._parent.scanRunning:
             self.axes.cla()
             self.axes.set_xlabel('Location (nm)')
             self.axes.set_ylabel('Photo Current (pA)')
@@ -805,9 +806,9 @@ class MMC_Main(QMainWindow):
         self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
         self.plotCanvas.clear_plot_fcn()
         self.plotCanvas.set_table_clear_cb(self.table.plotsClearedCb)
-        # toolbar = self.plotCanvas.get_toolbar(self)
+        toolbar = self.plotCanvas.get_toolbar()
         layout = QtWidgets.QVBoxLayout()
-        # layout.addWidget(toolbar)
+        layout.addWidget(toolbar)
         layout.addWidget(self.plotCanvas)
         self.UIE_mgw_plot_frame_qw.setLayout(layout)
 
