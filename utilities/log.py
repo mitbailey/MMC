@@ -28,17 +28,33 @@ import os
 import inspect
 
 LOG_LEVEL = 0
+MAX_DIR_SIZE = 1000 # MB
 TRACE = True
 
 def register():
     log_file_found = False
     log_cfg = 'log.cfg'
     if os.path.isfile(log_cfg):
-        print('Log configuration file found.')
-        log_file_found = True
         cfg_file = open(log_cfg, 'r')
         contents = cfg_file.read()
-        LOG_LEVEL = int(contents[12:13])
+        if 'LOG_LEVEL = ' in contents and 'MAX_DIR_SIZE = ' in contents:
+            print('Log configuration file found.')
+            log_file_found = True
+            print('\n')
+            print(contents)
+            contents = contents.replace('\n', ',')
+            contents = contents.replace(' ', '')
+            contents = contents.replace('=', ',')
+            contents = contents.split(',')
+            print(contents)
+            try:
+                LOG_LEVEL = int(contents[contents.index('LOG_LEVEL') + 1])
+                MAX_DIR_SIZE = int(contents[contents.index('MAX_DIR_SIZE') + 1])
+            except Exception as e:
+                print(e)
+                exit(99)
+        else:
+            print('Log configuration file format invalid.')
     else:
         print('No log configuration file found.')
 
