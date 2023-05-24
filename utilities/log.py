@@ -31,6 +31,17 @@ LOG_LEVEL = 0
 TRACE = True
 
 def register():
+    log_file_found = False
+    log_cfg = 'log.cfg'
+    if os.path.isfile(log_cfg):
+        print('Log configuration file found.')
+        log_file_found = True
+        cfg_file = open(log_cfg, 'r')
+        contents = cfg_file.read()
+        LOG_LEVEL = int(contents[12:13])
+    else:
+        print('No log configuration file found.')
+
     logdir = 'logs'
     if not os.path.isdir(logdir):
         os.makedirs(logdir)
@@ -38,6 +49,12 @@ def register():
     global __logfile
     __logfile = open('%s/%s_%s.txt'%(logdir, logname, version.__MMC_VERSION__), 'a')
     info('Logger opened log file.')
+
+    info('Logger initialized. Log level: %d.'%(LOG_LEVEL))
+    if log_file_found:
+        info('Log configuration file found.')
+    else:
+        warn('No log configuration file found.')
 
 def debug(*arg, **end):
     if LOG_LEVEL <= 0:
