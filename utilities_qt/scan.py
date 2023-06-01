@@ -32,10 +32,10 @@ from PyQt5.QtWidgets import (QMainWindow, QMessageBox)
 
 # More Standard Imports
 from time import sleep
-import weakref
+# import weakref
 import numpy as np
 import datetime as dt
-from functools import partial
+# from functools import partial
 
 import matplotlib
 matplotlib.use('Qt5Agg')

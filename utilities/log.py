@@ -32,6 +32,10 @@ MAX_DIR_SIZE = 1000 # MB
 TRACE = True
 
 def register():
+    global LOG_LEVEL
+    global MAX_DIR_SIZE
+    global TRACE
+    
     log_file_found = False
     log_cfg = 'log.cfg'
     if os.path.isfile(log_cfg):
@@ -73,26 +77,32 @@ def register():
         warn('No log configuration file found.')
 
 def debug(*arg, **end):
+    global LOG_LEVEL
     if LOG_LEVEL <= 0:
         _out('[DEBUG]', arg)
 
 def trace(*arg, **end):
+    global TRACE
     if TRACE:
         _out('[TRACE]', arg, True)
 
 def info(*arg, **end):
+    global LOG_LEVEL
     if LOG_LEVEL <= 1:
         _out('[INFO ]', arg)
 
 def warn(*arg, **end):
+    global LOG_LEVEL
     if LOG_LEVEL <= 2:
         _out('[WARN ]', arg)
 
 def error(*arg, **end):
+    global LOG_LEVEL
     if LOG_LEVEL <= 3:
         _out('[ERROR]', arg)
 
 def fatal(*arg, **end):
+    global LOG_LEVEL
     if LOG_LEVEL <= 4:
         _out('[FATAL]', arg)
 

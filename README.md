@@ -30,10 +30,13 @@ Run: `python mmc.py`
 The One Directory compilation method produces a larger set of files but starts up significantly faster than the One File method. For software versions 0.7.1 and newer, this method is used to compile the zip archive and executable available on the [releases page](https://github.com/mitbailey/MMC/releases).
 
 ## Prerequisites
-PyQtWebEngine, pipenv
+See requirements.txt for requirements.
+
+`pip install -r requirements.txt`
+
+Additionally, you may need to manually install PyQtWebEngine:
 
 `pip install PyQtWebEngine`  
-`pip install pipenv`
 
 ## Pipenv Setup
 `cd MMC`  

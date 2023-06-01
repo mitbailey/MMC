@@ -39,12 +39,12 @@ import os.path
 build_version = '0.7.1'
 
 # Change directory in case of dependent libs not on PATH
-_old_curdir = os.path.abspath(os.curdir)
-if 'C:\\Program Files\\Thorlabs\\Kinesis':
-    os.chdir('C:\\Program Files\\Thorlabs\\Kinesis')
+# _old_curdir = os.path.abspath(os.curdir)
+# if 'C:\\Program Files\\Thorlabs\\Kinesis':
+    # os.chdir('C:\\Program Files\\Thorlabs\\Kinesis')
 os.environ['PATH'] = os.path.dirname('C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.KCube.StepperMotor.dll') + ';' + os.environ['PATH'] # added to avoid OSError on dlopen from exe
 lib = ffi.dlopen('C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.KCube.StepperMotor.dll')
-os.chdir(_old_curdir)
+# os.chdir(_old_curdir)
 
 # Generated macro definitions
 defs = {}

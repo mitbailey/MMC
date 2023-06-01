@@ -64,24 +64,13 @@ elif __file__:
 
 # PyQt Imports
 from PyQt5 import uic
-from PyQt5.Qt import QTextOption
-from PyQt5.QtCore import (pyqtSignal, pyqtSlot, Q_ARG, QAbstractItemModel,
-                          QFileInfo, qFuzzyCompare, QMetaObject, QModelIndex, QObject, Qt,
-                          QThread, QTime, QUrl, QSize, QEvent, QCoreApplication, QFile, QIODevice, QMutex, QWaitCondition, QTimer, QPropertyAnimation, QPoint, QEasingCurve)
-from PyQt5.QtGui import QColor, qGray, QImage, QPainter, QPalette, QIcon, QKeyEvent, QMouseEvent, QFontDatabase, QFont
-from PyQt5.QtMultimedia import (QAbstractVideoBuffer, QMediaContent,
-                                QMediaMetaData, QMediaPlayer, QMediaPlaylist, QVideoFrame, QVideoProbe)
-from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBox, QDialog, QFileDialog,
-                             QFormLayout, QHBoxLayout, QLabel, QListView, QMessageBox, QPushButton,
-                             QSizePolicy, QSlider, QStyle, QToolButton, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QPlainTextEdit,
-                             QTableWidget, QTabWidget, QTableWidgetItem, QSplitter, QAbstractItemView, QStyledItemDelegate, QHeaderView, QFrame, QProgressBar, QCheckBox, QToolTip, QGridLayout, QSpinBox,
-                             QLCDNumber, QAbstractSpinBox, QStatusBar, QAction, QScrollArea, QSpacerItem)
+from PyQt5.QtCore import (pyqtSignal, QFileInfo, QEvent, QFile, QIODevice, QTimer, QPropertyAnimation, QEasingCurve)
+from PyQt5.QtGui import QColor, QFontDatabase, QFont
+from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QSizePolicy, QStyle, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QTabWidget, QTableWidgetItem, QFrame, QProgressBar, QCheckBox, QSpinBox, QStatusBar, QAction, QSpacerItem)
 from PyQt5.QtCore import QTimer
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtWidgets
 
 # More Standard Imports
-from time import sleep
 import weakref
 import numpy as np
 import datetime as dt
@@ -102,7 +91,13 @@ from utilities_qt import connect_devices
 from instruments.mcpherson import McPherson
 
 from utilities import motion_controller_list as mcl
-import middleware as mw
+
+try:
+    import middleware as mw
+except Exception as e:
+    print(e)
+    raise e
+
 from middleware import MotionController#, list_all_devices
 from middleware import Detector
 from utilities import version
