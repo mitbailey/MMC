@@ -2325,11 +2325,6 @@ class MMC_Main(QMainWindow):
 
 # Main function.
 if __name__ == '__main__':
-    # There will be three separate GUIs:
-    # 1. Initialization loading screen, where devices are being searched for and the current status and tasks are displayed. If none are found, display an error and an exit button.
-    # 2. The device selection display, where devices can be selected and their settings can be changed prior to entering the control program.
-    # 3. The control GUI (mainwindow.ui), where the user has control over what the device(s) do.
-
     log.register()
 
     sys._excepthook = sys.excepthook 
@@ -2383,10 +2378,6 @@ if __name__ == '__main__':
             
             # Wait for the Qt loop to exit before exiting.
             exit_code = application.exec() # block until
-
-            # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
-            # if mainWindow.main_gui_booted:
-            #     mainWindow.save_config(appDir, False) 
 
             # Cleanup.
             del mainWindow
