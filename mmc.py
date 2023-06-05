@@ -277,6 +277,13 @@ class MMC_Main(QMainWindow):
         self.dr_max_pos = 9999
         self.dr_min_pos = -9999
 
+        self.md_sp = 0.0
+        self.fw_sp = 0.0
+        self.sr_sp = 0.0
+        self.sa_sp = 0.0
+        self.st_sp = 0.0
+        self.dr_sp = 0.0
+
         self.load_config(appDir, False)
 
         self.manual_position = 0 # 0 nm
@@ -1041,9 +1048,29 @@ class MMC_Main(QMainWindow):
         self.save_config(fileInfo.absoluteFilePath()) 
         
     def save_config(self, path: str):
-        log.debug(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.sma_max_pos, self.sma_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.sa_offset, self.dr_offset)
+        md_sp = 0.0
+        fw_sp = 0.0
+        sr_sp = 0.0
+        sa_sp = 0.0
+        st_sp = 0.0
+        dr_sp = 0.0
 
-        save_config(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.sma_max_pos, self.sma_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.sa_offset, self.dr_offset)
+        if self.motion_controllers.main_drive_axis is not None:
+            md_sp = self.motion_controllers.main_drive_axis.get_steps_per_value()
+        if self.motion_controllers.filter_wheel_axis is not None:
+            fw_sp = self.motion_controllers.filter_wheel_axis.get_steps_per_value()
+        if self.motion_controllers.sample_rotation_axis is not None:
+            sr_sp = self.motion_controllers.sample_rotation_axis.get_steps_per_value()
+        if self.motion_controllers.sample_angle_axis is not None:
+            sa_sp = self.motion_controllers.sample_angle_axis.get_steps_per_value()
+        if self.motion_controllers.sample_translation_axis is not None:
+            st_sp = self.motion_controllers.sample_translation_axis.get_steps_per_value()
+        if self.motion_controllers.detector_rotation_axis is not None:
+            dr_sp = self.motion_controllers.detector_rotation_axis.get_steps_per_value()
+
+        log.debug(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.sma_max_pos, self.sma_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.sa_offset, self.dr_offset, md_sp, fw_sp, sr_sp, sa_sp, st_sp, dr_sp)
+
+        save_config(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.sma_max_pos, self.sma_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.sa_offset, self.dr_offset, md_sp, fw_sp, sr_sp, sa_sp, st_sp, dr_sp)
 
     def load_config(self, path: str, is_import: bool):
         # Replaces default grating equation values with the values found in the config.ini file.
@@ -1117,6 +1144,24 @@ class MMC_Main(QMainWindow):
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
+        self.md_sp = load_dict['mdSp']
+        self.fw_sp = load_dict['fwSp']
+        self.sr_sp = load_dict['srSp']
+        self.sa_sp = load_dict['saSp']
+        self.st_sp = load_dict['stSp']
+        self.dr_sp = load_dict['drSp']
+
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.fw_sp)
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.sr_sp)
+        if self.motion_controllers.sample_angle_axis is not None:
+            self.motion_controllers.sample_angle_axis.set_steps_per_value(self.sa_sp)
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.motion_controllers.sample_translation_axis.set_steps_per_value(self.st_sp)
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.dr_sp)
+        
     def collapse_mda(self):
         log.debug('collapse_mda:', self.mda_collapsed)
         self.mda_collapsed = not self.mda_collapsed
@@ -1839,6 +1884,12 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_smt_min_qdsb.setValue(self.smt_min_pos)
         self.UIE_mcw_dr_max_qdsb.setValue(self.dr_max_pos)
         self.UIE_mcw_dr_min_qdsb.setValue(self.dr_min_pos)
+
+        self.UIE_mcw_fw_steps_per_rot_qdsb.setValue(self.fw_sp)
+        self.UIE_mcw_sm_steps_per_rot_qdsb.setValue(self.sr_sp)
+        self.UIE_mcw_sm_steps_per_ang_qdsb.setValue(self.sa_sp)
+        self.UIE_mcw_sm_steps_per_trans_qdsb.setValue(self.st_sp)
+        self.UIE_mcw_dr_steps_per_qdsb.setValue(self.dr_sp)
 
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         log.debug('Exec done')
