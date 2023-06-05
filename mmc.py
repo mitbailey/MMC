@@ -247,6 +247,7 @@ class MMC_Main(QMainWindow):
         self.fw_offset = 0.0
         self.st_offset = 0.0
         self.sr_offset = 0.0
+        self.sa_offset = 0.0
         self.dr_offset = 0.0
 
         # Other settings' default values.
@@ -269,6 +270,8 @@ class MMC_Main(QMainWindow):
         self.fw_min_pos = -9999
         self.smr_max_pos = 9999
         self.smr_min_pos = -9999
+        self.sma_max_pos = 9999
+        self.sma_min_pos = -9999
         self.smt_max_pos = 9999
         self.smt_min_pos = -9999
         self.dr_max_pos = 9999
@@ -1006,6 +1009,7 @@ class MMC_Main(QMainWindow):
 
         self.UIE_mcw_fw_offset_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_sr_offset_qdsb: QDoubleSpinBox = None
+        self.UIE_mcw_sa_offset_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = None
 
@@ -1037,9 +1041,9 @@ class MMC_Main(QMainWindow):
         self.save_config(fileInfo.absoluteFilePath()) 
         
     def save_config(self, path: str):
-        log.debug(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.dr_offset)
+        log.debug(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.sma_max_pos, self.sma_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.sa_offset, self.dr_offset)
 
-        save_config(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.dr_offset)
+        save_config(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name, self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.sma_max_pos, self.sma_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.sa_offset, self.dr_offset)
 
     def load_config(self, path: str, is_import: bool):
         # Replaces default grating equation values with the values found in the config.ini file.
@@ -1087,14 +1091,17 @@ class MMC_Main(QMainWindow):
         self.fw_min_pos = load_dict['fwMin']
         self.smr_max_pos = load_dict['smrMax']
         self.smr_min_pos = load_dict['smrMin']
-        self.smt_max_pos = load_dict['smrMax']
-        self.smt_min_pos = load_dict['smrMin']
+        self.sma_max_pos = load_dict['smaMax']
+        self.sma_min_pos = load_dict['smaMin']
+        self.smt_max_pos = load_dict['smtMax']
+        self.smt_min_pos = load_dict['smtMin']
         self.dr_max_pos = load_dict['drMax']
         self.dr_min_pos = load_dict['drMin']
 
         self.fw_offset = load_dict['fwOffset']
         self.st_offset = load_dict['stOffset']
         self.sr_offset = load_dict['srOffset']
+        self.sa_offset = load_dict['saOffset']
         self.dr_offset = load_dict['drOffset']
 
         if self.motion_controllers.main_drive_axis is not None:
@@ -1105,6 +1112,8 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
         if self.motion_controllers.sample_rotation_axis is not None:
             self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
+        if self.motion_controllers.sample_angle_axis is not None:
+            self.motion_controllers.sample_angle_axis.set_offset(self.sa_offset)
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
@@ -1772,6 +1781,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_sm_steps_per_rot_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smr_steps_per_deg')
             self.UIE_mcw_smr_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smr_max')
             self.UIE_mcw_smr_min_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smr_min')
+            self.UIE_mcw_sm_steps_per_ang_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'sma_steps_per_deg')
+            self.UIE_mcw_sma_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'sma_max')
+            self.UIE_mcw_sma_min_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'sma_min')
             self.UIE_mcw_sm_steps_per_trans_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smt_steps_per_deg')
             self.UIE_mcw_smt_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smt_max')
             self.UIE_mcw_smt_min_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'smt_min')
@@ -1781,18 +1793,21 @@ class MMC_Main(QMainWindow):
 
             self.UIE_mcw_fw_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_offset')
             self.UIE_mcw_sr_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'sr_offset')
+            self.UIE_mcw_sa_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'sa_offset')
             self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'st_offset')
             self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_offset')
 
             self.UIE_mcw_zero_ofst_in_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_fw_offset_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_sr_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_sa_offset_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
 
             self.UIE_mcw_fw_offset_qdsb.setValue(self.fw_offset)
-            self.UIE_mcw_sr_offset_qdsb.setValue(self.st_offset)
-            self.UIE_mcw_st_offset_qdsb.setValue(self.sr_offset)
+            self.UIE_mcw_sr_offset_qdsb.setValue(self.sr_offset)
+            self.UIE_mcw_st_offset_qdsb.setValue(self.st_offset)
+            self.UIE_mcw_sa_offset_qdsb.setValue(self.sa_offset)
             self.UIE_mcw_dr_offset_qdsb.setValue(self.dr_offset)
 
             # TEMPORARY DISABLING OF UI ELEMENT UNTIL FUTURE VERSION IMPLEMENTATION. 
@@ -1817,6 +1832,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_fw_min_qdsb.setValue(self.fw_min_pos)
         self.UIE_mcw_smr_max_qdsb.setValue(self.smr_max_pos)
         self.UIE_mcw_smr_min_qdsb.setValue(self.smr_min_pos)
+        self.UIE_mcw_sma_max_qdsb.setValue(self.sma_max_pos)
+        self.UIE_mcw_sma_min_qdsb.setValue(self.sma_min_pos)
         self.UIE_mcw_smt_max_qdsb.setValue(self.smt_max_pos)
         self.UIE_mcw_smt_min_qdsb.setValue(self.smt_min_pos)
         self.UIE_mcw_dr_max_qdsb.setValue(self.dr_max_pos)
@@ -1834,6 +1851,8 @@ class MMC_Main(QMainWindow):
             self.st_offset = self.UIE_mcw_st_offset_qdsb.value()
         if self.UIE_mcw_sr_offset_qdsb is not None:
             self.sr_offset = self.UIE_mcw_sr_offset_qdsb.value()
+        if self.UIE_mcw_sa_offset_qdsb is not None:
+            self.sa_offset = self.UIE_mcw_sa_offset_qdsb.value()
         if self.UIE_mcw_dr_offset_qdsb is not None:
             self.dr_offset = self.UIE_mcw_dr_offset_qdsb.value()
 
@@ -1851,6 +1870,8 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
         if self.motion_controllers.sample_rotation_axis is not None:
             self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
+        if self.motion_controllers.sample_angle_axis is not None:
+            self.motion_controllers.sample_angle_axis.set_offset(self.sa_offset)
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
@@ -2235,6 +2256,8 @@ class MMC_Main(QMainWindow):
         self.fw_min_pos = self.UIE_mcw_fw_min_qdsb.value()
         self.smr_max_pos = self.UIE_mcw_smr_max_qdsb.value()
         self.smr_min_pos = self.UIE_mcw_smr_min_qdsb.value()
+        self.sma_max_pos = self.UIE_mcw_sma_max_qdsb.value()
+        self.sma_min_pos = self.UIE_mcw_sma_min_qdsb.value()
         self.smt_max_pos = self.UIE_mcw_smt_max_qdsb.value()
         self.smt_min_pos = self.UIE_mcw_smt_min_qdsb.value()
         self.dr_max_pos = self.UIE_mcw_dr_max_qdsb.value()
@@ -2246,6 +2269,8 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.filter_wheel_axis.set_limits(self.fw_max_pos, self.fw_min_pos)
         if self.motion_controllers.sample_rotation_axis is not None:
             self.motion_controllers.sample_rotation_axis.set_limits(self.smr_max_pos, self.smr_min_pos)
+        if self.motion_controllers.sample_angle_axis is not None:
+            self.motion_controllers.sample_angle_axis.set_limits(self.sma_max_pos, self.sma_min_pos)
         if self.motion_controllers.sample_translation_axis is not None:
             self.motion_controllers.sample_translation_axis.set_limits(self.smt_max_pos, self.smt_min_pos)
         if self.motion_controllers.detector_rotation_axis is not None:
@@ -2261,6 +2286,8 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())
         if self.motion_controllers.sample_rotation_axis is not None:
             self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_rot_qdsb.value())
+        if self.motion_controllers.sample_angle_axis is not None:
+            self.motion_controllers.sample_angle_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_ang_qdsb.value())
         if self.motion_controllers.sample_translation_axis is not None:
             self.motion_controllers.sample_translation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans_qdsb.value())
         if self.motion_controllers.detector_rotation_axis is not None:
@@ -2277,6 +2304,32 @@ class MMC_Main(QMainWindow):
             log.info('APPLIED STEPS PER NM:', self.motion_controllers.main_drive_axis.get_steps_per_value())
         else:
             log.info('APPLIED STEPS PER NM: Unable due to main_drive_axis being NoneType.')
+
+        if self.motion_controllers.main_drive_axis is not None:
+            log.debug('Main drive steps-per: %f'%(self.motion_controllers.main_drive_axis.get_steps_per_value()))
+        else:
+            log.debug('Main drive axis is NoneType.')
+        if self.motion_controllers.filter_wheel_axis is not None:
+            log.debug('Filter wheel steps-per: %f'%(self.motion_controllers.filter_wheel_axis.get_steps_per_value()))
+        else:
+            log.debug('Filter wheel axis is NoneType.')
+        if self.motion_controllers.sample_rotation_axis is not None:
+            log.debug('Sample rotation steps-per: %f'%(self.motion_controllers.sample_rotation_axis.get_steps_per_value()))
+        else:
+            log.debug('Sample rotation axis is NoneType.')
+        if self.motion_controllers.sample_angle_axis is not None:
+            log.debug('Sample angle steps-per: %f'%(self.motion_controllers.sample_angle_axis.get_steps_per_value()))
+        else:
+            log.debug('Sample angle axis is NoneType.')
+        if self.motion_controllers.sample_translation_axis is not None:
+            log.debug('Sample translation steps-per: %f'%(self.motion_controllers.sample_translation_axis.get_steps_per_value()))
+        else:
+            log.debug('Sample translation axis is NoneType.')
+        if self.motion_controllers.detector_rotation_axis is not None:
+            log.debug('Detector rotation steps-per: %f'%(self.motion_controllers.detector_rotation_axis.get_steps_per_value()))
+        else:
+            log.debug('Detector rotation axis is NoneType.')
+
 
         self.machine_conf_win.close()
 

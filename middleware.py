@@ -266,9 +266,12 @@ class MotionController:
         Returns:
             float: _description_
         """
+        log.debug('Attempting to set steps-per-value for %s to %f (is now %f).'%(self.short_name(), steps, self._steps_per_value))
+
         if steps > 0:
             self._steps_per_value = steps
 
+        log.debug('Steps-per-value for %s is now %f.'%(self.short_name(), self._steps_per_value))
         return self._steps_per_value
 
     # Getters.
@@ -363,7 +366,7 @@ class MotionController:
     def _move_to(self, position, block):
         if self._steps_per_value == 0:
             self._moving = False
-            log.error('Steps-per value has not been set for this axis. This value must be set in the Machine Configuration window.')
+            log.error('Steps-per value has not been set for this axis (%s). This value must be set in the Machine Configuration window.'%(self.short_name()))
             raise Exception('Steps-per value has not been set for this axis. This value must be set in the Machine Configuration window.')
         if position > self._max_pos:
             self._moving = False

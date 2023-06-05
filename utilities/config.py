@@ -56,9 +56,9 @@ def reset_config(path: str):
     save_config(path, data_save_directory=data_save_dir)
 
 # TODO: Change this to taking a dictionary or something, this many arguments is ridiculous.
-def save_config(path: str, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 0.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, asamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'Loaded Config Name Empty', filter_axis_dev_name: str = 'Loaded Config Name Empty', rsamp_axis_dev_name: str = 'Loaded Config Name Empty', asamp_axis_dev_name: str = 'Loaded Config Name Empty', tsamp_axis_dev_name: str = 'Loaded Config Name Empty', detector_axis_dev_name: str = 'Loaded Config Name Empty', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0, fw_offset: float = 0.0, st_offset: float = 0.0, sr_offset: float = 0.0, dr_offset: float = 0.0) -> bool:
+def save_config(path: str, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 0.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, asamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'Loaded Config Name Empty', filter_axis_dev_name: str = 'Loaded Config Name Empty', rsamp_axis_dev_name: str = 'Loaded Config Name Empty', asamp_axis_dev_name: str = 'Loaded Config Name Empty', tsamp_axis_dev_name: str = 'Loaded Config Name Empty', detector_axis_dev_name: str = 'Loaded Config Name Empty', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, sma_max_pos: float = 9999.0, sma_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0, fw_offset: float = 0.0, st_offset: float = 0.0, sr_offset: float = 0.0, sa_offset: float = 0.0, dr_offset: float = 0.0) -> bool:
 
-    log.debug(path, mes_sign, autosave_data, data_save_directory, model_index, current_grating_density, zero_ofst, max_pos, min_pos, main_axis_index, filter_axis_index, rsamp_axis_index, asamp_axis_index, tsamp_axis_index, detector_axis_index, main_axis_dev_name, filter_axis_dev_name, rsamp_axis_dev_name, asamp_axis_dev_name, tsamp_axis_dev_name, detector_axis_dev_name, num_axes, fw_max_pos, fw_min_pos, smr_max_pos, smr_min_pos, smt_max_pos, smt_min_pos, dr_max_pos, dr_min_pos, fw_offset, st_offset, sr_offset, dr_offset)
+    log.debug(path, mes_sign, autosave_data, data_save_directory, model_index, current_grating_density, zero_ofst, max_pos, min_pos, main_axis_index, filter_axis_index, rsamp_axis_index, asamp_axis_index, tsamp_axis_index, detector_axis_index, main_axis_dev_name, filter_axis_dev_name, rsamp_axis_dev_name, asamp_axis_dev_name, tsamp_axis_dev_name, detector_axis_dev_name, num_axes, fw_max_pos, fw_min_pos, smr_max_pos, smr_min_pos, sma_max_pos, sma_min_pos, smt_max_pos, smt_min_pos, dr_max_pos, dr_min_pos, fw_offset, st_offset, sr_offset, sa_offset, dr_offset)
     
     # Save the current configuration when exiting. If the program crashes, it doesn't save your config.
     save_config = confp.ConfigParser()
@@ -93,6 +93,8 @@ def save_config(path: str, mes_sign: int = 1, autosave_data: bool = True, data_s
                                   'fwMin': fw_min_pos,
                                   'smrMax': smr_max_pos,
                                   'smrMin': smr_min_pos,
+                                  'smaMax': sma_max_pos,
+                                  'smaMin': sma_min_pos,
                                   'smtMax': smt_max_pos,
                                   'smtMin': smt_min_pos,
                                   'drMax': dr_max_pos,
@@ -100,6 +102,7 @@ def save_config(path: str, mes_sign: int = 1, autosave_data: bool = True, data_s
     save_config['OFFSETS'] = {'fwOffset': fw_offset,
                               'stOffset': st_offset,
                               'srOffset': sr_offset,
+                              'saOffset': sa_offset,
                               'drOffset': dr_offset}
     
     with open(path, 'w') as confFile:
@@ -202,6 +205,8 @@ def load_config(path: str, is_import: bool) -> dict:
             fw_min_pos = float(config['AXIS LIMITS']['fwMin'])
             smr_max_pos = float(config['AXIS LIMITS']['smrMax'])
             smr_min_pos = float(config['AXIS LIMITS']['smrMin'])
+            sma_max_pos = float(config['AXIS LIMITS']['smaMax'])
+            sma_min_pos = float(config['AXIS LIMITS']['smaMin'])
             smt_max_pos = float(config['AXIS LIMITS']['smtMax'])
             smt_min_pos = float(config['AXIS LIMITS']['smtMin'])
             dr_max_pos = float(config['AXIS LIMITS']['drMax'])
@@ -210,6 +215,7 @@ def load_config(path: str, is_import: bool) -> dict:
             fw_offset = float(config['OFFSETS']['fwOffset'])
             st_offset = float(config['OFFSETS']['stOffset'])
             sr_offset = float(config['OFFSETS']['srOffset'])
+            sa_offset = float(config['OFFSETS']['saOffset'])
             dr_offset = float(config['OFFSETS']['drOffset'])
 
             break
@@ -240,6 +246,8 @@ def load_config(path: str, is_import: bool) -> dict:
         'fwMin': fw_min_pos,
         'smrMax': smr_max_pos,
         'smrMin': smr_min_pos,
+        'smaMax': sma_max_pos,
+        'smaMin': sma_min_pos,
         'smtMax': smt_max_pos,
         'smtMin': smt_min_pos,
         'drMax': dr_max_pos,
@@ -247,6 +255,7 @@ def load_config(path: str, is_import: bool) -> dict:
         'fwOffset': fw_offset,
         'stOffset': st_offset,
         'srOffset': sr_offset,
+        'saOffset': sa_offset,
         'drOffset': dr_offset
     }
 
