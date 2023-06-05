@@ -224,18 +224,22 @@ class MP_789A_4:
         return self._is_homing
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
-    def move_to(self, position: int, block: bool):
+    def move_to(self, position: int, backlash: int):
         log.debug('func: move_to')
         steps = position - self._position
-        self.move_relative(steps, block)
 
-        if block:
-            while self.is_moving():
-                log.debug('BLOCKING')
-                time.sleep(1)
-            log.debug('FINISHED BLOCKING')
+        if (steps < 0) and (backlash > 0):
+            self.move_relative(steps - backlash)
+            self.move_relative(backlash)
+        else:
+            self.move_relative(steps)
 
-    def move_relative(self, steps: int, block: bool):
+        # while self.is_moving():
+        #     log.debug('BLOCKING')
+        #     time.sleep(1)
+        # log.debug('FINISHED BLOCKING')
+
+    def move_relative(self, steps: int):
         log.debug('func: move_relative')
         log.info('Being told to move %d steps.'%(steps))
 
@@ -253,11 +257,10 @@ class MP_789A_4:
             log.info('Not moving (0 steps).')
             return
         
-        if block:
-            while self.is_moving():
-                log.debug('BLOCKING')
-                time.sleep(0.5)
-            log.debug('FINISHED BLOCKING')
+        while self.is_moving():
+            log.debug('BLOCKING')
+            time.sleep(0.5)
+        log.debug('FINISHED BLOCKING')
 
         time.sleep(0.25)
 
@@ -306,30 +309,35 @@ class MP_789A_4_DUMMY:
         return self._moving
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
-    def move_to(self, position: int, block: bool):
+    def move_to(self, position: int, backlash: int):
         log.debug('func: move_to')
         steps = position - self._position
-        # Stops the moving updater from starting more than once.
-        self.move_relative(steps, block)
 
-    def move_relative(self, steps: int, block: bool):
+        # Stops the moving updater from starting more than once. <-- Huh?
+
+        if (steps < 0) and (backlash > 0):
+            self.move_relative(steps - backlash)
+            self.move_relative(backlash)
+        else:
+            self.move_relative(steps)
+
+    def move_relative(self, steps: int):
         log.debug('func: move_relative')
         log.debug(b'+%d\r', steps)
         self._position += steps
 
-        if block:
-            i=0
-            # moving = True
-            while i<15:
-                log.debug('BLOCKING')
-                time.sleep(0.5)
-                if not self.is_moving():
-                    log.info('Found to be NOT MOVING.',i)
-                    i+=1
-                else:
-                    log.info('Found to be MOVING',i)
-                    i=0
-            log.debug('FINISHED BLOCKING because moving is', i)
+        i=0
+        # moving = True
+        while i<15:
+            log.debug('BLOCKING')
+            time.sleep(0.5)
+            if not self.is_moving():
+                log.info('Found to be NOT MOVING.',i)
+                i+=1
+            else:
+                log.info('Found to be MOVING',i)
+                i=0
+        log.debug('FINISHED BLOCKING because moving is', i)
         time.sleep(0.25)
 
 

@@ -537,11 +537,11 @@ class Thorlabs: # Wrapper class for TLI methods
             return retval
 
         # move_to
-        def move_to(self, position: int, block: bool):
+        def move_to(self, position: int):
             self.moving = True
             retval = TLI_KST.MoveToPosition(self.serial, position)
-            if block:
-                self.wait_for_move()
+
+            self.wait_for_move()
             return retval
 
         # jog - probably slew?
@@ -945,11 +945,11 @@ class Thorlabs: # Wrapper class for TLI methods
             return True
 
         # move_to
-        def move_to(self, position: int, block: bool):
+        def move_to(self, position: int):
             self.moving = True
             self.position = position
-            if block:
-                self.wait_for_move()
+
+            self.wait_for_move()
             return True
 
         # jog - probably slew?
@@ -1113,7 +1113,7 @@ if __name__ == '__main__':
     DESIRED_POSITION_MM = 5
 
     DESIRED_POSITION_IDX = int(DESIRED_POSITION_MM * STEPS_PER_VALUE)
-    retval = motor_ctrl.move_to(DESIRED_POSITION_IDX, True)
+    retval = motor_ctrl.move_to(DESIRED_POSITION_IDX)
 
     print('Final position: ' + str(motor_ctrl.get_position()))
     print("Press any key for next move...")

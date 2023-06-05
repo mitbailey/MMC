@@ -1615,6 +1615,7 @@ class MMC_Main(QMainWindow):
             pass
         self.moving = False
         self.disable_movement_sensitive_buttons(False)
+        log.debug('Completed move_to_position_button_pressed_sa() function.')
 
     def move_to_position_button_pressed_st(self):
         if (self.moving):

@@ -171,7 +171,9 @@ class MotionController:
             Exception: _description_
             RuntimeError: _description_
         """
+        self._max_backlash = 2000
         self._model = dev_model
+        self._manual_backlash = 1 # 0 = no manual backlash, 1 = manual backlash
         self._steps_per_value = 0.0
         self._offset = 0.0
         self._is_dummy = dummy
@@ -211,6 +213,7 @@ class MotionController:
                     log.error("Connection with motor controller failed.")
                     raise RuntimeError('Connection with motor controller failed.')
                 self._motor_ctrl.set_stage('ZST25')
+            self._manual_backlash = 0 # KST101s have backlash built in
         elif self._model == MotionController.SupportedDevices[1]:
             if dummy:
                 self._motor_ctrl = mp789.MP_789A_4_DUMMY(man_port)
@@ -356,14 +359,14 @@ class MotionController:
         log.info('Moving to position:', position, 'with blocking:', block)
         if block:
             log.info('Blocking.')
-            return self._move_to(position, block)
+            return self._move_to(position)
         else:
             log.info('Non-blocking.')
-            move_th = threading.Thread(target=lambda: self._move_to(position, block))
+            move_th = threading.Thread(target=lambda: self._move_to(position))
             move_th.start()
             return
 
-    def _move_to(self, position, block):
+    def _move_to(self, position):
         if self._steps_per_value == 0:
             self._moving = False
             log.error('Steps-per value has not been set for this axis (%s). This value must be set in the Machine Configuration window.'%(self.short_name()))
@@ -377,10 +380,15 @@ class MotionController:
             log.error('Position is beyond the lower limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
             raise Exception('Position is beyond the lower limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
 
+        backlash = (position * self._steps_per_value) - (self._min_pos * self._steps_per_value) # Steps until we hit minimum.
+        backlash *= self._manual_backlash # If we have automatic backlash correction, _manual_backlash will be set to 0. A zero sent to the move_to() function will simply disable backlash.
+        if backlash > self._max_backlash:
+            backlash = self._max_backlash
+
         if self._multi_axis:
-            retval = self._motor_ctrl.move_to((position * self._steps_per_value) + (self._offset * self._steps_per_value), block, self._axis)
+            retval = self._motor_ctrl.move_to((position * self._steps_per_value) + (self._offset * self._steps_per_value), self._axis, backlash)
         else:
-            retval = self._motor_ctrl.move_to((position * self._steps_per_value) + (self._offset * self._steps_per_value), block)
+            retval = self._motor_ctrl.move_to((position * self._steps_per_value) + (self._offset * self._steps_per_value), backlash)
 
         self._moving = False
         return retval

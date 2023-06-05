@@ -73,7 +73,7 @@ class MP_792:
             raise RuntimeError('Invalid response.')
 
         log.info('Checking axes...')
-        for i in [0, 3, 2, 1]:
+        for i in [2, 0, 3, 1]:
             log.debug('WR:', MP_792.AXES[i] + b'\r')
             self.s.write(MP_792.AXES[i] + b'\r')
             time.sleep(0.1)
@@ -218,13 +218,24 @@ class MP_792:
         return self._is_homing[axis]
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
-    def move_to(self, position: int, block: bool, axis: int):
+    def move_to(self, position: int, axis: int, backlash: int):
         self.set_axis(axis)
 
-        steps = position - self._position[axis]
-        self.move_relative(steps, block, axis)
+        log.debug('MOVE-DEBUG: Performing a move with backlash value: ', backlash)
 
-    def move_relative(self, steps: int, block: bool, axis: int):
+        steps = position - self._position[axis]
+
+        if (steps < 0) and (backlash > 0):
+            log.debug('MOVE-DEBUG: Performing overshoot manuever.')
+            self.move_relative(steps - backlash, axis)
+            log.debug('MOVE-DEBUG: Performing backlash correction.')
+            self.move_relative(backlash, axis)
+            log.debug('MOVE-DEBUG: Move complete.')
+        else:
+            log.debug('MOVE-DEBUG: Performing backlash-free move.')
+            self.move_relative(steps, axis)
+
+    def move_relative(self, steps: int, axis: int):
         self.set_axis(axis)
 
         log.info('Being told to move %d steps.'%(steps))
@@ -243,16 +254,15 @@ class MP_792:
             log.info('Not moving (0 steps).')
         self._position[axis] += steps
 
-        if block:
-            i=0
-            # moving = True
-            while i<3:
-                log.debug('BLOCKING')
-                time.sleep(0.2)
-                if not self._is_moving(axis):
-                    log.info('Found to be NOT MOVING.')
-                    i+=1
-            log.debug('FINISHED BLOCKING because moving is', i)
+        i=0
+        # moving = True
+        while i<3:
+            log.debug('BLOCKING')
+            time.sleep(0.2)
+            if not self._is_moving(axis):
+                log.info('Found to be NOT MOVING.')
+                i+=1
+        log.debug('FINISHED BLOCKING because moving is', i)
         time.sleep(0.25)
 
     def short_name(self):
@@ -344,22 +354,26 @@ class MP_792_DUMMY:
         return self._is_homing[axis]
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
-    def move_to(self, position: int, block: bool, axis: int):
+    def move_to(self, position: int, axis: int, backlash: int):
         self.set_axis(axis)
 
         steps = position - self._position[axis]
-        self.move_relative(steps, block, axis)
 
-    def move_relative(self, steps: int, block: bool, axis: int):
+        if (steps < 0) and (backlash > 0):
+            self.move_relative(steps - backlash, axis)
+            self.move_relative(backlash, axis)
+        else:
+            self.move_relative(steps, axis)
+
+    def move_relative(self, steps: int, axis: int):
         self.set_axis(axis)
 
         self._position[axis] += steps
 
-        if block:
-            while self._is_moving(axis):
-                log.debug('BLOCKING')
-                time.sleep(0.5)
-            log.debug('FINISHED BLOCKING')
+        while self._is_moving(axis):
+            log.debug('BLOCKING')
+            time.sleep(0.5)
+        log.debug('FINISHED BLOCKING')
 
 
     def short_name(self):
