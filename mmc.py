@@ -95,7 +95,7 @@ from utilities import motion_controller_list as mcl
 try:
     import middleware as mw
 except Exception as e:
-    print(e)
+    log.error(str(e))
     raise e
 
 from middleware import MotionController#, list_all_devices
@@ -236,6 +236,8 @@ class MMC_Main(QMainWindow):
         self.motion_controllers = mcl.MotionControllerList()
 
         # Load Configuration File
+        self.moving = False
+        self.axes_info_prev_moving = False
 
         # Default grating equation values.
         self.max_pos = 600.0
@@ -550,7 +552,12 @@ class MMC_Main(QMainWindow):
         self.autosave_data_bool = False
         self.pop_out_table = False
         self.pop_out_plot = False
-        self.moving = False
+        self.mda_moving = False
+        self.fwa_moving = False
+        self.sra_moving = False
+        self.saa_moving = False
+        self.sta_moving = False
+        self.dra_moving = False
         self.scanRunning = False
 
         self.machine_conf_win: QDialog = None
@@ -744,6 +751,9 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_dm_rhome_qpb: QPushButton = self.findChild(QPushButton, 'detector_rotate_home_button')
         self.UIE_mgw_dm_rmove_qpb: QPushButton = self.findChild(QPushButton, 'detector_rotate_move_button')
 
+        self.UIE_mgw_master_stop_qpb: QPushButton = self.findChild(QPushButton, 'master_stop_button')
+        self.UIE_mgw_master_stop_qpb.clicked.connect(self.stop_master_button_pressed)
+
         self.UIE_mgw_sm_scan_type_qcb: QComboBox = self.findChild(QComboBox, 'scan_type_combo')
         self.UIE_mgw_sm_start_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'start_set_spinbox_2')
         self.UIE_mgw_sm_end_set_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, 'end_set_spinbox_2')
@@ -825,7 +835,7 @@ class MMC_Main(QMainWindow):
         # Signal-to-slot connections.
         self.UIE_mgw_save_config_qpb.clicked.connect(self.show_window_machine_config)
         self.UIE_mgw_scan_qpb.clicked.connect(self.scan_button_pressed)
-        self.UIE_mgw_stop_scan_qpb.clicked.connect(self.stop_scan_button_pressed)
+        self.UIE_mgw_stop_scan_qpb.clicked.connect(self.stop_master_button_pressed)
 
         self.UIE_mgw_move_to_position_qpb.clicked.connect(self.move_to_position_button_pressed)
         self.UIE_mgw_start_qdsb.valueChanged.connect(self.start_changed)
@@ -955,10 +965,10 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sm_scan_type_qcb.addItem('Translation')
         self.UIE_mgw_sm_scan_type_qcb.addItem('Theta2Theta')
         self.UIE_mgw_sm_begin_scan_qpb.clicked.connect(self.scan_sm_button_pressed)
-        self.UIE_mgw_sm_end_scan_qpb.clicked.connect(self.stop_scan_button_pressed)
+        self.UIE_mgw_sm_end_scan_qpb.clicked.connect(self.stop_master_button_pressed)
 
         self.UIE_mgw_dm_begin_scan_qpb.clicked.connect(self.scan_dm_button_pressed)
-        self.UIE_mgw_dm_end_scan_qpb.clicked.connect(self.stop_scan_button_pressed)
+        self.UIE_mgw_dm_end_scan_qpb.clicked.connect(self.stop_master_button_pressed)
 
         movement_sensitive_list = []
         movement_sensitive_list.append(self.UIE_mgw_scan_qpb)
@@ -1006,6 +1016,8 @@ class MMC_Main(QMainWindow):
         movement_sensitive_list.append(self.UIE_mgw_dm_step_set_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_dm_scan_repeats_qdsb)
         movement_sensitive_list.append(self.UIE_mgw_dm_begin_scan_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_amove_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_sm_ahome_qpb)
 
         self.movement_sensitive_metalist = []
         self.movement_sensitive_metalist.append(movement_sensitive_list)
@@ -1040,12 +1052,28 @@ class MMC_Main(QMainWindow):
     def config_import(self):
         loadFileName, _ = QFileDialog.getOpenFileName(self, "Load CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv', filter='*.csv')
         fileInfo = QFileInfo(loadFileName)
-        self.load_config(fileInfo.absoluteFilePath(), True)
+
+        if fileInfo.absoluteFilePath() == '':
+            log.info('File name empty. User probably exited dialog manually.')
+            return
+
+        try:
+            self.load_config(fileInfo.absoluteFilePath(), True)
+        except Exception as e:
+            self.QMessageBoxWarning('Import Error', str(e))
 
     def config_export(self):
         savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv', filter='*.csv')
         fileInfo = QFileInfo(savFileName)
-        self.save_config(fileInfo.absoluteFilePath()) 
+
+        if fileInfo.absoluteFilePath() == '':
+            log.info('File name empty. User probably exited dialog manually.')
+            return
+
+        try:
+            self.save_config(fileInfo.absoluteFilePath()) 
+        except Exception as e:
+            self.QMessageBoxWarning('Import Error', str(e))
         
     def save_config(self, path: str):
         md_sp = 0.0
@@ -1540,7 +1568,7 @@ class MMC_Main(QMainWindow):
 
     def scan_complete(self):
         self.scanRunning = False
-        self.disable_movement_sensitive_buttons(False)
+        # self.disable_movement_sensitive_buttons(False)
         self.UIE_mgw_scan_qpb.setText('Begin Scan')
         self.UIE_mgw_scan_status_ql.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
         self.UIE_mgw_scan_qpbar.reset()
@@ -1570,9 +1598,26 @@ class MMC_Main(QMainWindow):
             else:
                 log.error('ERROR: Unknown scan class %s.'%(scan_class))
 
-    def update_position_displays(self):
+    def update_axes_info(self, mda_pos, mda_moving, fwa_pos, fwa_moving, sra_pos, sra_moving, saa_pos, saa_moving, sta_pos, sta_moving, dra_pos, dra_moving):
+
+        if (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) and not self.axes_info_prev_moving:
+            self.axes_info_prev_moving = True
+            self.disable_movement_sensitive_buttons(True)
+        else:
+            self.axes_info_prev_moving = False
+            self.disable_movement_sensitive_buttons(False)
+
+        self.current_position = mda_pos
+        self.moving = mda_moving
+
         self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position))))
-        # self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position)) - self.zero_ofst))
+
+        # print(mda_pos, mda_moving)
+        # print(fwa_pos, fwa_moving)
+        # print(sra_pos, sra_moving)
+        # print(saa_pos, saa_moving)
+        # print(sta_pos, sta_moving)
+        # print(dra_pos, dra_moving)
 
     def scan_button_pressed(self):
         log.debug('SCAN_BUTTON_PRESSED FUNCTION START!')
@@ -1594,9 +1639,13 @@ class MMC_Main(QMainWindow):
             self.disable_movement_sensitive_buttons(True)
             self.dm_scan.start()
 
-    def stop_scan_button_pressed(self):
+    def stop_master_button_pressed(self):
+        log.info('Master stop button pressed.')
+
         if self.scanRunning:
             self.scanRunning = False
+
+        # TODO: Somehow stop the system.
 
     def move_to_position_button_pressed(self):
         self.moving = True
@@ -1614,10 +1663,10 @@ class MMC_Main(QMainWindow):
             QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s.'%(e))
             log.error('QMessageBox.Critical: Move Failure - Main drive axis failed to move: %s'%(e))
             self.moving = False
-            self.disable_movement_sensitive_buttons(False)
+            # self.disable_movement_sensitive_buttons(False)
             pass
         self.moving = False
-        self.disable_movement_sensitive_buttons(False)
+        # self.disable_movement_sensitive_buttons(False)
 
     def move_to_position_button_pressed_sr(self):
         if (self.moving):
@@ -1635,10 +1684,10 @@ class MMC_Main(QMainWindow):
             QMessageBox.critical(self, 'Move Failure', 'Sample rotation axis failed to move: %s'%(e))
             log.error('QMessageBox.Critical: Move Failure - Sample rotation axis failed to move: %s'%(e))
             self.moving = False
-            self.disable_movement_sensitive_buttons(False)
+            # self.disable_movement_sensitive_buttons(False)
             pass
         self.moving = False
-        self.disable_movement_sensitive_buttons(False)
+        # self.disable_movement_sensitive_buttons(False)
 
     def move_to_position_button_pressed_sa(self):
         if (self.moving):
@@ -1656,10 +1705,10 @@ class MMC_Main(QMainWindow):
             QMessageBox.critical(self, 'Move Failure', 'Sample angle axis failed to move: %s'%(e))
             log.error('QMessageBox.Critical: Move Failure - Sample angle axis failed to move: %s'%(e))
             self.moving = False
-            self.disable_movement_sensitive_buttons(False)
+            # self.disable_movement_sensitive_buttons(False)
             pass
         self.moving = False
-        self.disable_movement_sensitive_buttons(False)
+        # self.disable_movement_sensitive_buttons(False)
         log.debug('Completed move_to_position_button_pressed_sa() function.')
 
     def move_to_position_button_pressed_st(self):
@@ -1678,10 +1727,10 @@ class MMC_Main(QMainWindow):
             QMessageBox.critical(self, 'Move Failure', 'Sample translation axis failed to move: %s'%(e))
             log.error('QMessageBox.Critical: Move Failure - Sample translation axis failed to move: %s'%(e))
             self.moving = False
-            self.disable_movement_sensitive_buttons(False)
+            # self.disable_movement_sensitive_buttons(False)
             pass
         self.moving = False
-        self.disable_movement_sensitive_buttons(False)
+        # self.disable_movement_sensitive_buttons(False)
 
 
     def move_to_position_button_pressed_dr(self):
@@ -1701,10 +1750,10 @@ class MMC_Main(QMainWindow):
             log.error('QMessageBox.Critical: Move Failure - Detector rotation axis failed to move: %s'%(e))
             QMessageBox.critical(self, 'Move Failure', 'Detector rotation axis failed to move: %s'%(e))
             self.moving = False
-            self.disable_movement_sensitive_buttons(False)
+            # self.disable_movement_sensitive_buttons(False)
             pass
         self.moving = False
-        self.disable_movement_sensitive_buttons(False)
+        # self.disable_movement_sensitive_buttons(False)
 
     def start_changed(self):
         log.info("Start changed to: %s mm"%(self.UIE_mgw_start_qdsb.value()))
@@ -2064,7 +2113,7 @@ class MMC_Main(QMainWindow):
 
     def mgw_axis_change_filter(self, mcw = False):
         log.trace()
-        print(mcw)
+        # print(mcw)
         if mcw and self.machine_conf_win is None:
             log.warn('mgw_axis_change_filter called with mcw True but machine_conf_win is NoneType.')
             mcw = False

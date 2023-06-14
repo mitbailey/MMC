@@ -33,17 +33,20 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 
 class UpdatePositionDisplays(QThread):
-    SIGNAL_update_main_axis_display = pyqtSignal(str)
+    # SIGNAL_update_main_axis_display = pyqtSignal(str)
+    SIGNAL_update_axes_info = pyqtSignal(float, bool, float, bool, float, bool, float, bool, float, bool, float, bool)
     SIGNAL_qmsg_info = pyqtSignal(str, str)
     SIGNAL_qmsg_warn = pyqtSignal(str, str)
     SIGNAL_qmsg_crit = pyqtSignal(str, str)
 
-    def __init__(self, parent: QMainWindow, cadence = 1000):
+
+    def __init__(self, parent: QMainWindow, cadence = 200):
         log.debug("Update worker init called.")
         self.CADENCE = cadence
         super(UpdatePositionDisplays, self).__init__()
         self.other: MMC_Main = parent
-        self.SIGNAL_update_main_axis_display.connect(self.other.update_position_displays)
+        # self.SIGNAL_update_main_axis_display.connect(self.other.update_position_displays)
+        self.SIGNAL_update_axes_info.connect(self.other.update_axes_info)
         self.SIGNAL_qmsg_info.connect(self.other.QMessageBoxInformation)
         self.SIGNAL_qmsg_warn.connect(self.other.QMessageBoxWarning)
         self.SIGNAL_qmsg_crit.connect(self.other.QMessageBoxCritical)
@@ -52,41 +55,98 @@ class UpdatePositionDisplays(QThread):
     def run(self):
         log.debug("Update worker started.")
         def update():
-            if self.other.motion_controllers.main_drive_axis is None:
-                log.debug("Main drive axis not selected.")
-                return
+            mda_pos = -999
+            mda_moving = False 
+            fwa_pos = -999
+            fwa_moving = False
+            sra_pos = -999
+            sra_moving = False
+            saa_pos = -999
+            saa_moving = False
+            sta_pos = -999
+            sta_moving = False
+            dra_pos = -999
+            dra_moving = False
 
-            log.debug("Updating position displays...")
-            self.other.current_position = self.other.motion_controllers.main_drive_axis.get_position()
-            
-            if self.other.homing_started: # set this to True at __init__ because we are homing, and disable everything. same goes for 'Home' button
-                home_status = self.other.motion_controllers.main_drive_axis.is_homing() # explore possibility of replacing this with is_homed()
+            try:
+                if self.other.motion_controllers.main_drive_axis is not None:
+                    # if self.other.motion_controllers.main_drive_axis is None:
+                    #     log.debug("Main drive axis not selected.")
+                    #     return
 
-                if home_status:
-                    # Detect if the device is saying its homing, but its not actually moving.
-                    if self.other.current_position == self.other.previous_position:
-                        self.other.immobile_count += 1
-                    if self.other.immobile_count >= 3:
-                        self.other.motion_controllers.main_drive_axis.home()
-                        self.other.immobile_count = 0
+                    # log.debug("Updating position displays...")
+                    mda_pos = self.other.motion_controllers.main_drive_axis.get_position()
+                    
+                    if self.other.homing_started: # set this to True at __init__ because we are homing, and disable everything. same goes for 'Home' button
+                        home_status = self.other.motion_controllers.main_drive_axis.is_homing() # explore possibility of replacing this with is_homed()
 
-                if not home_status:
-                    # enable stuff here
-                    log.debug(home_status)
-                    self.other.immobile_count = 0
-                    self.other.scan_status_update("IDLE")
-                    self.other.disable_movement_sensitive_buttons(False)
-                    self.other.homing_started = False
-                    pass
-            move_status = self.other.motion_controllers.main_drive_axis.is_moving()
-            
-            if not move_status and self.other.moving and not self.other.scanRunning:
-                self.other.disable_movement_sensitive_buttons(False)
+                        if home_status:
+                            # Detect if the device is saying its homing, but its not actually moving.
+                            if self.other.current_position == self.other.previous_position:
+                                self.other.immobile_count += 1
+                            if self.other.immobile_count >= 3:
+                                self.other.motion_controllers.main_drive_axis.home()
+                                self.other.immobile_count = 0
 
-            self.other.moving = move_status
-            self.other.previous_position = self.other.current_position
+                        if not home_status:
+                            # enable stuff here
+                            log.debug(home_status)
+                            self.other.immobile_count = 0
+                            self.other.scan_status_update("IDLE")
+                            # self.other.disable_movement_sensitive_buttons(False)
+                            self.other.homing_started = False
+                            pass
+                    move_status = self.other.motion_controllers.main_drive_axis.is_moving()
+                    
+                    if not move_status and self.other.moving and not self.other.scanRunning:
+                        mda_moving = False
+                        # self.other.disable_movement_sensitive_buttons(False)
 
-            self.SIGNAL_update_main_axis_display.emit('<b><i>%3.4f</i></b>'%(((self.other.current_position)) - self.other.zero_ofst))
+                    # self.other.moving = move_status
+                    self.other.previous_position = self.other.current_position
+
+                    # mda_pos = '<b><i>%3.4f</i></b>'%(((self.other.current_position)) - self.other.zero_ofst)
+                    # self.SIGNAL_update_main_axis_display.emit('<b><i>%3.4f</i></b>'%(((self.other.current_position)) - self.other.zero_ofst))
+            except Exception as e:
+                log.error(str(e))
+
+            try:
+                if self.other.motion_controllers.filter_wheel_axis is not None:
+                    fwa_moving = self.other.motion_controllers.filter_wheel_axis.is_moving()
+                    fwa_pos = self.other.motion_controllers.filter_wheel_axis.get_position()
+            except Exception as e:
+                log.error(str(e))
+
+            try:
+                if self.other.motion_controllers.sample_rotation_axis is not None:
+                    sra_moving = self.other.motion_controllers.sample_rotation_axis.is_moving()
+                    sra_pos = self.other.motion_controllers.sample_rotation_axis.get_position()
+            except Exception as e:
+                log.error(str(e))
+
+            try:
+                if self.other.motion_controllers.sample_angle_axis is not None:
+                    saa_moving = self.other.motion_controllers.sample_angle_axis.is_moving()
+                    saa_pos = self.other.motion_controllers.sample_angle_axis.get_position()
+            except Exception as e:
+                log.error(str(e))
+                    
+            try:
+                if self.other.motion_controllers.sample_translation_axis is not None:
+                    sta_moving = self.other.motion_controllers.sample_translation_axis.is_moving()
+                    sta_pos = self.other.motion_controllers.sample_translation_axis.get_position()
+            except Exception as e:
+                log.error(str(e))
+
+            try:
+                if self.other.motion_controllers.detector_rotation_axis is not None:
+                    dra_moving = self.other.motion_controllers.detector_rotation_axis.is_moving()
+                    dra_pos = self.other.motion_controllers.detector_rotation_axis.get_position()
+            except Exception as e:
+                log.error(str(e))
+
+            self.SIGNAL_update_axes_info.emit(mda_pos, mda_moving, fwa_pos, fwa_moving, sra_pos, sra_moving, saa_pos, saa_moving, sta_pos, sta_moving, dra_pos, dra_moving)
+
 
         self.timer = QTimer()
         self.timer.timeout.connect(update)

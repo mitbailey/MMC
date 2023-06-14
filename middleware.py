@@ -234,6 +234,10 @@ class MotionController:
 
         self._port = man_port
 
+    def all_stop():
+        log.info('Middleware all-stop received.')
+        log.error('All-stop currently not implemented.')
+
     # Setters.
     def set_limits(self, max_pos, min_pos):
         """Set the software-defined movement limits of this axis.
