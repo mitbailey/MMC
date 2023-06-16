@@ -416,7 +416,6 @@ class Thorlabs: # Wrapper class for TLI methods
         def poll_status(arg):
             TLI_KST.ClearMessageQueue(arg.serial)
             while arg.keep_polling:
-                # print('Poll thread: waiting')
                 if arg.message_queue_size():
                     ret, _mtype, _mid, _mdata = arg._GetNext()
                     if not ret:
@@ -520,7 +519,7 @@ class Thorlabs: # Wrapper class for TLI methods
         def get_position(self):
             # TLI_KST.RequestPosition(self.serial)
             retval = TLI_KST.GetPosition(self.serial)
-            print("Raw position reported as:", retval)
+            # print("Raw position reported as:", retval)
             return retval
 
         # set_position_reference
@@ -537,7 +536,7 @@ class Thorlabs: # Wrapper class for TLI methods
             return retval
 
         # move_to
-        def move_to(self, position: int):
+        def move_to(self, position: int, _ = 0):
             self.moving = True
             retval = TLI_KST.MoveToPosition(self.serial, position)
 
@@ -853,7 +852,7 @@ class Thorlabs: # Wrapper class for TLI methods
         @staticmethod
         def poll_status(arg):
             while arg.keep_polling:
-                # print('Poll thread: waiting')
+                print('Poll thread: doing its thing', arg.moving)
                 if arg.moving:
                     sleep(0.5)
                     # In this case 'arg' is 'self' so arg.moving is self.moving!
@@ -946,7 +945,7 @@ class Thorlabs: # Wrapper class for TLI methods
             return True
 
         # move_to
-        def move_to(self, position: int):
+        def move_to(self, position: int, _ = 0):
             self.moving = True
             self.position = position
 
