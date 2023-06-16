@@ -41,6 +41,7 @@ class MP_789A_4:
         self._is_homing = False
         self._moving = False
         self.moving_poll_mutex = Lock()
+        self._backlash_lock = False
 
         self._position = 0
 
@@ -199,6 +200,10 @@ class MP_789A_4:
 
     def is_moving(self):
         log.debug('func: is_moving')
+
+        if self._backlash_lock:
+            return True
+
         self.moving_poll_mutex.acquire()
         self.s.write(b'^\r')
         time.sleep(MP_789A_4.WR_DLY)
@@ -229,8 +234,10 @@ class MP_789A_4:
         steps = position - self._position
 
         if (steps < 0) and (backlash > 0):
+            self._backlash_lock = True
             self.move_relative(steps - backlash)
             self.move_relative(backlash)
+            self._backlash_lock = False
         else:
             self.move_relative(steps)
 

@@ -171,7 +171,7 @@ class MotionController:
             Exception: _description_
             RuntimeError: _description_
         """
-        self._max_backlash = 2000
+        self._max_backlash = 8000
         self._model = dev_model
         self._manual_backlash = 1 # 0 = no manual backlash, 1 = manual backlash
         self._steps_per_value = 0.0

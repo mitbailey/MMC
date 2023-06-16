@@ -43,6 +43,7 @@ class MP_792:
         self._is_homing = [False] * axes
         self._is_moving_l = [False] * axes
         self.current_axis = 0
+        self._backlash_lock_l = [False] * axes
 
         if port is None:
             log.error('Port is none type.')
@@ -194,7 +195,10 @@ class MP_792:
 
     # Publicly callable is_moving() function.
     def is_moving(self, axis: int):
-        return self._is_moving_l[axis]
+        if self._backlash_lock_l[axis]:
+            return True
+        else:
+            return self._is_moving_l[axis]
 
     # Internal-calling only.
     def _is_moving(self, axis: int):
@@ -229,11 +233,13 @@ class MP_792:
         steps = position - self._position[axis]
 
         if (steps < 0) and (backlash > 0):
+            self._backlash_lock_l[axis] = True
             log.debug('MOVE-DEBUG: Performing overshoot manuever.')
             self.move_relative(steps - backlash, axis)
             log.debug('MOVE-DEBUG: Performing backlash correction.')
             self.move_relative(backlash, axis)
             log.debug('MOVE-DEBUG: Move complete.')
+            self._backlash_lock_l[axis] = False
         else:
             log.debug('MOVE-DEBUG: Performing backlash-free move.')
             self.move_relative(steps, axis)
@@ -261,12 +267,12 @@ class MP_792:
         # moving = True
         while i<3:
             log.debug('BLOCKING')
-            time.sleep(MP_792.WR_DLY * 2)
+            time.sleep(MP_792.WR_DLY)
             if not self._is_moving(axis):
                 log.info('Found to be NOT MOVING.')
                 i+=1
         log.debug('FINISHED BLOCKING because moving is', i)
-        time.sleep(MP_792.WR_DLY * 2.5)
+        time.sleep(MP_792.WR_DLY)
 
     def short_name(self):
         return self.s_name
