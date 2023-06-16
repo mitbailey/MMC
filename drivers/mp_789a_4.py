@@ -33,6 +33,8 @@ from utilities import log
 # This class is also used by the 792, since the 792 is essentially four 789A-4s addressed separately.
 
 class MP_789A_4:
+    WR_DLY = 0.1
+
     def __init__(self, port):
         self.s_name = 'MP789'
         self.l_name = 'McPherson 789A-4'
@@ -56,7 +58,7 @@ class MP_789A_4:
 
         self.s = safe_serial.SafeSerial(port, 9600, timeout=1)
         self.s.write(b' \r')
-        time.sleep(0.1)
+        time.sleep(MP_789A_4.WR_DLY)
         rx = self.s.read(128)#.decode('utf-8').rstrip()
         log.debug(rx)
 
@@ -81,12 +83,12 @@ class MP_789A_4:
 
         # Enable Home Circuit
         self.s.write(b'A8\r')
-        time.sleep(0.1)
+        time.sleep(MP_789A_4.WR_DLY)
         rx = self.s.read(128).decode('utf-8')
 
         # Check Limit Status
         self.s.write(b']\r')
-        time.sleep(0.1)
+        time.sleep(MP_789A_4.WR_DLY)
         rx_raw = self.s.read(128)
         rx = rx_raw.decode('utf-8')
         # rx = self.s.read(128).decode('utf-8')
@@ -98,48 +100,47 @@ class MP_789A_4:
             # Home switch blocked.
             # Move at constant velocity (23 KHz).
             self.s.write(b'M+23000\r')
-            time.sleep(0.1)
+            time.sleep(MP_789A_4.WR_DLY)
             while True:
                 # Check limit status - send every 0.8 seconds.
                 self.s.write(b']\r')
-                time.sleep(0.1)     
+                time.sleep(MP_789A_4.WR_DLY)     
                 rx = self.s.read(128).decode('utf-8')
                 if ('0' in rx or '2' in rx) and ('+' not in rx and '-' not in rx): # Not-on-a-limit-switch status is 0 when stationary, 2 when in motion.
                     break
                 elif ('64' in rx or '128' in rx) and ('+' not in rx and '-' not in rx): # If we have hit either of the extreme limit switches and stopped.
                     log.error('Hit edge limit switch when homing. Does this device have a home sensor?')
                     raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
-                time.sleep(0.7)
+                time.sleep(MP_789A_4.WR_DLY * 7)
             # Soft stop when homing flag is located.
             self.s.write(b'@\r')
-            time.sleep(0.1) 
+            time.sleep(MP_789A_4.WR_DLY) 
             # Back into home switch 3 motor revolutions.
             self.s.write(b'-108000\r')
-            time.sleep(0.1) 
+            time.sleep(MP_789A_4.WR_DLY) 
             # Go 2 motor revolutions up.
             self.s.write(b'+72000\r')
-            time.sleep(0.1) 
+            time.sleep(MP_789A_4.WR_DLY) 
             # Enable 'high accuracy' circuit.
             self.s.write(b'A24\r')
-            time.sleep(0.1) 
+            time.sleep(MP_789A_4.WR_DLY) 
             # Find edge of home flag at 1000 steps/sec.
             self.s.write(b'F1000,0\r')
-            time.sleep(0.1) 
-            time.sleep(3)
+            time.sleep(MP_789A_4.WR_DLY * 7)
             # Disable home circuit.
             self.s.write(b'A0\r')
-            time.sleep(0.1) 
+            time.sleep(MP_789A_4.WR_DLY) 
             pass
         elif ('0' in rx) and ('+' not in rx and '-' not in rx):
             log.info('Home switch not blocked.')
             # Home switch not blocked.
             # Move at constant velocity (23 KHz).
             self.s.write(b'M-23000\r')
-            time.sleep(0.1)
+            time.sleep(MP_789A_4.WR_DLY)
             while True:
                 # Check limit status - send every 0.8 seconds.
                 self.s.write(b']\r')
-                time.sleep(0.1)     
+                time.sleep(MP_789A_4.WR_DLY)     
                 rx = self.s.read(128).decode('utf-8')
                 if ('32' in rx or '34' in rx) and ('+' not in rx and '-' not in rx): # Home-switch-blocked status is 32 when stationary, 34 when in motion.
                     break
@@ -147,26 +148,25 @@ class MP_789A_4:
                     # TODO: Some 789s don't have a limit switch. In this case, we will need to home using the lower limit switch... ?
                     log.error('Hit edge limit switch when homing. Does this device have a home sensor?')
                     raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
-                time.sleep(0.7)
+                time.sleep(MP_789A_4.WR_DLY * 7)
             # Soft stop when homing flag is located.
             self.s.write(b'@\r')
-            time.sleep(0.1) 
+            time.sleep(MP_789A_4.WR_DLY) 
             # Back into home switch 3 motor revolutions.
             self.s.write(b'-108000\r')
-            time.sleep(0.1) 
+            time.sleep(MP_789A_4.WR_DLY) 
             # Go 2 motor revolutions up.
             self.s.write(b'+72000\r')
-            time.sleep(0.1) 
+            time.sleep(MP_789A_4.WR_DLY) 
             # Enable 'high accuracy' circuit.
             self.s.write(b'A24\r')
-            time.sleep(0.1) 
+            time.sleep(MP_789A_4.WR_DLY) 
             # Find edge of home flag at 1000 steps/sec.
             self.s.write(b'F1000,0\r')
-            time.sleep(0.1) 
-            time.sleep(3)
+            time.sleep(MP_789A_4.WR_DLY * 7) 
             # Disable home circuit.
             self.s.write(b'A0\r')
-            time.sleep(0.1) 
+            time.sleep(MP_789A_4.WR_DLY) 
             pass
         else:
             log.error('Unknown position to home from.', rx)
@@ -177,7 +177,7 @@ class MP_789A_4:
         if (self.is_moving()):
             log.warn('Post-home movement detected. Entering movement remediation.')
             self.s.write(b'@\r')
-            time.sleep(1)
+            time.sleep(MP_789A_4.WR_DLY * 10)
         stop_waits = 0
         while(self.is_moving()):
             if stop_waits > 3:
@@ -186,7 +186,7 @@ class MP_789A_4:
                 self.s.write(b'@\r')
             stop_waits += 1
             log.warn('Waiting for device to cease movement.')
-            time.sleep(1)
+            time.sleep(MP_789A_4.WR_DLY * 10)
 
 
         self._position = 0
@@ -201,13 +201,13 @@ class MP_789A_4:
         log.debug('func: is_moving')
         self.moving_poll_mutex.acquire()
         self.s.write(b'^\r')
-        time.sleep(0.1)
+        time.sleep(MP_789A_4.WR_DLY)
         status = self.s.read(128).decode('utf-8').rstrip()
-        time.sleep(0.1)
+        time.sleep(MP_789A_4.WR_DLY)
         self.s.write(b'^\r')
-        time.sleep(0.1)
+        time.sleep(MP_789A_4.WR_DLY)
         status2 = self.s.read(128).decode('utf-8').rstrip()
-        time.sleep(0.1)
+        time.sleep(MP_789A_4.WR_DLY)
         self.moving_poll_mutex.release()
 
         if ('0' in status and '0' in status2) and ('+' not in status and '+' not in status2 and '-' not in status and '-' not in status2):
@@ -247,22 +247,22 @@ class MP_789A_4:
             log.info('Moving...')
             log.debug(b'+%d\r'%(steps))
             self.s.write(b'+%d\r'%(steps))
-            time.sleep(0.1)
+            time.sleep(MP_789A_4.WR_DLY)
         elif steps < 0:
             log.info('Moving...')
             log.debug(b'-%d\r'%(steps * -1))
             self.s.write(b'-%d\r'%(steps * -1))
-            time.sleep(0.1)
+            time.sleep(MP_789A_4.WR_DLY)
         else:
             log.info('Not moving (0 steps).')
             return
         
         while self.is_moving():
             log.debug('BLOCKING')
-            time.sleep(0.5)
+            time.sleep(MP_789A_4.WR_DLY * 5)
         log.debug('FINISHED BLOCKING')
 
-        time.sleep(0.25)
+        time.sleep(MP_789A_4.WR_DLY * 2.5)
 
         self._position += steps
         
@@ -287,7 +287,7 @@ class MP_789A_4_DUMMY:
         self._position = 0
         self._moving = False
         self.home()
-        time.sleep(5)
+        time.sleep(MP_789A_4.WR_DLY * 50)
 
     def home(self)->bool:
         log.debug('func: home')
@@ -330,7 +330,7 @@ class MP_789A_4_DUMMY:
         # moving = True
         while i<15:
             log.debug('BLOCKING')
-            time.sleep(0.5)
+            time.sleep(MP_789A_4.WR_DLY * 5)
             if not self.is_moving():
                 log.info('Found to be NOT MOVING.',i)
                 i+=1
@@ -338,7 +338,7 @@ class MP_789A_4_DUMMY:
                 log.info('Found to be MOVING',i)
                 i=0
         log.debug('FINISHED BLOCKING because moving is', i)
-        time.sleep(0.25)
+        time.sleep(MP_789A_4.WR_DLY * 2.5)
 
 
     def short_name(self):

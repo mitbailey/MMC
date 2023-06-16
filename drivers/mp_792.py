@@ -33,6 +33,7 @@ from drivers.mp_789a_4 import MP_789A_4_DUMMY
 
 class MP_792:
     AXES = [b'A0', b'A8', b'A16', b'A24']
+    WR_DLY = 0.1
 
     def __init__(self, port: serial.Serial, axes: int = 4):
         self.num_axes = axes
@@ -59,7 +60,7 @@ class MP_792:
 
         self.s = safe_serial.SafeSerial(port, 9600, timeout=1)
         self.s.write(b' \r')
-        time.sleep(0.1)
+        time.sleep(MP_792.WR_DLY)
         rx = self.s.read(128)#.decode('utf-8').rstrip()
         log.debug(rx)
 
@@ -76,16 +77,16 @@ class MP_792:
         for i in [2, 0, 3, 1]:
             log.debug('WR:', MP_792.AXES[i] + b'\r')
             self.s.write(MP_792.AXES[i] + b'\r')
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
             log.debug('RD:', self.s.read(128))
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
 
             log.debug('WR:', b']\r')
             self.s.write(b']\r')
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
             alivestat = self.s.read(128).decode('utf-8')
             log.debug('RD:', alivestat)
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
 
             if '192' in alivestat:
                 log.info('Axis %d is dead.'%(i))
@@ -102,10 +103,10 @@ class MP_792:
         if axis != self.current_axis:
             log.debug('WR:', MP_792.AXES[axis] + b'\r')
             self.s.write(MP_792.AXES[axis] + b'\r')
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
             log.debug('RD:', self.s.read(128))
             self.current_axis = axis
-            time.sleep(0.5)
+            time.sleep(MP_792.WR_DLY * 5)
 
     def home(self, axis: int)->bool:
         self.set_axis(axis)
@@ -123,7 +124,7 @@ class MP_792:
             home_cmd = b'M-10000\r'
 
         self.s.write(home_cmd)
-        time.sleep(0.1)
+        time.sleep(MP_792.WR_DLY)
         # print('RD:', self.s.read(128))
         self.s.read(128)
 
@@ -135,10 +136,10 @@ class MP_792:
             log.info('Time spent homing:', current_time - start_time)
 
             moving = self._is_moving(axis)
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
 
             self.s.write(b']\r')
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
             limstat = self.s.read(128).decode('utf-8')
             log.debug('limstat:', limstat)
 
@@ -167,12 +168,12 @@ class MP_792:
 
                 #     start_time = time.time()
 
-            time.sleep(0.5)
+            time.sleep(MP_792.WR_DLY * 5)
 
         if (self.is_moving(axis)):
             log.warn('Post-home movement detected. Entering movement remediation.')
             self.s.write(b'@\r')
-            time.sleep(1)
+            time.sleep(MP_792.WR_DLY * 10)
         stop_waits = 0
         while(self.is_moving(axis)):
             if stop_waits > 3:
@@ -182,7 +183,7 @@ class MP_792:
                     
             stop_waits += 1
             log.warn('Waiting for device to cease movement.')
-            time.sleep(1)
+            time.sleep(MP_792.WR_DLY * 10)
 
         self._position[axis] = 0
         self._is_homing[axis] = False
@@ -191,19 +192,21 @@ class MP_792:
     def get_position(self, axis: int):
         return self._position[axis]
 
+    # Publicly callable is_moving() function.
     def is_moving(self, axis: int):
         return self._is_moving_l[axis]
 
+    # Internal-calling only.
     def _is_moving(self, axis: int):
         self.set_axis(axis)
 
         self.s.write(b'^\r')
-        time.sleep(0.1)
+        time.sleep(MP_792.WR_DLY)
         status = self.s.read(128).decode('utf-8').rstrip()
         log.debug('792 _status:', status)
-        time.sleep(0.1)
+        time.sleep(MP_792.WR_DLY)
         self.s.write(b'^\r')
-        time.sleep(0.1)
+        time.sleep(MP_792.WR_DLY)
         status2 = self.s.read(128).decode('utf-8').rstrip()
         log.debug('792 _status2:', status2)
 
@@ -244,12 +247,12 @@ class MP_792:
             log.info('Moving...')
             log.debug(b'+%d\r'%(steps))
             self.s.write(b'+%d\r'%(steps))
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
         elif steps < 0:
             log.info('Moving...')
             log.debug(b'-%d\r'%(steps * -1))
             self.s.write(b'-%d\r'%(steps * -1))
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
         else:
             log.info('Not moving (0 steps).')
         self._position[axis] += steps
@@ -258,12 +261,12 @@ class MP_792:
         # moving = True
         while i<3:
             log.debug('BLOCKING')
-            time.sleep(0.2)
+            time.sleep(MP_792.WR_DLY * 2)
             if not self._is_moving(axis):
                 log.info('Found to be NOT MOVING.')
                 i+=1
         log.debug('FINISHED BLOCKING because moving is', i)
-        time.sleep(0.25)
+        time.sleep(MP_792.WR_DLY * 2.5)
 
     def short_name(self):
         return self.s_name
@@ -294,14 +297,14 @@ class MP_792_DUMMY:
         log.info('Checking axes...')
         for i in range(4):
             log.debug('WR:', MP_792.AXES[i] + b'\r')
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
 
             log.debug('WR:', b']\r')
             
-            time.sleep(1.5)
+            time.sleep(MP_792.WR_DLY * 15)
             
             log.debug('RD:', 'Dummy - Axes Always Alive')
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
 
 
             log.debug('Axis %d is alive.'%(i))
@@ -309,7 +312,7 @@ class MP_792_DUMMY:
 
             self.home(i)
 
-        time.sleep(5)
+        time.sleep(MP_792.WR_DLY * 50)
 
         log.info('McPherson 792 initialization complete.')
 
@@ -317,7 +320,7 @@ class MP_792_DUMMY:
         if axis != self.current_axis:
             log.debug('WR:', MP_792.AXES[axis] + b'\r')
             self.current_axis = axis
-            time.sleep(0.1)
+            time.sleep(MP_792.WR_DLY)
 
     def home(self, axis: int)->bool:
         self.set_axis(axis)
@@ -326,7 +329,7 @@ class MP_792_DUMMY:
         self._is_homing[axis] = True
 
         log.debug('WR:', b'M-10000\r')
-        time.sleep(0.5)
+        time.sleep(MP_792.WR_DLY * 5)
 
         start_time = time.time()
         retries = 3
@@ -372,7 +375,7 @@ class MP_792_DUMMY:
 
         while self._is_moving(axis):
             log.debug('BLOCKING')
-            time.sleep(0.5)
+            time.sleep(MP_792.WR_DLY * 5)
         log.debug('FINISHED BLOCKING')
 
 

@@ -856,6 +856,7 @@ class Thorlabs: # Wrapper class for TLI methods
                 # print('Poll thread: waiting')
                 if arg.moving:
                     sleep(0.5)
+                    # In this case 'arg' is 'self' so arg.moving is self.moving!
                     arg.moving = False
                     with arg.cond:
                         arg.cond.notify()
