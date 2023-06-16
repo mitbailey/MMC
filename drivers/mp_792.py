@@ -33,7 +33,7 @@ from drivers.mp_789a_4 import MP_789A_4_DUMMY
 
 class MP_792:
     AXES = [b'A0', b'A8', b'A16', b'A24']
-    WR_DLY = 0.1
+    WR_DLY = 0.05
 
     def __init__(self, port: serial.Serial, axes: int = 4):
         self.num_axes = axes

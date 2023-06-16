@@ -33,7 +33,7 @@ from utilities import log
 # This class is also used by the 792, since the 792 is essentially four 789A-4s addressed separately.
 
 class MP_789A_4:
-    WR_DLY = 0.1
+    WR_DLY = 0.05
 
     def __init__(self, port):
         self.s_name = 'MP789'
