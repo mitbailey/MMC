@@ -1600,7 +1600,7 @@ class MMC_Main(QMainWindow):
 
     def update_axes_info(self, mda_pos, mda_moving, fwa_pos, fwa_moving, sra_pos, sra_moving, saa_pos, saa_moving, sta_pos, sta_moving, dra_pos, dra_moving):
 
-        if (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) and not self.axes_info_prev_moving:
+        if (self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) and not self.axes_info_prev_moving:
             self.axes_info_prev_moving = True
             self.disable_movement_sensitive_buttons(True)
         else:

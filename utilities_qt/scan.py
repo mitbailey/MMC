@@ -91,8 +91,8 @@ class Scan(QThread):
         log.info("SCAN QTHREAD")
         log.info("Start | Stop | Step")
         log.info(self.other.startpos, self.other.stoppos, self.other.steppos)
-        self.other.startpos = (self.other.UIE_mgw_start_qdsb.value() + self.other.zero_ofst)
-        self.other.stoppos = (self.other.UIE_mgw_stop_qdsb.value() + self.other.zero_ofst)
+        self.other.startpos = (self.other.UIE_mgw_start_qdsb.value())
+        self.other.stoppos = (self.other.UIE_mgw_stop_qdsb.value())
         self.other.steppos = (self.other.UIE_mgw_step_qdsb.value())
         if self.other.steppos == 0 or self.other.startpos == self.other.stoppos:
             for f in sav_files:
@@ -105,7 +105,8 @@ class Scan(QThread):
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
         self.SIGNAL_status_update.emit("ZEROING")
-        prep_pos = int((0 + self.other.zero_ofst))
+        # prep_pos = int((0 + self.other.zero_ofst))
+        prep_pos = 0
         try:
             log.info('107: Moving to', prep_pos)
             self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
@@ -161,7 +162,7 @@ class Scan(QThread):
                 except Exception:
                     continue
 
-                self._xdata[i].append((((pos))) - self.other.zero_ofst)
+                self._xdata[i].append((((pos))))
                 self._ydata[i].append(self.other.mes_sign * mes * 1e12)
                 self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
 

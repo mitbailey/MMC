@@ -852,7 +852,7 @@ class Thorlabs: # Wrapper class for TLI methods
         @staticmethod
         def poll_status(arg):
             while arg.keep_polling:
-                print('Poll thread: doing its thing', arg.moving)
+                # print('Poll thread: doing its thing', arg.moving)
                 if arg.moving:
                     sleep(0.5)
                     # In this case 'arg' is 'self' so arg.moving is self.moving!
