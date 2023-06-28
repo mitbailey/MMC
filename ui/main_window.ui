@@ -254,7 +254,7 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>0</y>
+                      <y>-641</y>
                       <width>630</width>
                       <height>1194</height>
                      </rect>
@@ -524,6 +524,13 @@
                                </property>
                                <property name="text">
                                 <string>Move</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QLabel" name="mca_pos">
+                               <property name="text">
+                                <string>0</string>
                                </property>
                               </widget>
                              </item>
@@ -1034,6 +1041,13 @@
                               </widget>
                              </item>
                              <item>
+                              <widget class="QLabel" name="fwa_pos">
+                               <property name="text">
+                                <string>0</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
                               <spacer name="horizontalSpacer_9">
                                <property name="orientation">
                                 <enum>Qt::Horizontal</enum>
@@ -1432,6 +1446,13 @@
                               </widget>
                              </item>
                              <item>
+                              <widget class="QLabel" name="sra_pos">
+                               <property name="text">
+                                <string>0</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
                               <spacer name="horizontalSpacer_8">
                                <property name="orientation">
                                 <enum>Qt::Horizontal</enum>
@@ -1543,6 +1564,13 @@
                               </widget>
                              </item>
                              <item>
+                              <widget class="QLabel" name="saa_pos">
+                               <property name="text">
+                                <string>0</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
                               <spacer name="horizontalSpacer_19">
                                <property name="orientation">
                                 <enum>Qt::Horizontal</enum>
@@ -1650,6 +1678,13 @@
                                </property>
                                <property name="text">
                                 <string>Move</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QLabel" name="sta_pos">
+                               <property name="text">
+                                <string>0</string>
                                </property>
                               </widget>
                              </item>
@@ -2216,6 +2251,13 @@
                                </property>
                                <property name="text">
                                 <string>Move</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QLabel" name="dra_pos">
+                               <property name="text">
+                                <string>0</string>
                                </property>
                               </widget>
                              </item>
