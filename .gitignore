@@ -3,7 +3,7 @@
 **/__pycache__
 **/.vs*
 **/.csv
-**/.txt
+# **/.txt
 **/dist/
 enable.adv
 enable.exp
@@ -77,7 +77,7 @@ enable.exp
 **/*.fits
 **/*.png
 **/*.dat
-**/*.txt
+# **/*.txt
 **/*.csv
 **/*.csv
 
