@@ -133,6 +133,7 @@ class Scan(QThread):
             continue
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
+                log.debug('scanRunning False, stop button may have been pressed (A).')
                 break
             self.SIGNAL_status_update.emit("MOVING")
             
@@ -302,6 +303,7 @@ class ScanSM(QThread):
                 continue
             for idx, dpos in enumerate(scanrange):
                 if not self.other.scanRunning:
+                    log.debug('scanRunning False, stop button may have been pressed (B).')
                     break
                 self.SIGNAL_status_update.emit('MOVING')
                 try:
@@ -384,6 +386,7 @@ class ScanSM(QThread):
                 continue
             for idx, dpos in enumerate(scanrange):
                 if not self.other.scanRunning:
+                    log.debug('scanRunning False, stop button may have been pressed (C).')
                     break
                 self.SIGNAL_status_update.emit('MOVING')
                 try:
@@ -562,6 +565,7 @@ class ScanDM(QThread):
             continue
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
+                log.debug('scanRunning False, stop button may have been pressed (D).')
                 break
             self.SIGNAL_status_update.emit('MOVING')
             try:
