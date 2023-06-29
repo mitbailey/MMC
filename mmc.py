@@ -1654,7 +1654,7 @@ class MMC_Main(QMainWindow):
         log.info("Steps per nm: " + str(self.motion_controllers.main_drive_axis.get_steps_per_value()))
         log.info("Manual position: " + str(self.manual_position))
         log.info("Move to position button pressed, moving to %d nm"%(self.manual_position))
-        pos = int((self.UIE_mgw_pos_qdsb.value()))
+        pos = self.UIE_mgw_pos_qdsb.value()
         # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst))
 
         try:
