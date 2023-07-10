@@ -162,42 +162,119 @@ class DataTableWidget(QTableWidget):
             self.rowMap += namedIds
             self.rowMap += unnamedIds
             log.debug("Row Map:", self.rowMap)
+            checkpoint = 0
+
+            log.debug('Checkpoint A: %d'%(checkpoint))
+            checkpoint+=1
 
             if len(self.rowMap) > self.num_rows:
+                    
+                log.debug('Checkpoint B: %d'%(checkpoint))
+                checkpoint+=1
+
                 log.debug('Allocating rows:', len(self.rowMap), self.num_rows)
                 for ii in range(self.num_rows, len(self.rowMap)):
+                    
+                    log.debug('Checkpoint C: %d'%(checkpoint))
+                    checkpoint+=1
+
                     self.insertRow(ii)
                     log.debug("Adding new row for row_idx %d."%(ii))
                     self.num_rows += 1
                 log.debug('After allocation:', self.num_rows, len(self.rowMap))
             
             for row_idx, scan_idx in enumerate(self.rowMap):
+                
+                log.debug('Checkpoint D: %d'%(checkpoint))
+                checkpoint+=1
+
                 text = 'Scan #%d'%(scan_idx + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx)
+
+                log.debug('Checkpoint E: %d'%(checkpoint))
+                checkpoint+=1
+
                 if name_editable:
+
+                    log.debug('Checkpoint F: %d'%(checkpoint))
+                    checkpoint+=1
+
                     textEditor = CustomQLineEdit(scan_idx, text)
+
+                    log.debug('Checkpoint G: %d'%(checkpoint))
+                    checkpoint+=1
+
                     textEditor.editingFinished.connect(self.__nameUpdated)
+
+                    log.debug('Checkpoint H: %d'%(checkpoint))
+                    checkpoint+=1
+
                     self.setCellWidget(row_idx, 0, textEditor)
+
+                    log.debug('Checkpoint I: %d'%(checkpoint))
+                    checkpoint+=1
                 else:
+                    log.debug('Checkpoint J: %d'%(checkpoint))
+                    checkpoint+=1
+
                     self.setItem(row_idx, 0, QTableWidgetItem(text))
+
+                    log.debug('Checkpoint K: %d'%(checkpoint))
+                    checkpoint+=1
                 xmin = 0
                 try:
+                    log.debug('Checkpoint L: %d'%(checkpoint))
+                    checkpoint+=1
+
                     xmin = round(self.recordedData[scan_idx]['x'].min(), 4)
+
+                    log.debug('Checkpoint M: %d'%(checkpoint))
+                    checkpoint+=1
                 except Exception as e:
                     pass
                 
                 xmax = 0
                 try:
+                    log.debug('Checkpoint N: %d'%(checkpoint))
+                    checkpoint+=1
+                    
                     xmax = round(self.recordedData[scan_idx]['x'].max(), 4)
+                    
+                    log.debug('Checkpoint O: %d'%(checkpoint))
+                    checkpoint+=1
                 except Exception:
                     pass
+
+                log.debug('Checkpoint P: %d'%(checkpoint))
+                checkpoint+=1
+
                 self.setItem(row_idx, 1, QTableWidgetItem(str(xmin)))
+
+                log.debug('Checkpoint Q: %d'%(checkpoint))
+                checkpoint+=1
+
                 self.setItem(row_idx, 2, QTableWidgetItem(str(xmax)))
                 try:
+
+                    log.debug('Checkpoint R: %d'%(checkpoint))
+                    checkpoint+=1
+
                     self.setItem(row_idx, 3, QTableWidgetItem(str(round(np.diff(self.recordedData[scan_idx]['x'])[0], 4))))
+
+                    log.debug('Checkpoint S: %d'%(checkpoint))
+                    checkpoint+=1
+
                 except Exception:
                     self.setItem(row_idx, 3, QTableWidgetItem(str(0)))
                 if name_editable:
+
+                    log.debug('Checkpoint T: %d'%(checkpoint))
+                    checkpoint+=1
+
                     self.setCellWidget(row_idx, 4, self.recordedData[scan_idx]['plot_cb'])
+
+                log.debug('Checkpoint U: %d'%(checkpoint))
+                checkpoint+=1
+
             self.newItem = False
 
         self.updatePlots()
