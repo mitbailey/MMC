@@ -44,9 +44,21 @@ class _SafeSerial:
         self._s = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
         self._m = Lock()
 
+    def __del__(self):
+        log.info('SafeSerial destructor called.')
+        self._m.acquire()
+        log.info('Destroying SafeSerial.')
+        self._s.close()
+
+    def close(self):
+        log.info('SafeSerial close called.')
+        self._m.acquire()
+        log.info('Closing SafeSerial.')
+        self._s.close()
+
     # Mutex-protected.
     def write(self, buf):
-        self._m.acquire()
+        self._m.acquire() 
         retval = self._s.write(buf)
         log.info('Serial TX:', buf)
         self._m.release()
