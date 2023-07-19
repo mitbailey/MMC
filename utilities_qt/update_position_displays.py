@@ -104,8 +104,10 @@ class UpdatePositionDisplays(QThread):
                             pass
                     move_status = self.other.motion_controllers.main_drive_axis.is_moving()
                     
-                    if not move_status and self.other.moving and not self.other.scanRunning:
-                        mda_moving = False
+                    mda_moving = move_status or self.other.scanRunning
+
+                    # if not move_status and self.other.moving and not self.other.scanRunning:
+                        # mda_moving = False
                         # self.other.disable_movement_sensitive_buttons(False)
 
                     mda_homing = self.other.motion_controllers.main_drive_axis.is_homing()

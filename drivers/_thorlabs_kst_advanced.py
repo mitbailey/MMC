@@ -86,6 +86,21 @@ class Thorlabs: # Wrapper class for TLI methods
                 ser_vals[idx] = int(ser_vals[idx])
         ser_vals.sort() # sort by ID
         return ser_vals
+    
+    @staticmethod
+    def ListDevicesAnyRobust(ser_buf_len: int = 512) -> list:
+        ser_vals = []
+        MAX_RETRIES = 20
+        retries = 0
+        while (len(ser_vals) == 0) and (retries < MAX_RETRIES):
+            # print('~ATTEMPT #%d'%(retries))
+            retries += 1
+            ser_vals = Thorlabs.ListDevicesAny(ser_buf_len)
+
+        if retries > 0:
+            log.warn('Had to retry KST-101 connection %d times.'%(retries))
+
+        return ser_vals
 
     @staticmethod
     def ListDevices(typeID: int) -> list:
@@ -224,6 +239,19 @@ class Thorlabs: # Wrapper class for TLI methods
             devs = Thorlabs.ListDevices(Thorlabs.TYPE_KST101) # special case
             _devs = Thorlabs.KST101.open_devices + devs
             _devs = list(set(_devs))
+
+            MAX_RETRIES = 20
+            retries = 0
+            while (len(_devs) == 0) and (retries <= MAX_RETRIES):
+                retries += 1
+                # print('~RETRYING CONNECTION (A-%d)~'%(retries))
+                devs = Thorlabs.ListDevices(Thorlabs.TYPE_KST101) # special case
+                _devs = Thorlabs.KST101.open_devices + devs
+                _devs = list(set(_devs))
+
+            if retries > 0:
+                log.warn('Had to retry KST-101 connection %d times.'%(retries))
+
             return _devs
         
         # Init stores the serial number

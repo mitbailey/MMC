@@ -237,7 +237,8 @@ class MMC_Main(QMainWindow):
 
         # Load Configuration File
         self.moving = False
-        self.axes_info_prev_moving = False
+        # self.axes_info_prev_moving = False
+        self.movement_sensitive_buttons_disabled = False
 
         # Default grating equation values.
         self.max_pos = 600.0
@@ -1605,12 +1606,17 @@ class MMC_Main(QMainWindow):
 
     def update_axes_info(self, mda_pos, mda_moving, mda_homing, fwa_pos, fwa_moving, fwa_homing, sra_pos, sra_moving, sra_homing, saa_pos, saa_moving, saa_homing, sta_pos, sta_moving, sta_homing, dra_pos, dra_moving, dra_homing):
 
-        if (self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) or (mda_homing or fwa_homing or sra_homing or saa_homing or sta_homing or dra_homing) and not self.axes_info_prev_moving:
-            self.axes_info_prev_moving = True
-            self.disable_movement_sensitive_buttons(True)
+        # print((self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) or (mda_homing or fwa_homing or sra_homing or saa_homing or sta_homing or dra_homing))
+
+        if (self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) or (mda_homing or fwa_homing or sra_homing or saa_homing or sta_homing or dra_homing): #  and not (self.axes_info_prev_moving)
+            # UIE_mgw_move_to_position_qpb is used to see if /all/ the buttons are disabled, since it would only be disabled if this function disabled it.
+            if self.UIE_mgw_move_to_position_qpb.isEnabled():
+                self.disable_movement_sensitive_buttons(True)
+            # self.movement_sensitive_buttons_disabled = True
         else:
-            self.axes_info_prev_moving = False
-            self.disable_movement_sensitive_buttons(False)
+            if not self.UIE_mgw_move_to_position_qpb.isEnabled():
+                self.disable_movement_sensitive_buttons(False)
+            # self.movement_sensitive_buttons_disabled = False
 
         self.current_position = mda_pos
         self.moving = mda_moving

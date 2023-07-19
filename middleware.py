@@ -26,6 +26,7 @@
 import os
 import sys
 from utilities import log
+from collections import deque
 
 try:
     exeDir = sys._MEIPASS
@@ -181,6 +182,7 @@ class MotionController:
         self._port = None
         self._axis = 0
         self._multi_axis = False
+        self._position_history = deque([0] * 5, maxlen=5) 
 
         self._max_pos = 9999
         self._min_pos = -9999
@@ -196,8 +198,15 @@ class MotionController:
                 self._motor_ctrl.set_stage('ZST25')
             else:
                 log.info("Trying...")
-                serials = tlkt.Thorlabs.ListDevicesAny()
+                serials = tlkt.Thorlabs.ListDevicesAnyRobust()
                 log.info(serials)
+
+                # retries = 0
+                # while (len(serials) == 0) and (retries < 3):
+                #     log.warn("Retrying...")
+                #     serials = tlkt.Thorlabs.ListDevicesAny()
+                #     log.info(serials)
+                
                 if len(serials) == 0:
                     log.error("No KST101 controller found.")
                     raise RuntimeError('No KST101 controller found')
@@ -331,13 +340,17 @@ class MotionController:
         Returns:
             float: _description_
         """
+
         if self._steps_per_value == 0:
-            return 0 + self._offset
+            position = 0 + self._offset
 
         if self._multi_axis:
-            return (self._motor_ctrl.get_position(self._axis) / self._steps_per_value) - self._offset
+            position = (self._motor_ctrl.get_position(self._axis) / self._steps_per_value) - self._offset
         else:
-            return (self._motor_ctrl.get_position() / self._steps_per_value) - self._offset
+            position = (self._motor_ctrl.get_position() / self._steps_per_value) - self._offset
+
+        self._position_history.appendleft(position)
+        return position
 
     def is_homing(self) -> bool:
         """Returns whether the device is currently homing.
@@ -351,10 +364,15 @@ class MotionController:
             return self._motor_ctrl.is_homing()
 
     def is_moving(self) -> bool:
+        # An extra layer of safety: the device is considered to be moving if the position history indicates as such, even if it reports that it is not moving.
+        pos_detected_moving = not all(x == self._position_history[0] for x in self._position_history)
+        # print(self._position_history)
+        # print('Pos det mov:', pos_detected_moving)
+
         if self._multi_axis:
-            return self._motor_ctrl.is_moving(self._axis)
+            return self._motor_ctrl.is_moving(self._axis) or pos_detected_moving
         else:
-            return self._motor_ctrl.is_moving()
+            return self._motor_ctrl.is_moving() or pos_detected_moving
 
     def move_to(self, position, block):
         if self._moving:
