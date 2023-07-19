@@ -600,6 +600,13 @@ class MMC_Main(QMainWindow):
         if dummy:
             self.UIE_mgw_stop_qdsb.setValue(0.2)
 
+        self.UIE_mgw_mca_pos_ql = self.findChild(QLabel, "mca_pos")
+        self.UIE_mgw_fwa_pos_ql = self.findChild(QLabel, "fwa_pos")
+        self.UIE_mgw_sra_pos_ql = self.findChild(QLabel, "sra_pos")
+        self.UIE_mgw_saa_pos_ql = self.findChild(QLabel, "saa_pos")
+        self.UIE_mgw_sta_pos_ql = self.findChild(QLabel, "sta_pos")
+        self.UIE_mgw_dra_pos_ql = self.findChild(QLabel, "dra_pos")
+
         self.UIE_mgw_step_qdsb = self.findChild(QDoubleSpinBox, "step_set_spinbox")
         self.UIE_mgw_currpos_nm_disp_ql = self.findChild(QLabel, "currpos_nm")
         self.UIE_mgw_scan_status_ql = self.findChild(QLabel, "status_label")
@@ -628,8 +635,10 @@ class MMC_Main(QMainWindow):
 
         self.UIE_mgw_import_qa: QAction = self.findChild(QAction, "actionImport_Config")
         self.UIE_mgw_export_qa: QAction = self.findChild(QAction, "actionExport_Config")
+        self.UIE_mgw_save_current_config_qa: QAction = self.findChild(QAction, "actionSave_Current_Config")
         self.UIE_mgw_import_qa.triggered.connect(self.config_import)
         self.UIE_mgw_export_qa.triggered.connect(self.config_export)
+        self.UIE_mgw_save_current_config_qa.triggered.connect(self.config_save)
 
         self.UIE_mgw_save_data_qpb: QPushButton = self.findChild(QPushButton, 'save_data_button')
         self.UIE_mgw_save_data_qpb.clicked.connect(self.save_data_cb)
@@ -788,20 +797,6 @@ class MMC_Main(QMainWindow):
         self.mgw_axis_change_detector()
 
         self.motion_controllers.main_drive_axis = self.mtn_ctrls[1]
-
-
-        # if self.motion_controllers.main_drive_axis is not None:
-        #     log.debug('Main drive offset before --- ', self.motion_controllers.main_drive_axis.get_offset(), self.motion_controllers.main_drive_axis._offset)
-        #     self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
-        #     log.debug('Main drive offset after ---- ', self.motion_controllers.main_drive_axis.get_offset(), self.motion_controllers.main_drive_axis._offset)
-        # if self.motion_controllers.filter_wheel_axis is not None:
-        #     self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
-        # if self.motion_controllers.sample_translation_axis is not None:
-        #     self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
-        # if self.motion_controllers.sample_rotation_axis is not None:
-        #     self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
-        # if self.motion_controllers.detector_rotation_axis is not None:
-        #     self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
 
         self.homing_started = False
         if not dummy:
@@ -1074,6 +1069,16 @@ class MMC_Main(QMainWindow):
             self.save_config(fileInfo.absoluteFilePath()) 
         except Exception as e:
             self.QMessageBoxWarning('Import Error', str(e))
+
+    # Triggered from QAction 'Save Current Config'.
+    def config_save(self):
+        answer = self.QMessageBoxQuestion('Save Configuration', 'Save current configuration? This will override the configuration saved from the previous exit.')
+
+        if answer == QMessageBox.Yes:
+            self.save_config(appDir + '/config.ini')
+
+        # if answer == 0:
+            # self.save_config(appDir + '/config.ini')
         
     def save_config(self, path: str):
         md_sp = 0.0
@@ -1598,9 +1603,9 @@ class MMC_Main(QMainWindow):
             else:
                 log.error('ERROR: Unknown scan class %s.'%(scan_class))
 
-    def update_axes_info(self, mda_pos, mda_moving, fwa_pos, fwa_moving, sra_pos, sra_moving, saa_pos, saa_moving, sta_pos, sta_moving, dra_pos, dra_moving):
+    def update_axes_info(self, mda_pos, mda_moving, mda_homing, fwa_pos, fwa_moving, fwa_homing, sra_pos, sra_moving, sra_homing, saa_pos, saa_moving, saa_homing, sta_pos, sta_moving, sta_homing, dra_pos, dra_moving, dra_homing):
 
-        if (self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) and not self.axes_info_prev_moving:
+        if (self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) or (mda_homing or fwa_homing or sra_homing or saa_homing or sta_homing or dra_homing) and not self.axes_info_prev_moving:
             self.axes_info_prev_moving = True
             self.disable_movement_sensitive_buttons(True)
         else:
@@ -1611,6 +1616,12 @@ class MMC_Main(QMainWindow):
         self.moving = mda_moving
 
         self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position))))
+        self.UIE_mgw_mca_pos_ql.setText('%f'%(mda_pos))
+        self.UIE_mgw_fwa_pos_ql.setText('%f'%(fwa_pos))
+        self.UIE_mgw_sra_pos_ql.setText('%f'%(sra_pos))
+        self.UIE_mgw_saa_pos_ql.setText('%f'%(saa_pos))
+        self.UIE_mgw_sta_pos_ql.setText('%f'%(sta_pos))
+        self.UIE_mgw_dra_pos_ql.setText('%f'%(dra_pos))
 
         # print(mda_pos, mda_moving)
         # print(fwa_pos, fwa_moving)
@@ -1644,6 +1655,19 @@ class MMC_Main(QMainWindow):
 
         if self.scanRunning:
             self.scanRunning = False
+
+        if self.motion_controllers.main_drive_axis is not None:
+            self.motion_controllers.main_drive_axis.stop()
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.motion_controllers.filter_wheel_axis.stop()
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.motion_controllers.detector_rotation_axis.stop()
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.motion_controllers.sample_rotation_axis.stop()
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.motion_controllers.sample_translation_axis.stop()
+        if self.motion_controllers.sample_angle_axis is not None:
+            self.motion_controllers.sample_angle_axis.stop()
 
         # TODO: Somehow stop the system.
 

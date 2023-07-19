@@ -42,6 +42,7 @@ class MP_789A_4:
         self._moving = False
         self.moving_poll_mutex = Lock()
         self._backlash_lock = False
+        self.stop_queued = 0
 
         self._position = 0
 
@@ -197,6 +198,22 @@ class MP_789A_4:
     def get_position(self):
         log.debug('func: get_position')
         return self._position
+    
+    # Triple-redundant serial stop command.
+    def stop(self):
+        self.stop_queued = 1
+
+        self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_789A_4.WR_DLY)
+
+        self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_789A_4.WR_DLY)
+
+        self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_789A_4.WR_DLY)
 
     def is_moving(self):
         log.debug('func: is_moving')
@@ -232,11 +249,17 @@ class MP_789A_4:
     def move_to(self, position: int, backlash: int):
         log.debug('func: move_to')
         steps = position - self._position
+        self.stop_queued = 0
 
         if (steps < 0) and (backlash > 0):
             self._backlash_lock = True
-            self.move_relative(steps - backlash)
-            self.move_relative(backlash)
+            
+            if self.stop_queued == 0:
+                self.move_relative(steps - backlash)
+            
+            if self.stop_queued == 0:
+                self.move_relative(backlash)
+            
             self._backlash_lock = False
         else:
             self.move_relative(steps)
@@ -245,6 +268,8 @@ class MP_789A_4:
         #     log.debug('BLOCKING')
         #     time.sleep(1)
         # log.debug('FINISHED BLOCKING')
+
+        self.stop_queued = 0
 
     def move_relative(self, steps: int):
         log.debug('func: move_relative')
@@ -310,6 +335,20 @@ class MP_789A_4_DUMMY:
     def get_position(self):
         log.debug('func: get_position')
         return self._position
+    
+    # Triple-redundant serial stop command.
+    def stop(self):
+        # self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_789A_4_DUMMY.WR_DLY)
+
+        # self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_789A_4_DUMMY.WR_DLY)
+
+        # self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_789A_4_DUMMY.WR_DLY)
 
     def is_moving(self):
         log.debug('func: is_moving')

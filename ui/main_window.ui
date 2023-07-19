@@ -254,7 +254,7 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>-641</y>
+                      <y>0</y>
                       <width>630</width>
                       <height>1194</height>
                      </rect>
@@ -2996,6 +2996,7 @@
     <addaction name="actionExport"/>
     <addaction name="actionExport_Config"/>
     <addaction name="actionImport_Config"/>
+    <addaction name="actionSave_Current_Config"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -3188,6 +3189,11 @@
    </property>
    <property name="text">
     <string>Show Data Table</string>
+   </property>
+  </action>
+  <action name="actionSave_Current_Config">
+   <property name="text">
+    <string>Save Current Config</string>
    </property>
   </action>
  </widget>

@@ -396,6 +396,9 @@ class MotionController:
 
         self._moving = False
         return retval
+    
+    def stop(self):
+        self._motor_ctrl.stop()
 
     def port_name(self) -> str:
         return self._port

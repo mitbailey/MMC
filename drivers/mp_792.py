@@ -44,6 +44,7 @@ class MP_792:
         self._is_moving_l = [False] * axes
         self.current_axis = 0
         self._backlash_lock_l = [False] * axes
+        self.stop_queued_l = [0] * axes
 
         if port is None:
             log.error('Port is none type.')
@@ -193,6 +194,22 @@ class MP_792:
     def get_position(self, axis: int):
         return self._position[axis]
 
+    # Triple-redundant serial stop command.
+    def stop(self, axis: int):
+        self.stop_queued_l[axis] = 1
+
+        self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_792.WR_DLY)
+
+        self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_792.WR_DLY)
+
+        self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_792.WR_DLY)
+
     # Publicly callable is_moving() function.
     def is_moving(self, axis: int):
         if self._backlash_lock_l[axis]:
@@ -228,21 +245,33 @@ class MP_792:
     def move_to(self, position: int, axis: int, backlash: int):
         self.set_axis(axis)
 
+        # Reset the stop queued such that we dont immediately stop from an old stop request.
+        # Otherwise, this enables us to cancel backlash, etc, when stops are desired.
+        self.stop_queued[axis] = 0
+
         log.debug('MOVE-DEBUG: Performing a move with backlash value: ', backlash)
 
         steps = position - self._position[axis]
 
         if (steps < 0) and (backlash > 0):
             self._backlash_lock_l[axis] = True
-            log.debug('MOVE-DEBUG: Performing overshoot manuever.')
-            self.move_relative(steps - backlash, axis)
-            log.debug('MOVE-DEBUG: Performing backlash correction.')
-            self.move_relative(backlash, axis)
+
+            if self.stop_queued[axis] == 0:
+                log.debug('MOVE-DEBUG: Performing overshoot manuever.')
+                self.move_relative(steps - backlash, axis)
+            
+            if self.stop_queued[axis] == 0:
+                log.debug('MOVE-DEBUG: Performing backlash correction.')
+                self.move_relative(backlash, axis)
+                
             log.debug('MOVE-DEBUG: Move complete.')
             self._backlash_lock_l[axis] = False
         else:
             log.debug('MOVE-DEBUG: Performing backlash-free move.')
             self.move_relative(steps, axis)
+
+        # Reset the stop queue.
+        self.stop_queued[axis] = 0
 
     def move_relative(self, steps: int, axis: int):
         self.set_axis(axis)
@@ -349,6 +378,20 @@ class MP_792_DUMMY:
 
     def get_position(self, axis: int):
         return self._position[axis]
+    
+    # Triple-redundant serial stop command.
+    def stop(self):
+        # self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_792_DUMMY.WR_DLY)
+
+        # self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_792_DUMMY.WR_DLY)
+
+        # self.s.write(b'@\r')
+        log.info('Stopping.')
+        time.sleep(MP_792_DUMMY.WR_DLY)
 
     def _is_moving(self, axis: int):
         self.set_axis(axis)

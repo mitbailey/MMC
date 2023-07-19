@@ -34,7 +34,7 @@ matplotlib.use('Qt5Agg')
 
 class UpdatePositionDisplays(QThread):
     # SIGNAL_update_main_axis_display = pyqtSignal(str)
-    SIGNAL_update_axes_info = pyqtSignal(float, bool, float, bool, float, bool, float, bool, float, bool, float, bool)
+    SIGNAL_update_axes_info = pyqtSignal(float, bool, bool, float, bool, bool, float, bool, bool, float, bool, bool, float, bool, bool, float, bool, bool)
     SIGNAL_qmsg_info = pyqtSignal(str, str)
     SIGNAL_qmsg_warn = pyqtSignal(str, str)
     SIGNAL_qmsg_crit = pyqtSignal(str, str)
@@ -57,16 +57,22 @@ class UpdatePositionDisplays(QThread):
         def update():
             mda_pos = -999
             mda_moving = False 
+            mda_homing = False 
             fwa_pos = -999
             fwa_moving = False
+            fwa_homing = False
             sra_pos = -999
             sra_moving = False
+            sra_homing = False
             saa_pos = -999
             saa_moving = False
+            saa_homing = False
             sta_pos = -999
             sta_moving = False
+            sta_homing = False
             dra_pos = -999
             dra_moving = False
+            dra_homing = False
 
             try:
                 if self.other.motion_controllers.main_drive_axis is not None:
@@ -102,6 +108,8 @@ class UpdatePositionDisplays(QThread):
                         mda_moving = False
                         # self.other.disable_movement_sensitive_buttons(False)
 
+                    mda_homing = self.other.motion_controllers.main_drive_axis.is_homing()
+
                     # self.other.moving = move_status
                     self.other.previous_position = self.other.current_position
 
@@ -113,6 +121,7 @@ class UpdatePositionDisplays(QThread):
             try:
                 if self.other.motion_controllers.filter_wheel_axis is not None:
                     fwa_moving = self.other.motion_controllers.filter_wheel_axis.is_moving()
+                    fwa_homing = self.other.motion_controllers.filter_wheel_axis.is_homing()
                     fwa_pos = self.other.motion_controllers.filter_wheel_axis.get_position()
             except Exception as e:
                 log.error(str(e))
@@ -120,6 +129,7 @@ class UpdatePositionDisplays(QThread):
             try:
                 if self.other.motion_controllers.sample_rotation_axis is not None:
                     sra_moving = self.other.motion_controllers.sample_rotation_axis.is_moving()
+                    sra_homing = self.other.motion_controllers.sample_rotation_axis.is_homing()
                     sra_pos = self.other.motion_controllers.sample_rotation_axis.get_position()
             except Exception as e:
                 log.error(str(e))
@@ -127,6 +137,7 @@ class UpdatePositionDisplays(QThread):
             try:
                 if self.other.motion_controllers.sample_angle_axis is not None:
                     saa_moving = self.other.motion_controllers.sample_angle_axis.is_moving()
+                    saa_homing = self.other.motion_controllers.sample_angle_axis.is_homing()
                     saa_pos = self.other.motion_controllers.sample_angle_axis.get_position()
             except Exception as e:
                 log.error(str(e))
@@ -134,6 +145,7 @@ class UpdatePositionDisplays(QThread):
             try:
                 if self.other.motion_controllers.sample_translation_axis is not None:
                     sta_moving = self.other.motion_controllers.sample_translation_axis.is_moving()
+                    sta_homing = self.other.motion_controllers.sample_translation_axis.is_homing()
                     sta_pos = self.other.motion_controllers.sample_translation_axis.get_position()
             except Exception as e:
                 log.error(str(e))
@@ -141,12 +153,12 @@ class UpdatePositionDisplays(QThread):
             try:
                 if self.other.motion_controllers.detector_rotation_axis is not None:
                     dra_moving = self.other.motion_controllers.detector_rotation_axis.is_moving()
+                    dra_homing = self.other.motion_controllers.detector_rotation_axis.is_homing()
                     dra_pos = self.other.motion_controllers.detector_rotation_axis.get_position()
             except Exception as e:
                 log.error(str(e))
 
-            self.SIGNAL_update_axes_info.emit(mda_pos, mda_moving, fwa_pos, fwa_moving, sra_pos, sra_moving, saa_pos, saa_moving, sta_pos, sta_moving, dra_pos, dra_moving)
-
+            self.SIGNAL_update_axes_info.emit(mda_pos, mda_moving, mda_homing, fwa_pos, fwa_moving, fwa_homing, sra_pos, sra_moving, sra_homing, saa_pos, saa_moving, saa_homing, sta_pos, sta_moving, sta_homing, dra_pos, dra_moving, dra_homing)
 
         self.timer = QTimer()
         self.timer.timeout.connect(update)
