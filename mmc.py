@@ -52,6 +52,7 @@ QProgressBar = qpbar
 import os
 import sys
 
+# Obtains the executable directory (as exeDir) and the application directory (as appDir) for future use.
 try:
     exeDir = sys._MEIPASS
 except Exception:
@@ -105,29 +106,32 @@ from utilities import log
 
 import signal
 
+# Setup signal.
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-# Fonts
+# Setup fonts variables.
 digital_7_italic_22 = None
 digital_7_16 = None
 
-# dev prefs
+# Determines which enabler files exist - these will enable certain experimental or advanced sections of the program.
 SHOW_FILTER_WHEEL = os.path.isfile('enable.exp')
 SHOW_SAMPLE_MOVEMENT = os.path.isfile('enable.adv')
 SHOW_DETECTOR_ROTATION = os.path.isfile('enable.adv')
 ALLOW_DUMMY_MODE = os.path.isfile('enable.adv')
 
-# Classes
+# Classes.
+
+# Sets up the navigation toolbar for the graph.
 class NavigationToolbar(NavigationToolbar2QT):
     def edit_parameters(self):
         super(NavigationToolbar, self).edit_parameters()
 
+# Sets up the canvas for the graph.
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
-        # matplotlib.rcParams['toolbar'] = 'None'
 
         fig = Figure(figsize=(width, height), dpi=dpi, tight_layout = True)
-        # self.parent = weakref.proxy(parent)
+
         self._parent = parent
         self.axes = fig.add_subplot(111)
         self.axes.set_xlabel('Position (nm)')
@@ -179,7 +183,9 @@ class MplCanvas(FigureCanvasQTAgg):
 # The main MMC program and GUI class.
 class MMC_Main(QMainWindow):
     # STARTUP PROCEDURE
-    # 
+    # Begins by starting the Device Manager window.
+    # Once devices are selected and connected, the Main GUI window is launched.
+
     # MMC_Main.__init__() --> show_window_device_manager() >>> emits device_manager_ready_signal
     # --> autoconnect_devices() >>> emits devices_auto_connected_signal
     # --> devices_auto_connected()
@@ -239,6 +245,9 @@ class MMC_Main(QMainWindow):
         self.moving = False
         # self.axes_info_prev_moving = False
         self.movement_sensitive_buttons_disabled = False
+
+        # Default measurement sign.
+        self.mes_sign = 1
 
         # Default grating equation values.
         self.max_pos = 600.0
@@ -549,7 +558,6 @@ class MMC_Main(QMainWindow):
         self.previous_position = -9999
         self.immobile_count = 0
 
-        self.mes_sign = 1
         self.autosave_data_bool = False
         self.pop_out_table = False
         self.pop_out_plot = False
@@ -1122,8 +1130,9 @@ class MMC_Main(QMainWindow):
                     sys.exit(43)
             else:
                 log.error("Config import failure.")
-                
+        
         self.mes_sign = load_dict['measurementSign']
+        
         self.autosave_data_bool = load_dict['autosaveData']
         self.data_save_directory = load_dict['dataSaveDirectory']
         self.model_index = load_dict["modelIndex"]
