@@ -22,4 +22,4 @@
 #
 #
 
-__MMC_VERSION__ = '0.8.12'
+__MMC_VERSION__ = '0.9'

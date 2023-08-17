@@ -1,7 +1,7 @@
 #
 # @file _thorlabs_kst_lib.py
 # @author Auto-Generated
-# @brief 
+# @brief Low-level ThorLabs KST driver wrapper.
 # @version See Git tags for version information.
 # @date 
 # 
@@ -21,7 +21,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 #
-
 
 import _cffi_backend
 

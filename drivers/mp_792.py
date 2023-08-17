@@ -36,6 +36,19 @@ class MP_792:
     WR_DLY = 0.05
 
     def __init__(self, port: serial.Serial, axes: int = 4):
+        """ MP_792 constructor.
+
+        Args:
+            port (serial.Serial): The port on which to attempt a connection.
+            axes (int, optional): The number of active axes on the 792. Defaults to 4.
+
+        Raises:
+            RuntimeError: _description_
+            RuntimeError: _description_
+            RuntimeError: _description_
+            RuntimeError: _description_
+        """
+
         self.num_axes = axes
         self.s_name = 'MP792'
         self.l_name = 'McPherson 792'

@@ -22,10 +22,9 @@
 #
 #
 
-from io import TextIOWrapper
+# from io import TextIOWrapper
 import sys
-import glob
-# import serial
+# import glob
 from time import sleep
 from utilities import ports_finder
 from utilities import safe_serial
@@ -33,47 +32,72 @@ from utilities import log
 
 class KI_Picoammeter:
     def __init__(self, samples: int, man_port: str = None):
+        """ KI_Picoammeter constructor.
+
+        Args:
+            samples (int): The number of samples to average together to form one output value.
+            man_port (str, optional): Overrides the automatically selected port with this one. Defaults to None.
+
+        Raises:
+            RuntimeError: Raised if the KI 6485 could not be found.
+        """
+
+        # Clamps samples between 2 and 20.
         if samples < 2:
-            samples = 2
-        if samples > 20:
-            samples = 20
-        self.samples = samples
+            self.samples = 2
+        elif samples > 20:
+            self.samples = 20
+
+        # Default values for SafeSerial port.
         self.s = None
         self.found = False
         self.port = -1
+
+        # Connect and initialize communication.
         for port in ports_finder.find_serial_ports():
             if man_port is not None:
+                # If `man_port` is defined, only connect on that port. Otherwise, try each available.
                 if port != man_port:
                     continue
-
+            
+            # Get a SafeSerial connection on the port.
             s = safe_serial.SafeSerial(port, 9600, timeout=1)
+
             log.info('Beginning search for Keithley Model 6485...')
             log.info('Trying port %s.'%(port))
+            
+            # Ask the device on this port for identification.
             s.write(b'*RST\r')
             sleep(0.5)
             s.write(b'*IDN?\r')
             buf = s.read(128).decode('utf-8').rstrip()
             log.debug(buf)
 
+            # Report success and break loop if we have found the KI 6485. Otherwise,
+            # continue searching ports.
             if 'KEITHLEY INSTRUMENTS INC.,MODEL 6485' in buf:
                 log.info("Keithley Model 6485 found.")
                 self.found = True
                 self.port = port
                 self.s = s
+                break
             else:
                 log.error("Keithley Model 6485 not found.")
                 s.close()
 
+        # Raise exception if KI 6485 not found.
         if self.found == False:
             raise RuntimeError('Could not find Keithley Model 6485!')
+        
+        # Log which port is being used.
         log.debug('Using port %s.'%(self.port))
 
+        # Set up and start up command sequence for the KI 6485.
         self.s.write(b'SYST:ZCH ON\r')
         sleep(0.1)
 
         self.s.write(b'RANG 2e-9\r')
         sleep(0.1)
-        # buf = s.read(128).decode('utf-8').rstrip()
 
         self.s.write(b'INIT\r')
         sleep(0.1)
@@ -96,20 +120,30 @@ class KI_Picoammeter:
         self.s.write(b'AVER ON\r')
         self.s.write(b'AVER:TCON REP\r')
         self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
+
         log.debug('Init complete')
 
-    def pinger(self):
-        self.s.write(b'*IDN?\r')
-
     def set_samples(self, samples: int):
+        """ Updates the number of samples the KI 6485 averages together per output value.
+
+        Args:
+            samples (int): Number of samples to average.
+        """
+
         if samples < 2:
-            samples = 2
-        if samples > 20:
-            samples = 20
-        self.samples = samples
+            self.samples = 2
+        elif samples > 20:
+            self.samples = 20
+
         self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
 
     def detect(self):
+        """ Requests a detector sample from the device.
+
+        Returns:
+            _type_: The detector's output value.
+        """
+
         out = ''
         self.s.write(b'READ?\r')
         retry = 10
@@ -130,22 +164,37 @@ class KI_Picoammeter:
         return out
 
     def __del__(self):
+        """ KI6485 destructor.
+        """
+
         if self.s is not None:
             self.s.close()
 
     def short_name(self):
+        """ Returns the short name of the device.
+
+        Returns:
+            str: The short name.
+        """
+
         return 'KI6485'
 
     def long_name(self):
+        """ Returns the full name of the device.
+
+        Returns:
+            str: The full name.
+        """
+        
         return 'Keithley 6485 Picoammeter'
 
 class KI_Picoammeter_Dummy:
     def __init__(self, samples: int):
         if samples < 2:
-            samples = 2
-        if samples > 20:
-            samples = 20
-        self.samples = samples
+            self.samples = 2
+        elif samples > 20:
+            self.samples = 20
+
         self.s = None
         self.found = False
         self.port = -1
@@ -163,6 +212,7 @@ class KI_Picoammeter_Dummy:
         if samples > 20:
             samples = 20
         self.samples = samples
+
     def detect(self):
         import numpy as np
         out = np.random.random(2)

@@ -29,13 +29,24 @@ from utilities import safe_serial
 from threading import Lock
 from utilities import log
 
-# Driver class for the McPherson 789A-4.
-# This class is also used by the 792, since the 792 is essentially four 789A-4s addressed separately.
-
 class MP_789A_4:
     WR_DLY = 0.05
 
     def __init__(self, port):
+        """ MP_789A_4 constructor.
+
+        Args:
+            port (_type_): The port on which to attempt a connection.
+
+        Raises:
+            RuntimeError: Raised if `port` is NoneType.
+            RuntimeError: Raised if `port` is not found in the list of available ports; may already be in use.
+            RuntimeError: Raised if the serial ID request response times out.
+            RuntimeError: Raised if the serial ID request response is invalid. 
+            RuntimeError: Raised is the SafeSerial object is NoneType.
+        """
+
+        # Default values for the class.
         self.s_name = 'MP789'
         self.l_name = 'McPherson 789A-4'
         self._is_homing = False
@@ -43,27 +54,29 @@ class MP_789A_4:
         self.moving_poll_mutex = Lock()
         self._backlash_lock = False
         self.stop_queued = 0
-
         self._position = 0
 
         log.info('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
+        # Check if we were given a port.
         if port is None:
             log.error('Port is none type.')
             raise RuntimeError('Port is none type.')
-            
-
+        
+        # Check if the port is available.
         ser_ports = ports_finder.find_serial_ports()
         if port not in ser_ports:
             log.error('Port not valid. Is another program using the port?')
             raise RuntimeError('Port not valid. Is another program using the port?')
 
+        # Get a SafeSerial connection on the port and begin communication.
         self.s = safe_serial.SafeSerial(port, 9600, timeout=1)
         self.s.write(b' \r')
         time.sleep(MP_789A_4.WR_DLY)
         rx = self.s.read(128)#.decode('utf-8').rstrip()
         log.debug(rx)
 
+        # Check the response to ensure connection to a 789A-4.
         if rx is None or rx == b'':
             raise RuntimeError('Response timed out.')
         elif rx == b' v2.55\r\n#\r\n':
@@ -76,27 +89,39 @@ class MP_789A_4:
         if self.s is None:
             raise RuntimeError('self.s is None')
 
+        # Home the 789A-4.
         self.home()
 
     def home(self)->bool:
-        log.debug('func: home')
+        """ Homes the 789A-4.
+
+        Raises:
+            RuntimeError: Raised if the device hits an edge limit-switch before a home switch; may not have a home switch.
+            RuntimeError: Raised if the device hits an edge limit-switch before a home switch; may not have a home switch.
+            RuntimeError: Raised when the device attempts to home from a location which it is unable to home from.
+
+        Returns:
+            bool: Success (True) or failure (False).
+        """
+
+        # Set the `_is_homing` flag to disallow simultaneous homing attempts.
         log.info('Beginning home.')
         self._is_homing = True
 
-        # Enable Home Circuit
+        # Enable the 789A-4's homing circuit.
         self.s.write(b'A8\r')
         time.sleep(MP_789A_4.WR_DLY)
         rx = self.s.read(128).decode('utf-8')
 
-        # Check Limit Status
+        # Check limit switch status.
         self.s.write(b']\r')
         time.sleep(MP_789A_4.WR_DLY)
         rx_raw = self.s.read(128)
         rx = rx_raw.decode('utf-8')
-        # rx = self.s.read(128).decode('utf-8')
 
         log.debug('RECEIVED (raw):', rx_raw)
 
+        # Carries out the 789A-4 homing algorithm as described in the relevant manual.
         if ('32' in rx) and ('+' not in rx and '-' not in rx):
             log.info('Home switch blocked.')
             # Home switch blocked.
@@ -190,17 +215,25 @@ class MP_789A_4:
             log.warn('Waiting for device to cease movement.')
             time.sleep(MP_789A_4.WR_DLY * 10)
 
-
+        # Reset position and homing status.
         self._position = 0
         self._is_homing = False
         return True
 
     def get_position(self):
+        """ Returns the current position of the 789A-4.
+
+        Returns:
+            _type_: The position.
+        """
+
         log.debug('func: get_position')
         return self._position
     
-    # Triple-redundant serial stop command.
     def stop(self):
+        """ Triple-redundant serial stop command.
+        """
+
         self.stop_queued = 1
 
         self.s.write(b'@\r')
@@ -216,11 +249,19 @@ class MP_789A_4:
         time.sleep(MP_789A_4.WR_DLY)
 
     def is_moving(self):
+        """_summary_
+
+        Returns:
+            _type_: Is moving (True) or is not moving (False).
+        """
+
         log.debug('func: is_moving')
 
+        # If the `_backlash_lock` flag is set then the 789A-4 is already performing a move command.
         if self._backlash_lock:
             return True
 
+        # Acquire the mutex and begin inquiring as to the moving status (double-redundant).
         self.moving_poll_mutex.acquire()
         self.s.write(b'^\r')
         time.sleep(MP_789A_4.WR_DLY)
@@ -232,6 +273,7 @@ class MP_789A_4:
         time.sleep(MP_789A_4.WR_DLY)
         self.moving_poll_mutex.release()
 
+        # Check the returned status to determine movement status.
         if ('0' in status and '0' in status2) and ('+' not in status and '+' not in status2 and '-' not in status and '-' not in status2):
             log.info('MOVING STATUS >>>%s<<< >>>%s<<<; INDICATES STOPPED.'%(status, status2))
             self._moving = False
@@ -242,36 +284,58 @@ class MP_789A_4:
             return True
 
     def is_homing(self):
+        """ Return homing status.
+
+        Returns:
+            _type_: Homing (True) or not homing (False).
+        """
+
         log.debug('func: is_homing')
         return self._is_homing
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, backlash: int):
+        """ Moves to a position based on the software's understanding of where the 789A-4 last was.
+            Position information is not tracked by the 789A-4.
+
+        Args:
+            position (int): The position in steps.
+            backlash (int): The amount of backlash correction to perform in steps.
+        """
+
         log.debug('func: move_to')
         steps = position - self._position
         self.stop_queued = 0
 
+        # Backlash correction only necessary if (1) requested and (2) moving in the negative direction.
         if (steps < 0) and (backlash > 0):
+            # Acquire `_backlash_lock` (should probably be a mutex lock, not a flag). Prevents movement before backlash.
             self._backlash_lock = True
             
+            # Check if we have a queued stop command prior to moving.
             if self.stop_queued == 0:
                 self.move_relative(steps - backlash)
             
+            # Check if we have a queued stop command prior to performing backlash correction.
             if self.stop_queued == 0:
                 self.move_relative(backlash)
             
+            # Release lock.
             self._backlash_lock = False
         else:
+            # Simple move.
             self.move_relative(steps)
 
-        # while self.is_moving():
-        #     log.debug('BLOCKING')
-        #     time.sleep(1)
-        # log.debug('FINISHED BLOCKING')
-
+        # Clear all queued stops since move/stop has been processed.
         self.stop_queued = 0
 
     def move_relative(self, steps: int):
+        """ Private function for use by `move_to()`. Moves a relative number of steps.
+
+        Args:
+            steps (int): Number of steps to move.
+        """
+
         log.debug('func: move_relative')
         log.info('Being told to move %d steps.'%(steps))
 
@@ -299,10 +363,22 @@ class MP_789A_4:
         self._position += steps
         
     def short_name(self):
+        """ Returns the short name of the device.
+
+        Returns:
+            str: The short name.
+        """
+
         log.debug('func: short_name')
         return self.s_name
 
     def long_name(self):
+        """ Returns the full name of the device.
+
+        Returns:
+            str: The full name.
+        """
+
         log.debug('func: long_name')
         return self.l_name
 

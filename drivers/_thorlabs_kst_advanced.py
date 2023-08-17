@@ -1,7 +1,7 @@
 #
 # @file _thorlabs_kst_advanced.py
 # @author Mit Bailey (mitbailey@outlook.com)
-# @brief 
+# @brief High-level ThorLabs KST driver wrapper.
 # @version See Git tags for version information.
 # @date 2022.08.18
 # 
@@ -24,25 +24,19 @@
 
 # Imports
 from __future__ import annotations
-# from asyncore import poll
 import sys
 import weakref
-# from nicelib import load_lib, NiceLib, Sig, NiceObject, RetHandler, ret_ignore
 from cffi import FFI
-# from inspect import getmembers
 import warnings
 from time import sleep
-# import math as m
 import threading
 from utilities import log
-
 from ._thorlabs_kst_wrap_basic import *
 
 def __funcname__():
     import inspect
     return inspect.stack()[1][3]
 
-#
 ################################################################################ 
 ############### Level 3 Wrapper (final stage) begin ############################
 

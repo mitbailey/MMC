@@ -1,7 +1,7 @@
 #
 # @file _thorlabs_kst_wrap_basic.py
 # @author Mit Bailey (mitbailey@outlook.com)
-# @brief 
+# @brief Mid-level ThorLabs KST driver wrapper.
 # @version See Git tags for version information.
 # @date 2022.08.18
 # 
