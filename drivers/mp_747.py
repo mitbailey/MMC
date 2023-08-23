@@ -74,19 +74,43 @@ class MP_747:
         # May not be desired / applicable???
         self.home()
 
+    def _header(self, rw: str, data_addr, data):
+        """ Builds a 747 header. 
+        """
+
+        pass
+
     def home(self)->bool:
+        """_summary_
+
+        Returns:
+            bool: _description_
+        """
+
         pass
 
     def get_position(self):
+        """_summary_
+        """
+
         pass
 
     def stop(self):
+        """_summary_
+        """
+
         pass
 
     def is_moving(self):
+        """_summary_
+        """
+
         pass
 
     def is_homing(self):
+        """_summary_
+        """
+
         pass
 
     def move_to(self, position: int):
@@ -294,7 +318,11 @@ def Initialize_747(s):
 
     s.write(EOT)
 
-comport = input('Port:')
-log.register()
-s = Initialize_Serial(comport)
-Initialize_747(s)
+if __name__ == "__main__":
+    comport = input('Port:')
+    log.register()
+    
+    # s = Initialize_Serial(comport)
+    # Initialize_747(s)
+
+    mp747 = MP_747(comport)
