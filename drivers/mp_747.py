@@ -33,6 +33,8 @@ class MP_747:
     ACK = bytearray(b'N!\x06')
     NACK = bytearray(b'N!\x15')
     EOT = bytearray(b'\x15')
+    STX = bytearray(b'\x02')
+    ETX = bytearray(b'\x03')
 
     def __init__(self, port):
         pass
@@ -61,24 +63,253 @@ class MP_747:
         # Get a SafeSerial connection on the port and begin communication.
         self.s = safe_serial.SafeSerial(port, 9600, timeout=0.5)
         
-        # A short communication to determine if the 747 is alive.
-        # TODO: Actually check the response to ensure its (1) alive and (2) a 747.
-        s.write(MP_747.ENQ)
-        msg = s.read(128)
-
-        s.write(MP_747.EOT)
-        msg = s.read(128)
-
-        s.write(MP_747.EOT)
+        # A short communication to determine if the 747 is alive / exists.
+        if not self._comms_detect():
+            log.error('Could not detect MP747 on port %s.'%(port))
+            raise RuntimeError('Could not detect MP747 on port %s.'%(port))
+        
+        # Initialize the 747.
+        if not self._comms_init(True, False, False, False):
+            log.error('Could not initialize MP747 on port %s.'%(port))
+            raise RuntimeError('Could not initialize MP747 on port %s.'%(port))
 
         # May not be desired / applicable???
         self.home()
 
-    def _header(self, rw: str, data_addr, data):
-        """ Builds a 747 header. 
+    # The _comms functions help hide some of the complexity of the 747's communication protocol.
+    def _comms_detect(self)->bool:
+        """ Detects whether we are able to talk to an MP747.
+
+        Returns:
+            bool: False on failure, True on success.
+        """
+
+        TO_RETRIES = 5
+        to_retries = 0
+        while (to_retries < TO_RETRIES):
+            self.s.write(MP_747.ENQ)
+            msg = self.s.read(128)
+
+            if msg != MP_747.ACK:
+                if MP_747.EOT in msg:
+                    # The 747 timed-out internally.
+                    log.warn('747 timed-out internally.')
+                    to_retries += 1
+                    continue
+                return False
+
+            self.s.write(MP_747.EOT)
+            msg = self.s.read(128)
+
+            self.s.write(MP_747.EOT)
+            break
+
+        return True
+
+    def _comms_init(self, dev_1: bool, dev_2: bool, dev_3: bool, dev_4: bool)->bool:
+        """ Initializes the 747.
+
+        Args:
+            dev_maske (int): Four-bit binary mask, 1 = init, 0 = ignore. Bits 0-3 correspond to devices 1-4.
+        
+        Returns:
+            bool: False on failure, True on success.
+        """
+
+        # Build the 0b0000 device initialization bitmask sequence from the four booleans.
+        dev_mask = 0
+        if dev_1:
+            dev_mask |= 1
+        if dev_2:
+            dev_mask |= 2
+        if dev_3:
+            dev_mask |= 4
+        if dev_4:
+            dev_mask |= 8
+
+        if dev_mask < 0 or dev_mask > 15:
+            log.error('Invalid device mask.')
+            raise RuntimeError('Invalid device mask.')
+        
+        # Convert the bitmask to a string in hex format. `hex()` gives us '0x', so [2:] skips that. This gives us the data we want to write in this scenario.
+        dev_mask_str = hex(dev_mask)[2:]
+        log.debug('Bitmask as a hex string:', dev_mask_str)
+
+        self.s.write(MP_747.ENQ) # Enquiry
+        msg = self.s.read(128) # Expected: ACK
+
+        if msg != MP_747.ACK:
+            return False
+        
+        header = self._header('w', '4181')
+        if header is None:
+            return False
+        
+        self.s.write(header) # Header
+        msg = self.s.read(128) # Expected: ACK
+
+        # UNKNOWN WHAT WILL BE RETURNED HERE. CHECK BEFORE PROCEEDING.
+        print(msg)
+
+        data = self._data(dev_mask_str) # Generates a 747-friendly data block.
+        if data is None:
+            return False
+        self.s.write(data) # Writes the data block.
+        msg = self.s.read(128) # Expected: ACK
+
+        # UNKNOWN WHAT WILL BE RETURNED HERE. CHECK BEFORE PROCEEDING.
+        print(msg)
+
+        # Supposedly after that last ACK, we are supposed to send more data (??) and then another ACK, etc.
+        # Here I just assume one set of data is enough and finish.
+
+        self.s.write(MP_747.EOT)
+
+        return True
+
+        # Header ->
+        # <- ACK
+        # <- DATA
+        # ACK ->
+        # <- DATA
+        # ACK ->
+        # <- EOT
+        # EOT ->
+
+
+    def _comms_query_motion(self, device: int):
+        """ Queries the MP747 for its motion status.
+
+        Args:
+            device (int): 0 for any motion, 1 - 4 for a specific device's motion.
         """
 
         pass
+
+    def _comms_query_error(self):
+        """ Queries the MP747 for its error status.
+        """
+
+        pass
+
+    def _comms_query_position(self, device: int):
+        """ Queries the MP747 for the position of a device.
+
+        Args:
+            device (int): 1 - 4 for a specific device.
+        """
+
+        pass
+
+    def _comms_set_destination(self, device: int, position: int):
+        """ Sets the destination of a device.
+
+        Args:
+            device (int): 1 - 4 for a specific device.
+            position (int): The position to set the device to.
+        """
+
+        pass
+    
+    def _lrc(self, data: bytearray)->bytearray or None:
+        pass
+
+    def _data(self, data: str)->bytearray or None:
+        """ Builds a 747 data block.
+
+        Args:
+            data (str): The data to be written.
+
+        Raises:
+            RuntimeError: _description_
+
+        Returns:
+            _type_: _description_
+        """
+
+        if type(data) is not str:
+            log.error('The data parameter must be a string.')
+            raise RuntimeError('The data parameter must be a string.')
+
+        if len(data) != 4:
+            log.error('The data parameter must be four characters long.')
+            raise RuntimeError('The data parameter must be four characters long.')
+
+        data_block = bytearray()
+        data_block.append(MP_747.STX)
+        data_block.append(data[2])
+        data_block.append(data[3])
+        data_block.append(data[0])
+        data_block.append(data[1])
+        data_block.append(MP_747.ETX)
+        lrc = self._lrc(data_block[1:5])
+        data_block.append(lrc[0]) # LRC byte #1
+        data_block.append(lrc[1]) # LRC byte #2
+
+        return data_block
+
+    def _header(self, rw: str, str_data_addr: str)->bytearray or None:
+        """ Builds a 747 header.
+
+        Args:
+            rw (str): 'r' for read, 'w' for write.
+            str_data_addr (str): The four-character ASCII address to access (e.g. '04A1').
+
+        Raises:
+            RuntimeError: _description_
+
+        Returns:
+            _type_: _description_
+        """
+
+        if type(str_data_addr) is not str:
+            log.error('The str_data_addr parameter must be a string.')
+            raise RuntimeError('The str_data_addr parameter must be a string.')
+
+        if len(str_data_addr) != 4:
+            log.error('The str_data_addr parameter must be four characters long.')
+            raise RuntimeError('The str_data_addr parameter must be four characters long.')
+
+        header = bytearray()
+        header.append(0x1) # SOH
+        header.append(0x30) # Controller address
+        header.append(0x31) # Controller address
+
+        # Operation read or write.
+        if rw == 'r':
+            header.append(0x30)
+        elif rw == 'w':
+            header.append(0x38)
+        else:
+            log.error('Invalid read/write value.')
+            raise RuntimeError('Invalid read/write value.')
+        
+        header.append(0x31) # Data type (V Memory)
+        
+        # Append mem addr MSB
+        header.append(0x30)
+        header.append(0x30)
+        # Append mem addr LSB
+        header.append(0x30)
+        header.append(0x30)
+        
+        # For remote control of the 747, the full data blocks should never need to be used.
+        header.append(0x30) # Complete data blocks (none)
+        header.append(0x30) # Complete data blocks (none)
+
+        header.append(0x30) # Partial data block (0) bytes
+        header.append(0x34) # Partial data block (4) bytes
+
+        header.append(0x30) # Host computer address
+        header.append(0x31) # Host computer address
+        header.append(0x17) # ETB
+
+        # Append LRC checksum
+        log.warn('LRC checksum not yet implemented.')
+        header.append(0x00) # LRC CS
+        header.append(0x00) # LRC CS
+
+        return header
 
     def home(self)->bool:
         """_summary_
