@@ -1057,7 +1057,8 @@ class MMC_Main(QMainWindow):
         self.dmw.close()
 
     def config_import(self):
-        loadFileName, _ = QFileDialog.getOpenFileName(self, "Load CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv', filter='*.csv')
+        # loadFileName, _ = QFileDialog.getOpenFileName(self, "Load CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv', filter='*.csv')
+        loadFileName, _ = QFileDialog.getOpenFileName(self, "Load CSV", directory=self.selected_config_save_path)
         fileInfo = QFileInfo(loadFileName)
 
         if fileInfo.absoluteFilePath() == '':
@@ -1138,7 +1139,7 @@ class MMC_Main(QMainWindow):
                 log.error("Config import failure.")
         
         self.mes_sign = load_dict['measurementSign']
-        
+
         self.autosave_data_bool = load_dict['autosaveData']
         self.data_save_directory = load_dict['dataSaveDirectory']
         self.model_index = load_dict["modelIndex"]
@@ -1842,30 +1843,22 @@ class MMC_Main(QMainWindow):
 
             self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'models')
             self.UIE_mcw_model_qcb.addItems(McPherson.MONO_MODELS)
-            self.UIE_mcw_model_qcb.setCurrentIndex(self.model_index)
             self.UIE_mcw_model_qcb.currentIndexChanged.connect(self.update_model_index)
 
             self.UIE_mcw_grating_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'grating_density')
-            self.UIE_mcw_grating_qdsb.setValue(self.grating_density)
             
             self.UIE_mcw_zero_ofst_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'zero_offset_in')
-            self.UIE_mcw_zero_ofst_in_qdsb.setValue(self.zero_ofst)
             
             self.UIE_mcw_max_pos_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'max_pos_sbox')
-            self.UIE_mcw_max_pos_in_qdsb.setValue(self.max_pos)
 
             self.UIE_mcw_min_pos_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'min_pos_sbox')
-            self.UIE_mcw_min_pos_in_qdsb.setValue(self.min_pos)
 
             self.UIE_mcw_machine_conf_qpb = self.machine_conf_win.findChild(QPushButton, 'update_conf_btn')
             self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
 
             self.UIE_mcw_steps_per_nm_ql = self.machine_conf_win.findChild(QLabel, 'steps_per_nm')
             steps_per_nm = self.motion_controllers.main_drive_axis.get_steps_per_value()
-            if steps_per_nm == 0.0:
-                self.UIE_mcw_steps_per_nm_ql.setText('NOT CALCULATED')
-            else:
-                self.UIE_mcw_steps_per_nm_ql.setText(str(steps_per_nm))
+
             
             self.UIE_mcw_steps_per_nm_override_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'steps_per_nm_override')
             self.UIE_mcw_override_steps_per_nm_qckbx = self.machine_conf_win.findChild(QCheckBox, 'override_steps_per_nm')
@@ -1944,12 +1937,6 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
 
-            self.UIE_mcw_fw_offset_qdsb.setValue(self.fw_offset)
-            self.UIE_mcw_sr_offset_qdsb.setValue(self.sr_offset)
-            self.UIE_mcw_st_offset_qdsb.setValue(self.st_offset)
-            self.UIE_mcw_sa_offset_qdsb.setValue(self.sa_offset)
-            self.UIE_mcw_dr_offset_qdsb.setValue(self.dr_offset)
-
             # TEMPORARY DISABLING OF UI ELEMENT UNTIL FUTURE VERSION IMPLEMENTATION. 
             tabWidget = self.machine_conf_win.findChild(QTabWidget, "tabWidget")
             if not SHOW_FILTER_WHEEL:
@@ -1958,6 +1945,23 @@ class MMC_Main(QMainWindow):
                 tabWidget.removeTab(tabWidget.indexOf(tabWidget.findChild(QWidget, 'sample_tab')))
             if not SHOW_DETECTOR_ROTATION:
                 tabWidget.removeTab(tabWidget.indexOf(tabWidget.findChild(QWidget, 'detector_tab')))
+
+        self.UIE_mcw_model_qcb.setCurrentIndex(self.model_index)
+        self.UIE_mcw_grating_qdsb.setValue(self.grating_density)
+        self.UIE_mcw_zero_ofst_in_qdsb.setValue(self.zero_ofst)
+        self.UIE_mcw_max_pos_in_qdsb.setValue(self.max_pos)
+        self.UIE_mcw_min_pos_in_qdsb.setValue(self.min_pos)
+
+        if steps_per_nm == 0.0:
+            self.UIE_mcw_steps_per_nm_ql.setText('NOT CALCULATED')
+        else:
+            self.UIE_mcw_steps_per_nm_ql.setText(str(steps_per_nm))
+
+        self.UIE_mcw_fw_offset_qdsb.setValue(self.fw_offset)
+        self.UIE_mcw_sr_offset_qdsb.setValue(self.sr_offset)
+        self.UIE_mcw_st_offset_qdsb.setValue(self.st_offset)
+        self.UIE_mcw_sa_offset_qdsb.setValue(self.sa_offset)
+        self.UIE_mcw_dr_offset_qdsb.setValue(self.dr_offset)
 
         self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(self.main_axis_index)
         self.UIE_mcw_filter_wheel_axis_qcb.setCurrentIndex(self.filter_axis_index)
