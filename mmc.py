@@ -139,7 +139,7 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes.grid()
         self.lines = dict()
         self.colors = ['b', 'r', 'k', 'c', 'g', 'm', 'tab:orange']
-        self._tableClearCb = None
+        self._tableClearCb = None        
         super(MplCanvas, self).__init__(fig)
 
     def get_toolbar(self) -> NavigationToolbar:
@@ -214,6 +214,8 @@ class MMC_Main(QMainWindow):
     def __init__(self, application, uiresource = None):
 
         # application.setQuitOnLastWindowClosed(False)
+
+        self.selected_config_save_path = os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv'
 
         # Handles the initial showing of the UI.
         self.mtn_ctrls = []
@@ -385,6 +387,7 @@ class MMC_Main(QMainWindow):
             self.device_timer.timeout.connect(self.devman_list_devices)
             self.device_timer.start(1000)
 
+    # Called when the main GUI window is closed.
     def closeEvent(self, event):
         answer = self.QMessageBoxYNC('Exit Confirmation', "Do you want to save all current settings and values?")
         event.ignore()
@@ -1067,8 +1070,11 @@ class MMC_Main(QMainWindow):
             self.QMessageBoxWarning('Import Error', str(e))
 
     def config_export(self):
-        savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv', filter='*.csv')
+
+        # savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv', filter='*.csv')
+        savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=self.selected_config_save_path, filter='*.csv')
         fileInfo = QFileInfo(savFileName)
+        self.selected_config_save_path = savFileName
 
         if fileInfo.absoluteFilePath() == '':
             log.info('File name empty. User probably exited dialog manually.')
