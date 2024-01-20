@@ -46,7 +46,7 @@ class SR_860:
                     continue
 
             s = safe_serial.SafeSerial(port, 9600, timeout=1)
-            log.info('Beginning search for Keithley Model 6485...')
+            log.info('Beginning search for SR860...')
             log.info('Trying port %s.'%(port))
             s.write(b'*RST\r')
             sleep(0.5)
@@ -54,96 +54,48 @@ class SR_860:
             buf = s.read(128).decode('utf-8').rstrip()
             log.debug(buf)
 
-            if 'KEITHLEY INSTRUMENTS INC.,MODEL 6485' in buf:
-                log.info("Keithley Model 6485 found.")
+            if 'Stanford_Research_Systems,SR860,' in buf:
+                log.info("SR860 found.")
                 self.found = True
                 self.port = port
                 self.s = s
             else:
-                log.error("Keithley Model 6485 not found.")
+                log.error("SR860 not found.")
                 s.close()
 
         if self.found == False:
-            raise RuntimeError('Could not find Keithley Model 6485!')
+            raise RuntimeError('Could not find SR860!')
         log.debug('Using port %s.'%(self.port))
 
-        self.s.write(b'SYST:ZCH ON\r')
+        # Set the system to LOCAL mode. This allows both commands and front-panel buttons to control the instrument.
+        self.s.write(b'LOCL 0\r')
         sleep(0.1)
 
-        self.s.write(b'RANG 2e-9\r')
-        sleep(0.1)
-        # buf = s.read(128).decode('utf-8').rstrip()
+        # TODO: Whatever standard settings are desired.
+        # TODO: (Maybe) Do we want to check settings? If so, what do we do in an error? Or should we check after this.
 
-        self.s.write(b'INIT\r')
-        sleep(0.1)
-
-        self.s.write(b'SYST:ZCOR:ACQ\r') # acquire zero current
-        sleep(0.1)
-
-        self.s.write(b'SYST:ZCOR ON\r') # perform zero correction
-        sleep(0.1)
-
-        self.s.write(b'RANG:AUTO ON\r') # enable auto range
-        sleep(0.1)
-
-        self.s.write(b'SYST:ZCH OFF\r') # disable zero check
-        sleep(0.1)
-
-        self.s.write(b'SYST:ZCOR OFF\r') # disable zero correction
-        sleep(0.1)
-
-        self.s.write(b'AVER ON\r')
-        self.s.write(b'AVER:TCON REP\r')
-        self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
         log.debug('Init complete')
 
-    def set_samples(self, samples: int):
-        if samples < 2:
-            samples = 2
-        if samples > 20:
-            samples = 20
-        self.samples = samples
-        self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
-
     def detect(self):
-        out = ''
-        self.s.write(b'READ?\r')
-        retry = 10
-        while retry:
-            buf = self.s.read(128).decode('utf-8').rstrip()
-            if len(buf):
-                break
-            retry -= 1
-        if not retry and len(buf) == 0:
-            return out
-        out = buf
-        spbuf = buf.split(',')
-        try:
-            if int(float(spbuf[2])) != 2:
-                log.error("ERROR #%d"%(int(float(spbuf[2]))))
-        except Exception:
-            log.error('Error: %s invalid output'%(buf))
-        return out
+        pass
 
     def __del__(self):
         if self.s is not None:
             self.s.close()
 
     def short_name(self):
-        return 'KI6485'
+        return 'SR860'
 
     def long_name(self):
-        return 'Keithley 6485 Picoammeter'
+        return 'Stanford Research Systems 860 Lock-In Amplifier'
 
 class SR_860_DUMMY:
     def __init__(self, samples: int):
         pass
 
-    def set_samples(self, samples: int):
-        pass
-
     def detect(self):
         pass
+
     def __del__(self):
         pass
 
@@ -151,7 +103,7 @@ class SR_860_DUMMY:
         return 'SR860DUM'
 
     def long_name(self):
-        return 'Stanford Research 860 Lock-In Amplifier Dummy'
+        return 'Stanford Research Systems 860 Lock-In Amplifier Dummy'
 
 """ Command Set
 """
