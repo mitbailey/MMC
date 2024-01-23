@@ -92,6 +92,7 @@ from utilities_qt import connect_devices
 from instruments.mcpherson import McPherson
 
 from utilities import motion_controller_list as mcl
+from utilities import log
 
 try:
     import middleware as mw
@@ -102,7 +103,6 @@ except Exception as e:
 from middleware import MotionController#, list_all_devices
 from middleware import Detector
 from utilities import version
-from utilities import log
 
 import signal
 

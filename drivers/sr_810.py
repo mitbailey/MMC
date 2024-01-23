@@ -1,0 +1,270 @@
+#
+# @file sr810.py
+# @author Mit Bailey (mitbailey@outlook.com)
+# @brief Detector Driver for the SR810 Lock-In Amplifier.
+# @version See Git tags for version information.
+# @date 2023.08.08
+# 
+# @copyright Copyright (c) 2022
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#
+
+# NOTES ABOUT LOCKIN
+# INTERFACE >>> Setup
+# GPIB/RS232:   RS232
+# ADDRESS:      12
+# BAUD:         9600
+# PARITY:       None
+
+from io import TextIOWrapper
+import sys
+import glob
+from time import sleep
+from utilities import ports_finder
+from utilities import safe_serial
+from utilities import log
+
+class SR810:
+    def __init__(self, man_port: str = None):
+        # if samples < 2:
+        #     samples = 2
+        # if samples > 20:
+        #     samples = 20
+        # self.samples = samples
+        self.s = None
+        self.found = False
+        self.port = -1
+        for port in ports_finder.find_serial_ports():
+            if man_port is not None:
+                if port != man_port:
+                    continue
+
+            s = safe_serial.SafeSerial(port, 9600, timeout=1)
+            log.info('Beginning search for SR810...')
+            log.info('Trying port %s.'%(port))
+            s.write(b'*RST\r')
+            sleep(0.5)
+            s.write(b'*IDN?\r')
+            buf = s.read(128).decode('utf-8').rstrip()
+            log.debug(buf)
+
+            if 'Stanford_Research_Systems,SR810,' in buf:
+                log.info("SR810 found.")
+                self.found = True
+                self.port = port
+                self.s = s
+            else:
+                log.error("SR810 not found.")
+                s.close()
+
+        if self.found == False:
+            raise RuntimeError('Could not find SR810!')
+        log.debug('Using port %s.'%(self.port))
+
+        # Set the system to LOCAL mode. This allows both commands and front-panel buttons to control the instrument.
+        self.s.write(b'LOCL 0\r')
+        sleep(0.1)
+
+        self.s.write(b'LOCL?\r')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '0'):
+            log.info('SR810 is in LOCAL mode.')
+        else:
+            log.warn('SR810 is not in LOCAL mode!')
+
+        # Set the time constant to 300ms.
+        self.s.write(b'OFLT 9\r')
+        sleep(0.1)
+
+        self.s.write(b'OFLT?\r')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '9'):
+            log.info('Time constant is 300ms.')
+        else:
+            log.warn('Time constant is not 300ms!')
+
+        # Set the low pass filter slope.
+        self.s.write(b'OFSL 1\r')
+        sleep(0.1)
+
+        self.s.write(b'OFSL?\r')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '1'):
+            log.info('Low pass filter slope is 12dB/octave.')
+        else:
+            log.warn('Low pass filter slope is not 12dB/octave!')
+
+        # Set the sync to 200 Hz.
+        self.s.write(b'SYNC 1\r')
+        sleep(0.1)
+
+        self.s.write(b'SYNC?\r')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '1'):
+            log.info('Sync is 200 Hz.')
+        else:
+            log.warn('Sync is not 200 Hz!')
+
+        # Signal input to A.
+        self.s.write(b'ISRC 0\r')
+        sleep(0.1)
+
+        self.s.write(b'ISRC?\r')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '0'):
+            log.info('Signal input is A.')
+        else:
+            log.warn('Signal input is not A!')
+
+        # Set the input coupling to AC.
+        self.s.write(b'ICPL 0\r')
+        sleep(0.1)
+
+        self.s.write(b'ICPL?\r')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '0'):
+            log.info('Input coupling is AC.')
+        else:
+            log.warn('Input coupling is not AC!')
+
+        # Ground / float.
+        self.s.write(b'IGND 0\r')
+        sleep(0.1)
+
+        self.s.write(b'IGND?\r')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '0'):
+            log.info('Ground is float.')
+        else:
+            log.warn('Ground is not float!')
+
+        # Set auto sensitivity.
+        # This command takes forever to complete, so we have to wait on *STB? 1 to be 1. 
+        # TODO: Comment out AGAN once we setup an option for the user to do it from within the GUI. For now, we can leave it like so.
+        self.s.write(b'AGAN\r')
+        sleep(0.1)
+
+        rdy = False
+        while (not rdy):
+            self.s.write(b'*STB? 1\r')
+            buf = self.s.read(128).decode('utf-8').rstrip()
+            if (buf == '1'):
+                rdy = True
+            else:
+                sleep(0.1)
+
+        # Reserve HIGH to Vuvas.
+        self.s.write(b'RMOD 1\r')
+        sleep(0.1)
+
+        self.s.write(b'RMOD?\r')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '1'):
+            log.info('Reserve is HIGH.')
+        else:
+            log.warn('Reserve is not HIGH!')
+
+        # Set both LINE and x2 LINE notch filters ON.
+        self.s.write(b'ILIN 3\r')
+        sleep(0.1)
+
+        self.s.write(b'ILIN?\r')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '1'):
+            log.info('Notch filters both on.')
+        else:
+            log.warn('Notch filter not both on!')
+
+        # Turn both filter ON.
+        # ??? What does this mean
+            
+        # Set trigger to pos edge.
+        # No command seems to exist.
+
+        # Do not set phasing to auto.
+
+        log.info('Init complete')
+
+        # print('\n\n\n\n\n\n\n\n')
+        # sleep(1)
+        # exit(0)
+
+    def detect(self):
+        self.s.write(b'OUTP ? 1\r')
+        X = self.s.read(128).decode('utf-8').rstrip()
+        if X == '': X = 0
+        self.val_X = float(X)
+
+        return self.val_X
+
+        # self.s.write(b'SNAP ? 1,2,3,4,9,10\r')
+        # buf = self.s.read(128).decode('utf-8').rstrip()
+        # vals = buf.split(',')
+        
+        # X = vals[0]
+        # if X == '': X = 0
+        # self.val_X = float(X)
+        
+        # Y = vals[1]
+        # if Y == '': Y = 0
+        # self.val_Y = float(Y)
+        
+        # R = vals[2]
+        # if R == '': R = 0
+        # self.val_R = float(R)
+        
+        # THETA = vals[3]
+        # if THETA == '': THETA = 0
+        # self.val_THETA = float(THETA)
+        
+        # REF = vals[3]
+        # if REF == '': REF = 0
+        # self.val_REF = float(REF)
+
+        # CH1 = vals[3]
+        # if CH1 == '': CH1 = 0
+        # self.val_CH1 = float(CH1)
+
+        # return self.val_X, self.val_Y, self.val_R, self.val_THETA, self.val_REF, self.val_CH1
+
+    def __del__(self):
+        if self.s is not None:
+            self.s.close()
+
+    def short_name(self):
+        return 'SR810'
+
+    def long_name(self):
+        return 'Stanford Research Systems 810 Lock-In Amplifier'
+
+class SR_810_DUMMY:
+    def __init__(self, samples: int):
+        pass
+
+    def detect(self):
+        pass
+
+    def __del__(self):
+        pass
+
+    def short_name(self):
+        return 'SR810DUM'
+
+    def long_name(self):
+        return 'Stanford Research Systems 810 Lock-In Amplifier Dummy'
+
+""" Command Set
+"""
