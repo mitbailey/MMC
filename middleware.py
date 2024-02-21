@@ -22,11 +22,14 @@
 #
 #
 
+#%%
 # OS and SYS Imports
 import os
 import sys
 from utilities import log
 from collections import deque
+
+#%%
 
 try:
     exeDir = sys._MEIPASS
@@ -60,6 +63,7 @@ from drivers import ki_picoammeter as ki_pico
 from drivers import mp_789a_4 as mp789
 from drivers import mp_792 as mp792
 from drivers import sr_810 as sr810
+from drivers import sr_860 as sr860
 
 from utilities import ports_finder
 
@@ -434,7 +438,7 @@ class MotionController:
 # Detector
 # Genericizes the type of detector.
 class Detector:
-    SupportedDevices = ['KI 6485', 'SR 810']
+    SupportedDevices = ['KI 6485', 'SR 810', 'SR 860']
 
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None):
         self.model = dev_model
@@ -456,6 +460,12 @@ class Detector:
                 self._is_dummy = True
             else:
                 self.pa = sr810.SR810()
+        elif self.model == Detector.SupportedDevices[2]:
+            if dummy:
+                self.pa = sr860.SR860_DUMMY()
+                self._is_dummy = True
+            else:
+                self.pa = sr860.SR860()
         else:
             log.error('Detector device model "%s" is not supported.'%(dev_model))
             raise Exception

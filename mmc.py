@@ -1827,6 +1827,7 @@ class MMC_Main(QMainWindow):
         self.model_index = self.UIE_mcw_model_qcb.currentIndex()
 
     def show_window_machine_config(self):
+        steps_per_nm = None
         if self.machine_conf_win is None:
             log.info('Setting up machine configuration window.')
             
@@ -1952,6 +1953,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_max_pos_in_qdsb.setValue(self.max_pos)
         self.UIE_mcw_min_pos_in_qdsb.setValue(self.min_pos)
 
+        # if steps_per_nm is None:
+        #     steps_per_nm = 0.0
         if steps_per_nm == 0.0:
             self.UIE_mcw_steps_per_nm_ql.setText('NOT CALCULATED')
         else:

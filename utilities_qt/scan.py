@@ -168,6 +168,8 @@ class Scan(QThread):
                     mes = mes * 1e12 # convert to pA
                 elif detector.short_name() == 'SR810':
                     mes = float(buf)
+                elif detector.short_name() == 'SR860':
+                    mes = float(buf)
                 else:
                     log.error('Unknown detector type.')
                     return

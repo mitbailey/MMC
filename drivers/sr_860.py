@@ -1,7 +1,7 @@
 #
-# @file sr810.py
+# @file sr860.py
 # @author Mit Bailey (mitbailey@outlook.com)
-# @brief Detector Driver for the SR810 Lock-In Amplifier.
+# @brief Detector Driver for the SR860 Lock-In Amplifier.
 # @version See Git tags for version information.
 # @date 2023.08.08
 # 
@@ -37,7 +37,7 @@ from utilities import ports_finder
 from utilities import safe_serial
 from utilities import log
 
-class SR810:
+class SR860:
     def __init__(self, man_port: str = None):
         # if samples < 2:
         #     samples = 2
@@ -52,44 +52,64 @@ class SR810:
                 if port != man_port:
                     continue
 
-            s = safe_serial.SafeSerial(port, 9600, timeout=1)
-            log.info('Beginning search for SR810...')
+            s = safe_serial.SafeSerial(port, 9600, timeout=0.25)
+            log.info('Beginning search for SR860...')
             log.info('Trying port %s.'%(port))
-            s.write(b'*RST\r')
-            sleep(0.5)
-            s.write(b'*IDN?\r')
+            # s.write(b'*RST\n')
+            # sleep(0.5)
+
+            s.write(b'*IDN?\n')
             buf = s.read(128).decode('utf-8').rstrip()
             log.debug(buf)
 
-            if 'Stanford_Research_Systems,SR810,' in buf:
-                log.info("SR810 found.")
+            sleep(1)
+
+            s.write(b'*IDN?\n')
+            buf = s.read(128).decode('utf-8').rstrip()
+            log.debug(buf)
+
+
+
+            # if 'Stanford_Research_Systems,SR860,' in buf:
+            if 'Stanford_Research_Systems,SR860,' in buf:
+                log.info("SR860 found.")
                 self.found = True
                 self.port = port
                 self.s = s
             else:
-                log.error("SR810 not found.")
+                log.error("SR860 not found.")
                 s.close()
 
         if self.found == False:
-            raise RuntimeError('Could not find SR810!')
+            raise RuntimeError('Could not find SR860!')
         log.debug('Using port %s.'%(self.port))
 
         # Set the system to LOCAL mode. This allows both commands and front-panel buttons to control the instrument.
-        self.s.write(b'LOCL 0\r')
+        self.s.write(b'LOCL 0\n')
         sleep(0.1)
 
-        self.s.write(b'LOCL?\r')
+        self.s.write(b'LOCL?\n')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
-            log.info('SR810 is in LOCAL mode.')
+            log.info('SR860 is in LOCAL mode.')
         else:
-            log.warn('SR810 is not in LOCAL mode!')
+            log.warn('SR860 is not in LOCAL mode!')
 
-        # Set the time constant to 300ms.
-        self.s.write(b'OFLT 9\r')
+        self.s.write(b'ERRE 255\n')
         sleep(0.1)
 
-        self.s.write(b'OFLT?\r')
+        self.s.write(b'ERRE?\n')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '255'):
+            log.info('Error Enable set to 255.')
+        else:
+            log.warn('Error Enable not set to 255!')
+
+        # Set the time constant to 300ms.
+        self.s.write(b'OFLT 9\n')
+        sleep(0.1)
+
+        self.s.write(b'OFLT?\n')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '9'):
             log.info('Time constant is 300ms.')
@@ -97,10 +117,10 @@ class SR810:
             log.warn('Time constant is not 300ms!')
 
         # Set the low pass filter slope.
-        self.s.write(b'OFSL 1\r')
+        self.s.write(b'OFSL 1\n')
         sleep(0.1)
 
-        self.s.write(b'OFSL?\r')
+        self.s.write(b'OFSL?\n')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '1'):
             log.info('Low pass filter slope is 12dB/octave.')
@@ -108,10 +128,10 @@ class SR810:
             log.warn('Low pass filter slope is not 12dB/octave!')
 
         # Set the sync to 200 Hz.
-        self.s.write(b'SYNC 1\r')
+        self.s.write(b'SYNC 1\n')
         sleep(0.1)
 
-        self.s.write(b'SYNC?\r')
+        self.s.write(b'SYNC?\n')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '1'):
             log.info('Sync is 200 Hz.')
@@ -119,10 +139,10 @@ class SR810:
             log.warn('Sync is not 200 Hz!')
 
         # Signal input to A.
-        self.s.write(b'ISRC 0\r')
+        self.s.write(b'ISRC 0\n')
         sleep(0.1)
 
-        self.s.write(b'ISRC?\r')
+        self.s.write(b'ISRC?\n')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('Signal input is A.')
@@ -130,10 +150,10 @@ class SR810:
             log.warn('Signal input is not A!')
 
         # Set the input coupling to AC.
-        self.s.write(b'ICPL 0\r')
+        self.s.write(b'ICPL 0\n')
         sleep(0.1)
 
-        self.s.write(b'ICPL?\r')
+        self.s.write(b'ICPL?\n')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('Input coupling is AC.')
@@ -141,52 +161,54 @@ class SR810:
             log.warn('Input coupling is not AC!')
 
         # Ground / float.
-        self.s.write(b'IGND 0\r')
+        self.s.write(b'IGND 0\n')
         sleep(0.1)
 
-        self.s.write(b'IGND?\r')
+        self.s.write(b'IGND?\n')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('Ground is float.')
         else:
             log.warn('Ground is not float!')
 
+        # There is no auto gain on the SR860!
         # Set auto sensitivity.
         # This command takes forever to complete, so we have to wait on *STB? 1 to be 1. 
         # TODO: Comment out AGAN once we setup an option for the user to do it from within the GUI. For now, we can leave it like so.
-        self.s.write(b'AGAN\r')
-        sleep(0.1)
+        # self.s.write(b'AGAN\n')
+        # sleep(0.1)
 
-        rdy = False
-        while (not rdy):
-            self.s.write(b'*STB? 1\r')
-            buf = self.s.read(128).decode('utf-8').rstrip()
-            if (buf == '1'):
-                rdy = True
-            else:
-                sleep(0.1)
+        # rdy = False
+        # while (not rdy):
+        #     self.s.write(b'*STB? 1\n')
+        #     buf = self.s.read(128).decode('utf-8').rstrip()
+        #     if (buf == '1'):
+        #         rdy = True
+        #     else:
+        #         sleep(0.1)
 
         # Reserve HIGH to Vuvas.
-        self.s.write(b'RMOD 1\r')
+        self.s.write(b'RMOD 1\n')
         sleep(0.1)
 
-        self.s.write(b'RMOD?\r')
+        self.s.write(b'RMOD?\n')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '1'):
             log.info('Reserve is HIGH.')
         else:
             log.warn('Reserve is not HIGH!')
 
-        # Set both LINE and x2 LINE notch filters ON.
-        self.s.write(b'ILIN 3\r')
-        sleep(0.1)
+        # Not a valid command on SR860.
+        # # Set both LINE and x2 LINE notch filters ON.
+        # self.s.write(b'ILIN 3\n')
+        # sleep(0.1)
 
-        self.s.write(b'ILIN?\r')
-        buf = self.s.read(128).decode('utf-8').rstrip()
-        if (buf == '1'):
-            log.info('Notch filters both on.')
-        else:
-            log.warn('Notch filter not both on!')
+        # self.s.write(b'ILIN?\n')
+        # buf = self.s.read(128).decode('utf-8').rstrip()
+        # if (buf == '1'):
+        #     log.info('Notch filters both on.')
+        # else:
+        #     log.warn('Notch filter not both on!')
 
         # Turn both filter ON.
         # ??? What does this mean
@@ -203,14 +225,23 @@ class SR810:
         # exit(0)
 
     def detect(self):
-        self.s.write(b'OUTP ? 1\r')
+        # 0 for X, 1 for Y.
+        self.s.write(b'OUTP? 0\n')
         X = self.s.read(128).decode('utf-8').rstrip()
         if X == '': X = 0
         self.val_X = float(X)
 
+        self.s.write(b'ERRS?\n')
+        buf = self.s.read(128).decode('utf-8').rstrip()
+        if (buf == '0'):
+            log.info('No errors.')
+        else:
+            log.warn('Error detected!')
+            log.warn('Error: %s'%(buf))
+
         return self.val_X
 
-        # self.s.write(b'SNAP ? 1,2,3,4,9,10\r')
+        # self.s.write(b'SNAP ? 1,2,3,4,9,10\n')
         # buf = self.s.read(128).decode('utf-8').rstrip()
         # vals = buf.split(',')
         
@@ -245,12 +276,12 @@ class SR810:
             self.s.close()
 
     def short_name(self):
-        return 'SR810'
+        return 'SR860'
 
     def long_name(self):
-        return 'Stanford Research Systems 810 Lock-In Amplifier'
+        return 'Stanford Research Systems 860 Lock-In Amplifier'
 
-class SR810_DUMMY:
+class SR860_DUMMY:
     def __init__(self, samples: int):
         pass
 
@@ -261,10 +292,10 @@ class SR810_DUMMY:
         pass
 
     def short_name(self):
-        return 'SR810DUM'
+        return 'SR860DUM'
 
     def long_name(self):
-        return 'Stanford Research Systems 810 Lock-In Amplifier Dummy'
+        return 'Stanford Research Systems 860 Lock-In Amplifier Dummy'
 
 """ Command Set
 """
