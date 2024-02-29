@@ -1947,6 +1947,10 @@ class MMC_Main(QMainWindow):
             if not SHOW_DETECTOR_ROTATION:
                 tabWidget.removeTab(tabWidget.indexOf(tabWidget.findChild(QWidget, 'detector_tab')))
 
+            ### TODO: Create and populate new tabs for:
+                # Lock-in Amplifiers (1 or 2) [Programmatically?]
+                # Generic Detector Math [Should already exist from QtDesigner]
+
         self.UIE_mcw_model_qcb.setCurrentIndex(self.model_index)
         self.UIE_mcw_grating_qdsb.setValue(self.grating_density)
         self.UIE_mcw_zero_ofst_in_qdsb.setValue(self.zero_ofst)
