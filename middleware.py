@@ -159,7 +159,7 @@ def new_motion_controller(dummy: bool, dev_model: str, man_port: str = None):
 class MotionController:
     """Provides a layer of abstraction for communication with motion controller drivers.
     """
-    SupportedDevices = ['TL KST101', 'MP 789A-4', 'MP 792']
+    SupportedDevices = ['TL KSTX01', 'MP 789A-4', 'MP 792']
 
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None, axis: int = 0, parent = None):
         """_summary_
@@ -213,8 +213,8 @@ class MotionController:
                 #     log.info(serials)
                 
                 if len(serials) == 0:
-                    log.error("No KST101 controller found.")
-                    raise RuntimeError('No KST101 controller found')
+                    log.error("No KSTX01 controller found.")
+                    raise RuntimeError('No KSTX01 controller found')
                 
                 try:
                     self._motor_ctrl = tlkt.Thorlabs.KSTX01(serials[0])
