@@ -217,11 +217,11 @@ class MotionController:
                     raise RuntimeError('No KST101 controller found')
                 
                 try:
-                    self._motor_ctrl = tlkt.Thorlabs.KST101(serials[0])
+                    self._motor_ctrl = tlkt.Thorlabs.KSTX01(serials[0])
                 except Exception as e:
                     log.warn('Got exception:', e, ' Waiting 3 seconds then retrying connection.')
                     sleep(3)
-                    self._motor_ctrl = tlkt.Thorlabs.KST101(serials[0])
+                    self._motor_ctrl = tlkt.Thorlabs.KSTX01(serials[0])
                 
                 if (self._motor_ctrl._CheckConnection() == False):
                     log.error("Connection with motor controller failed.")
