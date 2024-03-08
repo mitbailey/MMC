@@ -4,18 +4,29 @@ PyQt-based GUI program to control monochromators and adjacent hardware.
 
 # Pre-Requisites
 
-- ThorLabs' Kinesis drivers package. 
+- ThorLabs' Kinesis drivers package
+    - Kinesis 64-bit Software for 64-bit Windows: https://www.thorlabs.com/software_pages/ViewSoftwarePage.cfm?Code=Motion_Control&viewtab=0 
+    - Installed in C:/Program Files/Thorlabs/Kinesis (as is default).
+    - The Kinesis software MUST be run at least once prior to starting MMCS.
 - Windows 10 (may work on other Windows versions, but untested).
-- Python 3.9.7 (ONLY if running directly via source code).
+
+
+If running directly via source code you will also need Python 3.9.7.
 
 # Compatible Hardware
 ## Motion Controllers
-- ThorLabs KST101 (verified with ZFS25 stage)
-- McPherson 789
+- ThorLabs KST101 K-Cube (verified with ZFS25 stage)
+- McPherson 789A-4
 - McPherson 792
 
 ## Detectors
-- Keithley 6485
+- Keithley Instruments KI6485 Picoammeter
+- Stanford Research Systems SR810 Lock-In Amplifier
+- Stanford Research Systems SR860 Lock-In Amplifier
+
+## In Progress
+- McPherson 747
+- ThorLabs KST201 K-Cube
 
 # Usage
 ## via Executable
@@ -80,6 +91,6 @@ Outputs MMC/dist/mmc.exe
 
 ## Hierarchy
 GUI <-> Middleware <-> Drivers <-> Hardware
-- The GUI calls Middleware functions and is the layer the user directly interacts with. The GUI simply knows that it exists above some Monochromator with some type of Motion Controller and Sampling device.
-- The middleware allows the GUI to be agnostic to specific hardware and hardware implementations, providing the GUI layer with consistent functions to interface with across all forms of Motion Control and Sampling. The Middleware determines which drivers must be used.
-- The drivers interact directly with the Motion Controller and Sampler and are specific to their model / type.
+- The GUI calls Middleware functions and is the layer the user directly interacts with. The GUI simply knows that it exists above some Monochromator with some type of Motion Controller(s) and detector(s).
+- The middleware allows the GUI to be agnostic to specific hardware and hardware implementations, providing the GUI layer with consistent functions to interface with across all forms of motion control and detection. The Middleware determines which drivers must be used.
+- The drivers interact directly with the motion controller and detector and are specific to their model / type.

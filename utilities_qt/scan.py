@@ -181,7 +181,7 @@ class Scan(QThread):
                 log.debug(sav_files)
                 if len(sav_files) > 0 and sav_files[i] is not None:
                     if idx == 0:
-                        sav_files[i].write('# DATA RECORDED IN SOFTWARE VERSION: MMCv%s\n'%(version.__MMC_VERSION__))
+                        sav_files[i].write('# DATA RECORDED IN SOFTWARE VERSION: %sv%s\n'%(version.__short_name__, version.__version__))
                         sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
                         sav_files[i].write('# Steps/mm: %f\n'%(self.other.motion_controllers.main_drive_axis.get_steps_per_value()))
                         sav_files[i].write('# mm/nm: %e; lambda_0 (nm): %e\n'%(0, self.other.zero_ofst))
@@ -350,7 +350,7 @@ class ScanSM(QThread):
 
                     if len(sav_files) > 0 and sav_files[i] is not None:
                         if idx == 0:
-                            sav_files[i].write('# DATA RECORDED IN SOFTWARE VERSION: MMCv%s\n'%(version.__MMC_VERSION__))
+                            sav_files[i].write('# DATA RECORDED IN SOFTWARE VERSION: %sv%s\n'%(version.__short_name__, version.__version__))
                             sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
                             sav_files[i].write('# Steps/deg: %f\n'%(self.other.motion_controllers.sample_rotation_axis.get_steps_per_value()))
                             sav_files[i].write('# mm/nm: 0; lambda_0 (nm): 0\n')
@@ -440,7 +440,7 @@ class ScanSM(QThread):
 
                     if len(sav_files) > 0 and sav_files[i] is not None:
                         if idx == 0:
-                            sav_files[i].write('# DATA RECORDED IN SOFTWARE VERSION: MMCv%s\n'%(version.__MMC_VERSION__))
+                            sav_files[i].write('# DATA RECORDED IN SOFTWARE VERSION: %sv%s\n'%(version.__short_name__, version.__version__))
                             sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
                             sav_files[i].write('# Steps/deg: %f\n'%(self.other.motion_controllers.sample_rotation_axis.get_steps_per_value()))
                             sav_files[i].write('# mm/nm: 0; lambda_0 (nm): 0\n')
@@ -612,7 +612,7 @@ class ScanDM(QThread):
 
                 if len(sav_files) > 0 and sav_files[i] is not None:
                     if idx == 0:
-                        sav_files[i].write('# DATA RECORDED IN SOFTWARE VERSION: MMCv%s\n'%(version.__MMC_VERSION__))
+                        sav_files[i].write('# DATA RECORDED IN SOFTWARE VERSION: %sv%s\n'%(version.__short_name__, version.__version__))
                         sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
                         sav_files[i].write('# Steps/deg: %f\n'%(self.other.motion_controllers.detector_rotation_axis.get_steps_per_value()))
                         sav_files[i].write('# mm/nm: 0; lambda_0 (nm): 0\n')

@@ -22,4 +22,6 @@
 #
 #
 
-__MMC_VERSION__ = '0.8.15'
+__short_name__ = 'MMCS'
+__long_name__ = 'McPherson Monochromator Control Software'
+__version__ = '0.8.15'

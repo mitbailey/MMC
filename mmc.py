@@ -30,7 +30,7 @@ UIE_[window code]_[subsection code]_[Chosen Name]_[Q-type]
 
 Device Manager Window       dmw_
 Main GUI Window             mgw_
-Machine Config. Window       mcw_
+Machine Config. Window      mcw_
 
 Main Drive                  md_
 Filter Wheel                fw_
@@ -49,6 +49,7 @@ QProgressBar = qpbar
 """
 
 # OS and SYS Imports
+import hashlib
 import os
 import sys
 
@@ -83,7 +84,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationTool
 from matplotlib.figure import Figure
 
 # Custom Imports
-from utilities.config import load_config, save_config, reset_config
+from utilities.config import load_config_devman, save_config_devman, load_config, save_config, reset_config
 import webbrowser
 from utilities_qt.datatable import DataTableWidget
 from utilities_qt import scan
@@ -324,7 +325,7 @@ class MMC_Main(QMainWindow):
             self.dmw = QDialog(self) # pass parent window
             uic.loadUi(ui_file, self.dmw)
 
-            self.dmw.setWindowTitle('Device Manager (MMCv%s)'%(version.__MMC_VERSION__))
+            self.dmw.setWindowTitle('Device Manager (%sv%s)'%(version.__short_name__, version.__version__))
             self.dmw_list = ''
 
 
@@ -375,7 +376,7 @@ class MMC_Main(QMainWindow):
             self.UIE_dmw_mtn_ctrl_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
             self.UIE_dmw_load_bar_qpb: QProgressBar = self.dmw.findChild(QProgressBar, "loading_bar")
 
-            self.devman_list_devices()
+            self.devman_list_devices(True)
 
             self.dmw.show()
 
@@ -401,8 +402,8 @@ class MMC_Main(QMainWindow):
         else:
             log.info('Canceling program exit.')
 
-    def update_num_detectors_ui(self):
-        if self.num_detectors != self.UIE_dmw_num_detectors_qsb.value():
+    def update_num_detectors_ui(self, force: bool = False):
+        if (self.num_detectors != self.UIE_dmw_num_detectors_qsb.value()) or (force):
             self.num_detectors = self.UIE_dmw_num_detectors_qsb.value()
             for widget in self.UIEL_dmw_detector_qcb:
                 widget.setParent(None)
@@ -435,8 +436,8 @@ class MMC_Main(QMainWindow):
 
         log.debug('new detectors combo list len: %d'%(len(self.UIEL_dmw_detector_qcb)))
 
-    def update_num_motion_controllers_ui(self):
-        if self.num_motion_controllers != self.UIE_dmw_num_motion_controllers_qsb.value():
+    def update_num_motion_controllers_ui(self, force: bool = True):
+        if (self.num_motion_controllers != self.UIE_dmw_num_motion_controllers_qsb.value()) or (force):
             self.num_motion_controllers = self.UIE_dmw_num_motion_controllers_qsb.value()
             for widget in self.UIEL_dmw_mtn_ctrl_qcb:
                 widget.setParent(None)
@@ -471,6 +472,12 @@ class MMC_Main(QMainWindow):
         log.debug('new mtn ctrls combo list len: %d'%(len(self.UIEL_dmw_mtn_ctrl_qcb)))
 
     def connect_devices(self):
+        # Save the current states of the devman immediately when Accept is pressed.
+        """ Parameters we want to save.
+        - Number of detectors.
+        - Spinbox index 
+        """
+
         if self.num_detectors == 1 and self.UIEL_dmw_detector_qcb[0].currentIndex() == 0:
             self.QMessageBoxInformation('No Detectors Selected', 'No detectors selected: will run without a detector.')
             self.detectors = [] # This should allow for loops to auto-skip.
@@ -485,6 +492,10 @@ class MMC_Main(QMainWindow):
             if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() == 0:
                 self.QMessageBoxInformation('Connection Failure', 'No motion controller was selected for entry #%d.'%(i))
                 return
+
+        # Save config here.
+        self.save_config_devman(appDir + '/devman.ini')
+
         
         if not self.connecting_devices:
             self.connect_devices = True
@@ -586,11 +597,11 @@ class MMC_Main(QMainWindow):
 
         if ALLOW_DUMMY_MODE:
             if dummy:
-                self.setWindowTitle("McPherson Monochromator Control (Debug Mode) (MMCv%s)"%(version.__MMC_VERSION__))
+                self.setWindowTitle('McPherson Monochromator Control (Debug Mode) (%sv%s)'%(version.__short_name__, version.__version__))
             else:
-                self.setWindowTitle("McPherson Monochromator Control (Hardware Mode) (MMCv%s)"%(version.__MMC_VERSION__))
+                self.setWindowTitle('McPherson Monochromator Control (Hardware Mode) (%sv%s)'%(version.__short_name__, version.__version__))
         else:
-                self.setWindowTitle("McPherson Monochromator Control (MMCv%s)"%(version.__MMC_VERSION__))
+                self.setWindowTitle('McPherson Monochromator Control (%sv%s)'%(version.__short_name__, version.__version__))
 
         self.is_conv_set = False # Use this flag to set conversion
 
@@ -1212,6 +1223,54 @@ class MMC_Main(QMainWindow):
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.dr_sp)
         
+    def save_config_devman(self, path: str):
+        pass
+        detector_spinbox_indices = []
+        detector_model_spinbox_indices = []
+        motion_controller_spinbox_indices = []
+        motion_controller_model_spinbox_indices = []
+
+        for i in range(self.num_detectors):
+            detector_spinbox_indices.append(self.UIEL_dmw_detector_qcb[i].currentIndex())
+            detector_model_spinbox_indices.append(self.UIEL_dmw_detector_model_qcb[i].currentIndex())
+                
+        for i in range(self.num_motion_controllers):
+            motion_controller_spinbox_indices.append(self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex())
+            motion_controller_model_spinbox_indices.append(self.UIEL_dmw_mtn_ctrl_model_qcb[i].currentIndex())
+
+        save_config_devman(path, self.dev_list_hash, self.num_detectors, self.num_motion_controllers, detector_spinbox_indices, motion_controller_spinbox_indices, detector_model_spinbox_indices, motion_controller_model_spinbox_indices)
+
+    def load_config_devman(self, path: str):
+        pass
+        devman_config = load_config_devman(path)
+
+        if devman_config is None:
+            log.error('Failed to load previous device manager layout.')
+            return None
+
+        if devman_config['devListHash'] != self.dev_list_hash:
+            log.info('Cannot load previous device manager layout since the device configuration has changed.')
+            return None
+
+        self.num_detectors = devman_config['numDetectors']
+        self.num_motion_controllers = devman_config['numMotionControllers']
+
+        self.UIE_dmw_num_detectors_qsb.setValue(self.num_detectors)
+        self.update_num_detectors_ui(force=True)
+
+        self.UIE_dmw_num_motion_controllers_qsb.setValue(self.num_motion_controllers)
+        self.update_num_motion_controllers_ui(force=True)
+
+        for i in range(self.num_detectors):
+            print(i)
+            self.UIEL_dmw_detector_qcb[i].setCurrentIndex(devman_config['detectorIndices'][i])
+            self.UIEL_dmw_detector_model_qcb[i].setCurrentIndex(devman_config['detectorModelIndices'][i])
+
+        for i in range(self.num_motion_controllers):
+            print(i)
+            self.UIEL_dmw_mtn_ctrl_qcb[i].setCurrentIndex(devman_config['controllerIndices'][i])     
+            self.UIEL_dmw_mtn_ctrl_model_qcb[i].setCurrentIndex(devman_config['controllerModelIndices'][i])
+
     def collapse_mda(self):
         log.debug('collapse_mda:', self.mda_collapsed)
         self.mda_collapsed = not self.mda_collapsed
@@ -1359,7 +1418,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_fw_rules_qsa.removeItem(self.UIEL_mgw_fw_rules_qvbl[index])
         del self.UIEL_mgw_fw_rules_qvbl[index]
 
-    def devman_list_devices(self):
+    def devman_list_devices(self, first_time: bool = False):
         self.dev_list = mw.find_all_ports()
 
         dev_list_str = ''
@@ -1385,6 +1444,11 @@ class MMC_Main(QMainWindow):
 
             self.dmw_list = "~DEVICE LIST~\n" + dev_list_str
 
+        if first_time:
+            self.dev_list_hash = hashlib.md5(dev_list_str.encode()).hexdigest()
+            # Attempt a load of the device manager configuration file.
+            self.load_config_devman(appDir + '/devman.ini')
+
     def save_data_cb(self):
         if self.table is None:
             return
@@ -1406,7 +1470,7 @@ class MMC_Main(QMainWindow):
         except Exception:
             log.error('Could not open file %s'%(fileInfo.fileName()))
             return
-        ofile.write('# DATA RECORDED IN SOFTWARE VERSION: MMCv%s\n'%(version.__MMC_VERSION__))
+        ofile.write('# DATA RECORDED IN SOFTWARE VERSION: %sv%s'%(version.__short_name__, version.__version__))
         ofile.write('# %s\n'%(tstamp.strftime('%Y-%m-%d %H:%M:%S')))
         try:
             ofile.write('# Steps/mm: %f\n'%(metadata['steps_per_value']))
@@ -1840,7 +1904,7 @@ class MMC_Main(QMainWindow):
             self.machine_conf_win = QDialog(self) # pass parent window
             uic.loadUi(ui_file, self.machine_conf_win)
             
-            self.machine_conf_win.setWindowTitle('Monochromator Configuration (MMCv%s)'%(version.__MMC_VERSION__))
+            self.machine_conf_win.setWindowTitle('Monochromator Configuration (%sv%s)'%(version.__short_name__, version.__version__))
 
             self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'models')
             self.UIE_mcw_model_qcb.addItems(McPherson.MONO_MODELS)

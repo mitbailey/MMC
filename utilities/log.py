@@ -67,7 +67,7 @@ def register():
         os.makedirs(logdir)
     logname = time.strftime('%Y%m%dT%H%M%S')
     global __logfile
-    __logfile = open('%s/%s_%s.txt'%(logdir, logname, version.__MMC_VERSION__), 'a')
+    __logfile = open('%s/%s_%s.txt'%(logdir, logname, version.__version__), 'a')
     info('Logger opened log file.')
 
     info('Logger initialized. Log level: %d.'%(LOG_LEVEL))

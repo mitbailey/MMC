@@ -44,6 +44,98 @@ from utilities import log
 # How?
 # def request_config()
 
+def save_config_devman(path, dev_list_hash = '0', num_detectors = 1, num_motion_controllers = 1, detector_spinbox_indices = [0], motion_controller_spinbox_indices = [0], detector_model_indices = [0], motion_controller_model_indices = [0]):
+    
+    if detector_spinbox_indices == []:
+        detector_spinbox_indices = [0]
+
+    if motion_controller_spinbox_indices == []:
+        motion_controller_spinbox_indices = [0]
+
+    if detector_model_indices == []:
+        detector_model_indices = [0]
+
+    if motion_controller_model_indices == []:
+        motion_controller_model_indices = [0]
+
+    if (len(detector_spinbox_indices) != num_detectors) and not (len(detector_spinbox_indices) == 1 and num_detectors == 0):
+        log.warn("Number of detectors does not match number of detector indices (%d != %d)."%(len(detector_spinbox_indices), num_detectors))
+        # print("Number of detectors does not match number of detector indices.")
+        return None
+    
+    if (len(motion_controller_spinbox_indices) != num_motion_controllers) and not (len(motion_controller_spinbox_indices) == 1 and num_motion_controllers == 0):
+        log.warn("Number of motion controllers does not match number of motion controller indices (%d != %d)."%(len(motion_controller_spinbox_indices), num_motion_controllers))
+        # print("Number of motion controllers does not match number of motion controller indices.")
+        return None
+    
+    save_config = confp.ConfigParser()
+    
+    # Pack the lists into delimited strings and save them.
+    d = ' '
+    save_config['DEVICE MANAGER'] = {'devListHash': dev_list_hash, 
+                                     'numDetectors': num_detectors, 
+                                     'numMotionControllers': num_motion_controllers,
+                                     'detectorIndices': d.join([str(e) for e in detector_spinbox_indices]),
+                                     'controllerIndices': d.join([str(e) for e in motion_controller_spinbox_indices]),
+                                     'detectorModelIndices': d.join([str(e) for e in detector_model_indices]),
+                                     'controllerModelIndices': d.join([str(e) for e in motion_controller_model_indices])}
+    
+    with open(path, 'w') as confFile:
+        save_config.write(confFile)
+
+def load_config_devman(path: str) -> dict:
+    try:
+        if not os.path.exists(path):
+            return reset_config_devman(path)
+
+        config = confp.ConfigParser()
+        config.read(path)
+
+        # log.debug(config)
+
+        ret_dict = {
+            "devListHash": config['DEVICE MANAGER']['devListHash'],
+            "numDetectors": int(config['DEVICE MANAGER']['numDetectors']),
+            "numMotionControllers": int(config['DEVICE MANAGER']['numMotionControllers']),
+            "detectorIndices": list(map(int, (config['DEVICE MANAGER']['detectorIndices']).split())),
+            "controllerIndices": list(map(int, (config['DEVICE MANAGER']['controllerIndices']).split())),
+            "detectorModelIndices": list(map(int, (config['DEVICE MANAGER']['detectorModelIndices']).split())),
+            "controllerModelIndices": list(map(int, (config['DEVICE MANAGER']['controllerModelIndices']).split()))
+        }
+
+        if ret_dict['detectorIndices'] is None or ret_dict['controllerIndices'] is None or ret_dict['detectorModelIndices'] is None or ret_dict['controllerModelIndices'] is None:
+            raise Exception("One or more of the lists is empty.")
+
+        if (len(ret_dict['detectorIndices']) != ret_dict['numDetectors']) and not (len(ret_dict['detectorIndices']) == 1 and ret_dict['numDetectors'] == 0):
+            log.warn("Number of detectors does not match number of detector indices.")
+            # print("Number of detectors does not match number of detector indices.")
+            return None
+
+        if (len(ret_dict['controllerIndices']) != ret_dict['numMotionControllers']) and not (len(ret_dict['controllerIndices']) == 1 and ret_dict['numMotionControllers'] == 0):
+            log.warn("Number of motion controllers does not match number of motion controller indices.")
+            # print("Number of motion controllers does not match number of motion controller indices.")
+            return None
+        
+        if (len(ret_dict['detectorModelIndices']) != ret_dict['numDetectors']) and not (len(ret_dict['detectorModelIndices']) == 1 and ret_dict['numDetectors'] == 0):
+            log.warn("Number of detectors does not match number of detector model indices.")
+            # print("Number of detectors does not match number of detector model indices.")
+            return None
+        
+        if (len(ret_dict['controllerModelIndices']) != ret_dict['numMotionControllers']) and not (len(ret_dict['controllerModelIndices']) == 1 and ret_dict['numMotionControllers'] == 0):
+            log.warn("Number of motion controllers does not match number of motion controller model indices.")
+            # print("Number of motion controllers does not match number of motion controller model indices.")
+            return None
+
+        log.debug(ret_dict)
+        return ret_dict
+    except Exception as e:
+        print(e)
+        reset_config_devman(path)
+
+def reset_config_devman(path: str):
+    log.warn("Resetting configuration file...")
+    save_config_devman(path, '0')
+
 def reset_config(path: str):
     log.warn("Resetting configuration file...")
     

@@ -292,6 +292,9 @@ class Thorlabs: # Wrapper class for TLI methods
             self.cond = threading.Condition(self.mutex)
             self.poll_thread = threading.Thread(target = Thorlabs.KSTX01.poll_status, args=[weakref.proxy(self)])
             self.poll_thread.start()
+
+            ch_en_rv = self._EnableChannel()
+            log.info('Channel enabled: %d'%(ch_en_rv))
             
             # TODO: Remove blocking while homing in INIT
             # retval = self.home(False) 
@@ -366,6 +369,21 @@ class Thorlabs: # Wrapper class for TLI methods
                 self.Open()
             TLI_KST.Identify(self.serial)
             return
+        
+        def _EnableChannel(self) -> int:
+            """Enable the device channel.
+
+            Raises:
+                RuntimeError: Error enabling channel.
+
+            Returns:
+                Int: Error code.
+            """
+            
+            if not self.open:
+                self.Open()
+            retval = TLI_KST.EnableChannel(self.serial)
+            return retval
         
         # Should this be automatically performed on open?
         def _GetHardwareInfo(self) -> dict:
@@ -533,8 +551,12 @@ class Thorlabs: # Wrapper class for TLI methods
 
         # home
         def home(self, blocking = False):
+            print(self.serial)
+            print('Can home?', TLI_KST.CanHome(self.serial))
+            print('Needs homing?', TLI_KST.NeedsHoming(self.serial))
+
             retval = TLI_KST.Home(self.serial)
-            # print('Home fcn: retval %d'%(retval))
+            print('Home fcn: retval %d'%(retval)) ## 44 (0x2c) is "TL_CANNOT_HOME_DEVICE - This device does not support Homing. Check the Limit switch parameters are correct. "
             self.homing = True
             if blocking:
                 self.wait_for_home()
