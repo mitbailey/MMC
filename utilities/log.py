@@ -68,7 +68,7 @@ def register():
     else:
         file_list = os.listdir(logdir)
         # print(file_list[-10:])
-        for filename in file_list[:-10]:
+        for filename in file_list[:-MAX_DIR_SIZE]:
             print('Removing:', filename)
             os.remove('%s/%s'%(logdir, filename))
     logname = time.strftime('%Y%m%dT%H%M%S')
