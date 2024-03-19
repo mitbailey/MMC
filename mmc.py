@@ -256,7 +256,7 @@ class MMC_Main(QMainWindow):
         self.max_pos = 600.0
         self.min_pos = -40.0
         self.model_index = 0
-        self.grating_density = 0 # grooves/mm
+        self.grating_density = 1200.0 # grooves/mm
 
         self.zero_ofst = 37.8461 # nm
         self.fw_offset = 0.0
