@@ -44,12 +44,12 @@ build_version = '0.7.1'
 
 # This is where we search for the Thorlabs Kinesis drivers. If they are not installed in this hard-coded directory, the program will crash. We should instead search multiple directories or somehow find it at runtime.
 
-print('\n\n*******\n')
-print(os.environ['PATH'])
-print('\n\n*******\n')
+# print('\n\n*******\n')
+# print(os.environ['PATH'])
+# print('\n\n*******\n')
 os.environ['PATH'] = os.path.dirname('C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.KCube.StepperMotor.dll') + ';' + os.environ['PATH'] # added to avoid OSError on dlopen from exe
-print(os.environ['PATH'])
-print('\n\n*******\n')
+# print(os.environ['PATH'])
+# print('\n\n*******\n')
 lib = ffi.dlopen('C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.KCube.StepperMotor.dll')
 # os.chdir(_old_curdir)
 

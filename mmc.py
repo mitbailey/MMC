@@ -1262,12 +1262,12 @@ class MMC_Main(QMainWindow):
         self.update_num_motion_controllers_ui(force=True)
 
         for i in range(self.num_detectors):
-            print(i)
+            # print(i)
             self.UIEL_dmw_detector_qcb[i].setCurrentIndex(devman_config['detectorIndices'][i])
             self.UIEL_dmw_detector_model_qcb[i].setCurrentIndex(devman_config['detectorModelIndices'][i])
 
         for i in range(self.num_motion_controllers):
-            print(i)
+            # print(i)
             self.UIEL_dmw_mtn_ctrl_qcb[i].setCurrentIndex(devman_config['controllerIndices'][i])     
             self.UIEL_dmw_mtn_ctrl_model_qcb[i].setCurrentIndex(devman_config['controllerModelIndices'][i])
 

@@ -65,6 +65,12 @@ def register():
     logdir = 'logs'
     if not os.path.isdir(logdir):
         os.makedirs(logdir)
+    else:
+        file_list = os.listdir(logdir)
+        # print(file_list[-10:])
+        for filename in file_list[:-10]:
+            print('Removing:', filename)
+            os.remove('%s/%s'%(logdir, filename))
     logname = time.strftime('%Y%m%dT%H%M%S')
     global __logfile
     __logfile = open('%s/%s_%s.txt'%(logdir, logname, version.__version__), 'a')

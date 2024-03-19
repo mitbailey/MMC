@@ -294,9 +294,9 @@ class Thorlabs: # Wrapper class for TLI methods
             self.poll_thread.start()
 
             ch_en_rv = self._EnableChannel()
-            log.info('Channel enabled: %d'%(ch_en_rv))
-            print('Channel enabled: %d'%(ch_en_rv))
-            print('\n\n')
+            log.debug('Channel enabled: %d'%(ch_en_rv))
+            # print('Channel enabled: %d'%(ch_en_rv))
+            # print('\n\n')
 
             # TODO: Remove blocking while homing in INIT
             # retval = self.home(False) 

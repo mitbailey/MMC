@@ -229,9 +229,9 @@ class MotionController:
                 self._motor_ctrl.set_stage('ZST25')
 
                 ch_en_rv = self._motor_ctrl._EnableChannel()
-                log.info('Channel enabled (MW): %d'%(ch_en_rv))
-                print('Channel enabled (MW): %d'%(ch_en_rv))
-                print('\n\n')
+                log.debug('Channel enabled (MW): %d'%(ch_en_rv))
+                # print('Channel enabled (MW): %d'%(ch_en_rv))
+                # print('\n\n')
 
             self._manual_backlash = 0 # KST101s have backlash built in
         elif self._model == MotionController.SupportedDevices[1]:
