@@ -1,6 +1,6 @@
 # McPherson Monochromator Controller Software
 
-PyQt-based GUI program to control monochromators and adjacent hardware. 
+PyQt-based GUI program to control monochromators, detectors, and related hardware. 
 
 # Pre-Requisites
 
@@ -15,14 +15,14 @@ If running directly via source code you will also need Python 3.9.7.
 
 # Compatible Hardware
 ## Motion Controllers
-- ThorLabs KST101 K-Cube (verified with ZFS25 stage)
-- McPherson 789A-4
-- McPherson 792
+- ThorLabs KST101 K-Cube with the ZFS25B (USB; Requires ThorLabs drivers)
+- McPherson 789A-4 (RS-232)
+- McPherson 792 (RS-232)
 
 ## Detectors
-- Keithley Instruments KI6485 Picoammeter
 - Stanford Research Systems SR810 Lock-In Amplifier
 - Stanford Research Systems SR860 Lock-In Amplifier
+- Keithley Instruments KI6485 Picoammeter (RS-232)
 
 ## In Progress
 - McPherson 747

@@ -180,7 +180,7 @@ class Thorlabs: # Wrapper class for TLI methods
         else:
             raise TypeError('Serial number can be an int or a list of int.')
 
-    class KSTX01: # Subclass for KST101/201 devices
+    class KST101_201: # Subclass for KST101/201 devices
         # API calls; possible examples.
         """
             get_status_n
@@ -224,16 +224,16 @@ class Thorlabs: # Wrapper class for TLI methods
         avail_stages['ZST25'] = 2184560.64
         @staticmethod
         def _ListDevices() -> list:
-            """List all available KSTX01 devices (including opened devices).
+            """List all available KST101/201 devices (including opened devices).
 
             Returns:
-                list: Serial numbers of available KSTX01 devices.
+                list: Serial numbers of available KST101/201 devices.
 
             NOTE: Backport listing opened devices feature to Thorlabs.ListDevicesAny() and Thorlabs.ListDevices()
             """
             devs = Thorlabs.ListDevices(Thorlabs.TYPE_KST101) # special case
             devs = devs + Thorlabs.ListDevices(Thorlabs.TYPE_KST201) # special case
-            _devs = Thorlabs.KSTX01.open_devices + devs
+            _devs = Thorlabs.KST101_201.open_devices + devs
             _devs = list(set(_devs))
 
             MAX_RETRIES = 20
@@ -243,7 +243,7 @@ class Thorlabs: # Wrapper class for TLI methods
                 # print('~RETRYING CONNECTION (A-%d)~'%(retries))
                 devs = Thorlabs.ListDevices(Thorlabs.TYPE_KST101) # special case
                 devs = devs + Thorlabs.ListDevices(Thorlabs.TYPE_KST201) # special case
-                _devs = Thorlabs.KSTX01.open_devices + devs
+                _devs = Thorlabs.KST101_201.open_devices + devs
                 _devs = list(set(_devs))
 
             if retries > 0:
@@ -253,14 +253,14 @@ class Thorlabs: # Wrapper class for TLI methods
         
         # Init stores the serial number
         def __init__(self, serialNumber: int, pollingIntervalMs: int = 100): # should also get the stage here
-            """Create an instance of Thorlabs KSTX01 Stepper Motor Controller
+            """Create an instance of Thorlabs KST101/201 Stepper Motor Controller
 
             Args:
-                serialNumber (int): Serial number of the KSTX01 Controller
+                serialNumber (int): Serial number of the KST101/201 Controller
 
             Raises:
                 ValueError: Invalid serial number
-                RuntimeError: Instance of KSTX01 exists with this serial number
+                RuntimeError: Instance of KST101/201 exists with this serial number
                 RuntimeError: Serial number not in device list
             """
             self.open = False
@@ -275,9 +275,9 @@ class Thorlabs: # Wrapper class for TLI methods
             else:
                 raise ValueError('Invalid serial %d: KST101 Serial starts with %s and KST201 starts with %s.'%(serialNumber, str(Thorlabs.TYPE_KST101), str(Thorlabs.TYPE_KST201)))
 
-            if serialNumber in Thorlabs.KSTX01.open_devices:
+            if serialNumber in Thorlabs.KST101_201.open_devices:
                 raise RuntimeError('Serial %d already in use.'%(serialNumber))
-            elif serialNumber not in Thorlabs.KSTX01._ListDevices():
+            elif serialNumber not in Thorlabs.KST101_201._ListDevices():
                 raise RuntimeError('Serial %d not in device list.'%(serialNumber))
             
             self.serial = str(serialNumber)
@@ -290,7 +290,7 @@ class Thorlabs: # Wrapper class for TLI methods
             self.poll_interval = pollingIntervalMs * 0.001
             self.mutex = threading.Lock()
             self.cond = threading.Condition(self.mutex)
-            self.poll_thread = threading.Thread(target = Thorlabs.KSTX01.poll_status, args=[weakref.proxy(self)])
+            self.poll_thread = threading.Thread(target = Thorlabs.KST101_201.poll_status, args=[weakref.proxy(self)])
             self.poll_thread.start()
 
             ch_en_rv = self._EnableChannel()
@@ -306,7 +306,7 @@ class Thorlabs: # Wrapper class for TLI methods
 
         # SCC Methods
         def _Open(self, pollingIntervalMs: int = 100) -> bool:
-            """Open connection to the KSTX01 Controller.
+            """Open connection to the KST101/201 Controller.
 
             Raises:
                 RuntimeError: Connection to device is already open.
@@ -315,12 +315,12 @@ class Thorlabs: # Wrapper class for TLI methods
             Returns:
                 bool: _description_
             """
-            if int(self.serial) in Thorlabs.KSTX01.open_devices:
+            if int(self.serial) in Thorlabs.KST101_201.open_devices:
                 raise RuntimeError('Device %d is already open.'%(int(self.serial)))
             ret = TLI_KST.Open(self.serial)
             if ret:
-                raise RuntimeError('KSTX01:%s(): %d (%s)'%(__funcname__(), ret, err_codes[ret]))
-            Thorlabs.KSTX01.open_devices.append(int(self.serial))
+                raise RuntimeError('KST101/201:%s(): %d (%s)'%(__funcname__(), ret, err_codes[ret]))
+            Thorlabs.KST101_201.open_devices.append(int(self.serial))
             self.open = True
             # Run self connection test.
             # ret = self._CheckConnection(self.serial)
@@ -342,11 +342,11 @@ class Thorlabs: # Wrapper class for TLI methods
                 self._Close()
         
         def _Close(self) -> None:
-            """Close connection to the KSTX01 Controller.
+            """Close connection to the KST101/201 Controller.
             """
             self._StopPolling()
             TLI_KST.Close(self.serial)
-            Thorlabs.KSTX01.open_devices.remove(int(self.serial))
+            Thorlabs.KST101_201.open_devices.remove(int(self.serial))
             self.serial = None
             self.open = False
 
@@ -403,7 +403,7 @@ class Thorlabs: # Wrapper class for TLI methods
             ser_buf = package_ffi.new('struct TLI_HardwareInformation *')
             ret = TLI_KST.GetHardwareInfoBlock(self.serial, ser_buf)
             if ret:
-                raise RuntimeError('KSTX01:%s(): %d (%s)'%(__funcname__(), ret, err_codes[ret]))
+                raise RuntimeError('KST101/201:%s(): %d (%s)'%(__funcname__(), ret, err_codes[ret]))
             return cdata_dict(ser_buf, package_ffi)
 
         def _StartPolling(self, rate_ms: int):
@@ -442,7 +442,7 @@ class Thorlabs: # Wrapper class for TLI methods
         def set_stage(self, stype: str):
             if stype not in KST_Stages:
                 raise RuntimeError('%s not a valid stage type'%(stype))
-            self._steps_per_value = Thorlabs.KSTX01.avail_stages[stype]
+            self._steps_per_value = Thorlabs.KST101_201.avail_stages[stype]
             ret = TLI_KST.SetStageType(self.serial, KST_Stages.index(stype))
             return ret
 
@@ -896,7 +896,7 @@ class Thorlabs: # Wrapper class for TLI methods
         # API calls; possible examples.
 
         def set_stage(self, stype: str):
-            self._steps_per_value = Thorlabs.KSTX01.avail_stages[stype]
+            self._steps_per_value = Thorlabs.KST101_201.avail_stages[stype]
             return True
 
         @property
@@ -1123,7 +1123,7 @@ if __name__ == '__main__':
     pprint(Thorlabs.GetDeviceInfo(serials))
     
     print("INITIALIZING DEVICE")
-    motor_ctrl = Thorlabs.KSTX01(serials[0])
+    motor_ctrl = Thorlabs.KST101_201(serials[0])
     sleep(1)
     
     print("LISTING DEVICES: ")

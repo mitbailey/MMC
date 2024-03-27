@@ -159,7 +159,7 @@ def new_motion_controller(dummy: bool, dev_model: str, man_port: str = None):
 class MotionController:
     """Provides a layer of abstraction for communication with motion controller drivers.
     """
-    SupportedDevices = ['TL KSTX01', 'MP 789A-4', 'MP 792']
+    SupportedDevices = ['TL KST101/201', 'MP 789A-4', 'MP 792']
 
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None, axis: int = 0, parent = None):
         """_summary_
@@ -213,15 +213,15 @@ class MotionController:
                 #     log.info(serials)
                 
                 if len(serials) == 0:
-                    log.error("No KSTX01 controller found.")
-                    raise RuntimeError('No KSTX01 controller found')
+                    log.error("No KST101/201 controller found.")
+                    raise RuntimeError('No KST101/201 controller found')
                 
                 try:
-                    self._motor_ctrl = tlkt.Thorlabs.KSTX01(serials[0])
+                    self._motor_ctrl = tlkt.Thorlabs.KST101_201(serials[0])
                 except Exception as e:
                     log.warn('Got exception:', e, ' Waiting 3 seconds then retrying connection.')
                     sleep(3)
-                    self._motor_ctrl = tlkt.Thorlabs.KSTX01(serials[0])
+                    self._motor_ctrl = tlkt.Thorlabs.KST101_201(serials[0])
                 
                 if (self._motor_ctrl._CheckConnection() == False):
                     log.error("Connection with motor controller failed.")
