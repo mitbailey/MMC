@@ -43,10 +43,13 @@ class KI_Picoammeter:
         """
 
         # Clamps samples between 2 and 20.
-        if samples < 2:
-            self.samples = 2
-        elif samples > 20:
-            self.samples = 20
+        # if samples < 2:
+        #     samples = 2
+        # elif samples > 20:
+        #     samples = 20
+
+        # self.samples = samples
+        self.set_samples(samples)
 
         # Default values for SafeSerial port.
         self.s = None
@@ -131,9 +134,11 @@ class KI_Picoammeter:
         """
 
         if samples < 2:
-            self.samples = 2
+            samples = 2
         elif samples > 20:
-            self.samples = 20
+            samples = 20
+
+        self.samples = samples
 
         self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
 
@@ -190,11 +195,13 @@ class KI_Picoammeter:
 
 class KI_Picoammeter_Dummy:
     def __init__(self, samples: int):
-        if samples < 2:
-            self.samples = 2
-        elif samples > 20:
-            self.samples = 20
+        # if samples < 2:
+        #     samples = 2
+        # elif samples > 20:
+        #     samples = 20
+        self.set_samples(samples)
 
+        # self.samples = samples
         self.s = None
         self.found = False
         self.port = -1
