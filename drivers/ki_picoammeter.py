@@ -229,10 +229,10 @@ class KI_Picoammeter_Dummy:
         pass
 
     def short_name(self):
-        return 'KI6485DUM'
+        return 'KI6485'
 
     def long_name(self):
-        return 'Keithley 6485 Picoammeter Dummy'
+        return 'Keithley 6485 Picoammeter'
 
 # test code
 

@@ -171,7 +171,7 @@ class Scan(QThread):
                 elif detector.short_name() == 'SR860':
                     mes = float(buf)
                 else:
-                    log.error('Unknown detector type.')
+                    log.error('Unknown detector type %s.'%(detector.short_name()))
                     return
 
                 self._xdata[i].append((((pos))))
