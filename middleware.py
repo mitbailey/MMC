@@ -58,7 +58,7 @@ matplotlib.use('Qt5Agg')
 # from matplotlib.figure import Figure
 
 # Custom Imports
-from drivers import _thorlabs_kst_advanced as tlkt
+from drivers import tl_kst101 as tlkt
 from drivers import ki_picoammeter as ki_pico
 from drivers import mp_789a_4 as mp789
 from drivers import mp_792 as mp792
@@ -198,12 +198,12 @@ class MotionController:
         # Initializes our motor_ctrl stuff depending on what hardware we're using.
         if self._model == MotionController.SupportedDevices[0]:
             if dummy:
-                serials = tlkt.Thorlabs.KSTDummy._ListDevices()
-                self._motor_ctrl = tlkt.Thorlabs.KSTDummy(serials[0])
+                serials = tlkt.KSTDummy.list_devices()
+                self._motor_ctrl = tlkt.KSTDummy(serials[0])
                 self._motor_ctrl.set_stage('ZST25')
             else:
                 log.info("Trying...")
-                serials = tlkt.Thorlabs.ListDevicesAnyRobust()
+                serials = tlkt.ThorlabsKST101.list_devices()
                 log.info(serials)
 
                 # retries = 0
@@ -217,21 +217,13 @@ class MotionController:
                     raise RuntimeError('No KST101/201 controller found')
                 
                 try:
-                    self._motor_ctrl = tlkt.Thorlabs.KST101_201(serials[0])
+                    self._motor_ctrl = tlkt.ThorlabsKST101(serials[0])
                 except Exception as e:
                     log.warn('Got exception:', e, ' Waiting 3 seconds then retrying connection.')
                     sleep(3)
-                    self._motor_ctrl = tlkt.Thorlabs.KST101_201(serials[0])
+                    self._motor_ctrl = tlkt.ThorlabsKST101(serials[0])
                 
-                if (self._motor_ctrl._CheckConnection() == False):
-                    log.error("Connection with motor controller failed.")
-                    raise RuntimeError('Connection with motor controller failed.')
                 self._motor_ctrl.set_stage('ZST25')
-
-                ch_en_rv = self._motor_ctrl._EnableChannel()
-                log.debug('Channel enabled (MW): %d'%(ch_en_rv))
-                # print('Channel enabled (MW): %d'%(ch_en_rv))
-                # print('\n\n')
 
             self._manual_backlash = 0 # KST101s have backlash built in
         elif self._model == MotionController.SupportedDevices[1]:

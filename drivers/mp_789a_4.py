@@ -23,13 +23,16 @@
 #
 
 # import serial
+from __future__ import annotations
 import time
 from utilities import ports_finder
 from utilities import safe_serial
 from threading import Lock
 from utilities import log
 
-class MP_789A_4:
+from .stagedevice import StageDevice
+
+class MP_789A_4(StageDevice):
     WR_DLY = 0.05
 
     def __init__(self, port):
@@ -91,6 +94,12 @@ class MP_789A_4:
 
         # Home the 789A-4.
         self.home()
+
+    def set_stage(self, stage):
+        pass
+
+    def get_stage(self):
+        return None
 
     def home(self)->bool:
         """ Homes the 789A-4.
@@ -381,8 +390,15 @@ class MP_789A_4:
 
         log.debug('func: long_name')
         return self.l_name
+    
+    def open(self):
+        pass
 
-class MP_789A_4_DUMMY:
+    def close(self):
+        self.s.close()
+
+
+class MP_789A_4_DUMMY(StageDevice):
     def __init__(self, port):
         self.s_name = 'MP789_DUMMY'
         self.l_name = 'McPherson 789A-4 (DUMMY)'

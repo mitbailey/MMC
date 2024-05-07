@@ -25,7 +25,7 @@
 import sys
 import glob
 import serial
-from drivers import _thorlabs_kst_advanced as tlkt
+from drivers import tl_kst101 as tlkt
 import serial.tools.list_ports
 
 # Unknown if this works on Linux.
@@ -81,12 +81,12 @@ struct TLI_DeviceInfo
 };
 """
 def find_apt_ports():
-    serials = tlkt.Thorlabs.ListDevicesAny()
+    serials = tlkt.ThorlabsKST101.list_devices()
 
     devices = []
     for dev in serials:
-        info = tlkt.Thorlabs.GetDeviceInfo(dev)
-        devices.append(str(dev) + ' ' + info['description'])
+        info = tlkt.ThorlabsKST101.get_device_info(dev)
+        devices.append(f'{info["serial_no"]} {info["model_no"]} {info["fw_ver"]}')
     
     return devices
 
