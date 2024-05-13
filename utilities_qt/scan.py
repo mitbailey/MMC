@@ -83,8 +83,8 @@ class Scan(QThread):
         if (self.other.autosave_data_bool):
             log.info('Autosaving')
             filetime = tnow.strftime('%Y%m%d%H%M%S')
-            for detector in self.other.detectors:
-                filename = '%s%s_%s_data.csv'%(self.other.data_save_directory, filetime, detector.short_name())
+            for i, detector in enumerate(self.other.detectors):
+                filename = '%s%s_%s_%d_data.csv'%(self.other.data_save_directory, filetime, detector.short_name(), i)
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 sav_files.append(open(filename, 'w'))
 
@@ -112,7 +112,7 @@ class Scan(QThread):
             self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
             log.info('109: Done with', prep_pos)
         except Exception as e:
-            log.error('Exception: Move Failyre - Main drive axis failed to move: %s'%(e))
+            log.error('Exception: Move Failure - Main drive axis failed to move: %s'%(e))
             self.SIGNAL_error.emit('Move Failure', 'Main drive axis failed to move: %s'%(e))
             self.SIGNAL_complete.emit()
             return

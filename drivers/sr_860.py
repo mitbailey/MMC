@@ -282,20 +282,20 @@ class SR860:
         return 'Stanford Research Systems 860 Lock-In Amplifier'
 
 class SR860_DUMMY:
-    def __init__(self, samples: int):
+    def __init__(self, man_port: str = None):
         pass
 
     def detect(self):
-        pass
+        return 3.7*5
 
     def __del__(self):
         pass
 
     def short_name(self):
-        return 'SR860DUM'
+        return 'SR860'
 
     def long_name(self):
-        return 'Stanford Research Systems 860 Lock-In Amplifier Dummy'
+        return 'Stanford Research Systems 860 Lock-In Amplifier'
 
 """ Command Set
 """

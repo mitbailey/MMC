@@ -195,6 +195,7 @@ class SR810:
         # No command seems to exist.
 
         # Do not set phasing to auto.
+        # Ok.
 
         log.info('Init complete')
 
@@ -251,20 +252,20 @@ class SR810:
         return 'Stanford Research Systems 810 Lock-In Amplifier'
 
 class SR810_DUMMY:
-    def __init__(self, samples: int):
+    def __init__(self, man_port: str = None):
         pass
 
     def detect(self):
-        pass
+        return 3.7
 
     def __del__(self):
         pass
 
     def short_name(self):
-        return 'SR810DUM'
+        return 'SR810'
 
     def long_name(self):
-        return 'Stanford Research Systems 810 Lock-In Amplifier Dummy'
+        return 'Stanford Research Systems 810 Lock-In Amplifier'
 
 """ Command Set
 """
