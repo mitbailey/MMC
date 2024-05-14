@@ -118,6 +118,8 @@ class UpdatePositionDisplays(QThread):
                     # mda_pos = '<b><i>%3.4f</i></b>'%(((self.other.current_position)) - self.other.zero_ofst)
                     # self.SIGNAL_update_main_axis_display.emit('<b><i>%3.4f</i></b>'%(((self.other.current_position)) - self.other.zero_ofst))
             except Exception as e:
+                if "float division by zero" in str(e):
+                    log.error("Has the grating density been set in the Machine Configuration window?")
                 log.error(str(e))
 
             try:
