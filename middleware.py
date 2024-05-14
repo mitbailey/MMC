@@ -438,10 +438,15 @@ class MotionController:
 class Detector:
     SupportedDevices = ['KI 6485', 'SR 810', 'SR 860']
 
+    # The detector middleware's detect() function returns the most recently detected data (because Qt needs a callback to update the graph's lines' data), but also the data is stored and can be retrieved en masse.
+
     def __init__(self, dummy: bool, dev_model: str, man_port: str = None):
         self.model = dev_model
         self.pa = None
         self._is_dummy = False
+
+        # TODO: PLACEHOLDER! Change this to an xarray dataset...
+        self.data = []
 
         if self.model == Detector.SupportedDevices[0]:
             if dummy:
@@ -468,12 +473,16 @@ class Detector:
             log.error('Detector device model "%s" is not supported.'%(dev_model))
             raise Exception
 
+    # TODO: vvv Probably not necessary.
     # TODO: Need a pinger to keep the ComPort open... here or in the drivers? Probably drivers.
 
     # Only function used in mmc.py (.pa.detect())
     def detect(self):
         # TODO: Fire out a trigger here.
-        return self.pa.detect()
+        mes = self.pa.detect()
+        # TODO: Placeholder append. Change this to an xarray dataset.
+        self.data.append(mes)
+        return mes
 
     def is_dummy(self):
         return self._is_dummy

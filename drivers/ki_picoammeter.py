@@ -166,7 +166,17 @@ class KI_Picoammeter:
                 log.error("ERROR #%d"%(int(float(spbuf[2]))))
         except Exception:
             log.error('Error: %s invalid output'%(buf))
-        return out
+
+        words = buf.split(',')
+        if len(words) != 3:
+            log.error('Error: detector output', buf)
+
+        mes = float(words[0][:-1]) # skips the A (unit suffix)
+        err = int(float(words[2])) # skip timestamp
+
+        mes *= 1e12 # Converts from A to pA
+
+        return mes
 
     def __del__(self):
         """ KI6485 destructor.

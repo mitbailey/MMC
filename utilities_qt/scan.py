@@ -150,30 +150,11 @@ class Scan(QThread):
 
             i=0
             for detector in self.other.detectors:
-                buf = detector.detect()
-                log.debug(buf)
+                mes = detector.detect()
+                log.debug(mes)
 
                 self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
-
-                if detector.short_name() == 'KI6485':
-                    # process buf
-                    words = buf.split(',') # split at comma
-                    if len(words) != 3:
-                        continue
-                    try:
-                        mes = float(words[0][:-1]) # skip the A (unit suffix)
-                        err = int(float(words[2])) # skip timestamp
-                    except Exception:
-                        continue
-                    mes = mes * 1e12 # convert to pA
-                elif detector.short_name() == 'SR810':
-                    mes = float(buf)
-                elif detector.short_name() == 'SR860':
-                    mes = float(buf)
-                else:
-                    log.error('Unknown detector type %s.'%(detector.short_name()))
-                    return
-
+                
                 self._xdata[i].append((((pos))))
                 self._ydata[i].append(self.other.mes_sign * mes)
                 self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
@@ -189,7 +170,7 @@ class Scan(QThread):
                     # process buf
                     # 1. split by \n
 
-                    buf = '%d,%e,%e,%d\n'%(pos, ((pos)) - self.other.zero_ofst, self.other.mes_sign * mes, err)
+                    buf = '%d,%e,%e\n'%(pos, ((pos)) - self.other.zero_ofst, self.other.mes_sign * mes)
                     sav_files[i].write(buf)
 
                 i += 1
