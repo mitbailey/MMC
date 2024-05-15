@@ -481,7 +481,7 @@ class Detector:
         # TODO: Fire out a trigger here.
         mes = self.pa.detect()
         # TODO: Placeholder append. Change this to an xarray dataset.
-        self.data.append(mes)
+        # self.data.append(mes)
         return mes
 
     def is_dummy(self):
