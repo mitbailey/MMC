@@ -54,16 +54,12 @@ class ThorlabsKST101(StageDevice):
 
     @staticmethod
     def get_device_info(ser: int):
-        dev = KinesisDevice(ser)
-        while True:
-            try:
-                dev.open()
-                ret = dev.get_device_info()._asdict()
-                dev.close()
-                return ret
-            except Exception as e:
-                log.error(f'Failed to get device info: {e}')
-                sleep(1)
+        try:
+            with KinesisDevice(ser) as dev:
+                return dev.get_device_info()._asdict()
+        except Exception as e:
+            log.error(f'Failed to get device info: {e}')
+            return None
 
     def __init__(self, ser=int):
         while True:

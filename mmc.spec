@@ -12,7 +12,7 @@ a = Analysis(
     # execute pyinstaller mmc.spec to compile exe directly 
     # if pyinstaller --onefile --windowed mmc.py is used, it is going to overwrite the spec file
     # and create a malfunctioning exe that does not include the ui file
-    hiddenimports=[],
+    hiddenimports=['PyQt5', 'numpy', 'plumbum', 'pyqtgraph', 'pyusb', 'pyvisa', 'rpyc'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

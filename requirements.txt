@@ -1,7 +1,6 @@
-cffi==1.14.6
 matplotlib==3.4.3
-nicelib==0.7.1
 numpy==1.20.3
 PyQt5==5.15.9
 PyQt5_sip==12.12.1
 pyserial==3.5
+pylablib==1.4.3
