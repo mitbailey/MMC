@@ -35,6 +35,9 @@ from .stagedevice import StageDevice
 class MP_789A_4(StageDevice):
     WR_DLY = 0.05
 
+    def backend(self)->str:
+        return 'MP_789A_4'
+
     def __init__(self, port):
         """ MP_789A_4 constructor.
 
@@ -399,6 +402,9 @@ class MP_789A_4(StageDevice):
 
 
 class MP_789A_4_DUMMY(StageDevice):
+    def backend(self)->str:
+        return 'MP_789A_4'
+    
     def __init__(self, port):
         self.s_name = 'MP789_DUMMY'
         self.l_name = 'McPherson 789A-4 (DUMMY)'

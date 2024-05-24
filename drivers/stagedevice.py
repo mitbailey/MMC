@@ -85,3 +85,7 @@ class StageDevice:
     @abstractmethod
     def long_name(self)->str:
         pass
+
+    @abstractmethod
+    def backend(self)->str:
+        pass

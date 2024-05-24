@@ -25,16 +25,13 @@
 # %% Imports
 from __future__ import annotations
 from .stagedevice import StageDevice
-import sys
 import time
-from typing import List
-import weakref
-import warnings
+from typing import Iterable, List
 from time import sleep
-import threading
 from utilities import log
-from pylablib.devices.Thorlabs import KinesisMotor, KinesisDevice, list_kinesis_devices
 from threading import Lock
+
+from .thorlabs_net import *
 
 
 def __funcname__():
@@ -45,37 +42,184 @@ def __funcname__():
 # TODO add back relative import
 
 
+def wrap_result(err_type=RuntimeError, err_msg=''):
+    def decorate(f):
+        def applicator(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except Exception as e:
+                err = err_type(f'{f.__name__}({args}, {kwargs}): {err_msg} {e}')
+                log.error(err)
+                raise err
+
+        return applicator
+
+    return decorate
+
+
+@wrap_result()
+def build_device_list():
+    return DeviceManagerCLI.BuildDeviceList()
+
+
+@wrap_result()
+def get_device_list() -> List[str]:
+    return list(DeviceManagerCLI.GetDeviceList())
+
+
 class ThorlabsKST101(StageDevice):
+    OPEN_DEVICES = {}
+    LOCK = Lock() # Lock for OPEN_DEVICES
+
+    def backend(self)->str:
+        return 'Thorlabs'
+
     def list_devices():
-        ret = list_kinesis_devices(filter_ids=True)
-        ret = [x for x, _ in ret]
-        ret = filter(lambda x: x[:2] == '26', ret)
-        return list(map(int, ret))
+        build_device_list()
+        return get_device_list()
 
     @staticmethod
-    def get_device_info(ser: int):
-        try:
-            with KinesisDevice(ser) as dev:
-                return dev.get_device_info()._asdict()
-        except Exception as e:
-            log.error(f'Failed to get device info: {e}')
-            return None
+    @wrap_result()
+    def _get_device_info(device) -> dict:
+        info = device.GetDeviceInfo()
+        return {
+            'typeId': info.DeviceType,
+            'model_no': info.Name,
+            'description': info.Description,
+            'serial_no': info.SerialNumberText,
+            'fw_ver': str(info.FirmwareVersion),
+        }
 
-    def __init__(self, ser=int):
-        while True:
+    @staticmethod
+    def get_device_info(serialNumber: int | str | Iterable) -> dict:
+        """Get Device Info for a given Thorlabs Serial Number.
+
+            Args:
+                typeID (int | list(int)): Thorlabs Serial Numbers.
+
+            Raises:
+                RuntimeError: Could not get device info for serial.
+
+            Returns:
+                dict: Device Information (struct TLI_DeviceInfo)
+        """
+
+        if isinstance(serialNumber, int):
+            ser = [str(serialNumber),]
+        elif isinstance(serialNumber, str):
+            ser = [serialNumber,]
+        elif isinstance(serialNumber, Iterable):
+            ser = list(map(str, serialNumber))
+        else:
+            raise TypeError('Serial number can be an int or a list of int.')
+
+        out = []
+        with ThorlabsKST101.LOCK:
+            for s in ser:
+                if s in ThorlabsKST101.OPEN_DEVICES:
+                    return ThorlabsKST101.OPEN_DEVICES[s]
+                try:
+                    device = KCubeStepper.CreateKCubeStepper(s)
+                    device.Connect(s)
+                    out.append(ThorlabsKST101._get_device_info(device))
+                    device.Disconnect()
+                except Exception as e:
+                    raise RuntimeError(
+                        f'Could not get device info for serial {s}. {e}')
+
+            if len(out) == 1:
+                return out[0]
+            return out
+
+    def __init__(self, ser=int, pollingIntervalMs: int = 250):
+        """Create an instance of Thorlabs KST101 Stepper Motor Controller
+
+            Args:
+                serialNumber (int): Serial number of the KST101 Controller
+
+            Raises:
+                ValueError: Invalid serial number
+                RuntimeError: Instance of KST101 exists with this serial number
+                RuntimeError: Serial number not in device list
+        """
+        self._dev = None
+        with ThorlabsKST101.LOCK:
             try:
-                self._dev = KinesisMotor(ser)
-                self._dev.open()
+                self._dev = KCubeStepper.CreateKCubeStepper(ser)
+                self.serial = str(ser)
+                self._initialize(pollingIntervalMs)
                 self._stage = None
-                break
+                info = self._get_device_info(self._dev)
+                ThorlabsKST101.OPEN_DEVICES[self.serial] = info
+                self._pos = None
             except Exception as e:
                 log.error(f'Failed to open device: {e}')
                 sleep(1)
-        self._mutex = Lock()
         # self._dev.open() # <-- Auto-called.
         # https://pylablib.readthedocs.io/en/latest/devices/Thorlabs_kinesis.html#stages-thorlabs-kinesis
         # https://pylablib.readthedocs.io/en/stable/devices/devices_basics.html
         # Section "Connection"
+
+    def _initialize(self, pollingIntervalMs: int = 250) -> bool:
+        """Open connection to the KST101 Controller.
+
+        Raises:
+            RuntimeError: Connection to device is already open.
+            RuntimeError: Error opening connection to device.
+
+        Returns:
+            bool: _description_
+        """
+        try:
+            ret = KCubeStepper.CreateKCubeStepper(self.serial)
+            ret.Connect(self.serial)
+            self._dev = ret
+            time.sleep(0.25)
+            use_file_settings = DeviceConfiguration.DeviceSettingsUseOptionType.UseFileSettings
+            device_config = ret.LoadMotorConfiguration(
+                ret.DeviceID, use_file_settings)
+            # Get homing settings
+            home_params = ret.GetHomingParams()
+        except Exception as e:
+            raise RuntimeError(
+                'Could not open connection to device %s: %s' % (self.serial, e))
+
+        # Run self connection test.
+        # ret = self._CheckConnection(self.serial)
+        ret = self._CheckConnection()
+        if ret == False:
+            self._Close()
+            raise RuntimeError('Device opened but connection test failed.')
+        self._StartPolling(pollingIntervalMs)
+        return True
+
+    @wrap_result()
+    def _Close(self) -> None:
+        """Close connection to the KST101 Controller.
+        """
+        with ThorlabsKST101.LOCK:
+            if self._dev is not None:
+                self._StopPolling()
+                self._dev.Disconnect()
+                del ThorlabsKST101.OPEN_DEVICES[self.serial]
+
+    @wrap_result()
+    def _StopPolling(self):
+        self._dev.StopPolling()
+
+    @wrap_result()
+    def _StartPolling(self, rate_ms: int):
+        self._dev.StartPolling(rate_ms)
+        return True
+
+    @wrap_result()
+    def _CheckConnection(self) -> bool:
+        """Check connection to the device.
+
+        Returns:
+            bool: True if the device is connected.
+        """
+        return DeviceManagerCLI.IsDeviceConnected(self.serial)
 
     def __enter__(self):
         return self
@@ -87,8 +231,7 @@ class ThorlabsKST101(StageDevice):
         return
 
     def close(self):
-        with self._mutex:
-            self._dev.close()
+        self._dev.close()
 
     def set_stage(self, stage: str):
         self._stage = stage
@@ -96,93 +239,49 @@ class ThorlabsKST101(StageDevice):
     def get_stage(self):
         return self._stage
 
-    def home(self):
-        with self._mutex:
-            try:
-                # <-- use the non-blocking version, since QThread is panicking.
-                self._dev.home(force=True, sync=True)
-            except Exception as e:
-                log.error(f'Failed to home: {e}')
-                return False
-            cond = 10
-            while cond:
-                cond -= 1
-                try:
-                    cond = self._dev.is_moving()
-                    if not cond:
-                        break
-                except Exception as e:
-                    log.error(f'Failed to check if moving: {e}')
-                sleep(0.1)
+    @wrap_result()
+    def home(self, timeout_ms: int = 60000):
+        self._dev.Home(timeout_ms)
 
+    @wrap_result()
     def get_position(self):
-        with self._mutex:
-            cond = 10
-            while cond:
-                cond -= 1
-                try:
-                    return self._dev.get_position()
-                except Exception as e:
-                    log.error(f'Failed to get position: {e}')
-                    sleep(0.016)
+        state = self._dev.State
+        pos = self._dev.Position_DeviceUnit
+        if state == MotorStates.Idle: # idle
+            self._pos = pos
+        # log.trace(f'Position: {self._pos} | {pos}')
+        ret = 0 if self._pos is None else self._pos
+        return ret
 
+    @wrap_result()
     def stop(self):
-        with self._mutex:
-            cond = 10
-            while cond:
-                cond -= 1
-                try:
-                    self._dev.stop()
-                    break
-                except Exception as e:
-                    log.error(f'Failed to stop: {e}')
-                    sleep(0.016)
+        self._dev.Stop()
+
+    @wrap_result()
+    def _get_state(self):
+        return self._dev.State
 
     def is_moving(self):
-        with self._mutex:
-            cond = 10
-            while cond:
-                cond -= 1
-                try:
-                    return self._dev.is_moving()
-                except Exception as e:
-                    log.error(f'Failed to check if moving: {e}')
-                    sleep(0.016)
+        state = self._get_state()
+        return (state == MotorStates.Moving) or (state == MotorStates.Homing)
 
     def is_homing(self):
-        with self._mutex:
-            cond = 10
-            while cond:
-                cond -= 1
-                try:
-                    return self._dev.is_homing()
-                except Exception as e:
-                    log.error(f'Failed to check if homing: {e}')
-                    sleep(0.016)
+        state = self._get_state()
+        return state == MotorStates.Homing
 
-    def move_to(self, position: int, backlash: int = None):
-        with self._mutex:
-            cond = 10
-            while cond:
-                cond -= 1
-                try:
-                    self._dev.move_to(position)
-                    break
-                except Exception as e:
-                    log.error(f'Failed to move to position: {e}')
-                    sleep(0.016)
+    @wrap_result()
+    def move_to(self, position: int, backlash: int = None, timeout_ms: int = 60000):
+        position = int(position)
+        position = Int32(position)
+        self._dev.MoveTo_DeviceUnit(position, timeout_ms)
 
-    def move_relative(self, steps: int):
-        with self._mutex:
-            cond = 10
-            while cond:
-                cond -= 1
-                try:
-                    self._dev.move_by(steps)
-                    break
-                except Exception as e:
-                    log.error(f'Failed to move relative: {e}')
-                    sleep(0.016)
+    @wrap_result()
+    def move_relative(self, steps: int, timeout_ms: int = 60000):
+        steps = int(steps)
+        if steps == 0:
+            return
+        movdir = MotorDirection.Forward if steps > 0 else MotorDirection.Backward
+        self._dev.MoveRelative_DeviceUnit(movdir, Int32(abs(steps)), timeout_ms)
 
     def short_name(self):
         return 'KSTX01'
@@ -194,6 +293,9 @@ class ThorlabsKST101(StageDevice):
 
 
 class KSTDummy(StageDevice):
+    def backend(self) -> str:
+        return 'Thorlabs'
+    
     def __init__(self, port):
         self.s_name = 'MP789_DUMMY'
         self.l_name = 'McPherson 789A-4 (DUMMY)'

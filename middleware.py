@@ -309,6 +309,14 @@ class MotionController:
             bool: _description_
         """
         return self.is_dummy
+    
+    def backend(self)->str:
+        """Returns the backend of the device.
+
+        Returns:
+            str: _description_
+        """
+        return self._motor_ctrl.backend()
 
     # Commands.    
     def home(self, blocking: bool = False) -> None:
@@ -317,6 +325,7 @@ class MotionController:
         Args:
             blocking (bool, optional): Whether to block or not; will spawn a thread if blocking is False. Defaults to False.
         """
+        log.trace('Homing %s.'%(self.short_name()))
         if self._homing:
             raise Exception("Already homing!")
         self._homing = True

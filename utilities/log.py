@@ -26,6 +26,7 @@ from utilities import version
 import time
 import os
 import inspect
+from termcolor import colored
 
 LOG_LEVEL = 0
 MAX_DIR_SIZE = 1000 # MB
@@ -115,13 +116,22 @@ def fatal(*arg, **end):
 def _out(_l, _m, _t = False):
     global __logfile
 
+    cstack = ''
     if _t:
-        callerframerecord = inspect.stack()[3]
-        __FILE__, __LINE__, __FUNC__ = inspect.getframeinfo(callerframerecord[0])[0:3]
-        __FILE__ = __FILE__.split(sep='\\')[-1]
-        __FLF__ = '[%s:%d | %s]'%(__FILE__, __LINE__, __FUNC__)
-        __logfile.write('Caller: %s, '%(__FLF__))
-        print('Caller: %s, '%(__FLF__), end='')
+        stack = inspect.stack()
+        objs = []
+        for i in range(2, len(stack)):
+            callerframerecord = stack[i]
+            __FILE__, __LINE__, __FUNC__ = inspect.getframeinfo(callerframerecord[0])[0:3]
+            __FILE__ = __FILE__.split(sep='\\')[-1]
+            objs.append('[%s:%d | %s]'%(__FILE__, __LINE__, __FUNC__))
+        cstack = '->\n\t'.join(objs[::-1])
+
+        # callerframerecord = inspect.stack()[3]
+        # __FILE__, __LINE__, __FUNC__ = inspect.getframeinfo(callerframerecord[0])[0:3]
+        # __FILE__ = __FILE__.split(sep='\\')[-1]
+        # __FLF__ = '[%s:%d | %s]'%(__FILE__, __LINE__, __FUNC__)
+        # cstack = 'Caller: %s, '%(__FLF__)
 
     callerframerecord = inspect.stack()[2]
     __FILE__, __LINE__, __FUNC__ = inspect.getframeinfo(callerframerecord[0])[0:3]
@@ -129,17 +139,32 @@ def _out(_l, _m, _t = False):
 
     __FLF__ = ('[%s:%d | %s]'%(__FILE__, __LINE__, __FUNC__)).ljust(50, ' ')
 
-    if len(_m) == 1:
-        __logfile.write('%s %s %s\n'%(__FLF__, _l, _m[0]))
-        print('%s %s %s'%(__FLF__, _l, _m[0]))
-    elif len(_m) > 1:
-        __logfile.write('%s %s'%(__FLF__, _l))
-        print('%s %s'%(__FLF__, _l), end='')
-        for i in range(len(_m)):
-            __logfile.write(' %s'%(_m[i]))
-            print(' %s'%(_m[i]), end='')
-        __logfile.write('\n')
-        print()
+    out = '%s %s'%(_l, __FLF__)
+    if len(cstack) > 0:
+        out += ' ' + cstack
+    if len(_m) > 0:
+        out += ' ' + str(_m[0])
+        if len(_m) > 1:
+            for i in range(1, len(_m)):
+                out += ' %s'%(_m[i])
+            out += '\n'
+
+    __logfile.write(out)
+    out = out.lstrip()
+    out = ''.join(out.split(_l))
+    if _l == '[DEBUG]':
+        col = colored(_l, 'blue')
+    elif _l == '[TRACE]':
+        col = colored(_l, 'grey', attrs=['bold', 'blink'])
+    elif _l == '[INFO ]':
+        col = colored(_l, 'green')
+    elif _l == '[WARN ]':
+        col = colored(_l, 'yellow')
+    elif _l == '[ERROR]':
+        col = colored(_l, 'red')
+
+    print(col, end='')
+    print(out, end='\n')
 
     __logfile.flush()
 

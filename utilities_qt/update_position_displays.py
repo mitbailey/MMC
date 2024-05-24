@@ -88,11 +88,12 @@ class UpdatePositionDisplays(QThread):
 
                         if home_status:
                             # Detect if the device is saying its homing, but its not actually moving.
-                            if self.other.current_position == self.other.previous_position:
-                                self.other.immobile_count += 1
-                            if self.other.immobile_count >= 3:
-                                self.other.motion_controllers.main_drive_axis.home()
-                                self.other.immobile_count = 0
+                            if self.other.motion_controllers.main_drive_axis.backend() != "Thorlabs":
+                                if self.other.current_position == self.other.previous_position:
+                                    self.other.immobile_count += 1
+                                if self.other.immobile_count >= 3:
+                                    self.other.motion_controllers.main_drive_axis.home()
+                                    self.other.immobile_count = 0
 
                         if not home_status:
                             # enable stuff here

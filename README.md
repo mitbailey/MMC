@@ -53,29 +53,10 @@ Additionally, you may need to manually install PyQtWebEngine:
 `cd MMC`  
 `pipenv install requests`  
 
-Then, if using conda:
-```
-pipenv run conda install --yes --file requirements.txt
-pipenv run pip install pyqt5
-```
-otherwise
-```
-pip install -r requirements.txt
-```
-
 ## Compilation
 `pipenv run pyinstaller mmc.spec`
 
 Outputs MMC/dist/MMCS/MMCS.exe
-
-Note: If the unhandled exception "ImportError: DLL load failed while importing _path: The specified module could not be found." occurs when running the executable (visible only when run in Command Prompt), or the error "ModuleNotFoundError: No module named 'numba'" appears when attempting to run the code directly, the following process should fix the issue:
-```
-pip uninstall numpy
-pip uninstall numba
-pip install llvmlite --ignore-installed
-pip install numba
-```
-
 
 # Compilation (One File - Slow Startup, 400 MB)
 
@@ -113,24 +94,3 @@ GUI <-> Middleware <-> Drivers <-> Hardware
 - The GUI calls Middleware functions and is the layer the user directly interacts with. The GUI simply knows that it exists above some Monochromator with some type of Motion Controller(s) and detector(s).
 - The middleware allows the GUI to be agnostic to specific hardware and hardware implementations, providing the GUI layer with consistent functions to interface with across all forms of motion control and detection. The Middleware determines which drivers must be used.
 - The drivers interact directly with the motion controller and detector and are specific to their model / type.
-
-# Notes
-
-Making a venv / using it
-```
-python -m venv mmc-venv
-mmc-venv\Scripts\activate
-
-python mmc.py
-> Get PyQt5 not found module issue
-
-pip install PyQt5==5.15.9
-pip install numpy==1.20.3
-pip install matplotlib==3.4.3
-pip install pyserial==3.5
-pip install pylablib==1.4.3
-pip install PyQtWebEngine
-
-
-
-```

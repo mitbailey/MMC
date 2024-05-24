@@ -24,10 +24,14 @@
 
 import sys
 import glob
-from time import sleep, perf_counter
 import serial
 from drivers import tl_kst101 as tlkt
 import serial.tools.list_ports
+
+from time import perf_counter_ns
+
+APT_START = None
+APT_DEVICELIST = []
 
 # Unknown if this works on Linux.
 def find_com_ports():
@@ -81,30 +85,24 @@ struct TLI_DeviceInfo
     short maxChannels;
 };
 """
-
-apt_port_last_access = None
-apt_port_last_result = []
-
 def find_apt_ports():
-    global apt_port_last_access, apt_port_last_result
-    if apt_port_last_access is None:
-        apt_port_last_access = perf_counter()
+    global APT_START, APT_DEVICELIST
+    if APT_START is None:
+        APT_START = perf_counter_ns()
     else:
-        now = perf_counter()
-        old = apt_port_last_access
-        if now - old < 5:
-            return apt_port_last_result
-        else:
-            apt_port_last_access = now
-        
+        now = perf_counter_ns()
+        print("Time since last APT port search: %d ns"%(now - APT_START))
+        if (now - APT_START)*1e-9 < 0.25:
+            return APT_DEVICELIST
+        APT_START = now
+
     serials = tlkt.ThorlabsKST101.list_devices()
 
     devices = []
     for dev in serials:
         info = tlkt.ThorlabsKST101.get_device_info(dev)
-        if info is not None:
-            devices.append(f'{info["serial_no"]} {info["model_no"]} {info["fw_ver"]}')
-    apt_port_last_result = devices
+        devices.append(f'{info["serial_no"]} {info["model_no"]} {info["fw_ver"]}')
+    APT_DEVICELIST = devices
     return devices
 
 def generate_virtual_ports(num):
