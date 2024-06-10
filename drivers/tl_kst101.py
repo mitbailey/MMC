@@ -241,6 +241,7 @@ class ThorlabsKST101(StageDevice):
 
     @wrap_result()
     def home(self, timeout_ms: int = 60000):
+        log.info('Beginning home...')
         self._dev.Home(timeout_ms)
 
     @wrap_result()

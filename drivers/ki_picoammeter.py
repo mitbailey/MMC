@@ -29,6 +29,7 @@ from time import sleep
 from utilities import ports_finder
 from utilities import safe_serial
 from utilities import log
+import weakref
 
 class KI_Picoammeter:
     def __init__(self, samples: int, man_port: str = None):
@@ -41,15 +42,6 @@ class KI_Picoammeter:
         Raises:
             RuntimeError: Raised if the KI 6485 could not be found.
         """
-
-        # Clamps samples between 2 and 20.
-        # if samples < 2:
-        #     samples = 2
-        # elif samples > 20:
-        #     samples = 20
-
-        # self.samples = samples
-        self.set_samples(samples)
 
         # Default values for SafeSerial port.
         self.s = None
@@ -65,6 +57,10 @@ class KI_Picoammeter:
             
             # Get a SafeSerial connection on the port.
             s = safe_serial.SafeSerial(port, 9600, timeout=1)
+            try:
+                weakref.finalize(s, safe_serial.safe_close, s)
+            except Exception:
+                log.error('Could not finalize SafeSerial connection.')
 
             log.info('Beginning search for Keithley Model 6485...')
             log.info('Trying port %s.'%(port))
@@ -122,7 +118,8 @@ class KI_Picoammeter:
 
         self.s.write(b'AVER ON\r')
         self.s.write(b'AVER:TCON REP\r')
-        self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
+        # self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
+        self.set_samples(samples)
 
         log.debug('Init complete')
 

@@ -30,6 +30,11 @@ from utilities import log
 
 safe_ports = {}
 
+# Likely unnecessary.
+def safe_close(port):
+    log.info('safe_close: Closing port:', port)
+    port.close()
+
 # The overall idea here is to implement one mutex lock per port. A direct call to SafeSerial would create an arbitrary number of locks per port. Calling this function ensures that only have one lock per port by returning the SafeSerial object in charge of the port if we already have one, or creating a new one if we do not.
 def SafeSerial(port: str, baudrate: int, timeout: float = ...):
     if port not in safe_ports.keys():
@@ -41,8 +46,30 @@ class _SafeSerial:
     READ_SIZE = 128
 
     def __init__(self, port: str, baudrate: int, timeout: float = ...):
-        self._s = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
+        print('Creating SafeSerial on port:', port)
+
+        retries = 0
+        while True:
+            try:
+                self._s = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
+                break
+            except Exception as e:
+                log.warn('Failed to create SafeSerial on port ', port, 'because error:', e)
+                retries += 1         
+                time.sleep(0.25)
+                if retries > 10:
+                    log.error('Failed to create SafeSerial on port ', port, 'after 10 retries. Last error was:', e)
+                    return
+                continue
+
         self._m = Lock()
+        # if self._s.is_open:
+        #     log.warn('Port is already open. Closing and reopening.')
+        #     self._s.close()
+        #     time.sleep(0.25)
+        # self._s.open()
+
+        log.debug('SafeSerial created on port:', port)
 
     def __del__(self):
         log.info('SafeSerial destructor called.')
