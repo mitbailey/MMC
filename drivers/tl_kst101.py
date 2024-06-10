@@ -256,7 +256,8 @@ class ThorlabsKST101(StageDevice):
 
     @wrap_result()
     def stop(self):
-        self._dev.Stop(10000)
+        self._dev.Stop(0)
+        time.sleep(5)
         self.home() # KST201 requires a homing after a stop
 
     @wrap_result()

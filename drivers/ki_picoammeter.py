@@ -158,18 +158,18 @@ class KI_Picoammeter:
             return out
         out = buf
         spbuf = buf.split(',')
-        try:
-            if int(float(spbuf[2])) != 2:
-                log.error("ERROR #%d"%(int(float(spbuf[2]))))
-        except Exception:
-            log.error('Error: %s invalid output'%(buf))
+        # try:
+        #     if int(float(spbuf[2])) != 2:
+        #         log.error("ERROR #%d"%(int(float(spbuf[2]))))
+        # except Exception:
+        #     log.error('Error: %s invalid output'%(buf))
 
         words = buf.split(',')
         if len(words) != 3:
             log.error('Error: detector output', buf)
 
         mes = float(words[0][:-1]) # skips the A (unit suffix)
-        err = int(float(words[2])) # skip timestamp
+        # err = int(float(words[2])) # skip timestamp
 
         mes *= 1e12 # Converts from A to pA
 
