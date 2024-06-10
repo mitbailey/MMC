@@ -1755,8 +1755,6 @@ class MMC_Main(QMainWindow):
         if self.motion_controllers.sample_angle_axis is not None:
             self.motion_controllers.sample_angle_axis.stop()
 
-        # TODO: Somehow stop the system.
-
     def move_to_position_button_pressed(self):
         self.moving = True
         self.disable_movement_sensitive_buttons(True)

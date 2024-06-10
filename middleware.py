@@ -430,6 +430,8 @@ class MotionController:
     def stop(self):
         self._motor_ctrl.stop()
 
+        self._moving = False
+
     def port_name(self) -> str:
         return self._port
 
