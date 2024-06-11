@@ -1739,8 +1739,12 @@ class MMC_Main(QMainWindow):
     def stop_master_button_pressed(self):
         log.info('Master stop button pressed.')
 
+        # TODO: Fix the way we handle scan repeats. Right now we decrement the actual spinbox - this is dumb. Store the value internally, then zero it out when we stop a scan.
+        self.scan_repeats.setValue(0)
+
         if self.scanRunning:
             self.scanRunning = False
+            return
 
         if self.motion_controllers.main_drive_axis is not None:
             self.motion_controllers.main_drive_axis.stop()

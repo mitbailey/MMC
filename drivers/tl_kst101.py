@@ -256,9 +256,11 @@ class ThorlabsKST101(StageDevice):
 
     @wrap_result()
     def stop(self):
+        # TODO: Figure out if there is another method, besides Homing, that will re-enable movement.
+        # TODO: Scan stop should be different from an All Stop - right now theyre all the same, this needs to change such that scan stops wont require a homing.
         self._dev.Stop(0)
         time.sleep(5)
-        self.home() # KST201 requires a homing after a stop
+        self.home() # KST201 requires a homing after a stop, otherwise it doesnt move at all.
 
     @wrap_result()
     def _get_state(self):
