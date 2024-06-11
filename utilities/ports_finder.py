@@ -91,7 +91,7 @@ def find_apt_ports():
         APT_START = perf_counter_ns()
     else:
         now = perf_counter_ns()
-        print("Time since last APT port search: %d ns"%(now - APT_START))
+        print("Time since last APT port search: %d ns %f ms"%(now - APT_START, (now - APT_START) * 1e-6))
         if (now - APT_START)*1e-9 < 0.25:
             return APT_DEVICELIST
         APT_START = now

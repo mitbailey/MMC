@@ -386,7 +386,10 @@ class MMC_Main(QMainWindow):
             self.dev_man_win_enabled = True
             self.device_timer = QTimer()
             self.device_timer.timeout.connect(self.devman_list_devices)
-            self.device_timer.start(1000)
+            
+            # Devices are checked for every this many milliseconds.
+            # TODO: Is this causing the lag when a KST201 is connected? Fix this if so. It may need a longer timeout than 1000 ms.
+            self.device_timer.start(10000)
 
     # Called when the main GUI window is closed.
     def closeEvent(self, event):
@@ -508,6 +511,7 @@ class MMC_Main(QMainWindow):
             self.connect_devices_thread.start()
     
     def cancel_connect_devices(self):
+        # TODO: Implement device connection cancelation.
         log.warn('Cancelling device connections (NOT YET IMPLEMENTED).')
 
     def _connect_devices(self, detectors_connected, mtn_ctrls_connected):
