@@ -146,27 +146,53 @@ class KI_Picoammeter:
             _type_: The detector's output value.
         """
 
-        out = ''
-        self.s.write(b'READ?\r')
-        retry = 10
-        while retry:
-            buf = self.s.read(128).decode('utf-8').rstrip()
-            if len(buf):
-                break
-            retry -= 1
-        if not retry and len(buf) == 0:
-            return out
-        out = buf
-        spbuf = buf.split(',')
-        # try:
-        #     if int(float(spbuf[2])) != 2:
-        #         log.error("ERROR #%d"%(int(float(spbuf[2]))))
-        # except Exception:
-        #     log.error('Error: %s invalid output'%(buf))
+        num_read_err_flag = False
+        retry_num = 10
+        while num_read_err_flag and (retry_num > 0):
+            num_read_err_flag = False
+            retry_num -= 1
 
-        words = buf.split(',')
-        if len(words) != 3:
-            log.error('Error: detector output', buf)
+            out = ''
+            self.s.write(b'READ?\r')
+            retry_ser = 10
+            while retry_ser:
+                buf = self.s.read(128).decode('utf-8').rstrip()
+                if len(buf):
+                    break
+                retry_ser -= 1
+            if not retry_ser and len(buf) == 0:
+                return out
+            out = buf
+            spbuf = buf.split(',')
+            # try:
+            #     if int(float(spbuf[2])) != 2:
+            #         log.error("ERROR #%d"%(int(float(spbuf[2]))))
+            # except Exception:
+            #     log.error('Error: %s invalid output'%(buf))
+
+            # OK:
+            # -5.758246E-07A,+2.645176E+03,+2.000000E+00\r
+            # Not OK:
+            # -2.158728E-06A,+2.647697
+            # Not OK (fatal):
+            # E+03,+2.000000E+00\r-5.428587E-06A,+2.648818E+03,+2.000000E+00\r
+
+            words = buf.split(',')
+            if len(words) != 3:
+                log.warn('Error: The detector output an incorrect number of words (', len(words), ', expected 3). The output was:', buf)
+                num_read_err_flag = True
+            else:
+                try:
+                    mes = float(words[0][:-1]) # skips the A (unit suffix)
+                except Exception as e:
+                    log.warn('Error: Could not convert the detector output to a float. The output was:', buf)
+                    log.warn('num_read_err_flag:', num_read_err_flag, '; retry_num:', retry_num)
+                    num_read_err_flag = True
+
+        if num_read_err_flag:
+            err_val = -999.0
+            log.error('ERROR: Failed to get a proper value from the detector. Substituting %d for the value. This should never happen, and indicates a significant failure of detector-program communications. Please send the log file to the developer immediately.'%(err_val))
+            return err_val
 
         mes = float(words[0][:-1]) # skips the A (unit suffix)
         # err = int(float(words[2])) # skip timestamp
