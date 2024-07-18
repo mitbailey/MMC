@@ -139,6 +139,7 @@ def find_all_ports():
 # MotionController
 # Genericizes the type of motor controller.
 def new_motion_controller(dummy: bool, dev_model: str, man_port: str = None):
+    log.debug('new_motion_controller called.')
     devs = []
     if dev_model == MotionController.SupportedDevices[2]:
         # Multi-axis device.
@@ -154,6 +155,8 @@ def new_motion_controller(dummy: bool, dev_model: str, man_port: str = None):
     else:
         # Single-axis device.
         devs.append(MotionController(dummy, dev_model, man_port))
+        log.debug("MotionController __init__ called returned.")
+    log.debug('devs:', devs)
     return devs
 
 class MotionController:
@@ -177,6 +180,8 @@ class MotionController:
             Exception: _description_
             RuntimeError: _description_
         """
+        log.debug("MotionController __init__ called.")
+
         self._max_backlash = 8000
         self._model = dev_model
         self._manual_backlash = 1 # 0 = no manual backlash, 1 = manual backlash
@@ -225,6 +230,7 @@ class MotionController:
                 
                 self._motor_ctrl.set_stage('ZST25')
 
+            log.debug('Checkpoint.')
             self._manual_backlash = 0 # KST101s have backlash built in
         elif self._model == MotionController.SupportedDevices[1]:
             if dummy:
@@ -420,9 +426,10 @@ class MotionController:
             backlash = self._max_backlash
 
         if self._multi_axis:
-            retval = self._motor_ctrl.move_to((position * self._steps_per_value) + (self._offset * self._steps_per_value), self._axis, backlash)
+            retval = self._motor_ctrl.move_to(int((position * self._steps_per_value) + (self._offset * self._steps_per_value)), self._axis, backlash)
         else:
-            retval = self._motor_ctrl.move_to((position * self._steps_per_value) + (self._offset * self._steps_per_value), backlash)
+            log.debug('Single-axis valid case.')
+            retval = self._motor_ctrl.move_to(int((position * self._steps_per_value) + (self._offset * self._steps_per_value)), backlash)
 
         self._moving = False
         return retval

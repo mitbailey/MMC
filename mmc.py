@@ -2029,6 +2029,7 @@ class MMC_Main(QMainWindow):
 
         # if steps_per_nm is None:
         #     steps_per_nm = 0.0
+        steps_per_nm = self.motion_controllers.main_drive_axis.get_steps_per_value()
         if steps_per_nm == 0.0:
             self.UIE_mcw_steps_per_nm_ql.setText('NOT CALCULATED')
         else:

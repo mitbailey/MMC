@@ -240,7 +240,7 @@ class ThorlabsKST101(StageDevice):
         return self._stage
 
     @wrap_result()
-    def home(self, timeout_ms: int = 60000):
+    def home(self, timeout_ms: int = 90000):
         log.info('Beginning home...')
         self._dev.Home(timeout_ms)
 
@@ -276,9 +276,27 @@ class ThorlabsKST101(StageDevice):
 
     @wrap_result()
     def move_to(self, position: int, backlash: int = None, timeout_ms: int = 60000):
-        position = int(position)
-        position = Int32(position)
-        self._dev.MoveTo_DeviceUnit(position, timeout_ms)
+        # "Cannot move to requested position" likely means it wasn't homed and is trying to move beyond its limit.
+
+        # retries = 0
+        # while True:
+            # log.info(f'{retries}: Requesting a move to {position}, (int) {int(position)}, (Int32) {Int32(position)} with timeout_ms {timeout_ms}.')
+        log.info(f'Requesting a move to {position} with timeout_ms {timeout_ms}.')
+        # position = int(position)
+        # position = Int32(position)
+
+        try:
+            self._dev.MoveTo_DeviceUnit(position, timeout_ms)
+            # self._dev.MoveTo(Decimal(26.0), timeout_ms)
+        except Exception as e:
+            log.error(f'KST failed to move to position {position} because: {e}')
+            if 'Cannot move to requested position' in str(e):
+                log.error(f"The position index {position} may be beyond the motor's maximum limit and it is therefore unable to move further.")
+            # time.sleep(1)
+            # retries += 1
+            # log.info(f'Attempting retry {retries} for this move command.')
+            #     continue
+            # break
 
     @wrap_result()
     def move_relative(self, steps: int, timeout_ms: int = 60000):
@@ -298,6 +316,13 @@ class ThorlabsKST101(StageDevice):
 
 
 class KSTDummy(StageDevice):
+    WR_DLY = 0.1
+
+    def list_devices():
+        devlist = []
+        devlist.append('DUMMY_DEVICE_1')
+        return devlist
+
     def backend(self) -> str:
         return 'Thorlabs'
     

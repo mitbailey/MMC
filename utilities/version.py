@@ -24,4 +24,4 @@
 
 __short_name__ = 'MMCS'
 __long_name__ = 'McPherson Monochromator Control Software'
-__version__ = '0.8.22'
+__version__ = '0.8.22d'

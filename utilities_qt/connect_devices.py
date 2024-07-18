@@ -125,7 +125,10 @@ class ConnectDevices(QThread):
                     self.SIGNAL_status.emit("Connecting and homing motion controller #%d on port %s."%(i, self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
                     log.info(self.dummy, self.other.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
                     
+                    log.debug('About to call new_motion_controller().')
                     new_mtn_ctrls = mw.new_motion_controller(self.dummy, self.other.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
+                    
+                    log.debug('new_motion_controller() returned.')
                     
                     for ctrlr in new_mtn_ctrls:
                         log.debug('New axis:', ctrlr)
