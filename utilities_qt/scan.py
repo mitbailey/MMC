@@ -145,16 +145,20 @@ class Scan(QThread):
                 log.error('QMessageBox.Critical: Move Failure - Main drive axis failed to move: %s'%(e))
                 QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
                 pass
+            log.debug("Getting main drive axis position.")
             pos = self.other.motion_controllers.main_drive_axis.get_position()
+            log.debug("Emitting status update signal SAMPLING.")
             self.SIGNAL_status_update.emit("SAMPLING")
 
             i=0
+            log.debug("Beginning loop.")
             for detector in self.other.detectors:
                 mes = detector.detect()
                 log.debug(mes)
 
                 self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
                 
+                log.debug("Appending data.")
                 self._xdata[i].append((((pos))))
                 self._ydata[i].append(self.other.mes_sign * mes)
                 self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
@@ -162,6 +166,7 @@ class Scan(QThread):
                 log.debug(sav_files)
                 if len(sav_files) > 0 and sav_files[i] is not None:
                     if idx == 0:
+                        log.debug(f"Save files [{i}]")
                         sav_files[i].write('# DATA RECORDED IN SOFTWARE VERSION: %sv%s\n'%(version.__short_name__, version.__version__))
                         sav_files[i].write('# %s\n'%(tnow.strftime('%Y-%m-%d %H:%M:%S')))
                         sav_files[i].write('# Steps/mm: %f\n'%(self.other.motion_controllers.main_drive_axis.get_steps_per_value()))

@@ -146,6 +146,8 @@ class KI_Picoammeter:
             _type_: The detector's output value.
         """
 
+        log.debug("Picoammeter detect function called.")
+
         num_read_err_flag = False
         retry_num = 10
         words = None
@@ -154,6 +156,7 @@ class KI_Picoammeter:
             retry_num -= 1
 
             out = ''
+            buf = ''
             self.s.write(b'READ?\r')
             retry_ser = 10
             while retry_ser:
@@ -164,7 +167,7 @@ class KI_Picoammeter:
             if not retry_ser and len(buf) == 0:
                 return out
             out = buf
-            spbuf = buf.split(',')
+            # spbuf = buf.split(',')
             # try:
             #     if int(float(spbuf[2])) != 2:
             #         log.error("ERROR #%d"%(int(float(spbuf[2]))))
@@ -178,15 +181,16 @@ class KI_Picoammeter:
             # Not OK (fatal):
             # E+03,+2.000000E+00\r-5.428587E-06A,+2.648818E+03,+2.000000E+00\r
 
-            words = buf.split(',')
+            words = out.split(',')
             if words is None:
                 log.warn('Error: Unable to split the detector output.')
                 num_read_err_flag = True
             elif len(words) != 3:
-                log.warn('Error: The detector output an incorrect number of words (', len(words), ', expected 3). The output was:', buf)
+                log.warn('Error: The detector output an incorrect number of words (', len(words), ', expected 3). The output was:', out)
                 num_read_err_flag = True
             else:
                 try:
+                    log.debug("About to subscript 'words'.")
                     mes = float(words[0][:-1]) # skips the A (unit suffix)
                 except Exception as e:
                     log.warn('Error: Could not convert the detector output to a float. The output was:', buf)
@@ -198,6 +202,12 @@ class KI_Picoammeter:
             log.error('ERROR: Failed to get a proper value from the detector. Substituting %d for the value. This should never happen, and indicates a significant failure of detector-program communications. Please send the log file to the developer immediately.'%(err_val))
             return err_val
 
+        if words is None:
+            err_val = -999.0
+            log.error("For some reason, words is NoneType and yet made it to the end of detect.")
+            return err_val
+
+        log.debug("About to subscript 'words'.")
         mes = float(words[0][:-1]) # skips the A (unit suffix)
         # err = int(float(words[2])) # skip timestamp
 
