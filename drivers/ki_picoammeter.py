@@ -148,6 +148,7 @@ class KI_Picoammeter:
 
         num_read_err_flag = False
         retry_num = 10
+        words = None
         while num_read_err_flag and (retry_num > 0):
             num_read_err_flag = False
             retry_num -= 1
