@@ -13,6 +13,7 @@ PyQt-based GUI program to control monochromators, detectors, and related hardwar
 
 If running directly via source code you will also need Python 3.9.7.
 
+
 # Compatible Hardware
 ## Motion Controllers
 - ThorLabs KST101 K-Cube with the ZFS25B (USB; Requires ThorLabs drivers)
@@ -27,6 +28,13 @@ If running directly via source code you will also need Python 3.9.7.
 ## In Progress
 - McPherson 747
 - ThorLabs KST201 K-Cube
+
+### **_NOTICE FOR KCUBE USERS_**: 
+**The following one-time steps should be taken to enable proper KST201 homing and solve KST101/KST201 maximum range movement issues:**  
+1). Connect the KST201 to your PC.  
+2). Run the ThorLabs Kinesis GUI software.  
+3). Move and Home the KST201.  
+The MMC Software can now be used as usual.  
 
 # Usage
 ## via Executable

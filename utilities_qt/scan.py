@@ -224,6 +224,8 @@ class ScanSM(QThread):
         self.wait()
 
     def run(self):
+        words = None
+
         # Local variable setup.
         autosave_data = self.other.autosave_data_bool
         start = self.other.UIE_mgw_sm_start_set_qdsb.value()
@@ -316,7 +318,9 @@ class ScanSM(QThread):
                     log.debug(buf)
                     self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
 
+                    log.debug('Words.')
                     words = buf.split(',')
+                    log.debug('words:', words)
                     if len(words) != 3:
                         continue
                     try:
@@ -406,7 +410,9 @@ class ScanSM(QThread):
                     log.debug(buf)
                     self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
 
+                    log.debug('Words.')
                     words = buf.split(',')
+                    log.debug('words:', words)
                     if len(words) != 3:
                         continue
                     try:
@@ -578,7 +584,9 @@ class ScanDM(QThread):
                 log.info(buf)
                 self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(self.other.detectors)))
 
+                log.debug('Words.')
                 words = buf.split(',')
+                log.debug('words:', words)
                 if len(words) != 3:
                     continue
                 try:
