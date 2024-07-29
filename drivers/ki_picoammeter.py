@@ -179,7 +179,10 @@ class KI_Picoammeter:
             # E+03,+2.000000E+00\r-5.428587E-06A,+2.648818E+03,+2.000000E+00\r
 
             words = buf.split(',')
-            if len(words) != 3:
+            if words is None:
+                log.warn('Error: Unable to split the detector output.')
+                num_read_err_flag = True
+            elif len(words) != 3:
                 log.warn('Error: The detector output an incorrect number of words (', len(words), ', expected 3). The output was:', buf)
                 num_read_err_flag = True
             else:

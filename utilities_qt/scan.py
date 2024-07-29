@@ -321,7 +321,9 @@ class ScanSM(QThread):
                     log.debug('Words.')
                     words = buf.split(',')
                     log.debug('words:', words)
-                    if len(words) != 3:
+                    if words is None:
+                        continue
+                    elif len(words) != 3:
                         continue
                     try:
                         mes = float(words[0][:-1])
@@ -413,7 +415,9 @@ class ScanSM(QThread):
                     log.debug('Words.')
                     words = buf.split(',')
                     log.debug('words:', words)
-                    if len(words) != 3:
+                    if words is None:
+                        continue
+                    elif len(words) != 3:
                         continue
                     try:
                         mes = float(words[0][:-1])
@@ -587,7 +591,9 @@ class ScanDM(QThread):
                 log.debug('Words.')
                 words = buf.split(',')
                 log.debug('words:', words)
-                if len(words) != 3:
+                if words is None:
+                    continue
+                elif len(words) != 3:
                     continue
                 try:
                     mes = float(words[0][:-1])
