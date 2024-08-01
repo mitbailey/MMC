@@ -338,6 +338,7 @@ class KSTDummy(StageDevice):
 
         self._position = 0
         self._moving = False
+        self._homing = False
         self.home()
         time.sleep(KSTDummy.WR_DLY * 50)
 
@@ -373,6 +374,10 @@ class KSTDummy(StageDevice):
     def is_moving(self):
         log.debug('func: is_moving')
         return self._moving
+    
+    def is_homing(self):
+        log.debug('func: is_homing')
+        return self._homing
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, backlash: int):

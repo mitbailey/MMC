@@ -151,7 +151,7 @@ class KI_Picoammeter:
         num_read_err_flag = False
         retry_num = 10
         words = None
-        while num_read_err_flag and (retry_num > 0):
+        while not num_read_err_flag and (retry_num > 0):
             num_read_err_flag = False
             retry_num -= 1
 
@@ -212,7 +212,7 @@ class KI_Picoammeter:
         # err = int(float(words[2])) # skip timestamp
 
         mes *= 1e12 # Converts from A to pA
-
+ 
         return mes
 
     def __del__(self):
@@ -269,8 +269,80 @@ class KI_Picoammeter_Dummy:
 
     def detect(self):
         import numpy as np
-        out = np.random.random(2)
-        return '%eA,%e,0'%(out[0], out[1])
+        # return np.random.random()
+        # out = np.random.random(2)
+        # return '%eA,%e,0'%(out[0], out[1])
+
+        """ Requests a detector sample from the device.
+
+        Returns:
+            _type_: The detector's output value.
+        """
+
+        log.debug("Picoammeter detect function called.")
+
+        num_read_err_flag = False
+        retry_num = 10
+        words = None
+        while not num_read_err_flag and (retry_num > 0):
+            num_read_err_flag = False
+            retry_num -= 1
+
+            out = ''
+            buf = ''
+            # self.s.write(b'READ?\r')
+            retry_ser = 10
+            while retry_ser:
+                # buf = self.s.read(128).decode('utf-8').rstrip()
+                outp = np.random.random(2)
+                buf = '%eA,%e,0'%(outp[0], outp[1])
+                log.debug(f'len(buf): {len(buf)}')
+                log.debug(f'. buf: {buf}')
+                log.debug(f'retry_ser: {retry_ser}')
+                if len(buf):
+                    break
+                retry_ser -= 1
+            if not retry_ser and len(buf) == 0:
+                return out
+            out = buf
+
+            log.debug(f'outp: {outp}')
+            log.debug(f'buf: {buf}')
+            log.debug(f'out: {out}')
+
+            words = out.split(',')
+            if words is None:
+                log.warn('Error: Unable to split the detector output.')
+                num_read_err_flag = True
+            elif len(words) != 3:
+                log.warn('Error: The detector output an incorrect number of words (', len(words), ', expected 3). The output was:', out)
+                num_read_err_flag = True
+            else:
+                try:
+                    log.debug("About to subscript 'words'.")
+                    mes = float(words[0][:-1]) # skips the A (unit suffix)
+                except Exception as e:
+                    log.warn('Error: Could not convert the detector output to a float. The output was:', buf)
+                    log.warn('num_read_err_flag:', num_read_err_flag, '; retry_num:', retry_num)
+                    num_read_err_flag = True
+
+        if num_read_err_flag:
+            err_val = -999.0
+            log.error('ERROR: Failed to get a proper value from the detector. Substituting %d for the value. This should never happen, and indicates a significant failure of detector-program communications. Please send the log file to the developer immediately.'%(err_val))
+            return err_val
+
+        if words is None:
+            err_val = -999.0
+            log.error("For some reason, words is NoneType and yet made it to the end of detect.")
+            return err_val
+
+        log.debug("About to subscript 'words'.")
+        mes = float(words[0][:-1]) # skips the A (unit suffix)
+        # err = int(float(words[2])) # skip timestamp
+
+        mes *= 1e12 # Converts from A to pA
+ 
+        return mes
 
     def __del__(self):
         pass

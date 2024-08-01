@@ -51,6 +51,7 @@ QProgressBar = qpbar
 # OS and SYS Imports
 import hashlib
 import os
+import traceback as tb
 import sys
 
 # Obtains the executable directory (as exeDir) and the application directory (as appDir) for future use.
@@ -2610,9 +2611,15 @@ if __name__ == '__main__':
 
     sys._excepthook = sys.excepthook 
     def exception_hook(exctype, value, traceback):
-        log.error('\n\n\nEXCEPTION HOOK')
-        log.error(exctype, value, traceback)
-        log.error('EXCEPTION HOOK\n\n')
+        traceback_formatted = tb.format_exception(exctype, value, traceback)
+        traceback_string = "".join(traceback_formatted)
+
+        log.error('Exception caught by main hook.')
+        log.error(traceback_string)
+        # log.error(f'Exception exctype: {exctype}')
+        # log.error(f'Exception value: {value}')
+        # log.error(f'Exception traceback: {traceback}')
+        log.error('Hooked exception complete.')
         sys._excepthook(exctype, value, traceback) 
         sys.exit(1) 
     sys.excepthook = exception_hook 

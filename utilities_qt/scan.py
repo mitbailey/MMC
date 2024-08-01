@@ -161,6 +161,7 @@ class Scan(QThread):
                 log.debug("Appending data.")
                 self._xdata[i].append((((pos))))
                 self._ydata[i].append(self.other.mes_sign * mes)
+                log.debug(f'_ydata[i][-1]: {self._ydata[i][-1]}')
                 self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
 
                 log.debug(sav_files)
