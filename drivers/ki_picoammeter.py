@@ -146,12 +146,14 @@ class KI_Picoammeter:
             _type_: The detector's output value.
         """
 
+        ERR_VAL = -999.0
+
         log.debug("Picoammeter detect function called.")
 
         num_read_err_flag = False
         retry_num = 10
         words = None
-        while not num_read_err_flag and (retry_num > 0):
+        while retry_num > 0:
             num_read_err_flag = False
             retry_num -= 1
 
@@ -159,20 +161,16 @@ class KI_Picoammeter:
             buf = ''
             self.s.write(b'READ?\r')
             retry_ser = 10
-            while retry_ser:
+            while retry_ser > 0:
                 buf = self.s.read(128).decode('utf-8').rstrip()
                 if len(buf):
                     break
+                log.debug(f'Retrying serial read ({retry_ser})...')
                 retry_ser -= 1
-            if not retry_ser and len(buf) == 0:
-                return out
+            if retry_ser <= 0 and len(buf) == 0:
+                log.error('ERROR: Unable to receive anything from the picoammeter.')
+                return ERR_VAL
             out = buf
-            # spbuf = buf.split(',')
-            # try:
-            #     if int(float(spbuf[2])) != 2:
-            #         log.error("ERROR #%d"%(int(float(spbuf[2]))))
-            # except Exception:
-            #     log.error('Error: %s invalid output'%(buf))
 
             # OK:
             # -5.758246E-07A,+2.645176E+03,+2.000000E+00\r
@@ -185,9 +183,11 @@ class KI_Picoammeter:
             if words is None:
                 log.warn('Error: Unable to split the detector output.')
                 num_read_err_flag = True
+                continue
             elif len(words) != 3:
                 log.warn('Error: The detector output an incorrect number of words (', len(words), ', expected 3). The output was:', out)
                 num_read_err_flag = True
+                continue
             else:
                 try:
                     log.debug("About to subscript 'words'.")
@@ -196,16 +196,19 @@ class KI_Picoammeter:
                     log.warn('Error: Could not convert the detector output to a float. The output was:', buf)
                     log.warn('num_read_err_flag:', num_read_err_flag, '; retry_num:', retry_num)
                     num_read_err_flag = True
+                    continue
+
+            break
 
         if num_read_err_flag:
-            err_val = -999.0
-            log.error('ERROR: Failed to get a proper value from the detector. Substituting %d for the value. This should never happen, and indicates a significant failure of detector-program communications. Please send the log file to the developer immediately.'%(err_val))
-            return err_val
+            # err_val = -999.0
+            log.error('ERROR: Failed to get a proper value from the detector. Substituting %d for the value. This should never happen, and indicates a significant failure of detector-program communications. Please send the log file to the developer immediately.'%(ERR_VAL))
+            return ERR_VAL
 
         if words is None:
-            err_val = -999.0
+            # err_val = -999.0
             log.error("For some reason, words is NoneType and yet made it to the end of detect.")
-            return err_val
+            return ERR_VAL
 
         log.debug("About to subscript 'words'.")
         mes = float(words[0][:-1]) # skips the A (unit suffix)
@@ -279,12 +282,14 @@ class KI_Picoammeter_Dummy:
             _type_: The detector's output value.
         """
 
+        ERR_VAL = -999.0
+
         log.debug("Picoammeter detect function called.")
 
         num_read_err_flag = False
         retry_num = 10
         words = None
-        while not num_read_err_flag and (retry_num > 0):
+        while retry_num > 0:
             num_read_err_flag = False
             retry_num -= 1
 
@@ -292,7 +297,7 @@ class KI_Picoammeter_Dummy:
             buf = ''
             # self.s.write(b'READ?\r')
             retry_ser = 10
-            while retry_ser:
+            while retry_ser > 0:
                 # buf = self.s.read(128).decode('utf-8').rstrip()
                 outp = np.random.random(2)
                 buf = '%eA,%e,0'%(outp[0], outp[1])
@@ -302,8 +307,9 @@ class KI_Picoammeter_Dummy:
                 if len(buf):
                     break
                 retry_ser -= 1
-            if not retry_ser and len(buf) == 0:
-                return out
+            if retry_ser <= 0 and len(buf) == 0:
+                log.error('ERROR: Unable to receive anything from the picoammeter.')
+                return ERR_VAL
             out = buf
 
             log.debug(f'outp: {outp}')
@@ -314,9 +320,11 @@ class KI_Picoammeter_Dummy:
             if words is None:
                 log.warn('Error: Unable to split the detector output.')
                 num_read_err_flag = True
+                continue
             elif len(words) != 3:
                 log.warn('Error: The detector output an incorrect number of words (', len(words), ', expected 3). The output was:', out)
                 num_read_err_flag = True
+                continue
             else:
                 try:
                     log.debug("About to subscript 'words'.")
@@ -325,16 +333,19 @@ class KI_Picoammeter_Dummy:
                     log.warn('Error: Could not convert the detector output to a float. The output was:', buf)
                     log.warn('num_read_err_flag:', num_read_err_flag, '; retry_num:', retry_num)
                     num_read_err_flag = True
+                    continue
+
+            break
 
         if num_read_err_flag:
-            err_val = -999.0
-            log.error('ERROR: Failed to get a proper value from the detector. Substituting %d for the value. This should never happen, and indicates a significant failure of detector-program communications. Please send the log file to the developer immediately.'%(err_val))
-            return err_val
+            # err_val = -999.0
+            log.error('ERROR: Failed to get a proper value from the detector. Substituting %d for the value. This should never happen, and indicates a significant failure of detector-program communications. Please send the log file to the developer immediately.'%(ERR_VAL))
+            return ERR_VAL
 
         if words is None:
-            err_val = -999.0
+            # err_val = -999.0
             log.error("For some reason, words is NoneType and yet made it to the end of detect.")
-            return err_val
+            return ERR_VAL
 
         log.debug("About to subscript 'words'.")
         mes = float(words[0][:-1]) # skips the A (unit suffix)
