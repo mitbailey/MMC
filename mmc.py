@@ -1454,6 +1454,25 @@ class MMC_Main(QMainWindow):
             # Attempt a load of the device manager configuration file.
             self.load_config_devman(appDir + '/devman.ini')
 
+    def get_ref_data(self):
+        if self.table is None:
+            return
+        
+        # Extract ref data/metadata
+        data, metadata = self.table.getRefData()
+        log.debug(data, metadata)
+        if data is None:
+            return
+        if metadata is not None:
+            try:
+                tstamp = metadata['tstamp']
+                scan_id = metadata['scan_id']
+            except Exception:
+                tstamp = dt.datetime.now()
+                scan_id = 100
+
+        # TODO: Use the ref data
+
     def save_data_cb(self):
         if self.table is None:
             return
@@ -1669,7 +1688,11 @@ class MMC_Main(QMainWindow):
         if n_scan_idx != scan_idx:
             log.warn('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
 
+    # This function is called via a signal emission from scan.py.
+    # The data is actually stored in datatable.py's recordedData.
     def scan_data_update(self, scan_idx: int, which_detector: int, xdata: float, ydata: float):
+        # TODO: What about other detectors...?
+        # TODO: Adjust data based on reference if one is being used.   
         if which_detector == 0:
             self.table.insertDataAt(scan_idx, xdata, ydata)
 

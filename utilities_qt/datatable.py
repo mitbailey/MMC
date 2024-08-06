@@ -57,6 +57,7 @@ class TableRowRaw(TypedDict):
     y: np.ndarray
     plotted: bool
     plot_cb: CustomQCheckBox
+    ref_cb: CustomQCheckBox
 
 
 class DataTableWidget(QTableWidget):
@@ -68,6 +69,7 @@ class DataTableWidget(QTableWidget):
         self.insertColumn(2)
         self.insertColumn(3)
         self.insertColumn(4)
+        self.insertColumn(5)
         self.insertRow(0)
         self.recordedData = dict()
         self.recordedMetaData = dict()
@@ -78,11 +80,12 @@ class DataTableWidget(QTableWidget):
         self._internal_insert_exec = False
         self.num_rows = 1
         self.__del_confirm_win: QDialog = None
-        self.setHorizontalHeaderLabels(['Name', 'Start', 'Stop', 'Step', 'Plot'])
+        self.setHorizontalHeaderLabels(['Name', 'Start', 'Stop', 'Step', 'Plot', 'Ref'])
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.horizontalHeader().setStretchLastSection(False)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.selectionModel().selectionChanged.connect(self.__tableSelectAction)
+        self.currentRefId = -1
 
     def insertData(self, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         scanId = self._scanId
@@ -93,10 +96,14 @@ class DataTableWidget(QTableWidget):
             xdata = np.array([], dtype = float)
         if ydata is None:
             ydata = np.array([], dtype = float)
-        self.recordedData[scanId] = {'id': scanId, 'name': '', 'x': xdata, 'y': ydata, 'plotted': True, 'plot_cb': CustomQCheckBox(scanId)}
+        self.recordedData[scanId] = {'id': scanId, 'name': '', 'x': xdata, 'y': ydata, 'plotted': True, 'plot_cb': CustomQCheckBox(scanId), 'ref_cb': CustomQCheckBox(scanId)}
         self.recordedData[scanId]['plot_cb'].setChecked(True)
         self.recordedData[scanId]['plot_cb'].setDisabled(btn_disabled)
         self.recordedData[scanId]['plot_cb'].stateChanged.connect(self.__plotCheckboxCb) # connect callback
+
+        self.recordedData[scanId]['ref_cb'].setChecked(False)
+        self.recordedData[scanId]['ref_cb'].setDisabled(False)
+        self.recordedData[scanId]['ref_cb'].stateChanged.connect(self.__refCheckboxCb) # connect callback
 
         self.updateTableDisplay(scanId, name_editable)
         return (scanId)
@@ -105,6 +112,7 @@ class DataTableWidget(QTableWidget):
     def scanId(self):
         return self._scanId
 
+    # This is called from mmc.py which is called from scan.py. The data is stored here in recordedData.
     def insertDataAt(self, scanId: int, xdata: np.ndarray | float, ydata: np.ndarray | float) -> int:
         if scanId not in self.recordedData.keys():
             self._internal_insert_exec = True
@@ -303,6 +311,38 @@ class DataTableWidget(QTableWidget):
         self.recordedData[scanId]['plotted'] = state == Qt.Checked
         log.debug(self.recordedData[scanId]['plotted'])
         self.updatePlots()
+
+    def __refCheckboxCb(self, state: Qt.CheckState):
+        src: CustomQCheckBox = self.sender()
+        state = src.checkState()
+        scanId = src.id
+
+        if scanId == self.currentRefId:
+            self.currentRefId = -1
+        elif self.currentRefId > -1:
+            self.recordedData[self.currentRefId]['ref_cb'].setChecked(False)
+            self.currentRefId = scanId
+
+        # To retrieve the data from a row:
+        # self.recordedData[scanId]
+
+        # log.debug(state, scanId)
+        # self.recordedData[scanId]['plotted'] = state == Qt.Checked
+        # log.debug(self.recordedData[scanId]['plotted'])
+        # self.updatePlots()
+
+    def getRefData(self) -> tuple: # Return the data and the metadata
+        if self.currentRefId in self.recordedData:
+            data = self.recordedData[self.currentRefId]
+        else:
+            return (None, None)
+
+        if self.currentRefId in self.recordedMetaData:
+            metadata = self.recordedMetaData[self.currentRefId]
+        else:
+            metadata = None
+        
+        return (data, metadata)
 
     def saveDataCb(self) -> tuple: # just return the data and the metadata, let main handle the saving
         if self.selectedItem is None:
