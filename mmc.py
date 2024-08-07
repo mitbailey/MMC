@@ -69,7 +69,7 @@ elif __file__:
 from PyQt5 import uic
 from PyQt5.QtCore import (pyqtSignal, QFileInfo, QEvent, QFile, QIODevice, QTimer, QPropertyAnimation, QEasingCurve)
 from PyQt5.QtGui import QColor, QFontDatabase, QFont
-from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QSizePolicy, QStyle, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QTabWidget, QTableWidgetItem, QFrame, QProgressBar, QCheckBox, QSpinBox, QStatusBar, QAction, QSpacerItem)
+from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QRadioButton, QSizePolicy, QStyle, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QTabWidget, QTableWidgetItem, QFrame, QProgressBar, QCheckBox, QSpinBox, QStatusBar, QAction, QSpacerItem)
 from PyQt5.QtCore import QTimer
 from PyQt5 import QtWidgets
 
@@ -376,6 +376,10 @@ class MMC_Main(QMainWindow):
             self.UIE_dmw_detector_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "detector_combo_layout")
             self.UIE_dmw_mtn_ctrl_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
             self.UIE_dmw_load_bar_qpb: QProgressBar = self.dmw.findChild(QProgressBar, "loading_bar")
+
+            self.UIE_dmw_operation_qcb: QComboBox = self.dmw.findChild(QComboBox, 'operation_qcb')
+            self.UIE_dmw_meas_ref_qrb: QRadioButton = self.dmw.findChild(QRadioButton, 'order_meas_ref_qrb')
+            self.UIE_dmw_ref_meas_qrb: QRadioButton = self.dmw.findChild(QRadioButton, 'order_ref_meas_qrb')
 
             self.devman_list_devices(True)
 
@@ -1693,6 +1697,11 @@ class MMC_Main(QMainWindow):
     def scan_data_update(self, scan_idx: int, which_detector: int, xdata: float, ydata: float):
         # TODO: What about other detectors...?
         # TODO: Adjust data based on reference if one is being used.   
+
+        # self.UIE_dmw_operation_qcb
+        # self.UIE_dmw_meas_ref_qrb
+        # self.UIE_dmw_ref_meas_qrb
+
         if which_detector == 0:
             self.table.insertDataAt(scan_idx, xdata, ydata)
 

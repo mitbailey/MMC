@@ -97,6 +97,7 @@ class DataTableWidget(QTableWidget):
         if ydata is None:
             ydata = np.array([], dtype = float)
         self.recordedData[scanId] = {'id': scanId, 'name': '', 'x': xdata, 'y': ydata, 'plotted': True, 'plot_cb': CustomQCheckBox(scanId), 'ref_cb': CustomQCheckBox(scanId)}
+        
         self.recordedData[scanId]['plot_cb'].setChecked(True)
         self.recordedData[scanId]['plot_cb'].setDisabled(btn_disabled)
         self.recordedData[scanId]['plot_cb'].stateChanged.connect(self.__plotCheckboxCb) # connect callback
@@ -104,6 +105,9 @@ class DataTableWidget(QTableWidget):
         self.recordedData[scanId]['ref_cb'].setChecked(False)
         self.recordedData[scanId]['ref_cb'].setDisabled(False)
         self.recordedData[scanId]['ref_cb'].stateChanged.connect(self.__refCheckboxCb) # connect callback
+        log.debug('Ref Checkbox ID:', scanId)
+        log.debug('Plot Checkbox:', self.recordedData[scanId]['plot_cb'])
+        log.debug('Ref Checkbox:', self.recordedData[scanId]['ref_cb'])
 
         self.updateTableDisplay(scanId, name_editable)
         return (scanId)
@@ -280,6 +284,11 @@ class DataTableWidget(QTableWidget):
 
                     self.setCellWidget(row_idx, 4, self.recordedData[scan_idx]['plot_cb'])
 
+                try:
+                    self.setCellWidget(row_idx, 5, self.recordedData[scan_idx]['ref_cb'])
+                except Exception:
+                    self.setItem(row_idx, 5, QTableWidgetItem(str(0)))
+
                 # log.debug('Checkpoint U: %d'%(checkpoint))
                 checkpoint+=1
 
@@ -317,11 +326,15 @@ class DataTableWidget(QTableWidget):
         state = src.checkState()
         scanId = src.id
 
+        log.debug(f'BEFORE currentRefId: {self.currentRefId}, scanId: {scanId}')
+
         if scanId == self.currentRefId:
             self.currentRefId = -1
         elif self.currentRefId > -1:
             self.recordedData[self.currentRefId]['ref_cb'].setChecked(False)
-            self.currentRefId = scanId
+        self.currentRefId = scanId
+
+        log.debug(f'AFTER currentRefId: {self.currentRefId}, scanId: {scanId}')
 
         # To retrieve the data from a row:
         # self.recordedData[scanId]

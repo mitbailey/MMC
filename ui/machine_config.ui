@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>533</height>
+    <width>1065</width>
+    <height>717</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -1302,7 +1302,7 @@
      </widget>
      <widget class="QWidget" name="tab">
       <attribute name="title">
-       <string>Detectors</string>
+       <string>Spectral Math</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -1319,7 +1319,7 @@
             </size>
            </property>
            <property name="text">
-            <string>If a reference detector is selected, then the detected output value will be the reference detector's value subtracted from the primary detector's value (Output = Value_PD - Value_RD). Otherwise, only the primary detector will be polled.</string>
+            <string>Set the operation and order for the reference scan applied to all future scans. A reference scan can be chosen from the Scan Log.</string>
            </property>
            <property name="wordWrap">
             <bool>true</bool>
@@ -1342,12 +1342,23 @@
             </size>
            </property>
            <property name="text">
-            <string>Primary Detector</string>
+            <string>Operation</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox_2"/>
+          <widget class="QComboBox" name="operation_qcb">
+           <item>
+            <property name="text">
+             <string>Multiply</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Divide</string>
+            </property>
+           </item>
+          </widget>
          </item>
         </layout>
        </item>
@@ -1365,12 +1376,35 @@
             </size>
            </property>
            <property name="text">
-            <string>Reference Detector</string>
+            <string>Order</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox"/>
+          <widget class="QGroupBox" name="groupBox">
+           <property name="title">
+            <string/>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QRadioButton" name="order_meas_ref_qrb">
+              <property name="text">
+               <string>Meas * Ref</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="order_ref_meas_qrb">
+              <property name="text">
+               <string>Ref * Meas</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
          </item>
         </layout>
        </item>
