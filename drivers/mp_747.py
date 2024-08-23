@@ -28,7 +28,11 @@ from utilities import safe_serial
 from threading import Lock
 from utilities import log
 
-class MP_747:
+from .stagedevice import StageDevice
+
+class MP_747(StageDevice):
+    WR_DLY = 0.05
+
     ENQ = bytearray(b'N!\x05')
     ACK = bytearray(b'N!\x06')
     NACK = bytearray(b'N!\x15')
@@ -36,9 +40,10 @@ class MP_747:
     STX = bytearray(b'\x02')
     ETX = bytearray(b'\x03')
 
-    def __init__(self, port):
-        pass
+    def backend(self)->str:
+        return 'MP_747'
 
+    def __init__(self, port):
         self.s_name = 'MP747'
         self.l_name = 'McPherson 747'
         self._is_homing = False
@@ -63,6 +68,8 @@ class MP_747:
         # Get a SafeSerial connection on the port and begin communication.
         self.s = safe_serial.SafeSerial(port, 9600, timeout=0.5)
         
+        # TODO: Begin communication a la 789, and get rid of these weird functions.
+
         # A short communication to determine if the 747 is alive / exists.
         if not self._comms_detect():
             log.error('Could not detect MP747 on port %s.'%(port))
@@ -311,6 +318,12 @@ class MP_747:
 
         return header
 
+    def set_stage(self, stage):
+        pass
+
+    def get_stage(self):
+        return None
+
     def home(self)->bool:
         """_summary_
 
@@ -344,7 +357,7 @@ class MP_747:
 
         pass
 
-    def move_to(self, position: int):
+    def move_to(self, position: int, backlash: int):
         pass
 
     def move_relative(self, steps: int):
@@ -355,6 +368,12 @@ class MP_747:
 
     def long_name(self):
         pass
+
+    def open(self):
+        pass
+
+    def close(self):
+        self.s.close()
 
 """ 
 747 Communication Protocol

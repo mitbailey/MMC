@@ -297,11 +297,50 @@ class DataTableWidget(QTableWidget):
         self.updatePlots()
 
     def updatePlots(self):
+        log.debug('Update plots called...')
+        log.debug('Current reference ID is %d'%(self.currentRefId))
         data = []
         for scan_idx in self.recordedData.keys():
+            log.debug('Checkpoint A: %d'%(scan_idx))
             if self.recordedData[scan_idx]['plotted']:
                 text = 'Scan #%d'%(scan_idx + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx + 1)
-                data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx])
+                
+                # This next line is how we used to prepare and send the data before references and operations existed...
+                # data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx])
+                
+                # This is the new way we send the data - by applying the reference operation first. This is also done in saveDataCb(...)
+                # self.recordedData[self.currentRefId]
+                if (self.currentRefId > -1) and np.array_equal(self.recordedData[scan_idx]['x'], self.recordedData[self.currentRefId]['x']):
+                    log.debug('Current reference ID is set (%d), so performing operation...'%(self.currentRefId))
+                    # First we set which operands we want in which order based on the QRadioButtons.
+                    opx = np.copy(self.recordedData[scan_idx]['x'])
+                    if self.parent.reference_operation:
+                        # op1x = np.copy(self.recordedData[scan_idx]['x'])
+                        op1y = np.copy(self.recordedData[scan_idx]['y'])
+                        # op2x = np.copy(self.recordedData[self.currentRefId]['x'])
+                        op2y = np.copy(self.recordedData[self.currentRefId]['y'])
+                    else:
+                        # op1x = np.copy(self.recordedData[self.currentRefId]['x'])
+                        op1y = np.copy(self.recordedData[self.currentRefId]['y'])
+                        # op2x = np.copy(self.recordedData[scan_idx]['x'])
+                        op2y = np.copy(self.recordedData[scan_idx]['y'])
+
+                    # Then we operate based on the operation selected in the QComboBox and append.
+                    if self.parent.reference_operation == 0:
+                        # Multiply
+                        data.append([opx, np.multiply(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx])
+                    elif self.parent.reference_operation == 1:
+                        # Divide
+                        data.append([opx, np.divide(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx])
+                    else:
+                        # Unknown
+                        log.error('Unknown operation index:', self.parent.reference_operation)
+                else:
+                    log.debug('No reference ID set (%d), so no operation necessary...'%(self.currentRefId))
+                    # No operation necessary.
+                    data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx])
+
+        # This updates the main plot in MainGUIWindow with the data we are passing to it.
         self.parent.update_plots(data) # updatePlots in Ui(QMainWindow)
 
     def __nameUpdated(self):
@@ -328,11 +367,14 @@ class DataTableWidget(QTableWidget):
 
         log.debug(f'BEFORE currentRefId: {self.currentRefId}, scanId: {scanId}')
 
-        if scanId == self.currentRefId:
-            self.currentRefId = -1
-        elif self.currentRefId > -1:
+        if self.currentRefId > -1:
             self.recordedData[self.currentRefId]['ref_cb'].setChecked(False)
-        self.currentRefId = scanId
+
+        if scanId == self.currentRefId:
+            # self.recordedData[self.currentRefId]['ref_cb'].setChecked(False)
+            self.currentRefId = -1
+        else:
+            self.currentRefId = scanId
 
         log.debug(f'AFTER currentRefId: {self.currentRefId}, scanId: {scanId}')
 
@@ -342,7 +384,7 @@ class DataTableWidget(QTableWidget):
         # log.debug(state, scanId)
         # self.recordedData[scanId]['plotted'] = state == Qt.Checked
         # log.debug(self.recordedData[scanId]['plotted'])
-        # self.updatePlots()
+        self.updatePlots()
 
     def getRefData(self) -> tuple: # Return the data and the metadata
         if self.currentRefId in self.recordedData:
@@ -358,26 +400,64 @@ class DataTableWidget(QTableWidget):
         return (data, metadata)
 
     def saveDataCb(self) -> tuple: # just return the data and the metadata, let main handle the saving
+
+        # Reference Data Note - With the addition of reference data and operations, this becomes slightly more complex. 
+
         if self.selectedItem is None:
             return (None, None)
         row = self.selectedItem
+
         if row >= len(self.rowMap):
             return (None, None)
         scanIdx = self.rowMap[row]
+
         if scanIdx in self.recordedData:
             data = self.recordedData[scanIdx]
+            if (self.currentRefId > -1) and np.array_equal(data['x'], self.recordedData[self.currentRefId]['x']):
+                # opx = np.copy(data['x'])
+                # First we set which operands we want in which order based on the QRadioButtons.
+                if self.parent.reference_order_meas_ref:
+                    # op1x = np.copy(data['x'])
+                    op1y = np.copy(data['y'])
+                    # op2x = np.copy(self.recordedData[self.currentRefId]['x'])
+                    op2y = np.copy(self.recordedData[self.currentRefId]['y'])
+                else:
+                    # op1x = np.copy(self.recordedData[self.currentRefId]['x'])
+                    op1y = np.copy(self.recordedData[self.currentRefId]['y'])
+                    # op2x = np.copy(data['x'])
+                    op2y = np.copy(data['y'])
+
+                # Then we operate based on the operation selected in the QComboBox and append.
+                # TODONOW CHANGE FROM UIE_ CHECK DIRECTLY TO SELF.REFERENCE_OPERATION CHECK
+                if self.parent.reference_operation == 0:
+                    # Multiply
+                    # data['x'] = np.multiply(op1x, op2x)
+                    data['y'] = np.multiply(op1y, op2y)
+                elif self.parent.reference_operation == 1:
+                    # Divide
+                    # data['x'] = np.divide(op1x, op2x)
+                    data['y'] = np.divide(op1y, op2y)
+                else:
+                    # Unknown
+                    log.error('Unknown operation index:', self.parent.reference_operation)
+            else:
+                # No operation necessary.
+                pass
         else:
             data = None
+
         if scanIdx in self.recordedMetaData:
             metadata = self.recordedMetaData[scanIdx]
         else:
             metadata = None
+
         if data is None:
             return (None, None)
         elif not data['plot_cb'].isEnabled():
             return (None, None)
         else:
             return (data, metadata)
+
 
     def delDataCb(self):
         log.debug('Delete called')

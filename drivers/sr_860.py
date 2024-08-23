@@ -241,36 +241,6 @@ class SR860:
 
         return self.val_X
 
-        # self.s.write(b'SNAP ? 1,2,3,4,9,10\n')
-        # buf = self.s.read(128).decode('utf-8').rstrip()
-        # vals = buf.split(',')
-        
-        # X = vals[0]
-        # if X == '': X = 0
-        # self.val_X = float(X)
-        
-        # Y = vals[1]
-        # if Y == '': Y = 0
-        # self.val_Y = float(Y)
-        
-        # R = vals[2]
-        # if R == '': R = 0
-        # self.val_R = float(R)
-        
-        # THETA = vals[3]
-        # if THETA == '': THETA = 0
-        # self.val_THETA = float(THETA)
-        
-        # REF = vals[3]
-        # if REF == '': REF = 0
-        # self.val_REF = float(REF)
-
-        # CH1 = vals[3]
-        # if CH1 == '': CH1 = 0
-        # self.val_CH1 = float(CH1)
-
-        # return self.val_X, self.val_Y, self.val_R, self.val_THETA, self.val_REF, self.val_CH1
-
     def __del__(self):
         if self.s is not None:
             self.s.close()
@@ -296,6 +266,3 @@ class SR860_DUMMY:
 
     def long_name(self):
         return 'Stanford Research Systems 860 Lock-In Amplifier'
-
-""" Command Set
-"""

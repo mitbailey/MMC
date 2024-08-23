@@ -307,6 +307,9 @@ class MMC_Main(QMainWindow):
         self.stoppos = 0
         self.steppos = 0.1
 
+        self.reference_operation = 0
+        self.reference_order_meas_ref = True
+
     def eventFilter(self, source, event):
         if event.type() == QEvent.Wheel:
             return True
@@ -377,9 +380,7 @@ class MMC_Main(QMainWindow):
             self.UIE_dmw_mtn_ctrl_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
             self.UIE_dmw_load_bar_qpb: QProgressBar = self.dmw.findChild(QProgressBar, "loading_bar")
 
-            self.UIE_dmw_operation_qcb: QComboBox = self.dmw.findChild(QComboBox, 'operation_qcb')
-            self.UIE_dmw_meas_ref_qrb: QRadioButton = self.dmw.findChild(QRadioButton, 'order_meas_ref_qrb')
-            self.UIE_dmw_ref_meas_qrb: QRadioButton = self.dmw.findChild(QRadioButton, 'order_ref_meas_qrb')
+
 
             self.devman_list_devices(True)
 
@@ -2041,6 +2042,15 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
 
+            # Reference System
+            self.UIE_mcw_operation_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'operation_qcb')
+            self.UIE_mcw_meas_ref_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_meas_ref_qrb')
+            self.UIE_mcw_ref_meas_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_ref_meas_qrb')
+
+            self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
+            self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
+            self.UIE_mcw_ref_meas_qrb.toggled.connect(self.reference_order_changed)
+
             # TEMPORARY DISABLING OF UI ELEMENT UNTIL FUTURE VERSION IMPLEMENTATION. 
             tabWidget = self.machine_conf_win.findChild(QTabWidget, "tabWidget")
             if not SHOW_FILTER_WHEEL:
@@ -2102,6 +2112,13 @@ class MMC_Main(QMainWindow):
 
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         log.debug('Exec done')
+
+
+    def reference_operation_changed(self):
+        self.reference_operation = self.UIE_mcw_operation_qcb.currentIndex()
+
+    def reference_order_changed(self):
+        self.reference_order_meas_ref = self.UIE_mcw_meas_ref_qrb.isChecked()
 
     def update_offsets(self):
         if self.UIE_mcw_zero_ofst_in_qdsb is not None:

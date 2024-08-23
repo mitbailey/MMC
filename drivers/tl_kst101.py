@@ -340,7 +340,7 @@ class KSTDummy(StageDevice):
         self._moving = False
         self._homing = False
         self.home()
-        time.sleep(KSTDummy.WR_DLY * 50)
+        time.sleep(KSTDummy.WR_DLY)
 
     def home(self) -> bool:
         log.debug('func: home')
@@ -401,7 +401,7 @@ class KSTDummy(StageDevice):
         # moving = True
         while i < 15:
             log.debug('BLOCKING')
-            time.sleep(KSTDummy.WR_DLY * 5)
+            time.sleep(KSTDummy.WR_DLY)
             if not self.is_moving():
                 log.info('Found to be NOT MOVING.', i)
                 i += 1
@@ -409,7 +409,7 @@ class KSTDummy(StageDevice):
                 log.info('Found to be MOVING', i)
                 i = 0
         log.debug('FINISHED BLOCKING because moving is', i)
-        time.sleep(KSTDummy.WR_DLY * 2.5)
+        time.sleep(KSTDummy.WR_DLY)
 
     def short_name(self):
         log.debug('func: short_name')
