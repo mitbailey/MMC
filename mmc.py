@@ -1222,6 +1222,8 @@ class MMC_Main(QMainWindow):
         self.st_sp = load_dict['stSp']
         self.dr_sp = load_dict['drSp']
 
+        if self.motion_controllers.main_drive_axis is not None:
+            self.motion_controllers.main_drive_axis.set_steps_per_value(self.md_sp)
         if self.motion_controllers.filter_wheel_axis is not None:
             self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.fw_sp)
         if self.motion_controllers.sample_rotation_axis is not None:
@@ -2035,6 +2037,12 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'st_offset')
             self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_offset')
 
+            # UIE_mcw_fw_steps_per_rot_qdsb
+            self.UIE_mcw_sm_steps_per_rot_qdsb.valueChanged.connect(self.update_steps_per)
+            self.UIE_mcw_sm_steps_per_ang_qdsb.valueChanged.connect(self.update_steps_per)
+            self.UIE_mcw_sm_steps_per_trans_qdsb.valueChanged.connect(self.update_steps_per)
+            self.UIE_mcw_dr_steps_per_qdsb.valueChanged.connect(self.update_steps_per)
+
             self.UIE_mcw_zero_ofst_in_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_fw_offset_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_sr_offset_qdsb.valueChanged.connect(self.update_offsets)
@@ -2119,6 +2127,25 @@ class MMC_Main(QMainWindow):
 
     def reference_order_changed(self):
         self.reference_order_meas_ref = self.UIE_mcw_meas_ref_qrb.isChecked()
+
+    # None main axis steps per updater
+    def update_steps_per(self):
+        self.fw_sp = self.UIE_mcw_fw_steps_per_rot_qdsb.value()
+        self.sr_sp = self.UIE_mcw_sm_steps_per_rot_qdsb.value()
+        self.sa_sp = self.UIE_mcw_sm_steps_per_ang_qdsb.value()
+        self.st_sp = self.UIE_mcw_sm_steps_per_trans_qdsb.value()
+        self.dr_sp = self.UIE_mcw_dr_steps_per_qdsb.value()
+
+        if self.motion_controllers.filter_wheel_axis is not None:
+            self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.fw_sp)
+        if self.motion_controllers.sample_rotation_axis is not None:
+            self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.sr_sp)
+        if self.motion_controllers.sample_angle_axis is not None:
+            self.motion_controllers.sample_angle_axis.set_steps_per_value(self.sa_sp)
+        if self.motion_controllers.sample_translation_axis is not None:
+            self.motion_controllers.sample_translation_axis.set_steps_per_value(self.st_sp)
+        if self.motion_controllers.detector_rotation_axis is not None:
+            self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.dr_sp)
 
     def update_offsets(self):
         if self.UIE_mcw_zero_ofst_in_qdsb is not None:
