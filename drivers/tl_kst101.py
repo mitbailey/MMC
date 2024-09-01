@@ -327,9 +327,6 @@ class KSTDummy(StageDevice):
         return 'Thorlabs'
     
     def __init__(self, port):
-        self.s_name = 'MP789_DUMMY'
-        self.l_name = 'McPherson 789A-4 (DUMMY)'
-
         log.info(
             'Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.' % (port))
 
@@ -412,12 +409,10 @@ class KSTDummy(StageDevice):
         time.sleep(KSTDummy.WR_DLY)
 
     def short_name(self):
-        log.debug('func: short_name')
-        return self.s_name
+        return 'KSTX01 DUMMY'
 
     def long_name(self):
-        log.debug('func: long_name')
-        return self.l_name
+        return 'Thorlabs ' + self.short_name()
 
 
 # %%

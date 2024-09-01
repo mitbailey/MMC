@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1400</width>
-    <height>850</height>
+    <height>851</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -131,7 +131,7 @@
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,1">
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_22" stretch="0,0,0,0,0">
+                  <layout class="QHBoxLayout" name="horizontalLayout_22" stretch="0,0,0,0">
                    <property name="leftMargin">
                     <number>0</number>
                    </property>
@@ -171,26 +171,6 @@
                       </size>
                      </property>
                     </spacer>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="master_stop_button">
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>0</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <family>Segoe UI Semibold</family>
-                       <pointsize>12</pointsize>
-                       <italic>true</italic>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>All Stop</string>
-                     </property>
-                    </widget>
                    </item>
                    <item>
                     <spacer name="horizontalSpacer_22">
@@ -255,8 +235,8 @@
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>630</width>
-                      <height>1194</height>
+                      <width>624</width>
+                      <height>1300</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1041,13 +1021,6 @@
                               </widget>
                              </item>
                              <item>
-                              <widget class="QLabel" name="fwa_pos">
-                               <property name="text">
-                                <string>0</string>
-                               </property>
-                              </widget>
-                             </item>
-                             <item>
                               <spacer name="horizontalSpacer_9">
                                <property name="orientation">
                                 <enum>Qt::Horizontal</enum>
@@ -1119,7 +1092,7 @@
                                <rect>
                                 <x>0</x>
                                 <y>0</y>
-                                <width>587</width>
+                                <width>577</width>
                                 <height>148</height>
                                </rect>
                               </property>
@@ -1446,13 +1419,6 @@
                               </widget>
                              </item>
                              <item>
-                              <widget class="QLabel" name="sra_pos">
-                               <property name="text">
-                                <string>0</string>
-                               </property>
-                              </widget>
-                             </item>
-                             <item>
                               <spacer name="horizontalSpacer_8">
                                <property name="orientation">
                                 <enum>Qt::Horizontal</enum>
@@ -1564,13 +1530,6 @@
                               </widget>
                              </item>
                              <item>
-                              <widget class="QLabel" name="saa_pos">
-                               <property name="text">
-                                <string>0</string>
-                               </property>
-                              </widget>
-                             </item>
-                             <item>
                               <spacer name="horizontalSpacer_19">
                                <property name="orientation">
                                 <enum>Qt::Horizontal</enum>
@@ -1678,13 +1637,6 @@
                                </property>
                                <property name="text">
                                 <string>Move</string>
-                               </property>
-                              </widget>
-                             </item>
-                             <item>
-                              <widget class="QLabel" name="sta_pos">
-                               <property name="text">
-                                <string>0</string>
                                </property>
                               </widget>
                              </item>
@@ -2255,13 +2207,6 @@
                               </widget>
                              </item>
                              <item>
-                              <widget class="QLabel" name="dra_pos">
-                               <property name="text">
-                                <string>0</string>
-                               </property>
-                              </widget>
-                             </item>
-                             <item>
                               <spacer name="horizontalSpacer_12">
                                <property name="orientation">
                                 <enum>Qt::Horizontal</enum>
@@ -2798,132 +2743,664 @@
      </widget>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="3,2">
+     <layout class="QVBoxLayout" name="verticalLayout_28">
       <property name="leftMargin">
-       <number>0</number>
+       <number>15</number>
       </property>
       <property name="topMargin">
        <number>0</number>
       </property>
       <property name="rightMargin">
-       <number>0</number>
+       <number>15</number>
       </property>
       <property name="bottomMargin">
        <number>0</number>
       </property>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,0,0,0,0,1,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
         <property name="leftMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <property name="topMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <property name="rightMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <property name="bottomMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <item>
-         <widget class="QLabel" name="currpos_nm">
+         <widget class="QFrame" name="pframe_1">
           <property name="minimumSize">
            <size>
-            <width>140</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Digital-7 Mono</family>
-            <pointsize>22</pointsize>
-            <italic>true</italic>
-           </font>
-          </property>
-          <property name="text">
-           <string>-888.8888</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="font">
-           <font>
-            <family>Segoe UI</family>
-            <pointsize>18</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>nm</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QFrame" name="frame_3">
-          <property name="minimumSize">
-           <size>
-            <width>25</width>
+            <width>0</width>
             <height>0</height>
            </size>
           </property>
           <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
+           <enum>QFrame::WinPanel</enum>
           </property>
           <property name="frameShadow">
            <enum>QFrame::Raised</enum>
           </property>
+          <layout class="QVBoxLayout" name="verticalLayout_23">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_23">
+             <property name="font">
+              <font>
+               <family>Bahnschrift</family>
+               <pointsize>11</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Main Drive</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_7">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="currpos_nm">
+               <property name="minimumSize">
+                <size>
+                 <width>140</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <family>Bahnschrift</family>
+                 <pointsize>18</pointsize>
+                 <italic>false</italic>
+                </font>
+               </property>
+               <property name="text">
+                <string>-888.8888</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="font">
+                <font>
+                 <family>Bahnschrift</family>
+                 <pointsize>11</pointsize>
+                 <weight>50</weight>
+                 <bold>false</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>nm</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_2">
-          <property name="font">
-           <font>
-            <family>Segoe UI Semibold</family>
-            <pointsize>14</pointsize>
-            <weight>50</weight>
-            <italic>false</italic>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>System Status:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="status_label">
+         <widget class="QFrame" name="pframe_2">
           <property name="minimumSize">
            <size>
             <width>100</width>
             <height>0</height>
            </size>
           </property>
-          <property name="font">
-           <font>
-            <family>Digital-7 Mono</family>
-            <pointsize>16</pointsize>
-           </font>
+          <property name="frameShape">
+           <enum>QFrame::WinPanel</enum>
           </property>
-          <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IDLE&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
           </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          <layout class="QVBoxLayout" name="verticalLayout_29">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_26">
+             <property name="font">
+              <font>
+               <family>Bahnschrift</family>
+               <pointsize>11</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Filter Wheel</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_36">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="fwa_pos">
+               <property name="minimumSize">
+                <size>
+                 <width>140</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <family>Bahnschrift</family>
+                 <pointsize>18</pointsize>
+                 <italic>false</italic>
+                </font>
+               </property>
+               <property name="text">
+                <string>-888.8888</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_20">
+               <property name="font">
+                <font>
+                 <family>Segoe UI</family>
+                 <pointsize>18</pointsize>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="pframe_3">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
           </property>
+          <property name="frameShape">
+           <enum>QFrame::WinPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_30">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_33">
+             <property name="font">
+              <font>
+               <family>Bahnschrift</family>
+               <pointsize>11</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Sample Rotation</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_38">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="sra_pos">
+               <property name="minimumSize">
+                <size>
+                 <width>140</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <family>Bahnschrift</family>
+                 <pointsize>18</pointsize>
+                 <italic>false</italic>
+                </font>
+               </property>
+               <property name="text">
+                <string>-888.8888</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_34">
+               <property name="font">
+                <font>
+                 <family>Segoe UI</family>
+                 <pointsize>11</pointsize>
+                 <weight>50</weight>
+                 <bold>false</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>deg</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="pframe_4">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::WinPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_22">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_43">
+             <property name="font">
+              <font>
+               <family>Bahnschrift</family>
+               <pointsize>11</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Sample Angle</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_45">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="saa_pos">
+               <property name="minimumSize">
+                <size>
+                 <width>140</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <family>Bahnschrift</family>
+                 <pointsize>18</pointsize>
+                 <italic>false</italic>
+                </font>
+               </property>
+               <property name="text">
+                <string>-888.8888</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_44">
+               <property name="font">
+                <font>
+                 <family>Segoe UI</family>
+                 <pointsize>11</pointsize>
+                 <weight>50</weight>
+                 <bold>false</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>deg</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="pframe_5">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::WinPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_24">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_51">
+             <property name="font">
+              <font>
+               <family>Bahnschrift</family>
+               <pointsize>11</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Sample Translation</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_49">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="sta_pos">
+               <property name="minimumSize">
+                <size>
+                 <width>140</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <family>Bahnschrift</family>
+                 <pointsize>18</pointsize>
+                 <italic>false</italic>
+                </font>
+               </property>
+               <property name="text">
+                <string>-888.8888</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_52">
+               <property name="font">
+                <font>
+                 <family>Segoe UI</family>
+                 <pointsize>11</pointsize>
+                 <weight>50</weight>
+                 <bold>false</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>mm</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="pframe_6">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::WinPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_31">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_39">
+             <property name="font">
+              <font>
+               <family>Bahnschrift</family>
+               <pointsize>11</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Detector Rotation</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_43">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="dra_pos">
+               <property name="minimumSize">
+                <size>
+                 <width>140</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <family>Bahnschrift</family>
+                 <pointsize>18</pointsize>
+                 <italic>false</italic>
+                </font>
+               </property>
+               <property name="text">
+                <string>-888.8888</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_40">
+               <property name="font">
+                <font>
+                 <family>Segoe UI</family>
+                 <pointsize>11</pointsize>
+                 <weight>50</weight>
+                 <bold>false</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>deg</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
@@ -2939,40 +3416,118 @@
           </property>
          </spacer>
         </item>
+        <item>
+         <widget class="QPushButton" name="master_stop_button">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <family>Bahnschrift</family>
+            <pointsize>16</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>ALL STOP</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_5">
         <property name="leftMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <property name="topMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <property name="rightMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <property name="bottomMargin">
-         <number>5</number>
+         <number>0</number>
         </property>
         <item>
-         <widget class="QProgressBar" name="progressbar">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>256</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="value">
+         <layout class="QHBoxLayout" name="horizontalLayout_32" stretch="0,0,1">
+          <property name="leftMargin">
            <number>0</number>
           </property>
-         </widget>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="font">
+             <font>
+              <family>Bahnschrift</family>
+              <pointsize>14</pointsize>
+              <weight>50</weight>
+              <italic>false</italic>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>System Status:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="status_label">
+            <property name="minimumSize">
+             <size>
+              <width>256</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Bahnschrift</family>
+              <pointsize>18</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IDLE&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QProgressBar" name="progressbar">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>256</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="value">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </item>
@@ -2986,7 +3541,7 @@
      <x>0</x>
      <y>0</y>
      <width>1400</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

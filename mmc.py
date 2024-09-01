@@ -700,6 +700,13 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sample_translation_axis_qcb.addItem('%s'%('Select Sample Translation Axis'))
         self.UIE_mgw_detector_rotation_axis_qcb.addItem('%s'%('Select Detector Rotation Axis'))
 
+        self.UIE_mgw_pframe_1_qf: QFrame = self.findChild(QFrame, "pframe_1")
+        self.UIE_mgw_pframe_2_qf: QFrame = self.findChild(QFrame, "pframe_2")
+        self.UIE_mgw_pframe_3_qf: QFrame = self.findChild(QFrame, "pframe_3")
+        self.UIE_mgw_pframe_4_qf: QFrame = self.findChild(QFrame, "pframe_4")
+        self.UIE_mgw_pframe_5_qf: QFrame = self.findChild(QFrame, "pframe_5")
+        self.UIE_mgw_pframe_6_qf: QFrame = self.findChild(QFrame, "pframe_6")
+
         self.UIE_mgw_main_drive_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_main)
         self.UIE_mgw_filter_wheel_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_filter)
         self.UIE_mgw_sample_rotation_axis_qcb.currentIndexChanged.connect(self.mgw_axis_change_rsamp)
@@ -839,12 +846,12 @@ class MMC_Main(QMainWindow):
         self.current_position = -1900
 
         # Get and set the palette.
-        palette = self.UIE_mgw_currpos_nm_disp_ql.palette()
-        palette.setColor(palette.WindowText, QColor(255, 0, 0))
-        palette.setColor(palette.Background, QColor(0, 170, 255))
-        palette.setColor(palette.Light, QColor(80, 80, 255))
-        palette.setColor(palette.Dark, QColor(0, 255, 0))
-        self.UIE_mgw_currpos_nm_disp_ql.setPalette(palette)
+        # palette = self.UIE_mgw_currpos_nm_disp_ql.palette()
+        # palette.setColor(palette.WindowText, QColor(255, 0, 0))
+        # palette.setColor(palette.Background, QColor(0, 170, 255))
+        # palette.setColor(palette.Light, QColor(80, 80, 255))
+        # palette.setColor(palette.Dark, QColor(0, 255, 0))
+        # self.UIE_mgw_currpos_nm_disp_ql.setPalette(palette)
 
         self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
         self.plotCanvas.clear_plot_fcn()
@@ -1741,13 +1748,13 @@ class MMC_Main(QMainWindow):
         self.current_position = mda_pos
         self.moving = mda_moving
 
-        self.UIE_mgw_currpos_nm_disp_ql.setText('<b><i>%3.4f</i></b>'%(((self.current_position))))
-        self.UIE_mgw_mca_pos_ql.setText('%f'%(mda_pos))
-        self.UIE_mgw_fwa_pos_ql.setText('%f'%(fwa_pos))
-        self.UIE_mgw_sra_pos_ql.setText('%f'%(sra_pos))
-        self.UIE_mgw_saa_pos_ql.setText('%f'%(saa_pos))
-        self.UIE_mgw_sta_pos_ql.setText('%f'%(sta_pos))
-        self.UIE_mgw_dra_pos_ql.setText('%f'%(dra_pos))
+        self.UIE_mgw_currpos_nm_disp_ql.setText('%3.4f'%(((self.current_position))))
+        self.UIE_mgw_mca_pos_ql.setText('%3.4f'%(mda_pos))
+        self.UIE_mgw_fwa_pos_ql.setText('%3.4f'%(fwa_pos))
+        self.UIE_mgw_sra_pos_ql.setText('%3.4f'%(sra_pos))
+        self.UIE_mgw_saa_pos_ql.setText('%3.4f'%(saa_pos))
+        self.UIE_mgw_sta_pos_ql.setText('%3.4f'%(sta_pos))
+        self.UIE_mgw_dra_pos_ql.setText('%3.4f'%(dra_pos))
 
         # print(mda_pos, mda_moving)
         # print(fwa_pos, fwa_moving)
@@ -1964,8 +1971,11 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
 
             self.UIE_mcw_steps_per_nm_ql = self.machine_conf_win.findChild(QLabel, 'steps_per_nm')
-            steps_per_nm = self.motion_controllers.main_drive_axis.get_steps_per_value()
 
+            try:
+                steps_per_nm = self.motion_controllers.main_drive_axis.get_steps_per_value()
+            except Exception as e:
+                log.warn('Error getting steps per nm: %s. The Main Drive Axis may not be assigned a motion controller.'%(e))
             
             self.UIE_mcw_steps_per_nm_override_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'steps_per_nm_override')
             self.UIE_mcw_override_steps_per_nm_qckbx = self.machine_conf_win.findChild(QCheckBox, 'override_steps_per_nm')
@@ -2080,7 +2090,11 @@ class MMC_Main(QMainWindow):
 
         # if steps_per_nm is None:
         #     steps_per_nm = 0.0
-        steps_per_nm = self.motion_controllers.main_drive_axis.get_steps_per_value()
+        try:
+            steps_per_nm = self.motion_controllers.main_drive_axis.get_steps_per_value()
+        except Exception as e:
+            log.warn('Error getting steps per nm: %s. The Main Drive Axis may not be assigned a motion controller.'%(e))
+
         if steps_per_nm == 0.0:
             self.UIE_mcw_steps_per_nm_ql.setText('NOT CALCULATED')
         else:
@@ -2305,6 +2319,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_home_qpb.setEnabled(is_zero)
         self.UIE_mgw_scan_qpb.setEnabled(is_zero)
 
+        self.UIE_mgw_pframe_1_qf.setVisible(is_zero)
+
         return self.main_axis_index
 
     def mcw_axis_change_filter(self):
@@ -2349,6 +2365,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_fw_mancon_move_pos_qpb.setEnabled(is_zero)
         self.UIE_mgw_fw_mancon_home_qpb.setEnabled(is_zero)
 
+        self.UIE_mgw_pframe_2_qf.setVisible(is_zero)
+
         return self.filter_axis_index
 
     def mcw_axis_change_rsamp(self):
@@ -2390,6 +2408,8 @@ class MMC_Main(QMainWindow):
         is_zero = (self.UIE_mgw_sample_rotation_axis_qcb.currentIndex() != 0)
         self.UIE_mgw_sm_rmove_qpb.setEnabled(is_zero)
         self.UIE_mgw_sm_rhome_qpb.setEnabled(is_zero)
+
+        self.UIE_mgw_pframe_3_qf.setVisible(is_zero)
 
         return self.rsamp_axis_index
     
@@ -2433,6 +2453,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_sm_amove_qpb.setEnabled(is_zero)
         self.UIE_mgw_sm_ahome_qpb.setEnabled(is_zero)
 
+        self.UIE_mgw_pframe_4_qf.setVisible(is_zero)
+
         return self.asamp_axis_index
     
     def mcw_axis_change_tsamp(self):
@@ -2474,6 +2496,8 @@ class MMC_Main(QMainWindow):
         is_zero = (self.UIE_mgw_sample_translation_axis_qcb.currentIndex() != 0)
         self.UIE_mgw_sm_tmove_qpb.setEnabled(is_zero)
         self.UIE_mgw_sm_thome_qpb.setEnabled(is_zero)
+
+        self.UIE_mgw_pframe_5_qf.setVisible(is_zero)
 
         return self.tsamp_axis_index
 
@@ -2517,6 +2541,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_dm_rmove_qpb.setEnabled(is_zero)
         self.UIE_mgw_dm_rhome_qpb.setEnabled(is_zero)
         self.UIE_mgw_dm_begin_scan_qpb.setEnabled(is_zero)
+
+        self.UIE_mgw_pframe_6_qf.setVisible(is_zero)
 
         return self.detector_axis_index
 
