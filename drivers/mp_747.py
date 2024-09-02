@@ -23,6 +23,7 @@
 #
 
 import time
+# import directnet
 from utilities import ports_finder
 from utilities import safe_serial
 from threading import Lock
