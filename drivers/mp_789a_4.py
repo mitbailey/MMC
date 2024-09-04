@@ -457,7 +457,7 @@ class MP_789A_4_DUMMY(StageDevice):
     
     def is_homing(self):
         log.debug('func: is_homing')
-        return self._homing
+        return self._is_homing
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, backlash: int):
