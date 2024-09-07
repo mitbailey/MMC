@@ -116,6 +116,9 @@ class MP_789A_4(StageDevice):
             bool: Success (True) or failure (False).
         """
 
+        # Halt the device before beginning the homing process.
+        self.stop()
+
         # Set the `_is_homing` flag to disallow simultaneous homing attempts.
         log.info('Beginning home.')
         self._is_homing = True
@@ -170,7 +173,10 @@ class MP_789A_4(StageDevice):
             self.s.write(b'A0\r')
             time.sleep(MP_789A_4.WR_DLY) 
             pass
-        elif ('0' in rx) and ('+' not in rx and '-' not in rx):
+        elif ('0' in rx or '2' in rx) and ('+' not in rx and '-' not in rx):
+            # NOTE: When not on a limit switch, the device reports 0 when stationary and 2 when in motion. It seems sometimes it may report 2 even when not moving. We should just try to home anyway.
+            if '2' in rx:
+                log.warn('Device is moving. Will attempt to home anyway.')
             log.info('Home switch not blocked.')
             # Home switch not blocked.
             # Move at constant velocity (23 KHz).
@@ -351,12 +357,27 @@ class MP_789A_4(StageDevice):
         log.debug('func: move_relative')
         log.info('Being told to move %d steps.'%(steps))
 
+        # Query limit switch status.
+        self.s.write(b']\r')
+        time.sleep(MP_789A_4.WR_DLY)     
+        rx = self.s.read(128).decode('utf-8')
+
         if steps > 0:
+            # Verify we are not at the upper limit.
+            if '64' in rx:
+                log.warn('Upper limit switch hit. Cannot move further in this direction.')
+                raise RuntimeError('Upper limit switch hit. Cannot move further in this direction.')
+
             log.info('Moving...')
             log.debug(b'+%d\r'%(steps))
             self.s.write(b'+%d\r'%(steps))
             time.sleep(MP_789A_4.WR_DLY)
         elif steps < 0:
+            # Verify we are not at the lower limit.
+            if '128' in rx:
+                log.warn('Lower limit switch hit. Cannot move further in this direction.')
+                raise RuntimeError('Lower limit switch hit. Cannot move further in this direction.')
+
             log.info('Moving...')
             log.debug(b'-%d\r'%(steps * -1))
             self.s.write(b'-%d\r'%(steps * -1))

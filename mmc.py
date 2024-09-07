@@ -2152,14 +2152,28 @@ class MMC_Main(QMainWindow):
 
         if self.motion_controllers.filter_wheel_axis is not None:
             self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.fw_sp)
+        else:
+            log.warn('Filter wheel axis not set.')
+
         if self.motion_controllers.sample_rotation_axis is not None:
             self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.sr_sp)
+        else:
+            log.warn('Sample rotation axis not set.')
+
         if self.motion_controllers.sample_angle_axis is not None:
             self.motion_controllers.sample_angle_axis.set_steps_per_value(self.sa_sp)
+        else:
+            log.warn('Sample angle axis not set.')
+
         if self.motion_controllers.sample_translation_axis is not None:
             self.motion_controllers.sample_translation_axis.set_steps_per_value(self.st_sp)
+        else:
+            log.warn('Sample translation axis not set.')
+
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.dr_sp)
+        else:
+            log.warn('Detector rotation axis not set.')
 
     def update_offsets(self):
         if self.UIE_mcw_zero_ofst_in_qdsb is not None:

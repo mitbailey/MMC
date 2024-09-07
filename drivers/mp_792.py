@@ -226,9 +226,11 @@ class MP_792:
     # Publicly callable is_moving() function.
     def is_moving(self, axis: int):
         if self._backlash_lock_l[axis]:
+            log.info('is_moving is returning true because the Backlash lock is active.')
             return True
         else:
-            return self._is_moving_l[axis]
+            # return self._is_moving_l[axis]
+            return self._is_moving(axis)
 
     # Internal-calling only.
     def _is_moving(self, axis: int):
@@ -260,7 +262,7 @@ class MP_792:
 
         # Reset the stop queued such that we dont immediately stop from an old stop request.
         # Otherwise, this enables us to cancel backlash, etc, when stops are desired.
-        self.stop_queued[axis] = 0
+        self.stop_queued_l[axis] = 0
 
         log.debug('MOVE-DEBUG: Performing a move with backlash value: ', backlash)
 
@@ -269,22 +271,27 @@ class MP_792:
         if (steps < 0) and (backlash > 0):
             self._backlash_lock_l[axis] = True
 
-            if self.stop_queued[axis] == 0:
-                log.debug('MOVE-DEBUG: Performing overshoot manuever.')
-                self.move_relative(steps - backlash, axis)
-            
-            if self.stop_queued[axis] == 0:
-                log.debug('MOVE-DEBUG: Performing backlash correction.')
-                self.move_relative(backlash, axis)
+            try:
+                if self.stop_queued_l[axis] == 0:
+                    log.debug('MOVE-DEBUG: Performing overshoot manuever.')
+                    self.move_relative(steps - backlash, axis)
                 
-            log.debug('MOVE-DEBUG: Move complete.')
+                if self.stop_queued_l[axis] == 0:
+                    log.debug('MOVE-DEBUG: Performing backlash correction.')
+                    self.move_relative(backlash, axis)
+                    
+                log.debug('MOVE-DEBUG: Move complete.')
+            except Exception as e:
+                self._backlash_lock_l[axis] = False
+                raise e
+
             self._backlash_lock_l[axis] = False
         else:
             log.debug('MOVE-DEBUG: Performing backlash-free move.')
             self.move_relative(steps, axis)
 
         # Reset the stop queue.
-        self.stop_queued[axis] = 0
+        self.stop_queued_l[axis] = 0
 
     def move_relative(self, steps: int, axis: int):
         self.set_axis(axis)
