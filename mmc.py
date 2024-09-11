@@ -48,6 +48,9 @@ QCheckBox = qckbx
 QProgressBar = qpbar
 """
 
+import faulthandler
+faulthandler.enable()
+
 # OS and SYS Imports
 import hashlib
 import os
@@ -1736,11 +1739,26 @@ class MMC_Main(QMainWindow):
         # print((self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) or (mda_homing or fwa_homing or sra_homing or saa_homing or sta_homing or dra_homing))
 
         if (self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) or (mda_homing or fwa_homing or sra_homing or saa_homing or sta_homing or dra_homing): #  and not (self.axes_info_prev_moving)
+            log.info('Something is moving:')
+            log.info('scanRunning:', self.scanRunning)
+            log.info('mda_moving:', mda_moving)
+            log.info('fwa_moving:', fwa_moving)
+            log.info('sra_moving:', sra_moving)
+            log.info('saa_moving:', saa_moving)
+            log.info('sta_moving:', sta_moving)
+            log.info('dra_moving:', dra_moving)
+            log.info('mda_homing:', mda_homing)
+            log.info('fwa_homing:', fwa_homing)
+            log.info('sra_homing:', sra_homing)
+            log.info('saa_homing:', saa_homing)
+            log.info('sta_homing:', sta_homing)
+            log.info('dra_homing:', dra_homing)
             # UIE_mgw_move_to_position_qpb is used to see if /all/ the buttons are disabled, since it would only be disabled if this function disabled it.
             if self.UIE_mgw_move_to_position_qpb.isEnabled():
                 self.disable_movement_sensitive_buttons(True)
             # self.movement_sensitive_buttons_disabled = True
         else:
+            log.info('Nothing is moving.')
             if not self.UIE_mgw_move_to_position_qpb.isEnabled():
                 self.disable_movement_sensitive_buttons(False)
             # self.movement_sensitive_buttons_disabled = False

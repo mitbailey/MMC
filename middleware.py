@@ -361,11 +361,11 @@ class MotionController:
 
         if self._steps_per_value == 0:
             position = 0 + self._offset
-
-        if self._multi_axis:
-            position = (self._motor_ctrl.get_position(self._axis) / self._steps_per_value) - self._offset
         else:
-            position = (self._motor_ctrl.get_position() / self._steps_per_value) - self._offset
+            if self._multi_axis:
+                position = (self._motor_ctrl.get_position(self._axis) / self._steps_per_value) - self._offset
+            else:
+                position = (self._motor_ctrl.get_position() / self._steps_per_value) - self._offset
 
         self._position_history.appendleft(position)
         return position

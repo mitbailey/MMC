@@ -163,6 +163,7 @@ class UpdatePositionDisplays(QThread):
             except Exception as e:
                 log.error(str(e))
 
+            log.info('Calling SIGNAL_update_axes_info.emit()')
             self.SIGNAL_update_axes_info.emit(mda_pos, mda_moving, mda_homing, fwa_pos, fwa_moving, fwa_homing, sra_pos, sra_moving, sra_homing, saa_pos, saa_moving, saa_homing, sta_pos, sta_moving, sta_homing, dra_pos, dra_moving, dra_homing)
 
         self.timer = QTimer()

@@ -93,11 +93,37 @@ class _SafeSerial:
 
     # Prefixed with a small delay.
     def read(self, size: int = READ_SIZE):
+        self._m.acquire() 
         time.sleep(_SafeSerial.READ_DELAY)
         retval = self._s.read(size)
         log.info('Serial RX:', retval)
+        self._m.release()
         return retval
     
+    def xfer(self, tx_buf, rx_buf_size: int = READ_SIZE, custom_delay: float = 0.1):
+        delay = _SafeSerial.READ_DELAY
+        if custom_delay > delay:
+            delay = custom_delay
+
+        self._m.acquire()
+
+        log.info('Serial xfer called with TX:', tx_buf)
+
+        for i, msg in enumerate(tx_buf):
+            self._s.write(msg)
+            log.info(f'Serial xfer TX[{i}]: {msg}')
+
+            time.sleep(delay)
+    
+            retval = self._s.read(rx_buf_size)
+            log.info('Serial xfer RX:', retval)
+
+            time.sleep(delay)
+
+        self._m.release()
+
+        return retval
+
     def _lock_override(self):
         self._m.acquire()
 
