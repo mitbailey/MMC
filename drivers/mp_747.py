@@ -23,13 +23,69 @@
 #
 
 import time
-# import directnet
+import directnet
 from utilities import ports_finder
 from utilities import safe_serial
 from threading import Lock
 from utilities import log
 
 from .stagedevice import StageDevice
+
+"""
+V-Memory Locations
+
+Just a handful of memory locations are accessed for remote control of the 747 and the
+four devices it controls. V Memory is always accessed as two-byte words with the
+address specified in octal. The needed addresses and bit locations of the various controls
+are detailed below.
+
+The 747 Device Controller will only move one device at a time. It is possible to
+simultaneously set the data for moves of multiple devices by remote control, but is
+strongly discouraged.
+
+The Hex ASCII reference addressed needed for the message header are found by
+converting the octal address to Hex and adding one. This value is then converted to Hex
+ASCII. For example, octal address 2240 is Hex 04A0. The Hex reference address is then
+04A0 + 1 = 04A1. Converting to Hex ASCII results in 30 34 41 31. This example
+corresponds to the data listed in the Read column of Table 2.
+
+Initialization Flags:
+Octal Address: 40602 bits 0 - 3. Bits 0 – 3 correspond to devices 1 – 4,
+respectively. A “1” means the device must be initialized . Set the appropriate
+Increment Position Bit to initialize the device. A “0” indicates the device is ready.
+Devices require initialization after power up and following some error conditions.
+
+In Motion Flags:
+Octal Address: 40601 bits 16 – 20. Bit 16 reflects the motion status of all four
+devices. If any device is in motion this bit will contain a “1”. Bits 17 – 20
+correspond to devices 1 – 4, respectively. A “1” means the device is in motion . A
+“0” indicates the device is stopped. Poll these flags for completion of motion.
+
+Error Flag:
+Octal Address: 40600 bit 8. In case of a system error in the 747, bit 8 will be a
+“1”. Poll this location to check for errors.
+
+Increment Position Bits:
+Octal Address: 40600 bits 0 – 3. Bits 0 – 3 correspond to devices 1 – 4,
+respectively. To initialize a device or increment the position by one, e.g. position
+1 to position 2, set the appropriate bit to “1”.
+
+Current Positions:
+Octal Addresses: 2240 – 2243. Addresses 2240 – 2243 correspond to devices 1 –
+4, respectively. Read the value at the appropriate address to determine the current
+location of a device. This data is not valid if the device has not been initialized.
+
+Destinations:
+Octal Addresses: 2250 – 2253. Addresses 2250 – 2253 correspond to devices 1 –
+4, respectively. To send a device to a desired position without using the Increment
+Position Bit multiple time, write the destination into the appropriate address.
+Caution: Do not write a value greater than the number of physical positions of the
+device. An error will be generated which will require the device to be initialized
+or the 747 power cycled.
+
+"""
+
+# Octal 40602[0-3]
 
 class MP_747(StageDevice):
     WR_DLY = 0.05
