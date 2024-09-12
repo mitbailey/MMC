@@ -74,6 +74,8 @@ class UpdatePositionDisplays(QThread):
             dra_moving = False
             dra_homing = False
 
+            log.info('Updating position displays...')
+
             try:
                 if self.other.motion_controllers.main_drive_axis is not None:
                     # if self.other.motion_controllers.main_drive_axis is None:

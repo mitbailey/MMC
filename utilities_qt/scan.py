@@ -36,6 +36,7 @@ from time import sleep
 import numpy as np
 import datetime as dt
 # from functools import partial
+from enum import Enum
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -202,7 +203,13 @@ class Scan(QThread):
     def scanId(self):
         return self._scan_id
 
+class ScanType(Enum):
+    ROTATION = 0
+    TRANSLATION = 1
+    THETA2THETA = 2 
+
 class ScanSM(QThread):
+
     SIGNAL_status_update = pyqtSignal(str)
     SIGNAL_progress = pyqtSignal(int)
     SIGNAL_complete = pyqtSignal()
@@ -230,6 +237,8 @@ class ScanSM(QThread):
         self.wait()
 
     def run(self):
+        self.other.disable_movement_sensitive_buttons(True)
+
         words = None
 
         # Local variable setup.
@@ -244,7 +253,6 @@ class ScanSM(QThread):
 
 
         # print('\n\n\n')
-        self.other.disable_movement_sensitive_buttons(True)
 
         log.debug(self.other)
         log.info("Save to file? " + str(autosave_data))
@@ -277,7 +285,7 @@ class ScanSM(QThread):
         self.SIGNAL_status_update.emit("ZEROING")
         prep_pos = 0
 
-        if scan_type == 0: # Rotation
+        if scan_type == ScanType.ROTATION: # Rotation
             try:
                 log.info('273: Moving to', prep_pos)
                 self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
@@ -354,10 +362,10 @@ class ScanSM(QThread):
 
                     i += 1
             pass
-        elif scan_type == 1: # Translation
-            log.warn('Scan type 1 not implemented.')
+        elif scan_type == ScanType.TRANSLATION: # Translation
+            log.warn('Scan type not implemented.')
             pass
-        elif scan_type == 2: # Theta2Theta
+        elif scan_type == ScanType.THETA2THETA: # Theta2Theta
             try:
                 log.info('347: Moving to', prep_pos)
                 self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)

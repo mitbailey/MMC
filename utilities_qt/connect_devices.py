@@ -90,18 +90,18 @@ class ConnectDevices(QThread):
 
         for i in range(self.num_detectors):
             log.info('Instantiation attempt for detector #%d.'%(i))
-            self.SIGNAL_status.emit('Instantiation attempts for detector #%d.'%(i))
+            self.SIGNAL_status.emit(f'Establishing connection to detector {i} of {self.num_detectors}.')
             try:
                 if self.other.UIEL_dmw_detector_qcb[i].currentIndex() != 0:
                     log.info("Using manual port: %s"%(self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0]))
-                    self.SIGNAL_status.emit("Connecting and configuring detector #%d on port %s."%(i, self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0]))
-                    
+                    # self.SIGNAL_status.emit("Connecting and configuring detector #%d on port %s."%(i, self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0]))
+                    self.SIGNAL_status.emit(f'Configuring motion controller {i} of {self.num_motion_controllers}.')
                     self.detectors[i] = Detector(self.dummy, self.other.UIEL_dmw_detector_model_qcb[i].currentText(), self.other.UIEL_dmw_detector_qcb[i].currentText().split(' ')[0])
 
             except Exception as e:
                 log.error(e)
                 log.error("Failed to find detector (%s)."%(e))
-                self.SIGNAL_status.emit("Failed to find detector (%s)."%(e))
+                self.SIGNAL_status.emit("Failed to find detector #%d (%s)."%(i, e))
                 self.SIGNAL_qmsg_warn.emit('Connection Failure', 'Failed to find detector (%s).'%(e))
                 self.detectors[i] = None
                 detectors_connected[i] = False
@@ -111,6 +111,7 @@ class ConnectDevices(QThread):
                 detectors_connected[i] = False
             else:
                 detectors_connected[i] = True
+                self.SIGNAL_status.emit(f'Connected to detector {i} of {self.num_detectors}.')
 
             load+=load_increment
             self.SIGNAL_load_bar.emit(load)
@@ -118,14 +119,15 @@ class ConnectDevices(QThread):
         # for i, combo in self.dm_detector_combos:
         for i in range(self.num_motion_controllers):
             log.info('Instantiation attempt for motion controller #%d.'%(i))
-            self.SIGNAL_status.emit('Instantiation attempt for motion controller #%d.'%(i))
+            self.SIGNAL_status.emit(f'Establishing connection to motion controller {i} of {self.num_motion_controllers}.')
             try:
                 if self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() != 0:
                     log.info("Using manual port: %s"%(self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
-                    self.SIGNAL_status.emit("Connecting and homing motion controller #%d on port %s."%(i, self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
+                    # self.SIGNAL_status.emit("Connecting and homing motion controller #%d on port %s."%(i, self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0]))
                     log.info(self.dummy, self.other.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
                     
                     log.debug('About to call new_motion_controller().')
+                    self.SIGNAL_status.emit(f'Homing motion controller {i} of {self.num_motion_controllers}.')
                     new_mtn_ctrls = mw.new_motion_controller(self.dummy, self.other.UIEL_dmw_mtn_ctrl_model_qcb[i].currentText(), self.other.UIEL_dmw_mtn_ctrl_qcb[i].currentText().split(' ')[0])
                     
                     log.debug('new_motion_controller() returned.')
@@ -146,6 +148,7 @@ class ConnectDevices(QThread):
                 mtn_ctrls_connected[i] = False
             else:
                 mtn_ctrls_connected[i] = True
+                self.SIGNAL_status.emit(f'Connected to motion controller {i} of {self.num_motion_controllers}.')
 
             load+=load_increment
             self.SIGNAL_load_bar.emit(load)

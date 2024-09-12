@@ -27,6 +27,7 @@ import time
 import os
 import inspect
 from termcolor import colored
+import datetime
 
 LOG_LEVEL = 0
 MAX_DIR_SIZE = 1000 # MB
@@ -147,9 +148,14 @@ def _out(_l, _m, _t = False):
         if len(_m) > 1:
             for i in range(1, len(_m)):
                 out += ' %s'%(_m[i])
-            out += '\n'
+            # out += '\n'
+    out += '\n'
 
-    __logfile.write(out)
+    # Get timestamp.
+    # Prints are NOT guaranteed to be in order or meaningfully timestamped. This just provides a general duration between things.
+    ts = datetime.datetime.now().time().strftime('%H:%M:%S.%f')
+
+    __logfile.write(ts + ' ' + out)
     out = out.lstrip()
     out = ''.join(out.split(_l))
     if _l == '[DEBUG]':
@@ -163,6 +169,7 @@ def _out(_l, _m, _t = False):
     elif _l == '[ERROR]':
         col = colored(_l, 'red')
 
+    print(ts + ' ', end='')
     print(col, end='')
     print(out, end='\n')
 

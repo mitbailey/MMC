@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
+    <width>925</width>
     <height>600</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>800</width>
+    <width>925</width>
     <height>600</height>
    </size>
   </property>
@@ -102,8 +102,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>750</width>
-           <height>161</height>
+           <width>883</width>
+           <height>180</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -255,8 +255,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>750</width>
-           <height>162</height>
+           <width>883</width>
+           <height>180</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -399,6 +399,11 @@
      </property>
      <item>
       <widget class="QLabel" name="current_loading_status">
+       <property name="font">
+        <font>
+         <family>Bahnschrift</family>
+        </font>
+       </property>
        <property name="text">
         <string/>
        </property>
