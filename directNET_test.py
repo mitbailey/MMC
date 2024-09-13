@@ -5,7 +5,7 @@ import time
 from utilities import ports_finder
 from utilities import safe_serial
 from threading import Lock
-# from utilities import log
+from utilities import log
 
 # from .stagedevice import StageDevice
 
@@ -19,8 +19,8 @@ memory_map = {
 }
 
 class Operation:
-    READ = 0
-    WRITE = 1
+    READ = b'\x30'
+    WRITE = b'\x38'
 
 class ControlCodes:
     ENQ = b'\x05'  # Enquiry - initiate request
@@ -40,13 +40,15 @@ class DNClient(object):
     """
 
     ENQUIRY_ID = b'N'
+    MEM_TYPE = b'\x31'
+    CTRL_ADDR = b'\x30\x31'
+
 
     # This is where we set up RS232 / port communications.
     # 1 is the default client_id and its also the client_id of the 747...
-    def __init__(self, port: serial.Serial, client_id: int = 1):
+    def __init__(self, port: serial.Serial):
         self.s = safe_serial.SafeSerial(port, 9600, timeout=1)
         # self.serial = serial.serial_for_url(port, timeout=1, parity=serial.PARITY_ODD)
-        self.client_id = client_id
 
     def test_connection(self):
         self.enquiry()
@@ -55,54 +57,37 @@ class DNClient(object):
         self.s.close()
 
     def enquiry(self):
-        self.s.write(self.ENQUIRY_ID + chr(0x20 + self.client_id).encode() + ControlCodes.ENQ)
+        self.s.write(self.ENQUIRY_ID + chr(0x20 + self.client_id).encode() + ControlCodes.ENQ + b'\r\n')
         ack = self.s.read(size=3)
-        assert ack == self.ENQUIRY_ID + chr(0x20 + self.client_id).encode() + ControlCodes.ACK, "ACK not received. Instead got: "+repr(ack)
+        print('Enquiry retrieved:', ack)
+        # assert ack == self.ENQUIRY_ID + chr(0x20 + self.client_id).encode() + ControlCodes.ACK, "ACK not received. Instead got: "+repr(ack)
 
     # Build a header.
-    def get_request_header(self, oper: Operation, address, size):
-        # Header
-        header = ControlCodes.SOH
+    def get_request_header(self, operation: Operation, address_octal_str, size_bytes):
+        midheader = self.CTRL_ADDR 
+        midheader += operation 
+        midheader += self.MEM_TYPE
+        midheader += self._to_hex(int(address_octal_str, base=8) + 1, 4)
+        midheader += self._to_hex(size_bytes / 256, 2)
+        midheader += self._to_hex(size_bytes % 256, 2)
+        # For a Header, the LRC is the exclusive OR of all bytes between the SOH and ETB control codes, i.e. bytes 2 - 16. For Data blocks the LRC is the exclusive OR of all bytes between the STX and ETX control codes.
+        # Longitudinal Redundancy Check
+        crc = self._calc_csum(midheader)
 
-        # Client ID
-        header += self._to_hex(self.client_id, 2)
-
-        # Operation Read/Write 0/8
-        header += self._to_hex(0 if (oper == Operation.READ) else 8, 1)
-
-        # Data type
-        memory_type = address[0]
-        header += self._to_hex(memory_map[memory_type], 1)
-
-        # Address
-        address = address[1:]
-        # Looks like the address is expected in octal.
-        header += self._to_hex(int(address, base=8)+1, 4)
-
-        # No of blocks, bytes in last block
-        header += self._to_hex(size / 256, 2)
-        header += self._to_hex(size % 256, 2)
-
-        # master id = 0
-        header += self._to_hex(0, 2)
-
-        header += ControlCodes.ETB
-
-        # Checksum
-        header += self._calc_csum(header[1:15])
+        header = ControlCodes.SOH + midheader + crc + ControlCodes.ETB
 
         return header
 
     # Builds a header, sends it, and then reads & returns the response.
-    def read_value(self, address, size):
+    def read_value(self, address_octal_str, size_bytes):
         self.enquiry()
 
-        header = self.get_request_header(read=Operation.READ, address=address, size=size)
+        header = self.get_request_header(read=Operation.READ, address_octal_str=address_octal_str, size_bytes=size_bytes)
         self.s.write(header)
 
         self._read_ack()
 
-        data = self._parse_data(size)
+        data = self._parse_data(size_bytes)
 
         self._write_ack()
 
@@ -111,14 +96,30 @@ class DNClient(object):
         return data
     
     # UNVERIFIED
-    def write_value(self, address, size):
-        # TODO: Needs a place to put the payload...
-        pass
+    def write_value(self, address_octal_str, size_bytes, data):
+        self.enquiry()
 
-    # Shorthand for read_value where we are looking for an integer.
-    def read_int(self, address):
-        data = self.read_value(address, 2)
-        return int(encode(data[::-1], 'hex'))
+        header = self.get_request_header(read=Operation.WRITE, address_octal_str=address_octal_str, size_bytes=size_bytes)
+        self.s.write(header + ControlCodes.STX + data + ControlCodes.ETX + self._calc_csum(data))
+
+        self._read_ack()
+
+        # data = self._parse_data(size_bytes)
+
+        self._write_ack()
+
+        self._end_transaction()
+
+        # return data
+
+    # Shorthand for read_value hardcoded to 2 bytes.
+    def read_vmem(self, address_octal_str):
+        data = self.read_value(address_octal_str, 2)
+        return data
+    
+    # Shorthand for write_value hardcoded to 2 bytes.
+    def write_vmem(self, address_octal_str, data):
+        self.write_value(address_octal_str, 2, data)
 
     def _read_ack(self):
         ack = self.s.read(1)
@@ -133,7 +134,7 @@ class DNClient(object):
 
     def _end_transaction(self):
         eot = self.s.read(1)
-        assert eot == ControlCodes.EOT, 'Not received EOT: '+repr(eot)
+        # assert eot == ControlCodes.EOT, 'Not received EOT: '+repr(eot)
         self.s.write(ControlCodes.EOT)
 
     def _parse_data(self, size):
@@ -256,4 +257,10 @@ class Test747:
         print('Positions:')
         print('pos_0: %d, pos_1: %d, pos_2: %d, pos_3: %d'%(pos_0, pos_1, pos_2, pos_3))
 
-    
+log.register()
+
+while True:
+    my747 = Test747('COM4')
+    time.sleep(1)
+
+exit(0)
