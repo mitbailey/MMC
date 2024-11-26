@@ -23,6 +23,7 @@
 #
 
 import threading
+from threading import Lock
 import serial
 import time
 from utilities import ports_finder
@@ -117,41 +118,55 @@ class MP_792:
                 self.home(i)
 
         # TODO: (This is new) Spawn the t_movement_status thread. This thread will update the current movement status in line with what the device can handle. This is a break-away from the previous paradigm where only when asked would we check. This didnt make much sense.
-        self.movement_status_tid = threading.Thread(target=self.t_movement_status)
+        self.movement_status_tid = threading.Thread(target=self.movement_status_thread)
         self.movement_status_tid.start()
 
         log.info('McPherson 792 initialization complete.')
 
-    def t_movement_status(self):
-        pass
-        # n_movers = 0
-        # for i, axis_health in self.axis_alive:
-        #     if axis_healthy and 
-        #     if self._is_moving(axis):
-        #         n_movers += 1
+    def movement_status_thread(self):
+        # This thread runs in the background.
+        # It will be the only thing which calls the internal _is_moving() function.
+        # The middleware calls the external is_moving() function.
+        # This way we can ensure that the device is only queried for movement status when it is safe to do so.
 
-        # if n_movers == 1:
-        #     log.info('One axis reported as moving.')
-        # elif n_movers > 1:
-        #     log.error('Multiple axes report as moving.')
-        #     self.stop(0)
-        #     self.stop(1)
-        #     self.stop(2)
-        #     self.stop(3)
-        # else:
-        #     log.info('No axes are moving.')
-        
+        alive_axes_indices = [i for i, v in enumerate(self.axis_alive) if v]
 
-        # # If any of the axes are moving, we need to keep checking only those ones until they stop.
-        # if any(self._is_moving_l):
+        while True:
+            time.sleep(1.0)
 
+            moving_axes = 0
 
-        # self._is_moving_l = self._is_moving(0)
-        # self._is_moving_l = self._is_moving(1)
-        # self._is_moving_l = self._is_moving(2)
-        # self._is_moving_l = self._is_moving(3)
+            for i in alive_axes_indices:
+                if self._is_moving_l[i]:
+                    moving_axes += 1
 
-        # time.sleep(1.0)
+            if moving_axes > 1:
+                log.error('Multiple axes are moving.')
+                log.error('Cancelling all movement.')
+
+                for i in alive_axes_indices:
+                    self.stop(i)
+
+                continue
+
+            elif moving_axes == 1:
+                moving_axis_index = next((i for i, v in enumerate(self._is_moving_l) if v), None)
+
+                # Check if the backlash lock is active. If so, we should check again later.
+                if self._backlash_lock_l[moving_axis_index]:
+                    log.info('Backlash lock is active. Skipping movement inquiry.')
+
+                    continue
+
+                # Update the movement status of the axis which is moving.
+                log.info(f'Checking movement status of axis {moving_axis_index}.')
+                self._is_moving_l[moving_axis_index] = self._is_moving(moving_axis_index)
+                log.info(f'Axis {moving_axis_index} is moving? {self._is_moving_l[moving_axis_index]}.')
+
+            # Checking for movement in this last case isn't necessary because we know when we initiate an axis move - it should be set to True (moving) when its told to move. The assumption should be that it does begin to move. Then, we use the previous case to prove it isn't moving once its stopped (or failed to start moving).
+            elif moving_axes == 0:
+                # Update the movement status of all alive axes, since none are reported as moving.
+                log.info('No axes have been marked or reported as moving. Skipping movement inquiry.')
 
     # Axis needs to be set by passing MP_792.AXES[axis] + b'\r' command every time we do anything.
     def set_axis_cmd(self, axis: int):
@@ -182,8 +197,9 @@ class MP_792:
 
             log.info('Time spent homing:', current_time - start_time)
 
-            moving = self._is_moving(axis)
-            time.sleep(MP_792.WR_DLY)
+            # moving = self._is_moving(axis)
+            time.sleep(0.5)
+            moving = any(self._is_moving_l)
 
             limstat = self.s.xfer([self.set_axis_cmd(axis), b']\r'], custom_delay=MP_792.WR_DLY)
             limstat = limstat.decode('utf-8')
@@ -257,8 +273,10 @@ class MP_792:
         if self._backlash_lock_l[axis]:
             log.info('is_moving is returning true because the Backlash lock is active.')
             return True
+        elif self._is_homing[axis]:
+            return True
         else:
-            return self._is_moving(axis)
+            return self._is_moving_l[axis]
 
     # Internal-calling only.
     def _is_moving(self, axis: int):
@@ -380,15 +398,14 @@ class MP_792:
             log.info('Not moving (0 steps).')
         self._position[axis] += steps
 
-        i=0
-        # moving = True
-        while i<3:
-            log.debug('BLOCKING')
-            time.sleep(MP_792.WR_DLY)
-            if not self._is_moving(axis):
+        # Blocks until the move is complete (this may not even be necessary..?).
+        while True:
+            log.debug('BLOCKING until movement is completed.')
+            time.sleep(0.5)
+            if not self._is_moving_l[axis]:
                 log.info('Found to be NOT MOVING.')
-                i+=1
-        log.debug('FINISHED BLOCKING because moving is', i)
+                break
+        log.debug('FINISHED BLOCKING because moving is', self._is_moving_l)
         time.sleep(MP_792.WR_DLY)
 
     def short_name(self):

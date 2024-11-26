@@ -42,13 +42,13 @@ class DNClient(object):
     ENQUIRY_ID = b'N'
     MEM_TYPE = b'\x31'
     CTRL_ADDR = b'\x30\x31'
+    CLIENT_ID = b'\x21'
 
 
     # This is where we set up RS232 / port communications.
     # 1 is the default client_id and its also the client_id of the 747...
     def __init__(self, port: serial.Serial):
         self.s = safe_serial.SafeSerial(port, 9600, timeout=1)
-        # self.serial = serial.serial_for_url(port, timeout=1, parity=serial.PARITY_ODD)
 
     def test_connection(self):
         self.enquiry()
@@ -57,10 +57,9 @@ class DNClient(object):
         self.s.close()
 
     def enquiry(self):
-        self.s.write(self.ENQUIRY_ID + chr(0x20 + self.client_id).encode() + ControlCodes.ENQ + b'\r\n')
+        self.s.write(self.ENQUIRY_ID + self.CLIENT_ID + ControlCodes.ENQ)
         ack = self.s.read(size=3)
         print('Enquiry retrieved:', ack)
-        # assert ack == self.ENQUIRY_ID + chr(0x20 + self.client_id).encode() + ControlCodes.ACK, "ACK not received. Instead got: "+repr(ack)
 
     # Build a header.
     def get_request_header(self, operation: Operation, address_octal_str, size_bytes):
@@ -104,13 +103,9 @@ class DNClient(object):
 
         self._read_ack()
 
-        # data = self._parse_data(size_bytes)
-
         self._write_ack()
 
         self._end_transaction()
-
-        # return data
 
     # Shorthand for read_value hardcoded to 2 bytes.
     def read_vmem(self, address_octal_str):
@@ -260,7 +255,7 @@ class Test747:
 log.register()
 
 while True:
-    my747 = Test747('COM4')
+    my747 = Test747('COM5')
     time.sleep(1)
 
 exit(0)
