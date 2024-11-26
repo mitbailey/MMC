@@ -40,7 +40,7 @@ class UpdatePositionDisplays(QThread):
     SIGNAL_qmsg_crit = pyqtSignal(str, str)
 
 
-    def __init__(self, parent: QMainWindow, cadence = 200):
+    def __init__(self, parent: QMainWindow, cadence = 1000):
         log.debug("Update worker init called.")
         self.CADENCE = cadence
         super(UpdatePositionDisplays, self).__init__()
@@ -50,6 +50,7 @@ class UpdatePositionDisplays(QThread):
         self.SIGNAL_qmsg_info.connect(self.other.QMessageBoxInformation)
         self.SIGNAL_qmsg_warn.connect(self.other.QMessageBoxWarning)
         self.SIGNAL_qmsg_crit.connect(self.other.QMessageBoxCritical)
+        self.runloop_init = False
         log.debug("Update worker init'd.")
 
     def run(self):
@@ -105,6 +106,8 @@ class UpdatePositionDisplays(QThread):
                             # self.other.disable_movement_sensitive_buttons(False)
                             self.other.homing_started = False
                             pass
+
+                    log.warn("MAIN DRIVE AXIS IS MOVING STATUS CHECK!")
                     move_status = self.other.motion_controllers.main_drive_axis.is_moving()
                     
                     mda_moving = move_status or self.other.scanRunning
@@ -127,6 +130,7 @@ class UpdatePositionDisplays(QThread):
 
             try:
                 if self.other.motion_controllers.filter_wheel_axis is not None:
+                    log.warn("FILTER WHEEL AXIS IS MOVING STATUS CHECK!")
                     fwa_moving = self.other.motion_controllers.filter_wheel_axis.is_moving()
                     fwa_homing = self.other.motion_controllers.filter_wheel_axis.is_homing()
                     fwa_pos = self.other.motion_controllers.filter_wheel_axis.get_position()
@@ -135,6 +139,7 @@ class UpdatePositionDisplays(QThread):
 
             try:
                 if self.other.motion_controllers.sample_rotation_axis is not None:
+                    log.warn("SAMPLE ROTATION AXIS IS MOVING STATUS CHECK!")
                     sra_moving = self.other.motion_controllers.sample_rotation_axis.is_moving()
                     sra_homing = self.other.motion_controllers.sample_rotation_axis.is_homing()
                     sra_pos = self.other.motion_controllers.sample_rotation_axis.get_position()
@@ -143,6 +148,7 @@ class UpdatePositionDisplays(QThread):
 
             try:
                 if self.other.motion_controllers.sample_angle_axis is not None:
+                    log.warn("SAMPLE ANGLE AXIS IS MOVING STATUS CHECK!")
                     saa_moving = self.other.motion_controllers.sample_angle_axis.is_moving()
                     saa_homing = self.other.motion_controllers.sample_angle_axis.is_homing()
                     saa_pos = self.other.motion_controllers.sample_angle_axis.get_position()
@@ -151,6 +157,7 @@ class UpdatePositionDisplays(QThread):
                     
             try:
                 if self.other.motion_controllers.sample_translation_axis is not None:
+                    log.warn("SAMPLE TRANSLATION AXIS IS MOVING STATUS CHECK!")
                     sta_moving = self.other.motion_controllers.sample_translation_axis.is_moving()
                     sta_homing = self.other.motion_controllers.sample_translation_axis.is_homing()
                     sta_pos = self.other.motion_controllers.sample_translation_axis.get_position()
@@ -159,6 +166,7 @@ class UpdatePositionDisplays(QThread):
 
             try:
                 if self.other.motion_controllers.detector_rotation_axis is not None:
+                    log.warn("DETECTOR ROTATION IS MOVING STATUS CHECK!")
                     dra_moving = self.other.motion_controllers.detector_rotation_axis.is_moving()
                     dra_homing = self.other.motion_controllers.detector_rotation_axis.is_homing()
                     dra_pos = self.other.motion_controllers.detector_rotation_axis.get_position()
@@ -168,7 +176,15 @@ class UpdatePositionDisplays(QThread):
             log.info('Calling SIGNAL_update_axes_info.emit()')
             self.SIGNAL_update_axes_info.emit(mda_pos, mda_moving, mda_homing, fwa_pos, fwa_moving, fwa_homing, sra_pos, sra_moving, sra_homing, saa_pos, saa_moving, saa_homing, sta_pos, sta_moving, sta_homing, dra_pos, dra_moving, dra_homing)
 
-        self.timer = QTimer()
-        self.timer.timeout.connect(update)
-        self.timer.start(self.CADENCE)
-        self.exec()
+        if not self.runloop_init:
+            self.runloop_init = True
+
+            log.info("Beginning update worker.")
+            self.timer = QTimer()
+            self.timer.timeout.connect(update)
+            self.timer.start(self.CADENCE)
+            self.exec()
+        else:
+            log.fatal("Update worker already running. Cannot start timer again!")
+            # Throw exception.
+            raise Exception("Update worker already running. Cannot start timer again!")

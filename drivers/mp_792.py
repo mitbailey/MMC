@@ -22,6 +22,7 @@
 #
 #
 
+import threading
 import serial
 import time
 from utilities import ports_finder
@@ -115,15 +116,51 @@ class MP_792:
                 
                 self.home(i)
 
+        # TODO: (This is new) Spawn the t_movement_status thread. This thread will update the current movement status in line with what the device can handle. This is a break-away from the previous paradigm where only when asked would we check. This didnt make much sense.
+        self.movement_status_tid = threading.Thread(target=self.t_movement_status)
+        self.movement_status_tid.start()
+
         log.info('McPherson 792 initialization complete.')
+
+    def t_movement_status(self):
+        pass
+        # n_movers = 0
+        # for i, axis_health in self.axis_alive:
+        #     if axis_healthy and 
+        #     if self._is_moving(axis):
+        #         n_movers += 1
+
+        # if n_movers == 1:
+        #     log.info('One axis reported as moving.')
+        # elif n_movers > 1:
+        #     log.error('Multiple axes report as moving.')
+        #     self.stop(0)
+        #     self.stop(1)
+        #     self.stop(2)
+        #     self.stop(3)
+        # else:
+        #     log.info('No axes are moving.')
+        
+
+        # # If any of the axes are moving, we need to keep checking only those ones until they stop.
+        # if any(self._is_moving_l):
+
+
+        # self._is_moving_l = self._is_moving(0)
+        # self._is_moving_l = self._is_moving(1)
+        # self._is_moving_l = self._is_moving(2)
+        # self._is_moving_l = self._is_moving(3)
+
+        # time.sleep(1.0)
 
     # Axis needs to be set by passing MP_792.AXES[axis] + b'\r' command every time we do anything.
     def set_axis_cmd(self, axis: int):
         return MP_792.AXES[axis] + b'\r'
 
     def home(self, axis: int)->bool:
+        # Deny the home is any axis is busy.
         if any(self._is_homing) or any(self._is_moving_l) or any(self._backlash_lock_l):
-            log.warn(f'Device is busy: another axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
+            log.warn(f'Device is busy: an axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
             return False
 
         HOME_TIME = 9999999
@@ -225,10 +262,38 @@ class MP_792:
 
     # Internal-calling only.
     def _is_moving(self, axis: int):
-        # Check that the axis we are trying to operate on is the axis that is already busy. If so let it through.
-        if (any(self._is_homing) or any(self._is_moving_l) or any(self._backlash_lock_l)) and not (self._is_homing[axis] or self._is_moving_l[axis] or self._backlash_lock_l[axis]):
+
+        sum_moving = sum(self._is_moving_l)
+        sum_homing = sum(self._is_homing)
+
+        if sum_moving > 1:
+            log.fatal(f'Multiple axes are moving: {self._is_moving_l}.')
+            exit(-1)
+            raise RuntimeError('Multiple axes are moving.')
+        
+        if sum_homing > 1:
+            log.fatal(f'Multiple axes are homing: {self._is_homing}.')
+            exit(-1)
+            raise RuntimeError('Multiple axes are homing.')
+
+        # We want to deny access to the device if 
+        # - a different axis is moving.
+        # - this axis is mid-backlash.
+        # It doesn't matter if this axis is listed as moving or not.
+        # This will prevent switching to another axis mid-move.
+
+        _is_moving_others = [v for i, v in enumerate(self._is_moving_l) if not i == axis]
+        _is_homing_others = [v for i, v in enumerate(self._is_homing) if not i == axis]
+
+        if any(_is_moving_others) or any(_is_homing_others) or self._backlash_lock_l[axis]:
             log.info(f'Device is busy: another axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
-            return True
+            log.info(f'Returning the previous movement status of this axis (axis {axis}).')
+            return self._is_moving_l[axis]
+        
+        # # Check that the axis we are trying to operate on is the axis that is already busy. If so let it through.
+        # if (any(self._is_homing) or any(self._is_moving_l) or any(self._backlash_lock_l)) and not (self._is_homing[axis] or self._is_moving_l[axis] or self._backlash_lock_l[axis]):
+        #     log.info(f'Device is busy: another axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
+        #     return True
         
         status = self.s.xfer([self.set_axis_cmd(axis), b'^\r'], custom_delay=MP_792.WR_DLY)
         status = status.decode('utf-8').rstrip()
@@ -252,8 +317,9 @@ class MP_792:
 
     # Moves to a position, in steps, based on the software's understanding of where it last was.
     def move_to(self, position: int, axis: int, backlash: int):
+        # If anything is moving or homing, prevent a move.
         if any(self._is_homing) or any(self._is_moving_l) or any(self._backlash_lock_l):
-            log.warn(f'Device is busy: another axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
+            log.warn(f'Device is busy: an axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
             return
         
         # Reset the stop queued such that we dont immediately stop from an old stop request.
