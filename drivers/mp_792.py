@@ -91,6 +91,11 @@ class MP_792:
         else:
             raise RuntimeError('Invalid response.')
 
+        # TODO: (This is new) Spawn the t_movement_status thread. This thread will update the current movement status in line with what the device can handle. This is a break-away from the previous paradigm where only when asked would we check. This didnt make much sense.
+        # Starting movement watchdog.
+        self.movement_status_tid = threading.Thread(target=self.movement_status_thread)
+        self.movement_status_tid.start()
+
         log.info('Checking axes...')
         for i in [2, 0, 3, 1]:
             log.debug('WR:', MP_792.AXES[i] + b'\r')
@@ -117,10 +122,6 @@ class MP_792:
                 
                 self.home(i)
 
-        # TODO: (This is new) Spawn the t_movement_status thread. This thread will update the current movement status in line with what the device can handle. This is a break-away from the previous paradigm where only when asked would we check. This didnt make much sense.
-        self.movement_status_tid = threading.Thread(target=self.movement_status_thread)
-        self.movement_status_tid.start()
-
         log.info('McPherson 792 initialization complete.')
 
     def movement_status_thread(self):
@@ -129,16 +130,24 @@ class MP_792:
         # The middleware calls the external is_moving() function.
         # This way we can ensure that the device is only queried for movement status when it is safe to do so.
 
-        alive_axes_indices = [i for i, v in enumerate(self.axis_alive) if v]
+
+        any_alive = False
 
         while True:
-            time.sleep(1.0)
+            time.sleep(0.25)
+
+            alive_axes_indices = [i for i, v in enumerate(self.axis_alive) if v]
 
             moving_axes = 0
 
             for i in alive_axes_indices:
+                any_alive = True
                 if self._is_moving_l[i]:
                     moving_axes += 1
+
+            if not any_alive:
+                log.error('No axes are alive.')
+                continue
 
             if moving_axes > 1:
                 log.error('Multiple axes are moving.')
@@ -154,9 +163,10 @@ class MP_792:
 
                 # Check if the backlash lock is active. If so, we should check again later.
                 if self._backlash_lock_l[moving_axis_index]:
-                    log.info('Backlash lock is active. Skipping movement inquiry.')
+                    # log.info('Backlash lock is active. Skipping movement inquiry.')
+                    log.info('Backlash lock is active, but not skipping movement inquiry.')
 
-                    continue
+                    # continue
 
                 # Update the movement status of the axis which is moving.
                 log.info(f'Checking movement status of axis {moving_axis_index}.')
@@ -182,6 +192,7 @@ class MP_792:
 
         log.info('Beginning home for 792 axis %d.'%(axis))
         self._is_homing[axis] = True
+        self._is_moving_l[axis] = True # we set the movement, movement_status_thread will unset
 
         if axis == 2:
             home_cmd = b'M-5000\r'
@@ -225,13 +236,13 @@ class MP_792:
 
             time.sleep(MP_792.WR_DLY * 5)
 
-        if (self.is_moving(axis)):
+        if (self._is_moving(axis)):
             log.warn('Post-home movement detected. Entering movement remediation.')
             self.s.xfer([self.set_axis_cmd(axis), b'@\r'], custom_delay=MP_792.WR_DLY)
 
             time.sleep(MP_792.WR_DLY * 10)
         stop_waits = 0
-        while(self.is_moving(axis)):
+        while(self._is_moving(axis)):
             if stop_waits > 3:
                 stop_waits = 0
                 log.warn('Re-commanding that device ceases movement.')
@@ -302,9 +313,11 @@ class MP_792:
 
         _is_moving_others = [v for i, v in enumerate(self._is_moving_l) if not i == axis]
         _is_homing_others = [v for i, v in enumerate(self._is_homing) if not i == axis]
+        _backlash_lock_others = [v for i, v in enumerate(self._backlash_lock_l) if not i == axis]
+        # This function, the INTERNAL movement query, needs to return truly whether its moving or not. I dont care about backlash locks. We can check for that ourselves. The EXTERNAL movement function is more of an "is busy", and should return true if backlashing.
 
-        if any(_is_moving_others) or any(_is_homing_others) or self._backlash_lock_l[axis]:
-            log.info(f'Device is busy: another axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
+        if any(_is_moving_others) or any(_is_homing_others) or any(_backlash_lock_others):
+            log.info(f'Device is busy: another axis besides #{axis} is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
             log.info(f'Returning the previous movement status of this axis (axis {axis}).')
             return self._is_moving_l[axis]
         
