@@ -486,7 +486,7 @@ class Detector:
                 self.pa = sr860.SR860_DUMMY()
                 self._is_dummy = True
             else:
-                self.pa = sr860.SR860()
+                self.pa = sr860.SR860(man_port)
         else:
             log.error('Detector device model "%s" is not supported.'%(dev_model))
             raise Exception

@@ -75,11 +75,11 @@ class MP_792:
             log.error('%s\nnot found in\n%s'%(port, ser_ports))
             raise RuntimeError('Port not valid. Is another program using the port?')
 
-        self.s = safe_serial.SafeSerial(port, 9600, timeout=1)
+        self.s = safe_serial.SafeSerial(port, 9600, timeout=0.25)
         rx = self.s.xfer([b' \r'], custom_delay=MP_792.WR_DLY)
         # self.s.write(b' \r')
         # time.sleep(MP_792.WR_DLY)
-        # rx = self.s.read(128)#.decode('utf-8').rstrip()
+        # rx = self.s.read(128)#.decode('utf-8').rstrip()   
         log.debug(rx)
 
         if rx is None or rx == b'':

@@ -107,7 +107,7 @@ class UpdatePositionDisplays(QThread):
                             self.other.homing_started = False
                             pass
 
-                    log.warn("MAIN DRIVE AXIS IS MOVING STATUS CHECK!")
+                    log.info("MAIN DRIVE AXIS IS MOVING STATUS CHECK!")
                     move_status = self.other.motion_controllers.main_drive_axis.is_moving()
                     
                     mda_moving = move_status or self.other.scanRunning
@@ -130,7 +130,7 @@ class UpdatePositionDisplays(QThread):
 
             try:
                 if self.other.motion_controllers.filter_wheel_axis is not None:
-                    log.warn("FILTER WHEEL AXIS IS MOVING STATUS CHECK!")
+                    log.info("FILTER WHEEL AXIS IS MOVING STATUS CHECK!")
                     fwa_moving = self.other.motion_controllers.filter_wheel_axis.is_moving()
                     fwa_homing = self.other.motion_controllers.filter_wheel_axis.is_homing()
                     fwa_pos = self.other.motion_controllers.filter_wheel_axis.get_position()
@@ -139,7 +139,7 @@ class UpdatePositionDisplays(QThread):
 
             try:
                 if self.other.motion_controllers.sample_rotation_axis is not None:
-                    log.warn("SAMPLE ROTATION AXIS IS MOVING STATUS CHECK!")
+                    log.info("SAMPLE ROTATION AXIS IS MOVING STATUS CHECK!")
                     sra_moving = self.other.motion_controllers.sample_rotation_axis.is_moving()
                     sra_homing = self.other.motion_controllers.sample_rotation_axis.is_homing()
                     sra_pos = self.other.motion_controllers.sample_rotation_axis.get_position()
@@ -148,7 +148,7 @@ class UpdatePositionDisplays(QThread):
 
             try:
                 if self.other.motion_controllers.sample_angle_axis is not None:
-                    log.warn("SAMPLE ANGLE AXIS IS MOVING STATUS CHECK!")
+                    log.info("SAMPLE ANGLE AXIS IS MOVING STATUS CHECK!")
                     saa_moving = self.other.motion_controllers.sample_angle_axis.is_moving()
                     saa_homing = self.other.motion_controllers.sample_angle_axis.is_homing()
                     saa_pos = self.other.motion_controllers.sample_angle_axis.get_position()
@@ -157,7 +157,7 @@ class UpdatePositionDisplays(QThread):
                     
             try:
                 if self.other.motion_controllers.sample_translation_axis is not None:
-                    log.warn("SAMPLE TRANSLATION AXIS IS MOVING STATUS CHECK!")
+                    log.info("SAMPLE TRANSLATION AXIS IS MOVING STATUS CHECK!")
                     sta_moving = self.other.motion_controllers.sample_translation_axis.is_moving()
                     sta_homing = self.other.motion_controllers.sample_translation_axis.is_homing()
                     sta_pos = self.other.motion_controllers.sample_translation_axis.get_position()
@@ -166,7 +166,7 @@ class UpdatePositionDisplays(QThread):
 
             try:
                 if self.other.motion_controllers.detector_rotation_axis is not None:
-                    log.warn("DETECTOR ROTATION IS MOVING STATUS CHECK!")
+                    log.info("DETECTOR ROTATION IS MOVING STATUS CHECK!")
                     dra_moving = self.other.motion_controllers.detector_rotation_axis.is_moving()
                     dra_homing = self.other.motion_controllers.detector_rotation_axis.is_homing()
                     dra_pos = self.other.motion_controllers.detector_rotation_axis.get_position()

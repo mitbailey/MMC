@@ -32,13 +32,15 @@
 from io import TextIOWrapper
 import sys
 import glob
+import serial
 from time import sleep
 from utilities import ports_finder
 from utilities import safe_serial
 from utilities import log
 
 class SR860:
-    def __init__(self, man_port: str = None):
+    # def __init__(self, man_port: str = None):
+    def __init__(self, port: serial.Serial):
         # if samples < 2:
         #     samples = 2
         # if samples > 20:
@@ -46,39 +48,57 @@ class SR860:
         # self.samples = samples
         self.s = None
         self.found = False
-        self.port = -1
-        for port in ports_finder.find_serial_ports():
-            if man_port is not None:
-                if port != man_port:
-                    continue
+        # self.port = -1
+        # for port in ports_finder.find_serial_ports():
+        #     if man_port is not None:
+        #         if port != man_port:
+        #             continue
 
-            s = safe_serial.SafeSerial(port, 9600, timeout=0.25)
-            log.info('Beginning search for SR860...')
-            log.info('Trying port %s.'%(port))
-            # s.write(b'*RST\n')
-            # sleep(0.5)
+        # CRITICAL!!!!
+        # This needs to not clog up all the ports during a search. Just use the one the user gives it....
 
-            s.write(b'*IDN?\n')
-            buf = s.read(128).decode('utf-8').rstrip()
-            log.debug(buf)
+        if port is None:
+            log.error('Port is none type.')
+            raise RuntimeError('Port is none type.')
 
-            sleep(1)
+        log.info('Attempting to connect to LockIn 860 on port %s.'%(port))
 
-            s.write(b'*IDN?\n')
-            buf = s.read(128).decode('utf-8').rstrip()
-            log.debug(buf)
+        ser_ports = ports_finder.find_serial_ports()
+        if port not in ser_ports:
+            log.error('Port not valid. Is another program using the port?')
+            log.error('%s\nnot found in\n%s'%(port, ser_ports))
+            raise RuntimeError('Port not valid. Is another program using the port?')
 
+        s = safe_serial.SafeSerial(port, 9600, timeout=0.25)
 
+        log.info('Beginning search for SR860...')
+        log.info('Trying port %s.'%(port))
+        # s.write(b'*RST\n')
+        # sleep(0.5)
 
-            # if 'Stanford_Research_Systems,SR860,' in buf:
-            if 'Stanford_Research_Systems,SR860,' in buf:
-                log.info("SR860 found.")
-                self.found = True
-                self.port = port
-                self.s = s
-            else:
-                log.error("SR860 not found.")
-                s.close()
+        s.write(b'*TST?\n')
+        buf = s.read(128).decode('utf-8').rstrip()
+        log.debug(buf)
+
+        s.write(b'*IDN?\n')
+        buf = s.read(128).decode('utf-8').rstrip()
+        log.debug(buf)
+
+        sleep(1)
+
+        s.write(b'*IDN?\n')
+        buf = s.read(128).decode('utf-8').rstrip()
+        log.debug(buf)
+
+        # if 'Stanford_Research_Systems,SR860,' in buf:
+        if 'Stanford_Research_Systems,SR860,' in buf:
+            log.info("SR860 found.")
+            self.found = True
+            self.port = port
+            self.s = s
+        else:
+            log.error("SR860 not found.")
+            s.close()
 
         if self.found == False:
             raise RuntimeError('Could not find SR860!')
