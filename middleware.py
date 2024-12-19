@@ -111,7 +111,7 @@ class DevFinder:
         # For each serial port, since they're likely KEYSPAN devices, we will need to figure out what device is on the other end. 
 
         # Check if a 789A-4 or 792 is on this comport.
-        s.write(b' \r')
+        s.write(b' ')
         sleep(0.5)
 
         raw = s.read(128)
@@ -121,9 +121,9 @@ class DevFinder:
             return '(MP 789A-4 or MP 792)'
         else:
             # Check if a Keithley 6485 is on this comport.
-            s.write(b'*RST\r')
+            s.write(b'*RST')
             sleep(0.5)
-            s.write(b'*IDN?\r')
+            s.write(b'*IDN?')
             sleep(0.5)
             raw = s.read(128)
             if b'KEITHLEY INSTRUMENTS INC.,MODEL 6485' in raw:

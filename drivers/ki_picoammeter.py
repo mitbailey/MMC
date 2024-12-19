@@ -66,9 +66,9 @@ class KI_Picoammeter:
             log.info('Trying port %s.'%(port))
             
             # Ask the device on this port for identification.
-            s.write(b'*RST\r')
+            s.write(b'*RST')
             sleep(0.5)
-            s.write(b'*IDN?\r')
+            s.write(b'*IDN?')
             buf = s.read(128).decode('utf-8').rstrip()
             log.debug(buf)
 
@@ -92,32 +92,32 @@ class KI_Picoammeter:
         log.debug('Using port %s.'%(self.port))
 
         # Set up and start up command sequence for the KI 6485.
-        self.s.write(b'SYST:ZCH ON\r')
+        self.s.write(b'SYST:ZCH ON')
         sleep(0.1)
 
-        self.s.write(b'RANG 2e-9\r')
+        self.s.write(b'RANG 2e-9')
         sleep(0.1)
 
-        self.s.write(b'INIT\r')
+        self.s.write(b'INIT')
         sleep(0.1)
 
-        self.s.write(b'SYST:ZCOR:ACQ\r') # acquire zero current
+        self.s.write(b'SYST:ZCOR:ACQ') # acquire zero current
         sleep(0.1)
 
-        self.s.write(b'SYST:ZCOR ON\r') # perform zero correction
+        self.s.write(b'SYST:ZCOR ON') # perform zero correction
         sleep(0.1)
 
-        self.s.write(b'RANG:AUTO ON\r') # enable auto range
+        self.s.write(b'RANG:AUTO ON') # enable auto range
         sleep(0.1)
 
-        self.s.write(b'SYST:ZCH OFF\r') # disable zero check
+        self.s.write(b'SYST:ZCH OFF') # disable zero check
         sleep(0.1)
 
-        self.s.write(b'SYST:ZCOR OFF\r') # disable zero correction
+        self.s.write(b'SYST:ZCOR OFF') # disable zero correction
         sleep(0.1)
 
-        self.s.write(b'AVER ON\r')
-        self.s.write(b'AVER:TCON REP\r')
+        self.s.write(b'AVER ON')
+        self.s.write(b'AVER:TCON REP')
         # self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
         self.set_samples(samples)
 
@@ -137,7 +137,7 @@ class KI_Picoammeter:
 
         self.samples = samples
 
-        self.s.write(b'AVER:COUN %d\r'%(self.samples)) # enable averaging
+        self.s.write(b'AVER:COUN %d'%(self.samples)) # enable averaging
 
     def detect(self):
         """ Requests a detector sample from the device.
@@ -159,7 +159,7 @@ class KI_Picoammeter:
 
             out = ''
             buf = ''
-            self.s.write(b'READ?\r')
+            self.s.write(b'READ?')
             retry_ser = 10
             while retry_ser > 0:
                 buf = self.s.read(128).decode('utf-8').rstrip()

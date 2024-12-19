@@ -76,17 +76,17 @@ class SR860:
         # s.write(b'*RST\n')
         # sleep(0.5)
 
-        s.write(b'*TST?\n')
+        s.write(b'*TST?')
         buf = s.read(128).decode('utf-8').rstrip()
         log.debug(buf)
 
-        s.write(b'*IDN?\n')
+        s.write(b'*IDN?')
         buf = s.read(128).decode('utf-8').rstrip()
         log.debug(buf)
 
         sleep(1)
 
-        s.write(b'*IDN?\n')
+        s.write(b'*IDN?')
         buf = s.read(128).decode('utf-8').rstrip()
         log.debug(buf)
 
@@ -105,20 +105,20 @@ class SR860:
         log.debug('Using port %s.'%(self.port))
 
         # Set the system to LOCAL mode. This allows both commands and front-panel buttons to control the instrument.
-        self.s.write(b'LOCL 0\n')
+        self.s.write(b'LOCL 0')
         sleep(0.1)
 
-        self.s.write(b'LOCL?\n')
+        self.s.write(b'LOCL?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('SR860 is in LOCAL mode.')
         else:
             log.warn('SR860 is not in LOCAL mode!')
 
-        self.s.write(b'ERRE 255\n')
+        self.s.write(b'ERRE 255')
         sleep(0.1)
 
-        self.s.write(b'ERRE?\n')
+        self.s.write(b'ERRE?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '255'):
             log.info('Error Enable set to 255.')
@@ -126,10 +126,10 @@ class SR860:
             log.warn('Error Enable not set to 255!')
 
         # Set the time constant to 300ms.
-        self.s.write(b'OFLT 9\n')
+        self.s.write(b'OFLT 9')
         sleep(0.1)
 
-        self.s.write(b'OFLT?\n')
+        self.s.write(b'OFLT?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '9'):
             log.info('Time constant is 300ms.')
@@ -137,10 +137,10 @@ class SR860:
             log.warn('Time constant is not 300ms!')
 
         # Set the low pass filter slope.
-        self.s.write(b'OFSL 1\n')
+        self.s.write(b'OFSL 1')
         sleep(0.1)
 
-        self.s.write(b'OFSL?\n')
+        self.s.write(b'OFSL?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '1'):
             log.info('Low pass filter slope is 12dB/octave.')
@@ -148,10 +148,10 @@ class SR860:
             log.warn('Low pass filter slope is not 12dB/octave!')
 
         # Set the sync to 200 Hz.
-        self.s.write(b'SYNC 1\n')
+        self.s.write(b'SYNC 1')
         sleep(0.1)
 
-        self.s.write(b'SYNC?\n')
+        self.s.write(b'SYNC?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '1'):
             log.info('Sync is 200 Hz.')
@@ -159,10 +159,10 @@ class SR860:
             log.warn('Sync is not 200 Hz!')
 
         # Signal input to A.
-        self.s.write(b'ISRC 0\n')
+        self.s.write(b'ISRC 0')
         sleep(0.1)
 
-        self.s.write(b'ISRC?\n')
+        self.s.write(b'ISRC?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('Signal input is A.')
@@ -170,10 +170,10 @@ class SR860:
             log.warn('Signal input is not A!')
 
         # Set the input coupling to AC.
-        self.s.write(b'ICPL 0\n')
+        self.s.write(b'ICPL 0')
         sleep(0.1)
 
-        self.s.write(b'ICPL?\n')
+        self.s.write(b'ICPL?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('Input coupling is AC.')
@@ -181,10 +181,10 @@ class SR860:
             log.warn('Input coupling is not AC!')
 
         # Ground / float.
-        self.s.write(b'IGND 0\n')
+        self.s.write(b'IGND 0')
         sleep(0.1)
 
-        self.s.write(b'IGND?\n')
+        self.s.write(b'IGND?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('Ground is float.')
@@ -208,10 +208,10 @@ class SR860:
         #         sleep(0.1)
 
         # Reserve HIGH to Vuvas.
-        self.s.write(b'RMOD 1\n')
+        self.s.write(b'RMOD 1')
         sleep(0.1)
 
-        self.s.write(b'RMOD?\n')
+        self.s.write(b'RMOD?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '1'):
             log.info('Reserve is HIGH.')
@@ -246,12 +246,12 @@ class SR860:
 
     def detect(self):
         # 0 for X, 1 for Y.
-        self.s.write(b'OUTP? 0\n')
+        self.s.write(b'OUTP? 0')
         X = self.s.read(128).decode('utf-8').rstrip()
         if X == '': X = 0
         self.val_X = float(X)
 
-        self.s.write(b'ERRS?\n')
+        self.s.write(b'ERRS?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('No errors.')

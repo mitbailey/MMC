@@ -84,11 +84,26 @@ class _SafeSerial:
         self._s.close()
 
     # Mutex-protected.
+    # TODO: Delete this.
     def write(self, buf):
         self._m.acquire() 
+
+        buf = buf + b'\r\n'
+
+        log.info('SafeSerial Write:', buf)
+
         retval = self._s.write(buf)
-        log.info('Serial TX:', buf)
         self._m.release()
+        return retval
+
+    # INTERNAL USE ONLY
+    # Mutex pre-acquired.
+    def _write(self, buf):
+        buf = buf + b'\r\n'
+
+        log.info('SafeSerial Write:', buf)
+
+        retval = self._s.write(buf)
         return retval
 
     # Prefixed with a small delay.
@@ -98,6 +113,18 @@ class _SafeSerial:
         retval = self._s.read(size)
         log.info('Serial RX:', retval)
         self._m.release()
+
+        log.info('SafeSerial Read:', retval)
+        return retval
+
+    # INTERNAL USE ONLY
+    # Mutex pre-acquired.
+    def _read(self, size: int = READ_SIZE):
+        time.sleep(_SafeSerial.READ_DELAY)
+        retval = self._s.read(size)
+        log.info('Serial RX:', retval)
+
+        log.info('SafeSerial Read:', retval)
         return retval
     
     def xfer(self, tx_buf, rx_buf_size: int = READ_SIZE, custom_delay: float = 0.1):
@@ -110,12 +137,14 @@ class _SafeSerial:
         log.info('Serial xfer called with TX:', tx_buf)
 
         for i, msg in enumerate(tx_buf):
-            self._s.write(msg)
+            # self._s.write(msg)
+            self._write(msg)
             log.info(f'Serial xfer TX[{i}]: {msg}')
 
             time.sleep(delay)
     
-            retval = self._s.read(rx_buf_size)
+            # retval = self._s.read(rx_buf_size)
+            retval = self._read(rx_buf_size)
             log.info('Serial xfer RX:', retval)
 
             time.sleep(delay)

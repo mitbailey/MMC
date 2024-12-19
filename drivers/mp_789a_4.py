@@ -77,9 +77,13 @@ class MP_789A_4(StageDevice):
 
         # Get a SafeSerial connection on the port and begin communication.
         self.s = safe_serial.SafeSerial(port, 9600, timeout=1)
-        self.s.write(b' \r')
-        time.sleep(MP_789A_4.WR_DLY)
-        rx = self.s.read(128)#.decode('utf-8').rstrip()
+
+        # self.s.write(b' ')
+        # time.sleep(MP_789A_4.WR_DLY)
+        # rx = self.s.read(128)#.decode('utf-8').rstrip()
+
+        rx = self.s.xfer([b' '])
+
         log.debug(rx)
 
         # Check the response to ensure connection to a 789A-4.
@@ -124,30 +128,37 @@ class MP_789A_4(StageDevice):
         self._is_homing = True
 
         # Enable the 789A-4's homing circuit.
-        self.s.write(b'A8\r')
-        time.sleep(MP_789A_4.WR_DLY)
-        rx = self.s.read(128).decode('utf-8')
+        # self.s.write(b'A8')
+        # time.sleep(MP_789A_4.WR_DLY)
+        # rx = self.s.read(128).decode('utf-8')
+
+        rx = self.s.xfer([b'A8']).decode('utf-8')
 
         # Check limit switch status.
-        self.s.write(b']\r')
-        time.sleep(MP_789A_4.WR_DLY)
-        rx_raw = self.s.read(128)
+        # self.s.write(b']')
+        # time.sleep(MP_789A_4.WR_DLY)
+        # rx_raw = self.s.read(128)
+        rx_raw = self.s.xfer([b']'])
         rx = rx_raw.decode('utf-8')
 
         log.debug('RECEIVED (raw):', rx_raw)
 
         # Carries out the 789A-4 homing algorithm as described in the relevant manual.
-        if ('32' in rx) and ('+' not in rx and '-' not in rx):
+        if (('32' in rx) or ('128' in rx)) and ('+' not in rx and '-' not in rx):
             log.info('Home switch blocked.')
+
             # Home switch blocked.
             # Move at constant velocity (23 KHz).
-            self.s.write(b'M+23000\r')
-            time.sleep(MP_789A_4.WR_DLY)
+            # self.s.write(b'M+23000')
+            self.s.xfer([b'M+23000'])
+
+            # time.sleep(MP_789A_4.WR_DLY)
             while True:
                 # Check limit status - send every 0.8 seconds.
-                self.s.write(b']\r')
-                time.sleep(MP_789A_4.WR_DLY)     
-                rx = self.s.read(128).decode('utf-8')
+                # self.s.write(b']')
+                # time.sleep(MP_789A_4.WR_DLY)     
+                # rx = self.s.read(128).decode('utf-8')
+                rx = self.s.xfer([b']']).decode('utf-8')
                 if ('0' in rx or '2' in rx) and ('+' not in rx and '-' not in rx): # Not-on-a-limit-switch status is 0 when stationary, 2 when in motion.
                     break
                 elif ('64' in rx or '128' in rx) and ('+' not in rx and '-' not in rx): # If we have hit either of the extreme limit switches and stopped.
@@ -155,38 +166,54 @@ class MP_789A_4(StageDevice):
                     raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
                 time.sleep(MP_789A_4.WR_DLY * 7)
             # Soft stop when homing flag is located.
-            self.s.write(b'@\r')
-            time.sleep(MP_789A_4.WR_DLY) 
+            # self.s.write(b'@')
+            self.s.xfer([b'@'])
+            time.sleep(3) 
             # Back into home switch 3 motor revolutions.
-            self.s.write(b'-108000\r')
-            time.sleep(MP_789A_4.WR_DLY) 
+            # self.s.write(b'-108000')
+        # self.s.xfer([b'-108000'])
+            time.sleep(3) 
             # Go 2 motor revolutions up.
-            self.s.write(b'+72000\r')
-            time.sleep(MP_789A_4.WR_DLY) 
+            # self.s.write(b'+72000')
+        # self.s.xfer([b'+72000'])
+            time.sleep(3) 
             # Enable 'high accuracy' circuit.
-            self.s.write(b'A24\r')
-            time.sleep(MP_789A_4.WR_DLY) 
+            # self.s.write(b'A24')
+            self.s.xfer([b'A24'])
+            # time.sleep(1) 
             # Find edge of home flag at 1000 steps/sec.
-            self.s.write(b'F1000,0\r')
-            time.sleep(MP_789A_4.WR_DLY * 7)
+            # self.s.write(b'F1000,0')
+            self.s.xfer([b'F1000,0'])
+            # time.sleep(5)
+
+            while True:
+                # Check limit status - send every 0.8 seconds.
+                rx = self.s.xfer([b']']).decode('utf-8')
+                if ('0' in rx or '32' in rx) and ('+' not in rx and '-' not in rx): # We're not moving one way or another.
+                    break
+                time.sleep(2)
+
             # Disable home circuit.
-            self.s.write(b'A0\r')
+            # self.s.write(b'A0')
+            self.s.xfer([b'A0'])
             time.sleep(MP_789A_4.WR_DLY) 
             pass
-        elif ('0' in rx or '2' in rx) and ('+' not in rx and '-' not in rx):
+        elif ('0' in rx or '2' in rx or '64' in rx) and ('+' not in rx and '-' not in rx):
             # NOTE: When not on a limit switch, the device reports 0 when stationary and 2 when in motion. It seems sometimes it may report 2 even when not moving. We should just try to home anyway.
             if '2' in rx:
                 log.warn('Device is moving. Will attempt to home anyway.')
             log.info('Home switch not blocked.')
             # Home switch not blocked.
             # Move at constant velocity (23 KHz).
-            self.s.write(b'M-23000\r')
+            # self.s.write(b'M-23000')
+            self.s.xfer([b'M-23000'])
             time.sleep(MP_789A_4.WR_DLY)
             while True:
                 # Check limit status - send every 0.8 seconds.
-                self.s.write(b']\r')
-                time.sleep(MP_789A_4.WR_DLY)     
-                rx = self.s.read(128).decode('utf-8')
+                # self.s.write(b']')
+                # time.sleep(MP_789A_4.WR_DLY)     
+                # rx = self.s.read(128).decode('utf-8')
+                rx = self.s.xfer([b']']).decode('utf-8')
                 if ('32' in rx or '34' in rx) and ('+' not in rx and '-' not in rx): # Home-switch-blocked status is 32 when stationary, 34 when in motion.
                     break
                 elif ('64' in rx or '128' in rx) and ('+' not in rx and '-' not in rx): # If we have hit either of the extreme limit switches and stopped.
@@ -195,22 +222,36 @@ class MP_789A_4(StageDevice):
                     raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
                 time.sleep(MP_789A_4.WR_DLY * 7)
             # Soft stop when homing flag is located.
-            self.s.write(b'@\r')
-            time.sleep(MP_789A_4.WR_DLY) 
+            # self.s.write(b'@')
+            self.s.xfer([b'@'])
+            # time.sleep(1) 
             # Back into home switch 3 motor revolutions.
-            self.s.write(b'-108000\r')
-            time.sleep(MP_789A_4.WR_DLY) 
+            # self.s.write(b'-108000')
+        # self.s.xfer([b'-108000'])
+            # time.sleep(1) 
             # Go 2 motor revolutions up.
-            self.s.write(b'+72000\r')
-            time.sleep(MP_789A_4.WR_DLY) 
+            # self.s.write(b'+72000')
+        # self.s.xfer([b'+72000'])
+            # time.sleep(1) 
             # Enable 'high accuracy' circuit.
-            self.s.write(b'A24\r')
-            time.sleep(MP_789A_4.WR_DLY) 
+            # self.s.write(b'A24')
+            self.s.xfer([b'A24'])
+            # time.sleep(1) 
             # Find edge of home flag at 1000 steps/sec.
-            self.s.write(b'F1000,0\r')
-            time.sleep(MP_789A_4.WR_DLY * 7) 
+            # self.s.write(b'F1000,0')
+            self.s.xfer([b'F1000,0'])
+            # time.sleep(5) 
+
+            while True:
+                # Check limit status - send every 0.8 seconds.
+                rx = self.s.xfer([b']']).decode('utf-8')
+                if ('0' in rx or '32' in rx) and ('+' not in rx and '-' not in rx): # We're not moving one way or another.
+                    break
+                time.sleep(2)
+
             # Disable home circuit.
-            self.s.write(b'A0\r')
+            # self.s.write(b'A0')
+            self.s.xfer([b'A0'])
             time.sleep(MP_789A_4.WR_DLY) 
             pass
         else:
@@ -221,14 +262,16 @@ class MP_789A_4(StageDevice):
         # It is up to the middleware to handle zero- and home-offsets.
         if (self.is_moving()):
             log.warn('Post-home movement detected. Entering movement remediation.')
-            self.s.write(b'@\r')
+            # self.s.write(b'@')
+            self.s.xfer([b'@'])
             time.sleep(MP_789A_4.WR_DLY * 10)
         stop_waits = 0
         while(self.is_moving()):
             if stop_waits > 3:
                 stop_waits = 0
                 log.warn('Re-commanding that device ceases movement.')
-                self.s.write(b'@\r')
+                # self.s.write(b'@')
+                self.s.xfer([b'@'])
             stop_waits += 1
             log.warn('Waiting for device to cease movement.')
             time.sleep(MP_789A_4.WR_DLY * 10)
@@ -254,15 +297,18 @@ class MP_789A_4(StageDevice):
 
         self.stop_queued = 1
 
-        self.s.write(b'@\r')
+        self.s.xfer([b'@'])
+        # self.s.write(b'@')
         log.info('Stopping.')
         time.sleep(MP_789A_4.WR_DLY)
 
-        self.s.write(b'@\r')
+        self.s.xfer([b'@'])
+        # self.s.write(b'@')
         log.info('Stopping.')
         time.sleep(MP_789A_4.WR_DLY)
 
-        self.s.write(b'@\r')
+        self.s.xfer([b'@'])
+        # self.s.write(b'@')
         log.info('Stopping.')
         time.sleep(MP_789A_4.WR_DLY)
 
@@ -276,18 +322,23 @@ class MP_789A_4(StageDevice):
         log.debug('func: is_moving')
 
         # If the `_backlash_lock` flag is set then the 789A-4 is already performing a move command.
-        if self._backlash_lock:
-            return True
+        # If the `_backlash_lock` flag is set then the 789A-4 is already performing a move command.
+        # if self._backlash_lock:
+        #     log.warn('BACKLASH LOCK is set. Device is moving.')
+        #     return True
 
         # Acquire the mutex and begin inquiring as to the moving status (double-redundant).
         self.moving_poll_mutex.acquire()
-        self.s.write(b'^\r')
+        log.debug('ACQUIRED MOVING POLL MUTEX')
+        status = self.s.xfer([b'^']).decode('utf-8').rstrip()
+        # self.s.write(b'^')
+        # time.sleep(MP_789A_4.WR_DLY)
+        # status = self.s.read(128).decode('utf-8').rstrip()
         time.sleep(MP_789A_4.WR_DLY)
-        status = self.s.read(128).decode('utf-8').rstrip()
-        time.sleep(MP_789A_4.WR_DLY)
-        self.s.write(b'^\r')
-        time.sleep(MP_789A_4.WR_DLY)
-        status2 = self.s.read(128).decode('utf-8').rstrip()
+        status2 = self.s.xfer([b'^']).decode('utf-8').rstrip()
+        # self.s.write(b'^')
+        # time.sleep(MP_789A_4.WR_DLY)
+        # status2 = self.s.read(128).decode('utf-8').rstrip()
         time.sleep(MP_789A_4.WR_DLY)
         self.moving_poll_mutex.release()
 
@@ -321,11 +372,18 @@ class MP_789A_4(StageDevice):
             backlash (int): The amount of backlash correction to perform in steps.
         """
 
+        if self._is_homing or self._moving or self._backlash_lock:
+            log.warn(f'Device is homing ({self._is_homing}), moving ({self._moving}), or performing backlash correction ({self._backlash_lock}). Cannot move.')
+            return
+
         log.debug('func: move_to')
         steps = position - self._position
         self.stop_queued = 0
 
         # Backlash correction only necessary if (1) requested and (2) moving in the negative direction.
+        log.warn('BACKLASH: %d'%(backlash))
+        log.warn('BACKLASH: %d'%(backlash))
+        log.warn('BACKLASH: %d'%(backlash))
         if (steps < 0) and (backlash > 0):
             # Acquire `_backlash_lock` (should probably be a mutex lock, not a flag). Prevents movement before backlash.
             self._backlash_lock = True
@@ -358,9 +416,10 @@ class MP_789A_4(StageDevice):
         log.info('Being told to move %d steps.'%(steps))
 
         # Query limit switch status.
-        self.s.write(b']\r')
-        time.sleep(MP_789A_4.WR_DLY)     
-        rx = self.s.read(128).decode('utf-8')
+        # self.s.write(b']')
+        # time.sleep(MP_789A_4.WR_DLY)     
+        # rx = self.s.read(128).decode('utf-8')
+        rx = self.s.xfer([b']']).decode('utf-8')
 
         if steps > 0:
             # Verify we are not at the upper limit.
@@ -369,8 +428,11 @@ class MP_789A_4(StageDevice):
                 raise RuntimeError('Upper limit switch hit. Cannot move further in this direction.')
 
             log.info('Moving...')
-            log.debug(b'+%d\r'%(steps))
-            self.s.write(b'+%d\r'%(steps))
+            log.debug([b'+%d'%(steps)])
+            # self.s.write(b'+%d'%(steps))
+
+            self.s.xfer([b'+%d'%(steps)])
+
             time.sleep(MP_789A_4.WR_DLY)
         elif steps < 0:
             # Verify we are not at the lower limit.
@@ -379,21 +441,24 @@ class MP_789A_4(StageDevice):
                 raise RuntimeError('Lower limit switch hit. Cannot move further in this direction.')
 
             log.info('Moving...')
-            log.debug(b'-%d\r'%(steps * -1))
-            self.s.write(b'-%d\r'%(steps * -1))
+            log.debug(b'-%d'%(steps))
+            # self.s.write(b'-%d'%(steps * -1))
+
+            self.s.xfer([b'-%d'%(steps)])
+            
             time.sleep(MP_789A_4.WR_DLY)
         else:
             log.info('Not moving (0 steps).')
             return
+        self._position += steps
         
         while self.is_moving():
-            log.debug('BLOCKING')
-            time.sleep(MP_789A_4.WR_DLY * 5)
-        log.debug('FINISHED BLOCKING')
+            log.debug('BLOCKING until movement is completed.')
+            time.sleep(0.5)
+        log.debug('FINISHED BLOCKING because moving is', self._moving)
 
-        time.sleep(MP_789A_4.WR_DLY * 2.5)
+        time.sleep(MP_789A_4.WR_DLY)
 
-        self._position += steps
         
     def short_name(self):
         """ Returns the short name of the device.

@@ -144,8 +144,9 @@ class Scan(QThread):
                 log.info('140: Done with', dpos)
             except Exception as e:
                 log.error('QMessageBox.Critical: Move Failure - Main drive axis failed to move: %s'%(e))
-                QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
-                pass
+                # QMessageBox.critical(self, 'Move Failure', 'Main drive axis failed to move: %s'%(e))
+                self.SIGNAL_error.emit('Move Failure', 'Main drive axis failed to move: %s'%(e))
+                break
             log.debug("Getting main drive axis position.")
             pos = self.other.motion_controllers.main_drive_axis.get_position()
             log.debug("Emitting status update signal SAMPLING.")

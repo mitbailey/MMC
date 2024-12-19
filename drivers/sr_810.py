@@ -55,9 +55,9 @@ class SR810:
             s = safe_serial.SafeSerial(port, 9600, timeout=1)
             log.info('Beginning search for SR810...')
             log.info('Trying port %s.'%(port))
-            s.write(b'*RST\r')
+            s.write(b'*RST')
             sleep(0.5)
-            s.write(b'*IDN?\r')
+            s.write(b'*IDN?')
             buf = s.read(128).decode('utf-8').rstrip()
             log.debug(buf)
 
@@ -75,10 +75,10 @@ class SR810:
         log.debug('Using port %s.'%(self.port))
 
         # Set the system to LOCAL mode. This allows both commands and front-panel buttons to control the instrument.
-        self.s.write(b'LOCL 0\r')
+        self.s.write(b'LOCL 0')
         sleep(0.1)
 
-        self.s.write(b'LOCL?\r')
+        self.s.write(b'LOCL?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('SR810 is in LOCAL mode.')
@@ -86,10 +86,10 @@ class SR810:
             log.warn('SR810 is not in LOCAL mode!')
 
         # Set the time constant to 300ms.
-        self.s.write(b'OFLT 9\r')
+        self.s.write(b'OFLT 9')
         sleep(0.1)
 
-        self.s.write(b'OFLT?\r')
+        self.s.write(b'OFLT?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '9'):
             log.info('Time constant is 300ms.')
@@ -97,10 +97,10 @@ class SR810:
             log.warn('Time constant is not 300ms!')
 
         # Set the low pass filter slope.
-        self.s.write(b'OFSL 1\r')
+        self.s.write(b'OFSL 1')
         sleep(0.1)
 
-        self.s.write(b'OFSL?\r')
+        self.s.write(b'OFSL?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '1'):
             log.info('Low pass filter slope is 12dB/octave.')
@@ -108,10 +108,10 @@ class SR810:
             log.warn('Low pass filter slope is not 12dB/octave!')
 
         # Set the sync to 200 Hz.
-        self.s.write(b'SYNC 1\r')
+        self.s.write(b'SYNC 1')
         sleep(0.1)
 
-        self.s.write(b'SYNC?\r')
+        self.s.write(b'SYNC?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '1'):
             log.info('Sync is 200 Hz.')
@@ -119,10 +119,10 @@ class SR810:
             log.warn('Sync is not 200 Hz!')
 
         # Signal input to A.
-        self.s.write(b'ISRC 0\r')
+        self.s.write(b'ISRC 0')
         sleep(0.1)
 
-        self.s.write(b'ISRC?\r')
+        self.s.write(b'ISRC?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('Signal input is A.')
@@ -130,10 +130,10 @@ class SR810:
             log.warn('Signal input is not A!')
 
         # Set the input coupling to AC.
-        self.s.write(b'ICPL 0\r')
+        self.s.write(b'ICPL 0')
         sleep(0.1)
 
-        self.s.write(b'ICPL?\r')
+        self.s.write(b'ICPL?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('Input coupling is AC.')
@@ -141,10 +141,10 @@ class SR810:
             log.warn('Input coupling is not AC!')
 
         # Ground / float.
-        self.s.write(b'IGND 0\r')
+        self.s.write(b'IGND 0')
         sleep(0.1)
 
-        self.s.write(b'IGND?\r')
+        self.s.write(b'IGND?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '0'):
             log.info('Ground is float.')
@@ -154,12 +154,12 @@ class SR810:
         # Set auto sensitivity.
         # This command takes forever to complete, so we have to wait on *STB? 1 to be 1. 
         # TODO: Comment out AGAN once we setup an option for the user to do it from within the GUI. For now, we can leave it like so.
-        self.s.write(b'AGAN\r')
+        self.s.write(b'AGAN')
         sleep(0.1)
 
         rdy = False
         while (not rdy):
-            self.s.write(b'*STB? 1\r')
+            self.s.write(b'*STB? 1')
             buf = self.s.read(128).decode('utf-8').rstrip()
             if (buf == '1'):
                 rdy = True
@@ -167,10 +167,10 @@ class SR810:
                 sleep(0.1)
 
         # Reserve HIGH to Vuvas.
-        self.s.write(b'RMOD 1\r')
+        self.s.write(b'RMOD 1')
         sleep(0.1)
 
-        self.s.write(b'RMOD?\r')
+        self.s.write(b'RMOD?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '1'):
             log.info('Reserve is HIGH.')
@@ -178,10 +178,10 @@ class SR810:
             log.warn('Reserve is not HIGH!')
 
         # Set both LINE and x2 LINE notch filters ON.
-        self.s.write(b'ILIN 3\r')
+        self.s.write(b'ILIN 3')
         sleep(0.1)
 
-        self.s.write(b'ILIN?\r')
+        self.s.write(b'ILIN?')
         buf = self.s.read(128).decode('utf-8').rstrip()
         if (buf == '1'):
             log.info('Notch filters both on.')
@@ -200,7 +200,7 @@ class SR810:
         log.info('Init complete')
 
     def detect(self):
-        self.s.write(b'OUTP ? 1\r')
+        self.s.write(b'OUTP ? 1')
         X = self.s.read(128).decode('utf-8').rstrip()
         if X == '': X = 0
         self.val_X = float(X)

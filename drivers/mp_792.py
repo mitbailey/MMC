@@ -76,7 +76,7 @@ class MP_792:
             raise RuntimeError('Port not valid. Is another program using the port?')
 
         self.s = safe_serial.SafeSerial(port, 9600, timeout=0.25)
-        rx = self.s.xfer([b' \r'], custom_delay=MP_792.WR_DLY)
+        rx = self.s.xfer([b' '], custom_delay=MP_792.WR_DLY)
         # self.s.write(b' \r')
         # time.sleep(MP_792.WR_DLY)
         # rx = self.s.read(128)#.decode('utf-8').rstrip()   
@@ -99,7 +99,7 @@ class MP_792:
         log.info('Checking axes...')
         for i in [2, 0, 3, 1]:
             log.debug('WR:', MP_792.AXES[i] + b'\r')
-            alivestat = self.s.xfer([MP_792.AXES[i] + b'\r', b']\r'], custom_delay=MP_792.WR_DLY)
+            alivestat = self.s.xfer([MP_792.AXES[i], b']'], custom_delay=MP_792.WR_DLY)
             alivestat = alivestat.decode('utf-8')
             # self.s.write(MP_792.AXES[i] + b'\r')
             # time.sleep(MP_792.WR_DLY)
@@ -195,9 +195,9 @@ class MP_792:
         self._is_moving_l[axis] = True # we set the movement, movement_status_thread will unset
 
         if axis == 2:
-            home_cmd = b'M-5000\r'
+            home_cmd = b'M-5000'
         else:
-            home_cmd = b'M-10000\r'
+            home_cmd = b'M-10000'
 
         self.s.xfer([self.set_axis_cmd(axis), home_cmd], custom_delay=MP_792.WR_DLY)
 
@@ -212,7 +212,7 @@ class MP_792:
             time.sleep(0.5)
             moving = any(self._is_moving_l)
 
-            limstat = self.s.xfer([self.set_axis_cmd(axis), b']\r'], custom_delay=MP_792.WR_DLY)
+            limstat = self.s.xfer([self.set_axis_cmd(axis), b']'], custom_delay=MP_792.WR_DLY)
             limstat = limstat.decode('utf-8')
 
             log.debug('limstat:', limstat)
@@ -229,7 +229,7 @@ class MP_792:
                 log.warn('Moving has completed - homing failed.')
 
                 log.error('Homing failed.')
-                self.s.xfer([self.set_axis_cmd(axis), b'@\r'], custom_delay=MP_792.WR_DLY)
+                self.s.xfer([self.set_axis_cmd(axis), b'@'], custom_delay=MP_792.WR_DLY)
                 
                 self._is_homing[axis] = False
                 return False
@@ -238,7 +238,7 @@ class MP_792:
 
         if (self._is_moving(axis)):
             log.warn('Post-home movement detected. Entering movement remediation.')
-            self.s.xfer([self.set_axis_cmd(axis), b'@\r'], custom_delay=MP_792.WR_DLY)
+            self.s.xfer([self.set_axis_cmd(axis), b'@'], custom_delay=MP_792.WR_DLY)
 
             time.sleep(MP_792.WR_DLY * 10)
         stop_waits = 0
@@ -246,7 +246,7 @@ class MP_792:
             if stop_waits > 3:
                 stop_waits = 0
                 log.warn('Re-commanding that device ceases movement.')
-                self.s.xfer([self.set_axis_cmd(axis), b'@\r'], custom_delay=MP_792.WR_DLY)
+                self.s.xfer([self.set_axis_cmd(axis), b'@'], custom_delay=MP_792.WR_DLY)
                     
             stop_waits += 1
             log.warn('Waiting for device to cease movement.')
@@ -264,17 +264,17 @@ class MP_792:
     def stop(self, axis: int):
         self.stop_queued_l[axis] = 1
 
-        self.s.xfer([self.set_axis_cmd(axis), b'@\r'], custom_delay=MP_792.WR_DLY)
+        self.s.xfer([self.set_axis_cmd(axis), b'@'], custom_delay=MP_792.WR_DLY)
 
         log.info('Stopping.')
         time.sleep(MP_792.WR_DLY)
 
-        self.s.xfer([self.set_axis_cmd(axis), b'@\r'], custom_delay=MP_792.WR_DLY)
+        self.s.xfer([self.set_axis_cmd(axis), b'@'], custom_delay=MP_792.WR_DLY)
 
         log.info('Stopping.')
         time.sleep(MP_792.WR_DLY)
 
-        self.s.xfer([self.set_axis_cmd(axis), b'@\r'], custom_delay=MP_792.WR_DLY)
+        self.s.xfer([self.set_axis_cmd(axis), b'@'], custom_delay=MP_792.WR_DLY)
 
         log.info('Stopping.')
         time.sleep(MP_792.WR_DLY)
@@ -326,7 +326,7 @@ class MP_792:
         #     log.info(f'Device is busy: another axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
         #     return True
         
-        status = self.s.xfer([self.set_axis_cmd(axis), b'^\r'], custom_delay=MP_792.WR_DLY)
+        status = self.s.xfer([self.set_axis_cmd(axis), b'^'], custom_delay=MP_792.WR_DLY)
         status = status.decode('utf-8').rstrip()
 
         log.debug('792 _status:', status)
@@ -398,13 +398,13 @@ class MP_792:
         if steps > 0:
             log.info('Moving...')
             log.debug(b'+%d\r'%(steps))
-            self.s.xfer([self.set_axis_cmd(axis), b'+%d\r'%(steps)], custom_delay=MP_792.WR_DLY)
+            self.s.xfer([self.set_axis_cmd(axis), b'+%d'%(steps)], custom_delay=MP_792.WR_DLY)
             
             time.sleep(MP_792.WR_DLY)
         elif steps < 0:
             log.info('Moving...')
             log.debug(b'-%d\r'%(steps * -1))
-            self.s.xfer([self.set_axis_cmd(axis), b'-%d\r'%(steps * -1)], custom_delay=MP_792.WR_DLY)
+            self.s.xfer([self.set_axis_cmd(axis), b'-%d'%(steps * -1)], custom_delay=MP_792.WR_DLY)
             
             time.sleep(MP_792.WR_DLY)
         else:
