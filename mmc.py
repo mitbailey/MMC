@@ -111,6 +111,11 @@ from utilities import version
 
 import signal
 
+from PyQt5 import QtCore
+
+QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True) #enable highdpi scaling
+QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True) #use highdpi icons
+
 # Setup signal.
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -633,7 +638,7 @@ class MMC_Main(QMainWindow):
         if dummy:
             self.UIE_mgw_stop_qdsb.setValue(0.2)
 
-        self.UIE_mgw_mca_pos_ql = self.findChild(QLabel, "mca_pos")
+        # self.UIE_mgw_mca_pos_ql = self.findChild(QLabel, "mca_pos")
         self.UIE_mgw_fwa_pos_ql = self.findChild(QLabel, "fwa_pos")
         self.UIE_mgw_sra_pos_ql = self.findChild(QLabel, "sra_pos")
         self.UIE_mgw_saa_pos_ql = self.findChild(QLabel, "saa_pos")
@@ -992,7 +997,7 @@ class MMC_Main(QMainWindow):
     
         self.UIE_mgw_sm_scan_type_qcb.addItem('Rotation')
         self.UIE_mgw_sm_scan_type_qcb.addItem('Translation')
-        self.UIE_mgw_sm_scan_type_qcb.addItem('Theta2Theta')
+        self.UIE_mgw_sm_scan_type_qcb.addItem('Rot-Det Theta2Theta')
         self.UIE_mgw_sm_begin_scan_qpb.clicked.connect(self.scan_sm_button_pressed)
         self.UIE_mgw_sm_end_scan_qpb.clicked.connect(self.stop_master_button_pressed)
 
@@ -1746,7 +1751,7 @@ class MMC_Main(QMainWindow):
         self.moving = mda_moving
 
         self.UIE_mgw_currpos_nm_disp_ql.setText('%3.4f'%(((self.current_position))))
-        self.UIE_mgw_mca_pos_ql.setText('%3.4f'%(mda_pos))
+        # self.UIE_mgw_mca_pos_ql.setText('%3.4f'%(mda_pos))
         self.UIE_mgw_fwa_pos_ql.setText('%3.4f'%(fwa_pos))
         self.UIE_mgw_sra_pos_ql.setText('%3.4f'%(sra_pos))
         self.UIE_mgw_saa_pos_ql.setText('%3.4f'%(saa_pos))

@@ -22,6 +22,12 @@
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QTabWidget" name="tabWidget">
+     <property name="font">
+      <font>
+       <family>Bahnschrift</family>
+       <pointsize>14</pointsize>
+      </font>
+     </property>
      <property name="tabShape">
       <enum>QTabWidget::Rounded</enum>
      </property>
@@ -51,8 +57,8 @@
           <widget class="QLabel" name="label_17">
            <property name="font">
             <font>
-             <family>Segoe UI Semibold</family>
-             <pointsize>12</pointsize>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
            <property name="text">
@@ -70,8 +76,8 @@
            </property>
            <property name="font">
             <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
           </widget>
@@ -108,6 +114,12 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="font">
+              <font>
+               <family>Bahnschrift</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
              <property name="text">
               <string>Override Steps per Nanometer</string>
              </property>
@@ -117,6 +129,12 @@
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_15">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Minimum Allowed Position</string>
            </property>
@@ -124,6 +142,12 @@
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_13">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Maximum Allowed Position</string>
            </property>
@@ -131,6 +155,12 @@
          </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_14">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>nm</string>
            </property>
@@ -138,6 +168,12 @@
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_35">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Steps per Nanometer</string>
            </property>
@@ -145,6 +181,12 @@
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="label_38">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>steps/nm</string>
            </property>
@@ -152,6 +194,12 @@
          </item>
          <item row="2" column="1">
           <widget class="QDoubleSpinBox" name="max_pos_sbox">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-9999.000000000000000</double>
            </property>
@@ -165,6 +213,12 @@
          </item>
          <item row="3" column="2">
           <widget class="QLabel" name="label_16">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>nm</string>
            </property>
@@ -172,6 +226,12 @@
          </item>
          <item row="3" column="1">
           <widget class="QDoubleSpinBox" name="min_pos_sbox">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-9999.000000000000000</double>
            </property>
@@ -185,6 +245,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QLabel" name="steps_per_nm">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>NOT CALCULATED</string>
            </property>
@@ -192,6 +258,12 @@
          </item>
          <item row="1" column="2">
           <widget class="QLabel" name="label_46">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>steps/nm</string>
            </property>
@@ -213,6 +285,12 @@
            </property>
            <item>
             <widget class="QDoubleSpinBox" name="steps_per_nm_override">
+             <property name="font">
+              <font>
+               <family>Bahnschrift</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
              <property name="decimals">
               <number>4</number>
              </property>
@@ -226,6 +304,12 @@
            </item>
            <item>
             <widget class="QPushButton" name="enact_override">
+             <property name="font">
+              <font>
+               <family>Bahnschrift</family>
+               <pointsize>14</pointsize>
+              </font>
+             </property>
              <property name="text">
               <string>Enact Override</string>
              </property>
@@ -237,6 +321,12 @@
        </item>
        <item>
         <widget class="Line" name="line_3">
+         <property name="font">
+          <font>
+           <family>Bahnschrift</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -260,8 +350,8 @@
           <widget class="QLabel" name="label_57">
            <property name="font">
             <font>
-             <family>Segoe UI Semibold</family>
-             <pointsize>12</pointsize>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
            <property name="text">
@@ -275,6 +365,12 @@
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
           <widget class="QFrame" name="frame">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>
@@ -284,6 +380,12 @@
            <layout class="QGridLayout" name="gridLayout_2">
             <item row="1" column="2">
              <widget class="QLabel" name="label_6">
+              <property name="font">
+               <font>
+                <family>Bahnschrift</family>
+                <pointsize>14</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>lines/mm</string>
               </property>
@@ -291,6 +393,12 @@
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="zero_offset_in">
+              <property name="font">
+               <font>
+                <family>Bahnschrift</family>
+                <pointsize>14</pointsize>
+               </font>
+              </property>
               <property name="decimals">
                <number>4</number>
               </property>
@@ -304,6 +412,12 @@
             </item>
             <item row="2" column="2">
              <widget class="QLabel" name="label_7">
+              <property name="font">
+               <font>
+                <family>Bahnschrift</family>
+                <pointsize>14</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>nm</string>
               </property>
@@ -311,6 +425,12 @@
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label">
+              <property name="font">
+               <font>
+                <family>Bahnschrift SemiBold</family>
+                <pointsize>14</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>Grating Density (&lt;i&gt;G&lt;/i&gt;)</string>
               </property>
@@ -318,6 +438,12 @@
             </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_2">
+              <property name="font">
+               <font>
+                <family>Bahnschrift SemiBold</family>
+                <pointsize>14</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>Zero Order Offset (&lt;i&gt;&amp;lambda;&lt;/i&gt;&lt;sub&gt;0&lt;/sub&gt;)</string>
               </property>
@@ -325,6 +451,12 @@
             </item>
             <item row="0" column="0">
              <widget class="QLabel" name="label_3">
+              <property name="font">
+               <font>
+                <family>Bahnschrift SemiBold</family>
+                <pointsize>14</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;System Model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
@@ -332,6 +464,12 @@
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="grating_density">
+              <property name="font">
+               <font>
+                <family>Bahnschrift</family>
+                <pointsize>14</pointsize>
+               </font>
+              </property>
               <property name="decimals">
                <number>4</number>
               </property>
@@ -344,7 +482,14 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QComboBox" name="models"/>
+             <widget class="QComboBox" name="models">
+              <property name="font">
+               <font>
+                <family>Bahnschrift</family>
+                <pointsize>14</pointsize>
+               </font>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -353,6 +498,12 @@
        </item>
        <item>
         <widget class="Line" name="line">
+         <property name="font">
+          <font>
+           <family>Bahnschrift</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -360,6 +511,12 @@
        </item>
        <item>
         <spacer name="verticalSpacer_5">
+         <property name="font">
+          <font>
+           <family>Bahnschrift</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -387,6 +544,12 @@
          </property>
          <item>
           <widget class="QFrame" name="frame_2">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>
@@ -399,8 +562,8 @@
           <widget class="QPushButton" name="update_conf_btn">
            <property name="font">
             <font>
-             <family>Segoe UI Semibold</family>
-             <pointsize>12</pointsize>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
            <property name="text">
@@ -410,6 +573,12 @@
          </item>
          <item>
           <widget class="QFrame" name="frame_3">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>
@@ -422,6 +591,12 @@
        </item>
        <item>
         <spacer name="verticalSpacer">
+         <property name="font">
+          <font>
+           <family>Bahnschrift</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -458,8 +633,8 @@
           <widget class="QLabel" name="label_18">
            <property name="font">
             <font>
-             <family>Segoe UI Semibold</family>
-             <pointsize>12</pointsize>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
            <property name="text">
@@ -477,8 +652,8 @@
            </property>
            <property name="font">
             <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
           </widget>
@@ -501,6 +676,12 @@
          </property>
          <item row="2" column="2">
           <widget class="QLabel" name="label_45">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -508,6 +689,12 @@
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="label_41">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>steps / degree</string>
            </property>
@@ -515,6 +702,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QDoubleSpinBox" name="fw_steps_per_deg">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>1.000000000000000</double>
            </property>
@@ -525,6 +718,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_42">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Maximum Allowed Rotation</string>
            </property>
@@ -532,6 +731,12 @@
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_40">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Steps per Degree Rotation</string>
            </property>
@@ -539,6 +744,12 @@
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_43">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Minimum Allowed Rotation</string>
            </property>
@@ -546,6 +757,12 @@
          </item>
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="fw_max">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -556,6 +773,12 @@
          </item>
          <item row="2" column="1">
           <widget class="QDoubleSpinBox" name="fw_min">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -566,6 +789,12 @@
          </item>
          <item row="1" column="2">
           <widget class="QLabel" name="label_44">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -573,6 +802,12 @@
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_4">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Offset</string>
            </property>
@@ -580,6 +815,12 @@
          </item>
          <item row="3" column="1">
           <widget class="QDoubleSpinBox" name="fw_offset">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -590,6 +831,12 @@
          </item>
          <item row="3" column="2">
           <widget class="QLabel" name="label_5">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -599,6 +846,12 @@
        </item>
        <item>
         <spacer name="verticalSpacer_2">
+         <property name="font">
+          <font>
+           <family>Bahnschrift</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -635,8 +888,8 @@
           <widget class="QLabel" name="label_19">
            <property name="font">
             <font>
-             <family>Segoe UI Semibold</family>
-             <pointsize>12</pointsize>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
            <property name="text">
@@ -654,8 +907,8 @@
            </property>
            <property name="font">
             <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
           </widget>
@@ -678,6 +931,12 @@
          </property>
          <item row="2" column="0">
           <widget class="QLabel" name="label_26">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Minimum Allowed Rotation</string>
            </property>
@@ -685,6 +944,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_25">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Maximum Allowed Rotation</string>
            </property>
@@ -692,6 +957,12 @@
          </item>
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="smr_max">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -702,6 +973,12 @@
          </item>
          <item row="1" column="2">
           <widget class="QLabel" name="label_29">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -709,6 +986,12 @@
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_22">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Steps per Degree Rotation</string>
            </property>
@@ -716,6 +999,12 @@
          </item>
          <item row="2" column="1">
           <widget class="QDoubleSpinBox" name="smr_min">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -726,6 +1015,12 @@
          </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_30">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -733,6 +1028,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QDoubleSpinBox" name="smr_steps_per_deg">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-9999999.000000000000000</double>
            </property>
@@ -743,6 +1044,12 @@
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_8">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Offset</string>
            </property>
@@ -750,6 +1057,12 @@
          </item>
          <item row="3" column="1">
           <widget class="QDoubleSpinBox" name="sr_offset">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -760,6 +1073,12 @@
          </item>
          <item row="3" column="2">
           <widget class="QLabel" name="label_49">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -767,6 +1086,12 @@
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="label_50">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>steps / degree</string>
            </property>
@@ -776,6 +1101,12 @@
        </item>
        <item>
         <widget class="Line" name="line_6">
+         <property name="font">
+          <font>
+           <family>Bahnschrift</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -799,8 +1130,8 @@
           <widget class="QLabel" name="label_47">
            <property name="font">
             <font>
-             <family>Segoe UI Semibold</family>
-             <pointsize>12</pointsize>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
            <property name="text">
@@ -818,8 +1149,8 @@
            </property>
            <property name="font">
             <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
           </widget>
@@ -842,6 +1173,12 @@
          </property>
          <item row="3" column="0">
           <widget class="QLabel" name="label_48">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Minimum Allowed Rotation</string>
            </property>
@@ -849,6 +1186,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_51">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Steps per Degree Rotation</string>
            </property>
@@ -856,6 +1199,12 @@
          </item>
          <item row="2" column="1">
           <widget class="QDoubleSpinBox" name="sma_max">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -866,6 +1215,12 @@
          </item>
          <item row="3" column="2">
           <widget class="QLabel" name="label_55">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -873,6 +1228,12 @@
          </item>
          <item row="3" column="1">
           <widget class="QDoubleSpinBox" name="sma_min">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -883,6 +1244,12 @@
          </item>
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="sma_steps_per_deg">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-9999999.000000000000000</double>
            </property>
@@ -893,6 +1260,12 @@
          </item>
          <item row="4" column="2">
           <widget class="QLabel" name="label_60">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -900,6 +1273,12 @@
          </item>
          <item row="4" column="0">
           <widget class="QLabel" name="label_58">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Offset</string>
            </property>
@@ -907,6 +1286,12 @@
          </item>
          <item row="4" column="1">
           <widget class="QDoubleSpinBox" name="sa_offset">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -917,6 +1302,12 @@
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_53">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Maximum Allowed Rotation</string>
            </property>
@@ -924,6 +1315,12 @@
          </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_54">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -931,6 +1328,12 @@
          </item>
          <item row="1" column="2">
           <widget class="QLabel" name="label_56">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>steps / degree</string>
            </property>
@@ -940,6 +1343,12 @@
        </item>
        <item>
         <widget class="Line" name="line_4">
+         <property name="font">
+          <font>
+           <family>Bahnschrift</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -963,8 +1372,8 @@
           <widget class="QLabel" name="label_20">
            <property name="font">
             <font>
-             <family>Segoe UI Semibold</family>
-             <pointsize>12</pointsize>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
            <property name="text">
@@ -982,8 +1391,8 @@
            </property>
            <property name="font">
             <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
           </widget>
@@ -1006,6 +1415,12 @@
          </property>
          <item row="3" column="1">
           <widget class="QDoubleSpinBox" name="st_offset">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="decimals">
             <number>4</number>
            </property>
@@ -1019,6 +1434,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_27">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Maximum Allowed Position</string>
            </property>
@@ -1026,6 +1447,12 @@
          </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_32">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>mm</string>
            </property>
@@ -1033,6 +1460,12 @@
          </item>
          <item row="3" column="2">
           <widget class="QLabel" name="label_11">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>mm</string>
            </property>
@@ -1040,6 +1473,12 @@
          </item>
          <item row="1" column="2">
           <widget class="QLabel" name="label_31">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>mm</string>
            </property>
@@ -1047,6 +1486,12 @@
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_28">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Minimum Allowed Position</string>
            </property>
@@ -1054,6 +1499,12 @@
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_9">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Offset</string>
            </property>
@@ -1061,6 +1512,12 @@
          </item>
          <item row="2" column="1">
           <widget class="QDoubleSpinBox" name="smt_min">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -1071,6 +1528,12 @@
          </item>
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="smt_max">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -1081,6 +1544,12 @@
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_23">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Steps per Millimeter Translation</string>
            </property>
@@ -1088,6 +1557,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QDoubleSpinBox" name="smt_steps_per_deg">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-9999999.000000000000000</double>
            </property>
@@ -1101,6 +1576,12 @@
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="label_10">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>steps / millimeter</string>
            </property>
@@ -1110,6 +1591,12 @@
        </item>
        <item>
         <spacer name="verticalSpacer_3">
+         <property name="font">
+          <font>
+           <family>Bahnschrift</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -1146,8 +1633,8 @@
           <widget class="QLabel" name="label_21">
            <property name="font">
             <font>
-             <family>Segoe UI Semibold</family>
-             <pointsize>12</pointsize>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
            <property name="text">
@@ -1165,8 +1652,8 @@
            </property>
            <property name="font">
             <font>
-             <family>Segoe UI</family>
-             <pointsize>10</pointsize>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
             </font>
            </property>
           </widget>
@@ -1189,6 +1676,12 @@
          </property>
          <item row="2" column="0">
           <widget class="QLabel" name="label_34">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Minimum Allowed Rotation</string>
            </property>
@@ -1196,6 +1689,12 @@
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_24">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Steps per Degree</string>
            </property>
@@ -1203,6 +1702,12 @@
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_33">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Maximum Allowed Rotation</string>
            </property>
@@ -1210,6 +1715,12 @@
          </item>
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="dr_max">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -1220,6 +1731,12 @@
          </item>
          <item row="2" column="1">
           <widget class="QDoubleSpinBox" name="dr_min">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -1230,6 +1747,12 @@
          </item>
          <item row="1" column="2">
           <widget class="QLabel" name="label_36">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -1237,6 +1760,12 @@
          </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_37">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -1244,6 +1773,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QDoubleSpinBox" name="dr_steps_per_deg">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-9999999.000000000000000</double>
            </property>
@@ -1254,6 +1789,12 @@
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_12">
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Offset</string>
            </property>
@@ -1261,6 +1802,12 @@
          </item>
          <item row="3" column="2">
           <widget class="QLabel" name="label_39">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>degrees</string>
            </property>
@@ -1268,6 +1815,12 @@
          </item>
          <item row="3" column="1">
           <widget class="QDoubleSpinBox" name="dr_offset">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="minimum">
             <double>-360.000000000000000</double>
            </property>
@@ -1278,6 +1831,12 @@
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="label_52">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>steps / degree</string>
            </property>
@@ -1287,6 +1846,12 @@
        </item>
        <item>
         <spacer name="verticalSpacer_4">
+         <property name="font">
+          <font>
+           <family>Bahnschrift</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -1318,6 +1883,12 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Set the operation and order for the reference scan applied to all future scans. A reference scan can be chosen from the Scan Log.</string>
            </property>
@@ -1341,13 +1912,28 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
-            <string>Operation</string>
+            <string>Operation ( * )</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QComboBox" name="operation_qcb">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
            <item>
             <property name="text">
              <string>Multiply</string>
@@ -1356,6 +1942,16 @@
            <item>
             <property name="text">
              <string>Divide</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Add</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Subtract</string>
             </property>
            </item>
           </widget>
@@ -1375,6 +1971,12 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <family>Bahnschrift SemiBold</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Order</string>
            </property>
@@ -1382,12 +1984,24 @@
          </item>
          <item>
           <widget class="QGroupBox" name="groupBox">
+           <property name="font">
+            <font>
+             <family>Bahnschrift</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
            <property name="title">
             <string/>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
              <widget class="QRadioButton" name="order_meas_ref_qrb">
+              <property name="font">
+               <font>
+                <family>Bahnschrift</family>
+                <pointsize>14</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>Meas * Ref</string>
               </property>
@@ -1398,6 +2012,12 @@
             </item>
             <item>
              <widget class="QRadioButton" name="order_ref_meas_qrb">
+              <property name="font">
+               <font>
+                <family>Bahnschrift</family>
+                <pointsize>14</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>Ref * Meas</string>
               </property>
@@ -1410,6 +2030,12 @@
        </item>
        <item>
         <spacer name="verticalSpacer_6">
+         <property name="font">
+          <font>
+           <family>Bahnschrift</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -1441,6 +2067,12 @@
      </property>
      <item>
       <spacer name="horizontalSpacer">
+       <property name="font">
+        <font>
+         <family>Bahnschrift</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -1456,8 +2088,8 @@
       <widget class="QPushButton" name="mcw_accept">
        <property name="font">
         <font>
-         <family>Segoe UI Semibold</family>
-         <pointsize>12</pointsize>
+         <family>Bahnschrift</family>
+         <pointsize>14</pointsize>
         </font>
        </property>
        <property name="text">
