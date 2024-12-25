@@ -44,6 +44,17 @@ matplotlib.use('Qt5Agg')
 from utilities import version
 from utilities import log
 
+class ScanAxis(Enum):
+    MAIN = 0
+    SAMPLE = 1
+    DETECTOR = 2
+    MULTI = 3
+
+class SampleScanType(Enum):
+    ROTATION = 0
+    TRANSLATION = 1
+    THETA2THETA = 2 
+
 class Scan(QThread):
     SIGNAL_status_update = pyqtSignal(str)
     SIGNAL_progress = pyqtSignal(int)
@@ -67,42 +78,68 @@ class Scan(QThread):
         self.SIGNAL_error.connect(self.other.QMessageBoxCritical)
         log.debug('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
+        self.ctrl_axis = ScanAxis.MAIN
 
     def __del__(self):
         self.wait()
 
+    def argstart(self, ctrl_axis: ScanAxis):
+        self.ctrl_axis = ctrl_axis
+        self.start()
+
+    # def run(self, ctrl_axis: ScanAxis):
     def run(self):
+        ctrl_axis = self.ctrl_axis
+        log.warn('!!!')
+    # def run(self):
         # print('\n\n\n')
         self.other.disable_movement_sensitive_buttons(True)
-
+        log.warn('!!!')
         log.debug(self.other)
         log.info("Save to file? " + str(self.other.autosave_data_bool))
-
+        log.warn('!!!')
         self.SIGNAL_status_update.emit("PREPARING")
         sav_files = []
         tnow = dt.datetime.now()
         if (self.other.autosave_data_bool):
+            log.warn('!!!')
             log.info('Autosaving')
             filetime = tnow.strftime('%Y%m%d%H%M%S')
             for i, detector in enumerate(self.other.detectors):
                 filename = '%s%s_%s_%d_data.csv'%(self.other.data_save_directory, filetime, detector.short_name(), i)
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 sav_files.append(open(filename, 'w'))
+        log.warn('!!!')
+        if ctrl_axis == ScanAxis.MAIN:
+            log.warn('!!!')
+            start = self.other.UIE_mgw_start_qdsb.value()
+            stop = self.other.UIE_mgw_stop_qdsb.value()
+            step = self.other.UIE_mgw_step_qdsb.value()
+        elif ctrl_axis == ScanAxis.SAMPLE:
+            start = self.other.UIE_mgw_sm_start_set_qdsb.value()
+            stop = self.other.UIE_mgw_sm_end_set_qdsb.value()
+            step = self.other.UIE_mgw_sm_step_set_qdsb.value()
+        elif ctrl_axis == ScanAxis.DETECTOR:
+            log.warn('!!!')
+            start = self.other.UIE_mgw_dm_start_set_qdsb.value()
+            stop = self.other.UIE_mgw_dm_end_set_qdsb.value()
+            step = self.other.UIE_mgw_dm_step_set_qdsb.value()
+        log.warn('!!!')
 
         log.info("SCAN QTHREAD")
         log.info("Start | Stop | Step")
-        log.info(self.other.startpos, self.other.stoppos, self.other.steppos)
-        self.other.startpos = (self.other.UIE_mgw_start_qdsb.value())
-        self.other.stoppos = (self.other.UIE_mgw_stop_qdsb.value())
-        self.other.steppos = (self.other.UIE_mgw_step_qdsb.value())
-        if self.other.steppos == 0 or self.other.startpos == self.other.stoppos:
+        log.info(start, stop, step)
+
+        if step == 0 or start == stop:
             for f in sav_files:
                 if (f is not None):
                     f.close()
             self.SIGNAL_complete.emit()
             return
-        scanrange = np.arange(self.other.startpos, self.other.stoppos + self.other.steppos, self.other.steppos)
+        scanrange = np.arange(start, stop + step, step)
         nidx = len(scanrange)
+
+        scan_type = self.other.UIE_mgw_sm_scan_type_qcb.currentIndex()
 
         # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
         self.SIGNAL_status_update.emit("ZEROING")
@@ -110,7 +147,18 @@ class Scan(QThread):
         prep_pos = 0
         try:
             log.info('107: Moving to', prep_pos)
-            self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
+
+            if ctrl_axis == ScanAxis.MAIN:
+                self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
+            elif ctrl_axis == ScanAxis.SAMPLE:
+                if scan_type == SampleScanType.ROTATION:
+                    self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
+                elif scan_type == SampleScanType.TRANSLATION:
+                    self.other.motion_controllers.sample_translation_axis.move_to(prep_pos, True)
+                elif scan_type == SampleScanType.THETA2THETA:
+                    self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
+                    self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos * 2, True)
+
             log.info('109: Done with', prep_pos)
         except Exception as e:
             log.error('Exception: Move Failure - Main drive axis failed to move: %s'%(e))
@@ -140,7 +188,18 @@ class Scan(QThread):
             
             try:
                 log.info('138: Moving to', dpos)
-                self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
+                
+                if ctrl_axis == ScanAxis.MAIN:
+                    self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
+                elif ctrl_axis == ScanAxis.SAMPLE:
+                    if scan_type == SampleScanType.ROTATION:
+                        self.other.motion_controllers.sample_rotation_axis.move_to(dpos, True)
+                    elif scan_type == SampleScanType.TRANSLATION:
+                        self.other.motion_controllers.sample_translation_axis.move_to(dpos, True)
+                    elif scan_type == SampleScanType.THETA2THETA:
+                        self.other.motion_controllers.sample_rotation_axis.move_to(dpos, True)
+                        self.other.motion_controllers.detector_rotation_axis.move_to(dpos * 2, True)
+                
                 log.info('140: Done with', dpos)
             except Exception as e:
                 log.error('QMessageBox.Critical: Move Failure - Main drive axis failed to move: %s'%(e))

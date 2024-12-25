@@ -1701,8 +1701,12 @@ class MMC_Main(QMainWindow):
         # self.UIE_dmw_meas_ref_qrb
         # self.UIE_dmw_ref_meas_qrb
 
+        # TODO: This is where we can handle other detectors.
+
         if which_detector == 0:
             self.table.insertDataAt(scan_idx, xdata, ydata)
+        elif which_detector == 1:
+            log.info("Detector 1 data received.")
 
     def scan_data_complete(self, scan_idx: int, scan_class: str):
         self.table.markInsertFinished(scan_idx)
@@ -1763,6 +1767,8 @@ class MMC_Main(QMainWindow):
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
+            # self.scan.argstart(scan.ScanAxis.MAIN)
+            self.scan.ctrl_axis = scan.ScanAxis.MAIN
             self.scan.start()
             log.debug('scan_button_press function end.')
 
@@ -1770,13 +1776,19 @@ class MMC_Main(QMainWindow):
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
-            self.sm_scan.start()
+            # self.scan.argstart(scan.ScanAxis.SAMPLE)
+            self.scan.ctrl_axis = scan.ScanAxis.SAMPLE
+            self.scan.start()
+            # self.sm_scan.start()
 
     def scan_dm_button_pressed(self):
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
-            self.dm_scan.start()
+            # self.scan.argstart(scan.ScanAxis.DETECTOR)
+            self.scan.ctrl_axis = scan.ScanAxis.DETECTOR
+            self.scan.start()
+            # self.dm_scan.start()
 
     def stop_master_button_pressed(self):
         log.info('Master stop button pressed.')
