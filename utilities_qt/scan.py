@@ -60,7 +60,7 @@ class Scan(QThread):
     SIGNAL_progress = pyqtSignal(int)
     SIGNAL_complete = pyqtSignal()
 
-    SIGNAL_data_begin = pyqtSignal(int, dict) # scan index, which detector, redundant
+    SIGNAL_data_begin = pyqtSignal(int, int, dict) # scan index, which detector, redundant
     SIGNAL_data_update = pyqtSignal(int, int, float, float) # scan index, which detector, xdata, ydata (to be appended into index)
     SIGNAL_data_complete = pyqtSignal(int, str) # scan index, which detector, redundant
 
@@ -175,10 +175,14 @@ class Scan(QThread):
             self._xdata.append([])
             self._ydata.append([])
 
-        self._scan_id = self.other.table.scanId
+        self._scan_id = self.other.table_list[0].scanId
         metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.main_drive_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
-        self.SIGNAL_data_begin.emit(self.scanId,  metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
-        while self.scanId == self.other.table.scanId: # spin until that happens
+        
+        for i, _ in enumerate(self.other.detectors):
+            self.SIGNAL_data_begin.emit(i, self.scanId, metadata)
+        # self.SIGNAL_data_begin.emit(self.scanId,  metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
+        
+        while self.scanId == self.other.table_list[0].scanId: # spin until that happens
             continue
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
@@ -363,11 +367,11 @@ class ScanSM(QThread):
                 self._xdata.append([])
                 self._ydata.append([])
 
-            self._scan_id = self.other.table.scanId
+            self._scan_id = self.other.table_list[0].scanId
             metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.sample_rotation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': 0, 'scan_id': self.scanId}
 
             self.SIGNAL_data_begin.emit(self.scanId, metadata)
-            while self.scanId == self.other.table.scanId:
+            while self.scanId == self.other.table_list[0].scanId:
                 continue
             for idx, dpos in enumerate(scanrange):
                 if not self.other.scanRunning:

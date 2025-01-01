@@ -683,11 +683,32 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_delete_data_qpb: QPushButton = self.findChild(QPushButton, 'delete_data_button')
         self.UIE_mgw_delete_data_qpb.clicked.connect(self.delete_data_cb)
         
-        UIE_mgw_table_qf: QFrame = self.findChild(QFrame, "table_frame")
-        self.table = DataTableWidget(self)
-        VLayout = QVBoxLayout()
-        VLayout.addWidget(self.table)
-        UIE_mgw_table_qf.setLayout(VLayout)
+        # UIE_mgw_table_qf: QFrame = self.findChild(QFrame, "table_frame")
+        
+
+        self.UIE_mgw_table_qtw: QTabWidget = self.findChild(QTabWidget, "table_tabs")
+        self.UIE_mgw_table_qtw.addTab(QWidget(), 'Data Table')
+
+        self.table_list = []
+        self.UIEL_mgw_table_tabs = [] # List of tabs.
+        for i in range(self.num_detectors):
+            if i > 0:
+                self.UIE_mgw_table_qtw.addTab(QWidget(), 'Detector %d'%(i+1))
+
+            table = DataTableWidget(self)
+            VLayout = QVBoxLayout()
+            VLayout.addWidget(table)
+            # This is how you address individual tabs.
+            self.UIE_mgw_table_qtw.widget(i).setLayout(VLayout)
+            
+            # TODO: Init all the tabs' layouts.
+
+            # List of datatable objects.
+
+            self.table_list.append(table)
+            self.UIEL_mgw_table_tabs.append(self.UIE_mgw_table_qtw.widget(i))
+
+
         self.UIE_mgw_home_qpb: QPushButton = self.findChild(QPushButton, "home_button")
 
         # Get axes combos.
@@ -854,7 +875,10 @@ class MMC_Main(QMainWindow):
 
         self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
         self.plotCanvas.clear_plot_fcn()
-        self.plotCanvas.set_table_clear_cb(self.table.plotsClearedCb)
+        # for i in range(self.UIE_mgw_table_qtw.count()):
+        for table in self.table_list:
+            self.plotCanvas.set_table_clear_cb(table.plotsClearedCb)
+        # self.plotCanvas.set_table_clear_cb(self.table.plotsClearedCb)
         toolbar = self.plotCanvas.get_toolbar()
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(toolbar)
@@ -950,7 +974,9 @@ class MMC_Main(QMainWindow):
 
         self.update_movement_limits_gui()
 
-        self.table.updatePlots()
+        for table in self.table_list:
+            table.updatePlots()
+        # self.table.updatePlots()
 
         self.UIE_mgw_mda_qw: QWidget = self.findChild(QWidget, 'main_drive_area')
         self.UIE_mgw_mda_collapse_qpb: QPushButton = self.findChild(QPushButton, 'main_drive_area_collap')
@@ -1457,72 +1483,77 @@ class MMC_Main(QMainWindow):
             # Attempt a load of the device manager configuration file.
             self.load_config_devman(appDir + '/devman.ini')
 
-    def get_ref_data(self):
-        if self.table is None:
-            return
+    # def get_ref_data(self):
+    #     if self.table is None:
+    #         return
         
-        # Extract ref data/metadata
-        data, metadata = self.table.getRefData()
-        log.debug(data, metadata)
-        if data is None:
-            return
-        if metadata is not None:
-            try:
-                tstamp = metadata['tstamp']
-                scan_id = metadata['scan_id']
-            except Exception:
-                tstamp = dt.datetime.now()
-                scan_id = 100
+    #     # Extract ref data/metadata
+    #     data, metadata = self.table.getRefData()
+    #     log.debug(data, metadata)
+    #     if data is None:
+    #         return
+    #     if metadata is not None:
+    #         try:
+    #             tstamp = metadata['tstamp']
+    #             scan_id = metadata['scan_id']
+    #         except Exception:
+    #             tstamp = dt.datetime.now()
+    #             scan_id = 100
 
-        # TODO: Use the ref data
+    #     # TODO: Use the ref data
 
     def save_data_cb(self):
-        if self.table is None:
-            return
-        data, metadata = self.table.saveDataCb()
-        log.debug(data, metadata)
-        if data is None:
-            return
-        if metadata is not None:
+        for i, table in self.table_list:
+            # if self.table_list[i] is None:
+            #     return
+            
+            data, metadata = table.saveDataCb()
+            log.debug(data, metadata)
+            if data is None:
+                return
+            if metadata is not None:
+                try:
+                    tstamp = metadata['tstamp']
+                    scan_id = metadata['scan_id']
+                except Exception:
+                    tstamp = dt.datetime.now()
+                    scan_id = 100
+            savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/%s_det-%d_%d.csv'%(tstamp.strftime('%Y%m%d%H%M%S'), i, scan_id), filter='*.csv')
+            fileInfo = QFileInfo(savFileName)
             try:
-                tstamp = metadata['tstamp']
-                scan_id = metadata['scan_id']
+                ofile = open(fileInfo.absoluteFilePath(), 'w', encoding='utf-8')
             except Exception:
-                tstamp = dt.datetime.now()
-                scan_id = 100
-        savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/%s_%d.csv'%(tstamp.strftime('%Y%m%d%H%M%S'), scan_id), filter='*.csv')
-        fileInfo = QFileInfo(savFileName)
-        try:
-            ofile = open(fileInfo.absoluteFilePath(), 'w', encoding='utf-8')
-        except Exception:
-            self.QMessageBoxCritical('Error', 'Could not open file %s'%(fileInfo.fileName()))
-            return
-        ofile.write('# DATA RECORDED IN SOFTWARE VERSION: %sv%s'%(version.__short_name__, version.__version__))
-        ofile.write('# %s\n'%(tstamp.strftime('%Y-%m-%d %H:%M:%S')))
-        try:
-            ofile.write('# Steps/mm: %f\n'%(metadata['steps_per_value']))
-        except Exception:
-            pass
-        try:
-            ofile.write('# mm/nm: %e; '%(metadata['mm_per_nm']))
-        except Exception:
-            pass
-        try:
-            ofile.write('lambda_0 (nm): %.4f\n'%(metadata['zero_ofst']))
-        except Exception:
-            pass
-        ofile.write('# Position (nm),Mean Current(A)\n')
-        xdata = data['x']
-        ydata = data['y']
-        for i in range(len(xdata)):
+                self.QMessageBoxCritical('Error', 'Could not open file %s'%(fileInfo.fileName()))
+                return
+            ofile.write('# DATA RECORDED IN SOFTWARE VERSION: %sv%s'%(version.__short_name__, version.__version__))
+            ofile.write('# %s det#%d\n'%(tstamp.strftime('%Y-%m-%d %H:%M:%S'), i))
             try:
-                ofile.write('%e, %e\n'%(xdata[i], ydata[i]))
+                ofile.write('# Steps/mm: %f\n'%(metadata['steps_per_value']))
             except Exception:
-                continue
-        ofile.close()
+                pass
+            try:
+                ofile.write('# mm/nm: %e; '%(metadata['mm_per_nm']))
+            except Exception:
+                pass
+            try:
+                ofile.write('lambda_0 (nm): %.4f\n'%(metadata['zero_ofst']))
+            except Exception:
+                pass
+            ofile.write('# Position (nm),Mean Current(A)\n')
+            xdata = data['x']
+            ydata = data['y']
+            for i in range(len(xdata)):
+                try:
+                    ofile.write('%e, %e\n'%(xdata[i], ydata[i]))
+                except Exception:
+                    continue
+            ofile.close()
 
     def delete_data_cb(self):
-        self.table.delDataCb()
+        # TODO: Move delete button within the tabs and have one per tab.
+        # for i in range(self.UIE_mgw_table_qtw.count()):
+        for table in self.table_list:
+            table.delDataCb()
         return
 
     def open_manual_hyperlink(self):
@@ -1602,48 +1633,48 @@ class MMC_Main(QMainWindow):
         except Exception as e:
             self.QMessageBoxWarning('Homing Failed', e)
 
-    def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
-        self.scan_number += 1
+    # def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
+    #     self.scan_number += 1
 
-        if scan_type == 'Automatic':
-            row_pos = 0
-            if self.table_has_manual_entry:
-                row_pos = 1
-            self.table.insertRow(row_pos)
-            self.table.setItem(row_pos, 0, QTableWidgetItem(str(self.scan_number)))
-            self.table.setItem(row_pos, 1, QTableWidgetItem(scan_type))
-            self.table.setItem(row_pos, 2, QTableWidgetItem(str(data_points)))
-            self.table.setItem(row_pos, 3, QTableWidgetItem(str(start)))
-            self.table.setItem(row_pos, 4, QTableWidgetItem(str(stop)))
-            self.table.setItem(row_pos, 5, QTableWidgetItem(str(step)))
+    #     if scan_type == 'Automatic':
+    #         row_pos = 0
+    #         if self.table_has_manual_entry:
+    #             row_pos = 1
+    #         self.table.insertRow(row_pos)
+    #         self.table.setItem(row_pos, 0, QTableWidgetItem(str(self.scan_number)))
+    #         self.table.setItem(row_pos, 1, QTableWidgetItem(scan_type))
+    #         self.table.setItem(row_pos, 2, QTableWidgetItem(str(data_points)))
+    #         self.table.setItem(row_pos, 3, QTableWidgetItem(str(start)))
+    #         self.table.setItem(row_pos, 4, QTableWidgetItem(str(stop)))
+    #         self.table.setItem(row_pos, 5, QTableWidgetItem(str(step)))
 
-            # Add or update data entry.
-            self.auto_data_dict.update({self.scan_number: data})
-            log.debug(self.auto_data_dict)
+    #         # Add or update data entry.
+    #         self.auto_data_dict.update({self.scan_number: data})
+    #         log.debug(self.auto_data_dict)
 
-        elif scan_type == 'Manual':
-            if self.table_has_manual_entry:
-                self.table_manual_points += 1
-                log.info("TABLE MANUAL POINTS: " + str(self.table_manual_points))
-                self.table.setItem(self.table_manual_row, 2, QTableWidgetItem(str(self.table_manual_points)))
+    #     elif scan_type == 'Manual':
+    #         if self.table_has_manual_entry:
+    #             self.table_manual_points += 1
+    #             log.info("TABLE MANUAL POINTS: " + str(self.table_manual_points))
+    #             self.table.setItem(self.table_manual_row, 2, QTableWidgetItem(str(self.table_manual_points)))
 
-                # Append to manual data CSV string.
-                self.man_data_str += data
-                log.debug(self.man_data_str)
+    #             # Append to manual data CSV string.
+    #             self.man_data_str += data
+    #             log.debug(self.man_data_str)
 
-            else:
-                self.table_has_manual_entry = True
-                self.table.insertRow(0)
-                self.table.setItem(0, 0, QTableWidgetItem(str(self.scan_number)))
-                self.table.setItem(0, 1, QTableWidgetItem(scan_type))
-                self.table.setItem(0, 2, QTableWidgetItem(str(data_points)))
-                self.table.setItem(0, 3, QTableWidgetItem(str(start)))
-                self.table.setItem(0, 4, QTableWidgetItem(str(stop)))
-                self.table.setItem(0, 5, QTableWidgetItem(str(step)))
+    #         else:
+    #             self.table_has_manual_entry = True
+    #             self.table.insertRow(0)
+    #             self.table.setItem(0, 0, QTableWidgetItem(str(self.scan_number)))
+    #             self.table.setItem(0, 1, QTableWidgetItem(scan_type))
+    #             self.table.setItem(0, 2, QTableWidgetItem(str(data_points)))
+    #             self.table.setItem(0, 3, QTableWidgetItem(str(start)))
+    #             self.table.setItem(0, 4, QTableWidgetItem(str(stop)))
+    #             self.table.setItem(0, 5, QTableWidgetItem(str(step)))
 
-                # Set manual data CSV string.
-                self.man_data_str = data
-                log.debug(self.man_data_str)
+    #             # Set manual data CSV string.
+    #             self.man_data_str = data
+    #             log.debug(self.man_data_str)
 
     def autosave_dir_triggered(self):
         self.data_save_directory = QFileDialog.getExistingDirectory(self, 'Auto logging files location', self.data_save_directory, options=QFileDialog.ShowDirsOnly)
@@ -1686,43 +1717,43 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_scan_status_ql.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
         self.UIE_mgw_scan_qpbar.reset()
 
-    def scan_data_begin(self, scan_idx: int, metadata: dict):
-        n_scan_idx = self.table.insertData(None, None, metadata)
+    def scan_data_begin(self, det_idx: int, scan_idx: int, metadata: dict):
+        n_scan_idx = self.table_list[det_idx].insertData(None, None, metadata)
         if n_scan_idx != scan_idx:
             log.warn('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
 
     # This function is called via a signal emission from scan.py.
     # The data is actually stored in datatable.py's recordedData.
     def scan_data_update(self, scan_idx: int, which_detector: int, xdata: float, ydata: float):
-        # TODO: What about other detectors...?
         # TODO: Adjust data based on reference if one is being used.   
 
-        # self.UIE_dmw_operation_qcb
-        # self.UIE_dmw_meas_ref_qrb
-        # self.UIE_dmw_ref_meas_qrb
+        log.debug(f'Data received from detector #{which_detector}: {xdata}; {ydata}')
 
-        # TODO: This is where we can handle other detectors.
+        # This is where we handle all detectors.
+        self.table_list[which_detector].insertDataAt(scan_idx, xdata, ydata)
+        log.info("Data from detector #%d received."%(which_detector))
 
-        if which_detector == 0:
-            self.table.insertDataAt(scan_idx, xdata, ydata)
-        elif which_detector == 1:
-            log.info("Detector 1 data received.")
+        # if which_detector == 0:
+        #     self.table.insertDataAt(scan_idx, xdata, ydata)
+        # elif which_detector == 1:
+        #     log.info("Detector 1 data received.")
 
     def scan_data_complete(self, scan_idx: int, scan_class: str):
-        self.table.markInsertFinished(scan_idx)
-        self.table.updateTableDisplay()
-        if self.scan_repeats.value() > 0:
-            if scan_class == 'main':
-                self.scan_repeats.setValue(self.scan_repeats.value() - 1)
-                self.scan_button_pressed()
-            elif scan_class == 'sample':
-                self.UIE_mgw_sm_scan_repeats_qdsb.setValue(self.UIE_mgw_sm_scan_repeats_qdsb.value() - 1)
-                self.scan_sm_button_pressed()
-            elif scan_class == 'detector':
-                self.UIE_mgw_dm_scan_repeats_qdsb.setValue(self.UIE_mgw_dm_scan_repeats_qdsb.value() - 1)
-                self.scan_dm_button_pressed()
-            else:
-                self.QMessageBoxCritical('Scan Error', 'Unknown scan class %s.'%(scan_class))
+        for table in self.table_list:
+            table.markInsertFinished(scan_idx)
+            table.updateTableDisplay()
+            if self.scan_repeats.value() > 0:
+                if scan_class == 'main':
+                    self.scan_repeats.setValue(self.scan_repeats.value() - 1)
+                    self.scan_button_pressed()
+                elif scan_class == 'sample':
+                    self.UIE_mgw_sm_scan_repeats_qdsb.setValue(self.UIE_mgw_sm_scan_repeats_qdsb.value() - 1)
+                    self.scan_sm_button_pressed()
+                elif scan_class == 'detector':
+                    self.UIE_mgw_dm_scan_repeats_qdsb.setValue(self.UIE_mgw_dm_scan_repeats_qdsb.value() - 1)
+                    self.scan_dm_button_pressed()
+                else:
+                    self.QMessageBoxCritical('Scan Error', 'Unknown scan class %s.'%(scan_class))
 
     def update_axes_info(self, mda_pos, mda_moving, mda_homing, fwa_pos, fwa_moving, fwa_homing, sra_pos, sra_moving, sra_homing, saa_pos, saa_moving, saa_homing, sta_pos, sta_moving, sta_homing, dra_pos, dra_moving, dra_homing):
 
