@@ -687,7 +687,7 @@ class MMC_Main(QMainWindow):
         
 
         self.UIE_mgw_table_qtw: QTabWidget = self.findChild(QTabWidget, "table_tabs")
-        self.UIE_mgw_table_qtw.addTab(QWidget(), 'Data Table')
+        # self.UIE_mgw_table_qtw.addTab(QWidget(), 'Data Table')
 
         self.table_list = []
         self.UIEL_mgw_table_tabs = [] # List of tabs.
@@ -710,6 +710,8 @@ class MMC_Main(QMainWindow):
 
 
         self.UIE_mgw_home_qpb: QPushButton = self.findChild(QPushButton, "home_button")
+
+        self.UIE_mgw_enabled_detectors_qcb: QComboBox = self.findChild(QComboBox, "enabled_detectors")
 
         # Get axes combos.
         self.UIE_mgw_main_drive_axis_qcb: QComboBox = self.findChild(QComboBox, "main_drive_axis")
@@ -916,8 +918,8 @@ class MMC_Main(QMainWindow):
 
         # Other stuff.
         self.scan = scan.Scan(weakref.proxy(self))
-        self.sm_scan = scan.ScanSM(weakref.proxy(self))
-        self.dm_scan = scan.ScanDM(weakref.proxy(self))
+        # self.sm_scan = scan.ScanSM(weakref.proxy(self))
+        # self.dm_scan = scan.ScanDM(weakref.proxy(self))
 
         log.debug('UpdatePositionDisplays: Thread start() called.')
         self.update_position_displays_thread.start()
@@ -1503,7 +1505,7 @@ class MMC_Main(QMainWindow):
     #     # TODO: Use the ref data
 
     def save_data_cb(self):
-        for i, table in self.table_list:
+        for i, table in enumerate(self.table_list):
             # if self.table_list[i] is None:
             #     return
             

@@ -107,7 +107,7 @@
              <property name="spacing">
               <number>0</number>
              </property>
-             <item row="0" column="0">
+             <item row="1" column="0">
               <widget class="QSplitter" name="splitter">
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
@@ -229,9 +229,9 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>0</y>
-                      <width>620</width>
-                      <height>1479</height>
+                      <y>-541</y>
+                      <width>630</width>
+                      <height>1188</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1143,7 +1143,7 @@
                                <rect>
                                 <x>0</x>
                                 <y>0</y>
-                                <width>578</width>
+                                <width>594</width>
                                 <height>148</height>
                                </rect>
                               </property>
@@ -2341,7 +2341,7 @@
                            </font>
                           </property>
                           <property name="title">
-                           <string>Manual Control</string>
+                           <string>Manual Control (degrees)</string>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_18">
                            <property name="leftMargin">
@@ -2500,7 +2500,7 @@
                            </font>
                           </property>
                           <property name="title">
-                           <string>Scanning Control (deg)</string>
+                           <string>Scanning Control (degrees)</string>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_17" stretch="0,0">
                            <property name="leftMargin">
@@ -2857,16 +2857,11 @@
                  <item>
                   <widget class="QTabWidget" name="table_tabs">
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="tab">
                     <attribute name="title">
                      <string>Detector 1</string>
-                    </attribute>
-                   </widget>
-                   <widget class="QWidget" name="tab_2">
-                    <attribute name="title">
-                     <string>Page</string>
                     </attribute>
                    </widget>
                   </widget>
@@ -2905,6 +2900,90 @@
                  </item>
                 </layout>
                </widget>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QFrame" name="frame">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>45</height>
+                </size>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::Box</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_25">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_28" stretch="0,1,1">
+                  <property name="spacing">
+                   <number>4</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_27">
+                    <property name="font">
+                     <font>
+                      <family>Bahnschrift</family>
+                      <pointsize>16</pointsize>
+                      <italic>false</italic>
+                      <underline>false</underline>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>Detector Control</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_23">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="enabled_detectors">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>25</height>
+                     </size>
+                    </property>
+                    <property name="font">
+                     <font>
+                      <pointsize>14</pointsize>
+                     </font>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>All</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Detector 1</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
               </widget>
              </item>
             </layout>
@@ -3799,7 +3878,7 @@
      <x>0</x>
      <y>0</y>
      <width>1400</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

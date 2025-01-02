@@ -120,8 +120,14 @@ class DataTableWidget(QTableWidget):
     def insertDataAt(self, scanId: int, xdata: np.ndarray | float, ydata: np.ndarray | float) -> int:
         log.debug(f'scanId: {scanId}')
         log.debug(f'self.recordedData.keys(): {self.recordedData.keys()}')
+        # self._scanId = scanId
         if scanId not in self.recordedData.keys():
+            self._scanId = scanId
             self._internal_insert_exec = True
+            if isinstance(xdata, float):
+                xdata = np.array([xdata], dtype=float)
+            if isinstance(ydata, float):
+                ydata = np.array([ydata], dtype=float)
             ret = self.insertData(xdata, ydata, dict())
             self._internal_insert_exec = False
             return ret
@@ -130,9 +136,9 @@ class DataTableWidget(QTableWidget):
                 xdata = np.array([xdata], dtype=float)
             if isinstance(ydata, float):
                 ydata = np.array([ydata], dtype=float)
-            log.debug(f'Appending {xdata} to the end of {self.recordedData[scanId]['x']}')
+            log.debug(f"Appending {xdata} to the end of {self.recordedData[scanId]['x']} for scanId {scanId}")
             self.recordedData[scanId]['x'] = np.concatenate((self.recordedData[scanId]['x'], xdata))
-            log.debug(f'Appending {ydata} to the end of {self.recordedData[scanId]['y']}')
+            log.debug(f"Appending {ydata} to the end of {self.recordedData[scanId]['y']} for scanId {scanId}")
             self.recordedData[scanId]['y'] = np.concatenate((self.recordedData[scanId]['y'], ydata))
             self.updateTableDisplay(scanId, name_editable=False)
         return scanId
