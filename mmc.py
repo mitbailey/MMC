@@ -224,6 +224,8 @@ class MMC_Main(QMainWindow):
     # Constructor
     def __init__(self, application, uiresource = None):
 
+        self.global_scan_id = 0
+
         # application.setQuitOnLastWindowClosed(False)
 
         self.selected_config_save_path = os.path.expanduser('~/Documents') + '/mcpherson_mmc/s_d.csv'
@@ -689,7 +691,15 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_table_qtw: QTabWidget = self.findChild(QTabWidget, "table_tabs")
         # self.UIE_mgw_table_qtw.addTab(QWidget(), 'Data Table')
 
-        self.table_list = []
+        # Setup the first (result) table tab.
+        table = DataTableWidget(self)
+        VLayout = QVBoxLayout()
+        VLayout.addWidget(table)
+        self.UIE_mgw_table_qtw.widget(0).setLayout(VLayout)
+        self.table_result = table
+        self.UIE_mgw_table_result_tab = self.UIE_mgw_table_qtw.widget(0)
+
+        self.table_list = []        
         self.UIEL_mgw_table_tabs = [] # List of tabs.
         for i in range(self.num_detectors):
             if i > 0:
@@ -699,19 +709,23 @@ class MMC_Main(QMainWindow):
             VLayout = QVBoxLayout()
             VLayout.addWidget(table)
             # This is how you address individual tabs.
-            self.UIE_mgw_table_qtw.widget(i).setLayout(VLayout)
+            self.UIE_mgw_table_qtw.widget(i+1).setLayout(VLayout)
             
             # TODO: Init all the tabs' layouts.
 
             # List of datatable objects.
 
             self.table_list.append(table)
-            self.UIEL_mgw_table_tabs.append(self.UIE_mgw_table_qtw.widget(i))
+            self.UIEL_mgw_table_tabs.append(self.UIE_mgw_table_qtw.widget(i+1))
 
 
         self.UIE_mgw_home_qpb: QPushButton = self.findChild(QPushButton, "home_button")
 
+        # The "Active Detectors" combo-box. Determines which detectors will run in a scan.
         self.UIE_mgw_enabled_detectors_qcb: QComboBox = self.findChild(QComboBox, "enabled_detectors")
+
+        for i in range(self.num_detectors):
+            self.UIE_mgw_enabled_detectors_qcb.addItem('Detector %d'%(i+1))
 
         # Get axes combos.
         self.UIE_mgw_main_drive_axis_qcb: QComboBox = self.findChild(QComboBox, "main_drive_axis")
@@ -1719,10 +1733,13 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_scan_status_ql.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
         self.UIE_mgw_scan_qpbar.reset()
 
-    def scan_data_begin(self, det_idx: int, scan_idx: int, metadata: dict):
-        n_scan_idx = self.table_list[det_idx].insertData(None, None, metadata)
-        if n_scan_idx != scan_idx:
-            log.warn('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
+    def scan_data_begin(self, det_idx: int, scans_global_scan_id: int, metadata: dict):
+        if scans_global_scan_id != self.global_scan_id:
+            log.error('Global scan ID mismatch %d != %d'%(scans_global_scan_id, self.global_scan_id))
+        self.table_list[det_idx].insertData(self.global_scan_id, None, None, metadata)
+        # n_scan_idx = self.table_list[det_idx].insertData(None, None, metadata)
+        # if n_scan_idx != scan_idx:
+        #     log.warn('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
 
     # This function is called via a signal emission from scan.py.
     # The data is actually stored in datatable.py's recordedData.
@@ -1743,7 +1760,7 @@ class MMC_Main(QMainWindow):
     def scan_data_complete(self, scan_idx: int, scan_class: str):
         for table in self.table_list:
             table.markInsertFinished(scan_idx)
-            table.updateTableDisplay()
+            table.updateTableDisplay(self.global_scan_id)
             if self.scan_repeats.value() > 0:
                 if scan_class == 'main':
                     self.scan_repeats.setValue(self.scan_repeats.value() - 1)
@@ -1756,6 +1773,8 @@ class MMC_Main(QMainWindow):
                     self.scan_dm_button_pressed()
                 else:
                     self.QMessageBoxCritical('Scan Error', 'Unknown scan class %s.'%(scan_class))
+
+        self.global_scan_id += 1
 
     def update_axes_info(self, mda_pos, mda_moving, mda_homing, fwa_pos, fwa_moving, fwa_homing, sra_pos, sra_moving, sra_homing, saa_pos, saa_moving, saa_homing, sta_pos, sta_moving, sta_homing, dra_pos, dra_moving, dra_homing):
 

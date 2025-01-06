@@ -79,6 +79,7 @@ class Scan(QThread):
         log.debug('mainWindow reference in scan init: %d'%(sys.getrefcount(self.other) - 1))
         self._last_scan = -1
         self.ctrl_axis = ScanAxis.MAIN
+        self.internal_scan_no = 0
 
     def __del__(self):
         self.wait()
@@ -167,18 +168,25 @@ class Scan(QThread):
             log.debug('scan_type: %s'%(scan_type))
 
             if ctrl_axis == ScanAxis.MAIN:
+                log.info('ctrl_axis == ScanAxis.MAIN')
                 self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
+                log.info('Complete move command.')
             elif ctrl_axis == ScanAxis.SAMPLE:
+                log.info('ctrl_axis == ScanAxis.SAMPLE')
                 if scan_type == SampleScanType.ROTATION:
+                    log.info('scan_type == SampleScanType.ROTATION')
                     self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
                 elif scan_type == SampleScanType.TRANSLATION:
+                    log.info('scan_type == SampleScanType.TRANSLATION')
                     self.other.motion_controllers.sample_translation_axis.move_to(prep_pos, True)
                 elif scan_type == SampleScanType.THETA2THETA:
+                    log.info('scan_type == SampleScanType.THETA2THETA')
                     self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
                     self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos * 2, True)
                 else:
                     log.error(f'Invalid scan type for control axis: sample ({ctrl_axis}; {scan_type}).')
             elif ctrl_axis == ScanAxis.DETECTOR:
+                log.info('ctrl_axis == ScanAxis.DETECTOR')
                 self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos, True)
             else:
                 log.error(f'Invalid control axis ({ctrl_axis}; {scan_type}).')
@@ -189,40 +197,59 @@ class Scan(QThread):
             self.SIGNAL_error.emit('Move Failure', 'Axis failed to move: %s'%(e))
             self.SIGNAL_complete.emit()
             return
+        
+        log.info('Holding for 1 second.')
+
         self.SIGNAL_status_update.emit("HOLDING")
         sleep(1)
 
+        log.info('Held for 1 second.')
+
         self._xdata = []
         self._ydata = []
+
+        log.info('Creating data arrays for detectors.')
 
         for detector in active_detectors:
             self._xdata.append([])
             self._ydata.append([])
 
-        self._scan_id = self.other.table_list[0].scanId
+        log.info('Getting scan ID.')
+
+        # self._scan_id = self.other.table_list[0].scanId
+        # self._scan_id = self.other.global_scan_id
+        self.last_global_scan_id = self.other.global_scan_id
+
+        log.info('Global Scan ID:', self.other.global_scan_id)
+        log.info('Internal Scan No:', self.internal_scan_no)
 
         if ctrl_axis == ScanAxis.MAIN:
-            metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.main_drive_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+            metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.main_drive_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.last_global_scan_id}
         elif ctrl_axis == ScanAxis.SAMPLE:
             if scan_type == SampleScanType.ROTATION:
-                metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.sample_rotation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+                metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.sample_rotation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.last_global_scan_id}
             elif scan_type == SampleScanType.TRANSLATION:
-                metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.sample_translation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+                metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.sample_translation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.last_global_scan_id}
             elif scan_type == SampleScanType.THETA2THETA:
-                metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.sample_rotation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+                metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.sample_rotation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.last_global_scan_id}
             else:
                 log.error(f'Invalid scan type for control axis: sample ({ctrl_axis}; {scan_type}).')
         elif ctrl_axis == ScanAxis.DETECTOR:
-            metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.detector_rotation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.scanId}
+            metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.detector_rotation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.last_global_scan_id}
         else:
             log.error(f'Invalid control axis ({ctrl_axis}; {scan_type}).')
 
-        for i, _ in enumerate(active_detectors):
-            self.SIGNAL_data_begin.emit(i, self.scanId, metadata)
-        # self.SIGNAL_data_begin.emit(self.scanId,  metadata) # emit scan ID so that the empty data can be appended and table scan ID can be incremented
-        
-        while self.scanId == self.other.table_list[0].scanId: # spin until that happens
-            continue
+        log.info('Emitting data begin signal.')
+
+        # This ensures that the 'i' is the index of the detector in the Main GUI's list, not just always 0 if we only have one active detector.
+        for i, det in enumerate(self.other.detectors):
+            if det in active_detectors:
+                self.SIGNAL_data_begin.emit(i, self.last_global_scan_id, metadata)
+
+        # log.info('Waiting for scan ID to change.')
+
+        # while self.scanId == self.other.table_list[0].scanId: # spin until that happens
+        #     continue
         for idx, dpos in enumerate(scanrange):
             if not self.other.scanRunning:
                 log.debug('scanRunning False, stop button may have been pressed (A).')
@@ -285,7 +312,7 @@ class Scan(QThread):
                     self._xdata[i].append((((pos))))
                 self._ydata[i].append(self.other.mes_sign * mes)
                 log.debug(f'_ydata[i][-1]: {self._ydata[i][-1]}')
-                self.SIGNAL_data_update.emit(self.scanId, i, self._xdata[i][-1], self._ydata[i][-1])
+                self.SIGNAL_data_update.emit(self.last_global_scan_id, i, self._xdata[i][-1], self._ydata[i][-1])
 
                 log.debug(sav_files)
                 if len(sav_files) > 0 and sav_files[i] is not None:
@@ -322,7 +349,7 @@ class Scan(QThread):
         self.other.num_scans += 1
 
         self.SIGNAL_complete.emit()
-        self.SIGNAL_data_complete.emit(self.scanId, 'main')
+        self.SIGNAL_data_complete.emit(self.last_global_scan_id, 'main')
         log.debug('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
 
     @property
@@ -333,9 +360,9 @@ class Scan(QThread):
     def ydata(self, which_detector: int):
         return np.array(self._ydata[which_detector], dtype=float)
 
-    @property
-    def scanId(self):
-        return self._scan_id
+    # @property
+    # def scanId(self):
+    #     return self.last_global_scan_id
 
 class ScanType(Enum):
     ROTATION = 0

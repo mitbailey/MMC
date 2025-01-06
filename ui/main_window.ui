@@ -229,9 +229,9 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>-541</y>
-                      <width>630</width>
-                      <height>1188</height>
+                      <y>0</y>
+                      <width>626</width>
+                      <height>1274</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1143,7 +1143,7 @@
                                <rect>
                                 <x>0</x>
                                 <y>0</y>
-                                <width>594</width>
+                                <width>588</width>
                                 <height>148</height>
                                </rect>
                               </property>
@@ -2859,6 +2859,11 @@
                    <property name="currentIndex">
                     <number>0</number>
                    </property>
+                   <widget class="QWidget" name="tab_2">
+                    <attribute name="title">
+                     <string>Result</string>
+                    </attribute>
+                   </widget>
                    <widget class="QWidget" name="tab">
                     <attribute name="title">
                      <string>Detector 1</string>
@@ -2924,7 +2929,7 @@
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_25">
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_28" stretch="0,1,1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_28" stretch="0,6,3">
                   <property name="spacing">
                    <number>4</number>
                   </property>
@@ -2939,7 +2944,7 @@
                      </font>
                     </property>
                     <property name="text">
-                     <string>Detector Control</string>
+                     <string>Active Detectors</string>
                     </property>
                    </widget>
                   </item>
@@ -2972,11 +2977,6 @@
                     <item>
                      <property name="text">
                       <string>All</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>Detector 1</string>
                      </property>
                     </item>
                    </widget>
@@ -3878,7 +3878,7 @@
      <x>0</x>
      <y>0</y>
      <width>1400</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

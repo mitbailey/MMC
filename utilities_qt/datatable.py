@@ -86,49 +86,55 @@ class DataTableWidget(QTableWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.selectionModel().selectionChanged.connect(self.__tableSelectAction)
         self.currentRefId = -1
+        # self.scan_idx = 0
 
-    def insertData(self, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
-        scanId = self._scanId
-        self._scanId += 1
+    def insertData(self, global_scan_id: int, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
+        
+        # scanId = self._scanId
+        # self._scanId += 1
+
+
         if not self._internal_insert_exec:
-            self.recordedMetaData[scanId] = metadata
+            self.recordedMetaData[global_scan_id] = metadata
         if xdata is None:
             xdata = np.array([], dtype = float)
         if ydata is None:
             ydata = np.array([], dtype = float)
-        self.recordedData[scanId] = {'id': scanId, 'name': '', 'x': xdata, 'y': ydata, 'plotted': True, 'plot_cb': CustomQCheckBox(scanId), 'ref_cb': CustomQCheckBox(scanId)}
+        self.recordedData[global_scan_id] = {'id': global_scan_id, 'name': '', 'x': xdata, 'y': ydata, 'plotted': True, 'plot_cb': CustomQCheckBox(global_scan_id), 'ref_cb': CustomQCheckBox(global_scan_id)}
         
-        self.recordedData[scanId]['plot_cb'].setChecked(True)
-        self.recordedData[scanId]['plot_cb'].setDisabled(btn_disabled)
-        self.recordedData[scanId]['plot_cb'].stateChanged.connect(self.__plotCheckboxCb) # connect callback
+        self.recordedData[global_scan_id]['plot_cb'].setChecked(True)
+        self.recordedData[global_scan_id]['plot_cb'].setDisabled(btn_disabled)
+        self.recordedData[global_scan_id]['plot_cb'].stateChanged.connect(self.__plotCheckboxCb) # connect callback
 
-        self.recordedData[scanId]['ref_cb'].setChecked(False)
-        self.recordedData[scanId]['ref_cb'].setDisabled(False)
-        self.recordedData[scanId]['ref_cb'].stateChanged.connect(self.__refCheckboxCb) # connect callback
-        log.debug('Ref Checkbox ID:', scanId)
-        log.debug('Plot Checkbox:', self.recordedData[scanId]['plot_cb'])
-        log.debug('Ref Checkbox:', self.recordedData[scanId]['ref_cb'])
+        self.recordedData[global_scan_id]['ref_cb'].setChecked(False)
+        self.recordedData[global_scan_id]['ref_cb'].setDisabled(False)
+        self.recordedData[global_scan_id]['ref_cb'].stateChanged.connect(self.__refCheckboxCb) # connect callback
+        log.debug('Ref Checkbox ID:', global_scan_id)
+        log.debug('Plot Checkbox:', self.recordedData[global_scan_id]['plot_cb'])
+        log.debug('Ref Checkbox:', self.recordedData[global_scan_id]['ref_cb'])
 
-        self.updateTableDisplay(scanId, name_editable)
-        return (scanId)
+        self.updateTableDisplay(global_scan_id, name_editable)
+
+        # self.scan_idx += 1
+        # return (scanId)
     
-    @property
-    def scanId(self):
-        return self._scanId
+    # @property
+    # def scanId(self):
+    #     return self._scanId
 
     # This is called from mmc.py which is called from scan.py. The data is stored here in recordedData.
-    def insertDataAt(self, scanId: int, xdata: np.ndarray | float, ydata: np.ndarray | float) -> int:
-        log.debug(f'scanId: {scanId}')
+    def insertDataAt(self, global_scan_id: int, xdata: np.ndarray | float, ydata: np.ndarray | float) -> int:
+        log.debug(f'global_scan_id: {global_scan_id}')
         log.debug(f'self.recordedData.keys(): {self.recordedData.keys()}')
         # self._scanId = scanId
-        if scanId not in self.recordedData.keys():
-            self._scanId = scanId
+        if global_scan_id not in self.recordedData.keys():
+            self._scanId = global_scan_id
             self._internal_insert_exec = True
             if isinstance(xdata, float):
                 xdata = np.array([xdata], dtype=float)
             if isinstance(ydata, float):
                 ydata = np.array([ydata], dtype=float)
-            ret = self.insertData(xdata, ydata, dict())
+            ret = self.insertData(global_scan_id, xdata, ydata, dict())
             self._internal_insert_exec = False
             return ret
         else:
@@ -136,37 +142,37 @@ class DataTableWidget(QTableWidget):
                 xdata = np.array([xdata], dtype=float)
             if isinstance(ydata, float):
                 ydata = np.array([ydata], dtype=float)
-            log.debug(f"Appending {xdata} to the end of {self.recordedData[scanId]['x']} for scanId {scanId}")
-            self.recordedData[scanId]['x'] = np.concatenate((self.recordedData[scanId]['x'], xdata))
-            log.debug(f"Appending {ydata} to the end of {self.recordedData[scanId]['y']} for scanId {scanId}")
-            self.recordedData[scanId]['y'] = np.concatenate((self.recordedData[scanId]['y'], ydata))
-            self.updateTableDisplay(scanId, name_editable=False)
-        return scanId
+            log.debug(f"Appending {xdata} to the end of {self.recordedData[global_scan_id]['x']} for global_scan_id {global_scan_id}")
+            self.recordedData[global_scan_id]['x'] = np.concatenate((self.recordedData[global_scan_id]['x'], xdata))
+            log.debug(f"Appending {ydata} to the end of {self.recordedData[global_scan_id]['y']} for global_scan_id {global_scan_id}")
+            self.recordedData[global_scan_id]['y'] = np.concatenate((self.recordedData[global_scan_id]['y'], ydata))
+            self.updateTableDisplay(global_scan_id, name_editable=False)
+        return global_scan_id
 
-    def markInsertFinished(self, scanId: int):
-        self.__enablePlotBtn(scanId)
+    def markInsertFinished(self, global_scan_id: int):
+        self.__enablePlotBtn(global_scan_id)
 
-    def __enablePlotBtn(self, scanId: int):
-        if scanId not in self.recordedData.keys():
+    def __enablePlotBtn(self, global_scan_id: int):
+        if global_scan_id not in self.recordedData.keys():
             return
-        self.recordedData[scanId]['plotted'] = True # plot by default if plot button is disabled
-        self.recordedData[scanId]['plot_cb'].setChecked(True) # it is checked at this point
-        self.recordedData[scanId]['plot_cb'].setDisabled(False)
+        self.recordedData[global_scan_id]['plotted'] = True # plot by default if plot button is disabled
+        self.recordedData[global_scan_id]['plot_cb'].setChecked(True) # it is checked at this point
+        self.recordedData[global_scan_id]['plot_cb'].setDisabled(False)
         # update just this row in the table
-        if self.rowMap is None or scanId not in self.rowMap:
-            self.updateTableDisplay(scanId)
-        if scanId in self.rowMap:
-            del self.rowMap[self.rowMap.index(scanId)]
-            self.updateTableDisplay(scanId)
+        if self.rowMap is None or global_scan_id not in self.rowMap:
+            self.updateTableDisplay(global_scan_id)
+        if global_scan_id in self.rowMap:
+            del self.rowMap[self.rowMap.index(global_scan_id)]
+            self.updateTableDisplay(global_scan_id)
 
     def plotsClearedCb(self):
-        for scanId in self.recordedData.keys():
-            self.recordedData[scanId]['plotted'] = False
-            self.recordedData[scanId]['plot_cb'].setChecked(False)
+        for global_scan_id in self.recordedData.keys():
+            self.recordedData[global_scan_id]['plotted'] = False
+            self.recordedData[global_scan_id]['plot_cb'].setChecked(False)
 
-    def updateTableDisplay(self, scanId: int = None, name_editable: bool = True):
-        if scanId is not None and isinstance(scanId, int):
-            if self.rowMap is None or scanId not in self.rowMap:
+    def updateTableDisplay(self, global_scan_id: int = None, name_editable: bool = True):
+        if global_scan_id is not None and isinstance(global_scan_id, int):
+            if self.rowMap is None or global_scan_id not in self.rowMap:
                 self.newItem = True
             else:
                 # update this row only
@@ -211,6 +217,7 @@ class DataTableWidget(QTableWidget):
                 checkpoint+=1
 
                 text = 'Scan #%d'%(scan_idx + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx)
+                # text = 'Scan #%d'%(scanId) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx)
 
                 # log.debug('Checkpoint E: %d'%(checkpoint))
                 checkpoint+=1
@@ -364,29 +371,29 @@ class DataTableWidget(QTableWidget):
     def __plotCheckboxCb(self, state: Qt.CheckState):
         src: CustomQCheckBox = self.sender()
         state = src.checkState()
-        scanId = src.id
-        log.debug(state, scanId)
-        self.recordedData[scanId]['plotted'] = state == Qt.Checked
-        log.debug(self.recordedData[scanId]['plotted'])
+        global_scan_id = src.id
+        log.debug(state, global_scan_id)
+        self.recordedData[global_scan_id]['plotted'] = state == Qt.Checked
+        log.debug(self.recordedData[global_scan_id]['plotted'])
         self.updatePlots()
 
     def __refCheckboxCb(self, state: Qt.CheckState):
         src: CustomQCheckBox = self.sender()
         state = src.checkState()
-        scanId = src.id
+        global_scan_id = src.id
 
-        log.debug(f'BEFORE currentRefId: {self.currentRefId}, scanId: {scanId}')
+        log.debug(f'BEFORE currentRefId: {self.currentRefId}, global_scan_id: {global_scan_id}')
 
         if self.currentRefId > -1:
             self.recordedData[self.currentRefId]['ref_cb'].setChecked(False)
 
-        if scanId == self.currentRefId:
+        if global_scan_id == self.currentRefId:
             # self.recordedData[self.currentRefId]['ref_cb'].setChecked(False)
             self.currentRefId = -1
         else:
-            self.currentRefId = scanId
+            self.currentRefId = global_scan_id
 
-        log.debug(f'AFTER currentRefId: {self.currentRefId}, scanId: {scanId}')
+        log.debug(f'AFTER currentRefId: {self.currentRefId}, global_scan_id: {global_scan_id}')
 
         # To retrieve the data from a row:
         # self.recordedData[scanId]
@@ -519,7 +526,7 @@ class DataTableWidget(QTableWidget):
             self.num_rows = 1
             self.insertRow(0)
 
-    def __showDelConfirmWin(self, row: int, scan_id: int):
+    def __showDelConfirmWin(self, row: int, global_scan_id: int):
         if self.__del_confirm_win is None:
             self.__del_confirm_win = QDialog(self, Qt.WindowSystemMenuHint | Qt.WindowTitleHint)
 
@@ -553,7 +560,7 @@ class DataTableWidget(QTableWidget):
 
         name = ''
         try:
-            name = self.recordedData[scan_id]['name']
+            name = self.recordedData[global_scan_id]['name']
         except Exception:
             name = ''
 
@@ -561,20 +568,20 @@ class DataTableWidget(QTableWidget):
             name = 'Scan'
 
         try:
-            scan_start = self.recordedData[scan_id]['x'].min()
+            scan_start = self.recordedData[global_scan_id]['x'].min()
         except Exception:
             scan_start = 0
         
         try:
-            scan_end = self.recordedData[scan_id]['x'].max()
+            scan_end = self.recordedData[global_scan_id]['x'].max()
         except Exception:
             scan_end = 0
 
         try:
-            num_pts = len(self.recordedData[scan_id]['x'] )
+            num_pts = len(self.recordedData[global_scan_id]['x'] )
         except Exception:
             num_pts = 0
-        text = 'Confirm for deletion:\n%s #%d: %.4f nm to %.4f nm (%d points)'%(name, scan_id + 1, scan_start, scan_end, num_pts)
+        text = 'Confirm for deletion:\n%s #%d: %.4f nm to %.4f nm (%d points)'%(name, global_scan_id + 1, scan_start, scan_end, num_pts)
         self._del_prompt_label.setText(text)
         self._del_prompt_label.setFont(QFont('Segoe UI', 12))
         self.__del_confirm_win.exec() # blocks
@@ -590,6 +597,8 @@ class DataTableWidget(QTableWidget):
             self.__del_confirm_win.close()
 
     def __deleteItem(self, row: int):
+        # TODO: This assume that the row# == global_scan_id. This is not always the case.
+        
         if row < 0:
             return
         try:
