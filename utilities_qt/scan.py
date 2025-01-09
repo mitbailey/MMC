@@ -251,6 +251,10 @@ class Scan(QThread):
         # while self.scanId == self.other.table_list[0].scanId: # spin until that happens
         #     continue
         for idx, dpos in enumerate(scanrange):
+            log.warn('!!! STARTING SCAN LOOP SECTION')
+            log.warn('!!! STARTING SCAN LOOP SECTION')
+            log.warn('!!! STARTING SCAN LOOP SECTION')
+
             if not self.other.scanRunning:
                 log.debug('scanRunning False, stop button may have been pressed (A).')
                 break
@@ -258,7 +262,9 @@ class Scan(QThread):
             
             try:
                 log.info('138: Moving to', dpos)
-                
+                log.warn('!!! MOVING TO')
+                log.warn('!!! MOVING TO')
+                log.warn('!!! MOVING TO')
                 if ctrl_axis == ScanAxis.MAIN:
                     self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
                 elif ctrl_axis == ScanAxis.SAMPLE:
@@ -272,12 +278,20 @@ class Scan(QThread):
                 elif ctrl_axis == ScanAxis.DETECTOR:
                     self.other.motion_controllers.detector_rotation_axis.move_to(dpos, True)
                 
+                log.warn('!!! DONE MOVING TO')
+                log.warn('!!! DONE MOVING TO')
+                log.warn('!!! DONE MOVING TO')
+
                 log.info('140: Done with', dpos)
             except Exception as e:
                 log.error('QMessageBox.Critical: Move Failure - Axis failed to move: %s'%(e))
                 self.SIGNAL_error.emit('Move Failure', 'Axis failed to move: %s'%(e))
                 break
             log.debug("Getting axis position.")
+
+            log.warn('!!! GETTING POSITION')
+            log.warn('!!! GETTING POSITION')
+            log.warn('!!! GETTING POSITION')
 
             if ctrl_axis == ScanAxis.MAIN:
                 pos = self.other.motion_controllers.main_drive_axis.get_position()
@@ -291,6 +305,10 @@ class Scan(QThread):
                     det_pos = self.other.motion_controllers.detector_rotation_axis.get_position()
             elif ctrl_axis == ScanAxis.DETECTOR:
                 pos = self.other.motion_controllers.detector_rotation_axis.get_position()
+
+            log.warn('!!! DONE GETTING POSITION')
+            log.warn('!!! DONE GETTING POSITION')
+            log.warn('!!! DONE GETTING POSITION')
 
             log.debug("Emitting status update signal SAMPLING.")
             self.SIGNAL_status_update.emit("SAMPLING")
@@ -342,6 +360,10 @@ class Scan(QThread):
                     sav_files[i].write(buf)
 
                 i += 1
+
+                log.warn('!!! DONE LOOP SECTION')
+                log.warn('!!! DONE LOOP SECTION')
+                log.warn('!!! DONE LOOP SECTION')
 
         for sav_file in sav_files:
             if (sav_file is not None):

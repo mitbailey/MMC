@@ -102,8 +102,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>883</width>
-           <height>180</height>
+           <width>895</width>
+           <height>218</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -255,8 +255,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>883</width>
-           <height>180</height>
+           <width>895</width>
+           <height>218</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -402,6 +402,7 @@
        <property name="font">
         <font>
          <family>Bahnschrift</family>
+         <pointsize>12</pointsize>
         </font>
        </property>
        <property name="text">
