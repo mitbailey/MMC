@@ -221,7 +221,7 @@ class MP_789A_4(StageDevice):
             # sps = 1000 * MP_789A_4.HSM
             # msg = f'F{str(sps)},0'
             # self.s.xfer([msg.encode('utf-8')])
-            self.s.xfer(['F1000,0'])
+            self.s.xfer([b'F1000,0'])
             # time.sleep(5)
 
             while True:
