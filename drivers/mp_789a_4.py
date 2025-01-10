@@ -117,7 +117,7 @@ class MP_789A_4(StageDevice):
         while True:
             time.sleep(0.25)
 
-            axis_moving = self._is_moving()
+            axis_moving = self._moving
 
             if axis_moving:
                 # Check if the backlash lock is active. If so, we should check again later.
@@ -369,12 +369,11 @@ class MP_789A_4(StageDevice):
 
         if self._backlash_lock:
             log.info('is_moving is returning true because the Backlash lock is active.')
+            return True
         elif self._homing:
             return True
         else:
-            return self._is_moving()
-
-        pass
+            return self._moving
 
         # # If the `_backlash_lock` flag is set then the 789A-4 is already performing a move command.
         # # If the `_backlash_lock` flag is set then the 789A-4 is already performing a move command.
@@ -417,11 +416,16 @@ class MP_789A_4(StageDevice):
         time.sleep(MP_789A_4.WR_DLY)
 
         if ('0' in status) and ('+' not in status and '-' not in status):
-            self._moving = False
+            # self._moving = False
+            moving = False
         else:
-            self._moving = True
+            # self._moving = True
+            moving = True
 
         self.moving_poll_mutex.release()
+
+        self._moving = moving
+        return moving
 
     def is_homing(self):
         """ Return homing status.
@@ -446,37 +450,73 @@ class MP_789A_4(StageDevice):
         if self._homing or self._moving or self._backlash_lock:
             log.warn(f'Device is homing ({self._homing}), moving ({self._moving}), or performing backlash correction ({self._backlash_lock}). Cannot move.')
             return
+        
+        # self.moving_poll_mutex.acquire()
+        self._moving = True
 
-        log.debug('func: move_to')
-        steps = position - self._position
-        self.stop_queued = 0
+        try:
 
-        # Backlash correction only necessary if (1) requested and (2) moving in the negative direction.
-        log.warn('BACKLASH: %d'%(backlash))
-        log.warn('BACKLASH: %d'%(backlash))
-        log.warn('BACKLASH: %d'%(backlash))
-        if (steps < 0) and (backlash > 0):
-            # Acquire `_backlash_lock` (should probably be a mutex lock, not a flag). Prevents movement before backlash.
-            self._backlash_lock = True
+            self.stop_queued = 0
+
+            log.debug('func: move_to')
             
-            # Check if we have a queued stop command prior to moving.
-            if self.stop_queued == 0:
-                self.move_relative(steps - backlash)
-            
-            # Check if we have a queued stop command prior to performing backlash correction.
-            if self.stop_queued == 0:
-                self.move_relative(backlash)
-            
-            # Release lock.
+            steps = position - self._position
+
+            if (steps < 0) and (backlash > 0):
+                self._backlash_lock = True
+
+                try:
+                    if self.stop_queued == 0:
+                        log.debug('MOVE-DEBUG: Performing overshot manuever.')
+                        self.move_relative(steps - backlash, backlash_bypass=True)
+
+                    if self.stop_queued == 0:
+                        log.debug('MOVE-DEBUG: Performing backlash correction.')
+                        self.move_relative(backlash, backlash_bypass=True)
+
+                except Exception as e:
+                    log.error('Error during backlash correction:', e)
+                    self._backlash_lock = False
+                    raise e
+                
+                self._backlash_lock = False
+            else:
+                log.debug('MOVE-DEBUG: Performing simple no-backlash move.')
+                self.move_relative(steps)
+
+            self.stop_queued = 0
             self._backlash_lock = False
-        else:
-            # Simple move.
-            self.move_relative(steps)
 
-        # Clear all queued stops since move/stop has been processed.
-        self.stop_queued = 0
+        except Exception as e:
+            # self.moving_poll_mutex.release()
+            raise e
 
-    def move_relative(self, steps: int):
+        # # Backlash correction only necessary if (1) requested and (2) moving in the negative direction.
+        # log.warn('BACKLASH: %d'%(backlash))
+        # log.warn('BACKLASH: %d'%(backlash))
+        # log.warn('BACKLASH: %d'%(backlash))
+        # if (steps < 0) and (backlash > 0):
+        #     # Acquire `_backlash_lock` (should probably be a mutex lock, not a flag). Prevents movement before backlash.
+        #     self._backlash_lock = True
+            
+        #     # Check if we have a queued stop command prior to moving.
+        #     if self.stop_queued == 0:
+        #         self.move_relative(steps - backlash)
+            
+        #     # Check if we have a queued stop command prior to performing backlash correction.
+        #     if self.stop_queued == 0:
+        #         self.move_relative(backlash)
+            
+        #     # Release lock.
+        #     self._backlash_lock = False
+        # else:
+        #     # Simple move.
+        #     self.move_relative(steps)
+
+        # # Clear all queued stops since move/stop has been processed.
+        # self.stop_queued = 0
+
+    def move_relative(self, steps: int, backlash_bypass=False):
         """ Private function for use by `move_to()`. Moves a relative number of steps.
 
         Args:
@@ -542,9 +582,17 @@ class MP_789A_4(StageDevice):
         log.warn('!!! CHKPT')
         self._position += steps
         log.warn('!!! CHKPT')
-        while self.is_moving():
-            log.debug('BLOCKING until movement is completed.')
-            time.sleep(0.05)
+
+        self._moving = True
+        if not backlash_bypass:
+            while self.is_moving():
+                log.debug('(not bypass) BLOCKING until movement is completed.')
+                time.sleep(0.05)
+        elif backlash_bypass:
+            while self._moving:
+                log.debug('(bypass) BLOCKING until movement is completed.')
+                time.sleep(0.05)
+
         log.debug('FINISHED BLOCKING because moving is', self._moving)
         log.warn('!!! CHKPT')
         time.sleep(MP_789A_4.WR_DLY)

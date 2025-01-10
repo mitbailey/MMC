@@ -388,13 +388,23 @@ class MotionController:
         # print('Pos det mov:', pos_detected_moving)
 
         if self._multi_axis:
-            return self._motor_ctrl.is_moving(self._axis) or pos_detected_moving
+            self._moving = self._motor_ctrl.is_moving(self._axis) or pos_detected_moving
+            # return self._motor_ctrl.is_moving(self._axis) or pos_detected_moving
         else:
-            return self._motor_ctrl.is_moving() or pos_detected_moving
+            self._moving = self._motor_ctrl.is_moving() or pos_detected_moving
+            # return self._motor_ctrl.is_moving() or pos_detected_moving
+        return self._moving
 
     def move_to(self, position, block):
+        # If we are supposedly moving, check if we actually are.
         if self._moving:
-            raise Exception("Already moving!")
+            if self._multi_axis:
+                self._moving = self._motor_ctrl.is_moving(self._axis)
+            else:
+                self._moving = self._motor_ctrl.is_moving()
+            if self._moving:
+                # If we're actually still moving...
+                raise Exception("Already moving!")
         self._moving = True
         log.info('Moving to position:', position, 'with blocking:', block)
         if block:

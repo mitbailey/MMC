@@ -944,7 +944,7 @@ class MMC_Main(QMainWindow):
         # self.sm_scan = scan.ScanSM(weakref.proxy(self))
         # self.dm_scan = scan.ScanDM(weakref.proxy(self))
         
-        self.queue_executor_thread.set_scan_obj(self.scan)
+        # self.queue_executor_thread.set_scan_obj(self.scan)
 
         log.debug('UpdatePositionDisplays: Thread start() called.')
         self.update_position_displays_thread.start()
