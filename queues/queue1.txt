@@ -1,0 +1,12 @@
+# SCAN QUEUE
+# Syntax
+# RUN [axis] [start] [stop] [step]
+# [axis]
+# MDA - main drive axis 
+# SRA - Sample rotation axis
+# SAA - Sample angle axis
+# STA - Sample translation axis
+# DRA - Detector rotation axis
+
+RUN MDA 0 100 1.0
+RUN MDA 10 20.0 4.0

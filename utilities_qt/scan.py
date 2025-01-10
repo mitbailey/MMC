@@ -80,6 +80,7 @@ class Scan(QThread):
         self._last_scan = -1
         self.ctrl_axis = ScanAxis.MAIN
         self.internal_scan_no = 0
+        self.done = True
 
     def __del__(self):
         self.wait()
@@ -374,6 +375,8 @@ class Scan(QThread):
         self.SIGNAL_data_complete.emit(self.last_global_scan_id, 'main')
         log.debug('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
 
+        self.done = True
+
     @property
     def xdata(self, which_detector: int):
         return np.array(self._xdata[which_detector], dtype=float)
@@ -385,6 +388,56 @@ class Scan(QThread):
     # @property
     # def scanId(self):
     #     return self.last_global_scan_id
+
+class QueueExecutor(QThread):
+    def __init__(self, parent: QMainWindow):
+        super(QueueExecutor, self).__init__()
+        self.other: MMC_Main = parent
+        self._queue = []
+        self._running = False
+
+    def set_scan_obj(self, scan_obj: Scan):
+        self._scan_obj = scan_obj
+
+    def set_queue(self, queue: list):
+        self._queue = queue
+
+    def run(self):
+        log.info('QueueExecutor - Beginning processing of the following queue: %s'%(self._queue))
+
+        for cmd in self._queue:
+            log.info('QueueExecutor - Processing command: %s'%(cmd))
+
+            args = cmd.split(' ')
+
+            if cmd.startswith('#') or cmd == '':
+                log.info('QueueExecutor - Skipping comment or empty line.')
+                continue
+
+            if args[0] == 'RUN':
+                if args[1] == 'MDA':
+                    log.info('QueueExecutor - Running MDA scan.')
+                    self.other.scan.ctrl_axis = ScanAxis.MAIN
+                    # TODO: which detector
+                    self.other.UIE_mgw_start_qdsb.setValue(float(args[2]))
+                    self.other.UIE_mgw_stop_qdsb.setValue(float(args[3]))
+                    self.other.UIE_mgw_step_qdsb.setValue(float(args[4]))
+
+                    self.other.scan.done = False
+
+                    self.other.scan.start()
+
+                    while not self.other.scan.done:
+                        sleep(0.1)
+                else:
+                    log.error('QueueExecutor - Unknown scan type: %s'%(args[1]))
+
+            elif args[0] == 'WAIT':
+                sleep(float(args[1]))
+            else:
+                log.error('QueueExecutor - Unknown command argument: %s'%(args[0]))
+
+        pass
 
 class ScanType(Enum):
     ROTATION = 0

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1400</width>
-    <height>851</height>
+    <width>1398</width>
+    <height>847</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -230,7 +230,7 @@
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>626</width>
+                      <width>624</width>
                       <height>1274</height>
                      </rect>
                     </property>
@@ -774,6 +774,57 @@
                               </spacer>
                              </item>
                              <item>
+                              <widget class="QPushButton" name="open_queue_file_button">
+                               <property name="minimumSize">
+                                <size>
+                                 <width>0</width>
+                                 <height>1</height>
+                                </size>
+                               </property>
+                               <property name="maximumSize">
+                                <size>
+                                 <width>30</width>
+                                 <height>30</height>
+                                </size>
+                               </property>
+                               <property name="text">
+                                <string>📂</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QPushButton" name="begin_queue_button">
+                               <property name="minimumSize">
+                                <size>
+                                 <width>0</width>
+                                 <height>1</height>
+                                </size>
+                               </property>
+                               <property name="maximumSize">
+                                <size>
+                                 <width>30</width>
+                                 <height>16777215</height>
+                                </size>
+                               </property>
+                               <property name="text">
+                                <string>➠</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
+                              <spacer name="horizontalSpacer_13">
+                               <property name="orientation">
+                                <enum>Qt::Horizontal</enum>
+                               </property>
+                               <property name="sizeHint" stdset="0">
+                                <size>
+                                 <width>40</width>
+                                 <height>20</height>
+                                </size>
+                               </property>
+                              </spacer>
+                             </item>
+                             <item>
                               <widget class="QPushButton" name="begin_scan_button">
                                <property name="minimumSize">
                                 <size>
@@ -1143,7 +1194,7 @@
                                <rect>
                                 <x>0</x>
                                 <y>0</y>
-                                <width>588</width>
+                                <width>586</width>
                                 <height>148</height>
                                </rect>
                               </property>
@@ -3877,7 +3928,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1400</width>
+     <width>1398</width>
      <height>21</height>
     </rect>
    </property>

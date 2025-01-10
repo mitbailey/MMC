@@ -239,6 +239,9 @@ class MMC_Main(QMainWindow):
 
         self.update_position_displays_thread = update_position_displays.UpdatePositionDisplays(weakref.proxy(self))
 
+        self.queue_executor_thread = scan.QueueExecutor(weakref.proxy(self))
+        
+
         self.application: QApplication = application
         self._startup_args = self.application.arguments()
         super(MMC_Main, self).__init__()
@@ -251,6 +254,8 @@ class MMC_Main(QMainWindow):
         self.dmw = None
         self.show_window_device_manager()
         self.dev_finder = None
+
+        self.scan_queue = None
 
         self.motion_controllers = mcl.MotionControllerList()
 
@@ -686,7 +691,11 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_delete_data_qpb.clicked.connect(self.delete_data_cb)
         
         # UIE_mgw_table_qf: QFrame = self.findChild(QFrame, "table_frame")
-        
+        self.UIE_mgw_open_queue_file_qpb: QPushButton = self.findChild(QPushButton, 'open_queue_file_button')
+        self.UIE_mgw_open_queue_file_qpb.clicked.connect(self.load_queue_file)
+
+        self.UIE_mgw_begin_queue_qpb: QPushButton = self.findChild(QPushButton, 'begin_queue_button')
+        self.UIE_mgw_begin_queue_qpb.clicked.connect(self.begin_queue)
 
         self.UIE_mgw_table_qtw: QTabWidget = self.findChild(QTabWidget, "table_tabs")
         # self.UIE_mgw_table_qtw.addTab(QWidget(), 'Data Table')
@@ -934,6 +943,8 @@ class MMC_Main(QMainWindow):
         self.scan = scan.Scan(weakref.proxy(self))
         # self.sm_scan = scan.ScanSM(weakref.proxy(self))
         # self.dm_scan = scan.ScanDM(weakref.proxy(self))
+        
+        self.queue_executor_thread.set_scan_obj(self.scan)
 
         log.debug('UpdatePositionDisplays: Thread start() called.')
         self.update_position_displays_thread.start()
@@ -1328,6 +1339,26 @@ class MMC_Main(QMainWindow):
             # print(i)
             self.UIEL_dmw_mtn_ctrl_qcb[i].setCurrentIndex(devman_config['controllerIndices'][i])     
             self.UIEL_dmw_mtn_ctrl_model_qcb[i].setCurrentIndex(devman_config['controllerModelIndices'][i])
+
+    def load_queue_file(self):
+        queueFileName, _ = QFileDialog.getOpenFileName(self, "Open Queue File", directory='./queues', filter='*.txt')
+
+        with open(queueFileName, 'r') as file:
+            lines = file.readlines()
+
+        # Remove newline characters and create a list
+        array = [line.strip() for line in lines]
+
+        log.debug(array)
+        self.scan_queue = array
+
+    def begin_queue(self):
+        if self.scan_queue is None:
+            self.QMessageBoxWarning('Cannot Execute Scan Queue', 'No queue file loaded.')
+            return
+
+        self.queue_executor_thread.set_queue(self.scan_queue)
+        self.queue_executor_thread.start()
 
     def collapse_mda(self):
         self.mda_collapsed = not self.mda_collapsed
