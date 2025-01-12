@@ -104,11 +104,11 @@ class DataTableWidget(QTableWidget):
         
         self.recordedData[global_scan_id]['plot_cb'].setChecked(True)
         self.recordedData[global_scan_id]['plot_cb'].setDisabled(btn_disabled)
-        self.recordedData[global_scan_id]['plot_cb'].stateChanged.connect(self.__plotCheckboxCb) # connect callback
+        self.recordedData[global_scan_id]['plot_cb'].stateChanged.connect(lambda: self.__plotCheckboxCb(det_idx)) # connect callback
 
         self.recordedData[global_scan_id]['ref_cb'].setChecked(False)
         self.recordedData[global_scan_id]['ref_cb'].setDisabled(False)
-        self.recordedData[global_scan_id]['ref_cb'].stateChanged.connect(self.__refCheckboxCb) # connect callback
+        self.recordedData[global_scan_id]['ref_cb'].stateChanged.connect(lambda: self.__refCheckboxCb(det_idx)) # connect callback
         log.debug('Ref Checkbox ID:', global_scan_id)
         log.debug('Plot Checkbox:', self.recordedData[global_scan_id]['plot_cb'])
         log.debug('Ref Checkbox:', self.recordedData[global_scan_id]['ref_cb'])
@@ -368,16 +368,16 @@ class DataTableWidget(QTableWidget):
         self.recordedData[src.id]['name'] = text
         self.updatePlots()
 
-    def __plotCheckboxCb(self, state: Qt.CheckState):
+    def __plotCheckboxCb(self, det_idx: int):
         src: CustomQCheckBox = self.sender()
         state = src.checkState()
         global_scan_id = src.id
         log.debug(state, global_scan_id)
         self.recordedData[global_scan_id]['plotted'] = state == Qt.Checked
         log.debug(self.recordedData[global_scan_id]['plotted'])
-        self.updatePlots()
+        self.updatePlots(det_idx)
 
-    def __refCheckboxCb(self, state: Qt.CheckState):
+    def __refCheckboxCb(self, det_idx: int):
         src: CustomQCheckBox = self.sender()
         state = src.checkState()
         global_scan_id = src.id
@@ -401,7 +401,10 @@ class DataTableWidget(QTableWidget):
         # log.debug(state, scanId)
         # self.recordedData[scanId]['plotted'] = state == Qt.Checked
         # log.debug(self.recordedData[scanId]['plotted'])
-        self.updatePlots()
+
+        # TODO: This will need to update only the Results tabs, not the raw tabs.
+        log.error('Reference checkbox callback not implemented for multiple tabs yet.')
+        # self.updatePlots(det_idx)
 
     def getRefData(self) -> tuple: # Return the data and the metadata
         if self.currentRefId in self.recordedData:

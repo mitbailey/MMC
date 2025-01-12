@@ -164,8 +164,9 @@ class MplCanvas(FigureCanvasQTAgg):
     def clear_plot_fcn(self):
         if not self._parent.scanRunning:
             self.axes.cla()
-            self.axes.set_xlabel('Location (nm)')
-            self.axes.set_ylabel('Photo Current (pA)')
+            self.axes.set_xlabel('Location (nm, deg)')
+            # self.axes.set_ylabel('Photo Current (pA)')
+            self.axes.set_ylabel('Magnitude (pA, etc.)')
             self.axes.grid()
             self.draw()
             if self._tableClearCb is not None:
@@ -174,8 +175,9 @@ class MplCanvas(FigureCanvasQTAgg):
 
     def update_plots(self, data):
         self.axes.cla()
-        self.axes.set_xlabel('Location (nm)')
-        self.axes.set_ylabel('Photo Current (pA)')
+        self.axes.set_xlabel('Location (nm, deg)')
+        # self.axes.set_ylabel('Photo Current (pA)')
+        self.axes.set_ylabel('Magnitude (pA, etc.)')
         for row in data:
             c = self.colors[row[-1] % len(self.colors)]
             self.lines[row[-1]], = self.axes.plot(row[0], row[1], label=row[2], color = c)
