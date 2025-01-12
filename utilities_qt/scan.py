@@ -414,6 +414,9 @@ class QueueExecutor(QThread):
                 log.info('QueueExecutor - Skipping comment or empty line.')
                 continue
 
+            self.other.scanRunning = True
+            self.other.disable_movement_sensitive_buttons(True)
+
             if args[0] == 'RUN':
                 if args[1] == 'MDA':
                     log.info('QueueExecutor - Running MDA scan.')
@@ -428,6 +431,7 @@ class QueueExecutor(QThread):
                     self.other.scan.start()
 
                     while not self.other.scan.done:
+                        log.debug('QueueExecutor - Waiting for scan to finish.')
                         sleep(0.1)
                 else:
                     log.error('QueueExecutor - Unknown scan type: %s'%(args[1]))
@@ -436,6 +440,10 @@ class QueueExecutor(QThread):
                 sleep(float(args[1]))
             else:
                 log.error('QueueExecutor - Unknown command argument: %s'%(args[0]))
+
+            log.info('QueueExecutor - Finished command: %s'%(cmd))
+
+        log.info('QueueExecutor - Finished processing queue.')
 
         pass
 
