@@ -90,6 +90,7 @@ from matplotlib.figure import Figure
 # Custom Imports
 from utilities.config import load_config_devman, save_config_devman, load_config, save_config, reset_config
 import webbrowser
+from PyQt5.QtWidgets import QGraphicsView
 from utilities_qt.datatable import DataTableWidget
 from utilities_qt import scan
 from utilities_qt import update_position_displays
@@ -588,7 +589,7 @@ class MMC_Main(QMainWindow):
         if not os.path.exists(self.data_save_directory):
             os.makedirs(self.data_save_directory)
 
-        self.plotCanvas = None
+        # self.plotCanvas = None
 
         self.num_scans = 0
         self.previous_position = -9999
@@ -659,7 +660,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_save_config_qpb: QPushButton = self.findChild(QPushButton, 'save_config_button')
         self.UIE_mgw_pos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox") # Manual Control 'Position:' Spin Box
         self.UIE_mgw_move_to_position_qpb: QPushButton = self.findChild(QPushButton, "move_pos_button")
-        self.UIE_mgw_plot_frame_qw: QWidget = self.findChild(QWidget, "data_graph")
+        # self.UIE_mgw_plot_frame_qw: QWidget = self.findChild(QWidget, "data_graph")
         self.UIE_mgw_xmin_in_qle: QLineEdit = self.findChild(QLineEdit, "xmin_in")
         self.UIE_mgw_ymin_in_qle: QLineEdit = self.findChild(QLineEdit, "ymin_in")
         self.UIE_mgw_xmax_in_qle: QLineEdit = self.findChild(QLineEdit, "xmax_in")
@@ -898,19 +899,78 @@ class MMC_Main(QMainWindow):
         # palette.setColor(palette.Dark, QColor(0, 255, 0))
         # self.UIE_mgw_currpos_nm_disp_ql.setPalette(palette)
 
-        self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
-        self.plotCanvas.clear_plot_fcn()
-        # for i in range(self.UIE_mgw_table_qtw.count()):
-        for table in self.table_list:
-            self.plotCanvas.set_table_clear_cb(table.plotsClearedCb)
-        # self.plotCanvas.set_table_clear_cb(self.table.plotsClearedCb)
-        toolbar = self.plotCanvas.get_toolbar()
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(toolbar)
-        layout.addWidget(self.plotCanvas)
-        self.UIE_mgw_plot_frame_qw.setLayout(layout)
 
-        self.UIE_mgw_plot_clear_plots_qpb.clicked.connect(self.plotCanvas.clear_plot_fcn)
+
+
+
+
+
+
+
+        self.UIE_mgw_graph_qtw: QTabWidget = self.findChild(QTabWidget, "graph_tabs")
+
+        self.UIEL_mgw_plot_frames = []
+        self.UIE_mgw_plot_frame_qw: QWidget = self.findChild(QWidget, "data_graph")
+
+        # Setup the multiple tabbed graphs.
+        self.graph_list = []
+        self.UIEL_mgw_graph_tabs = [] # List of tabs.
+        for i in range(self.num_detectors):
+            if i > 0:
+                self.UIE_mgw_graph_qtw.addTab(QWidget(), 'Detector %d'%(i+1))
+                primary_layout = QVBoxLayout()
+                primary_layout.addWidget(QGraphicsView())
+                self.UIE_mgw_graph_qtw.widget(i+1).setLayout(primary_layout)
+
+            plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
+            plotCanvas.clear_plot_fcn()
+            
+            for table in self.table_list:
+                plotCanvas.set_table_clear_cb(table.plotsClearedCb)
+
+            toolbar = plotCanvas.get_toolbar()
+            layout = QtWidgets.QVBoxLayout()
+            layout.addWidget(toolbar)
+            layout.addWidget(plotCanvas)
+            # self.UIE_mgw_graph_qtw.widget(i+1).
+            self.UIEL_mgw_graph_tabs.append(self.UIE_mgw_graph_qtw.widget(i+1))
+            # Get the frame within the tab and set its layout
+
+            log.warn('QGraphicsView:', self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QGraphicsView))
+            # log.warn('QObject:', self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QObject))
+            log.warn('QWidget:', self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QWidget))
+
+            self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QGraphicsView)[0].setLayout(layout)
+            self.graph_list.append(plotCanvas)
+
+        # Hmm, maybe make a different button for each graph?
+        # self.UIE_mgw_plot_clear_plots_qpb.clicked.connect(self.plotCanvas.clear_plot_fcn)
+
+
+
+        # # # Setup the single graph.
+        # self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
+        # self.plotCanvas.clear_plot_fcn()
+        # # for i in range(self.UIE_mgw_table_qtw.count()):
+        # for table in self.table_list:
+        #     self.plotCanvas.set_table_clear_cb(table.plotsClearedCb)
+        # # self.plotCanvas.set_table_clear_cb(self.table.plotsClearedCb)
+        # toolbar = self.plotCanvas.get_toolbar()
+        # layout = QtWidgets.QVBoxLayout()
+        # layout.addWidget(toolbar)
+        # layout.addWidget(self.plotCanvas)
+        # self.UIE_mgw_plot_frame_qw.setLayout(layout)
+
+        # self.UIE_mgw_plot_clear_plots_qpb.clicked.connect(self.plotCanvas.clear_plot_fcn)
+
+
+
+
+
+
+
+
+
 
         # Set the initial value of the Manual Control 'Position:' spin box.
         self.UIE_mgw_pos_qdsb.setValue(0)
@@ -1002,7 +1062,7 @@ class MMC_Main(QMainWindow):
         self.update_movement_limits_gui()
 
         for table in self.table_list:
-            table.updatePlots()
+            table.updatePlots(0)
         # self.table.updatePlots()
 
         self.UIE_mgw_mda_qw: QWidget = self.findChild(QWidget, 'main_drive_area')
@@ -1746,10 +1806,15 @@ class MMC_Main(QMainWindow):
     def pop_out_plot_toggled(self, state):
         self.pop_out_plot = state
 
-    def update_plots(self, data: list):
-        if self.plotCanvas is None:
+    def update_plots(self, det_idx: int, data: list):
+        # if self.plotCanvas is None:
+        #     return
+        # self.plotCanvas.update_plots(data)
+
+        if self.graph_list is None or len(self.graph_list) == 0:
             return
-        self.plotCanvas.update_plots(data)
+
+        self.graph_list[det_idx].update_plots(data)
 
     def scan_status_update(self, status):
         self.UIE_mgw_scan_status_ql.setText('<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>'%(status))
@@ -1764,34 +1829,48 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_scan_status_ql.setText('<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
         self.UIE_mgw_scan_qpbar.reset()
 
-    def scan_data_begin(self, det_idx: int, scans_global_scan_id: int, metadata: dict):
+    def scan_data_begin(self, which_detector: int, det_idx: int, scans_global_scan_id: int, metadata: dict):
         if scans_global_scan_id != self.global_scan_id:
             log.error('Global scan ID mismatch %d != %d'%(scans_global_scan_id, self.global_scan_id))
-        self.table_list[det_idx].insertData(self.global_scan_id, None, None, metadata)
+        
+        
+        self.table_list[det_idx].insertData(det_idx, self.global_scan_id, None, None, metadata)
+        
         # n_scan_idx = self.table_list[det_idx].insertData(None, None, metadata)
         # if n_scan_idx != scan_idx:
         #     log.warn('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
 
     # This function is called via a signal emission from scan.py.
     # The data is actually stored in datatable.py's recordedData.
-    def scan_data_update(self, scan_idx: int, which_detector: int, xdata: float, ydata: float):
+    def scan_data_update(self, which_detector: int, scan_idx: int, det_idx: int, xdata: float, ydata: float):
         # TODO: Adjust data based on reference if one is being used.   
 
-        log.debug(f'Data received from detector #{which_detector}: {xdata}; {ydata}')
+        log.debug(f'Data received from detector #{det_idx}: {xdata}; {ydata}')
 
         # This is where we handle all detectors.
-        self.table_list[which_detector].insertDataAt(scan_idx, xdata, ydata)
-        log.info("Data from detector #%d received."%(which_detector))
+        self.table_list[det_idx].insertDataAt(det_idx, scan_idx, xdata, ydata)
+        log.info("Data from detector #%d received."%(det_idx))
 
         # if which_detector == 0:
         #     self.table.insertDataAt(scan_idx, xdata, ydata)
         # elif which_detector == 1:
         #     log.info("Detector 1 data received.")
 
-    def scan_data_complete(self, scan_idx: int, scan_class: str):
+    def scan_data_complete(self, which_detector: int, scan_idx: int, scan_class: str):
+        # Which detector is just the index of the active detector spinbox when the scan began.
+        
+        if which_detector == 0:
+            for det_idx, table in enumerate(self.table_list):
+                table.markInsertFinished(det_idx, scan_idx)
+                table.updateTableDisplay(det_idx, self.global_scan_id)
+        else:
+            det_idx = which_detector - 1
+            self.table_list[det_idx].markInsertFinished(det_idx, scan_idx)
+            self.table_list[det_idx].updateTableDisplay(det_idx, self.global_scan_id)
+        
         for table in self.table_list:
-            table.markInsertFinished(scan_idx)
-            table.updateTableDisplay(self.global_scan_id)
+            # table.markInsertFinished(which_detector, scan_idx)
+            # table.updateTableDisplay(which_detector, self.global_scan_id)
             if self.scan_repeats.value() > 0:
                 if scan_class == 'main':
                     self.scan_repeats.setValue(self.scan_repeats.value() - 1)

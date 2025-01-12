@@ -88,7 +88,7 @@ class DataTableWidget(QTableWidget):
         self.currentRefId = -1
         # self.scan_idx = 0
 
-    def insertData(self, global_scan_id: int, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
+    def insertData(self, det_idx: int, global_scan_id: int, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         
         # scanId = self._scanId
         # self._scanId += 1
@@ -113,7 +113,7 @@ class DataTableWidget(QTableWidget):
         log.debug('Plot Checkbox:', self.recordedData[global_scan_id]['plot_cb'])
         log.debug('Ref Checkbox:', self.recordedData[global_scan_id]['ref_cb'])
 
-        self.updateTableDisplay(global_scan_id, name_editable)
+        self.updateTableDisplay(det_idx, global_scan_id, name_editable)
 
         # self.scan_idx += 1
         # return (scanId)
@@ -123,7 +123,7 @@ class DataTableWidget(QTableWidget):
     #     return self._scanId
 
     # This is called from mmc.py which is called from scan.py. The data is stored here in recordedData.
-    def insertDataAt(self, global_scan_id: int, xdata: np.ndarray | float, ydata: np.ndarray | float) -> int:
+    def insertDataAt(self, det_idx: int, global_scan_id: int, xdata: np.ndarray | float, ydata: np.ndarray | float) -> int:
         log.debug(f'global_scan_id: {global_scan_id}')
         log.debug(f'self.recordedData.keys(): {self.recordedData.keys()}')
         # self._scanId = scanId
@@ -134,7 +134,7 @@ class DataTableWidget(QTableWidget):
                 xdata = np.array([xdata], dtype=float)
             if isinstance(ydata, float):
                 ydata = np.array([ydata], dtype=float)
-            ret = self.insertData(global_scan_id, xdata, ydata, dict())
+            ret = self.insertData(det_idx, global_scan_id, xdata, ydata, dict())
             self._internal_insert_exec = False
             return ret
         else:
@@ -146,13 +146,13 @@ class DataTableWidget(QTableWidget):
             self.recordedData[global_scan_id]['x'] = np.concatenate((self.recordedData[global_scan_id]['x'], xdata))
             log.debug(f"Appending {ydata} to the end of {self.recordedData[global_scan_id]['y']} for global_scan_id {global_scan_id}")
             self.recordedData[global_scan_id]['y'] = np.concatenate((self.recordedData[global_scan_id]['y'], ydata))
-            self.updateTableDisplay(global_scan_id, name_editable=False)
+            self.updateTableDisplay(det_idx, global_scan_id, name_editable=False)
         return global_scan_id
 
-    def markInsertFinished(self, global_scan_id: int):
-        self.__enablePlotBtn(global_scan_id)
+    def markInsertFinished(self, det_idx: int, global_scan_id: int):
+        self.__enablePlotBtn(det_idx, global_scan_id)
 
-    def __enablePlotBtn(self, global_scan_id: int):
+    def __enablePlotBtn(self, det_idx: int, global_scan_id: int):
         if global_scan_id not in self.recordedData.keys():
             return
         self.recordedData[global_scan_id]['plotted'] = True # plot by default if plot button is disabled
@@ -160,17 +160,17 @@ class DataTableWidget(QTableWidget):
         self.recordedData[global_scan_id]['plot_cb'].setDisabled(False)
         # update just this row in the table
         if self.rowMap is None or global_scan_id not in self.rowMap:
-            self.updateTableDisplay(global_scan_id)
+            self.updateTableDisplay(det_idx, global_scan_id)
         if global_scan_id in self.rowMap:
             del self.rowMap[self.rowMap.index(global_scan_id)]
-            self.updateTableDisplay(global_scan_id)
+            self.updateTableDisplay(det_idx, global_scan_id)
 
     def plotsClearedCb(self):
         for global_scan_id in self.recordedData.keys():
             self.recordedData[global_scan_id]['plotted'] = False
             self.recordedData[global_scan_id]['plot_cb'].setChecked(False)
 
-    def updateTableDisplay(self, global_scan_id: int = None, name_editable: bool = True):
+    def updateTableDisplay(self, det_idx: int, global_scan_id: int = None, name_editable: bool = True):
         if global_scan_id is not None and isinstance(global_scan_id, int):
             if self.rowMap is None or global_scan_id not in self.rowMap:
                 self.newItem = True
@@ -311,9 +311,9 @@ class DataTableWidget(QTableWidget):
 
             self.newItem = False
 
-        self.updatePlots()
+        self.updatePlots(det_idx)
 
-    def updatePlots(self):
+    def updatePlots(self, det_idx: int):
         log.debug('Update plots called...')
         log.debug('Current reference ID is %d'%(self.currentRefId))
         data = []
@@ -358,7 +358,7 @@ class DataTableWidget(QTableWidget):
                     data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx])
 
         # This updates the main plot in MainGUIWindow with the data we are passing to it.
-        self.parent.update_plots(data) # updatePlots in Ui(QMainWindow)
+        self.parent.update_plots(det_idx, data) # updatePlots in Ui(QMainWindow)
 
     def __nameUpdated(self):
         src: CustomQLineEdit = self.sender()

@@ -91,7 +91,7 @@
             <property name="frameShadow">
              <enum>QFrame::Raised</enum>
             </property>
-            <layout class="QGridLayout" name="gridLayout">
+            <layout class="QGridLayout" name="gridLayout" rowstretch="0,1">
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -139,7 +139,7 @@
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,1">
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_22" stretch="0,0,0">
+                  <layout class="QHBoxLayout" name="horizontalLayout_22" stretch="0,0">
                    <property name="leftMargin">
                     <number>0</number>
                    </property>
@@ -180,26 +180,6 @@
                      </property>
                     </spacer>
                    </item>
-                   <item>
-                    <widget class="QPushButton" name="save_config_button">
-                     <property name="minimumSize">
-                      <size>
-                       <width>196</width>
-                       <height>0</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <family>Bahnschrift</family>
-                       <pointsize>14</pointsize>
-                       <italic>true</italic>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>Machine Configuration</string>
-                     </property>
-                    </widget>
-                   </item>
                   </layout>
                  </item>
                  <item>
@@ -222,6 +202,12 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="verticalScrollBarPolicy">
+                    <enum>Qt::ScrollBarAlwaysOn</enum>
+                   </property>
+                   <property name="horizontalScrollBarPolicy">
+                    <enum>Qt::ScrollBarAlwaysOn</enum>
+                   </property>
                    <property name="widgetResizable">
                     <bool>true</bool>
                    </property>
@@ -230,8 +216,8 @@
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>624</width>
-                      <height>1274</height>
+                      <width>620</width>
+                      <height>1479</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -774,57 +760,6 @@
                               </spacer>
                              </item>
                              <item>
-                              <widget class="QPushButton" name="open_queue_file_button">
-                               <property name="minimumSize">
-                                <size>
-                                 <width>0</width>
-                                 <height>1</height>
-                                </size>
-                               </property>
-                               <property name="maximumSize">
-                                <size>
-                                 <width>30</width>
-                                 <height>30</height>
-                                </size>
-                               </property>
-                               <property name="text">
-                                <string>📂</string>
-                               </property>
-                              </widget>
-                             </item>
-                             <item>
-                              <widget class="QPushButton" name="begin_queue_button">
-                               <property name="minimumSize">
-                                <size>
-                                 <width>0</width>
-                                 <height>1</height>
-                                </size>
-                               </property>
-                               <property name="maximumSize">
-                                <size>
-                                 <width>30</width>
-                                 <height>16777215</height>
-                                </size>
-                               </property>
-                               <property name="text">
-                                <string>➠</string>
-                               </property>
-                              </widget>
-                             </item>
-                             <item>
-                              <spacer name="horizontalSpacer_13">
-                               <property name="orientation">
-                                <enum>Qt::Horizontal</enum>
-                               </property>
-                               <property name="sizeHint" stdset="0">
-                                <size>
-                                 <width>40</width>
-                                 <height>20</height>
-                                </size>
-                               </property>
-                              </spacer>
-                             </item>
-                             <item>
                               <widget class="QPushButton" name="begin_scan_button">
                                <property name="minimumSize">
                                 <size>
@@ -1194,7 +1129,7 @@
                                <rect>
                                 <x>0</x>
                                 <y>0</y>
-                                <width>586</width>
+                                <width>578</width>
                                 <height>148</height>
                                </rect>
                               </property>
@@ -2908,7 +2843,7 @@
                  <item>
                   <widget class="QTabWidget" name="table_tabs">
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="tab_2">
                     <attribute name="title">
@@ -2959,83 +2894,187 @@
               </widget>
              </item>
              <item row="0" column="0">
-              <widget class="QFrame" name="frame">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
+              <layout class="QHBoxLayout" name="horizontalLayout_34">
+               <property name="spacing">
+                <number>8</number>
                </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>45</height>
-                </size>
+               <property name="sizeConstraint">
+                <enum>QLayout::SetMinimumSize</enum>
                </property>
-               <property name="frameShape">
-                <enum>QFrame::Box</enum>
-               </property>
-               <property name="frameShadow">
-                <enum>QFrame::Raised</enum>
-               </property>
-               <layout class="QVBoxLayout" name="verticalLayout_25">
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_28" stretch="0,6,3">
-                  <property name="spacing">
-                   <number>4</number>
+               <item>
+                <widget class="QComboBox" name="enabled_detectors">
+                 <property name="minimumSize">
+                  <size>
+                   <width>125</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>14</pointsize>
+                  </font>
+                 </property>
+                 <property name="toolTip">
+                  <string extracomment="Active detectors.">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Active Detectors&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Select which detectors to collect data from during scans.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>All Detectors</string>
                   </property>
-                  <item>
-                   <widget class="QLabel" name="label_27">
-                    <property name="font">
-                     <font>
-                      <family>Bahnschrift</family>
-                      <pointsize>16</pointsize>
-                      <italic>false</italic>
-                      <underline>false</underline>
-                     </font>
-                    </property>
-                    <property name="text">
-                     <string>Active Detectors</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_23">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                  <item>
-                   <widget class="QComboBox" name="enabled_detectors">
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>25</height>
-                     </size>
-                    </property>
-                    <property name="font">
-                     <font>
-                      <pointsize>14</pointsize>
-                     </font>
-                    </property>
-                    <item>
-                     <property name="text">
-                      <string>All</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                 </layout>
-                </item>
-               </layout>
-              </widget>
+                 </item>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="open_queue_file_button">
+                 <property name="minimumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>20</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                  </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Load Scan Queue&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Load in a scan queue from a file.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>📂</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="begin_queue_button">
+                 <property name="minimumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>20</pointsize>
+                   <weight>50</weight>
+                   <bold>false</bold>
+                  </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Execute Scan Queue&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Run the scans loaded into the current scan queue.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>➠</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_24">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="spectral_math">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>20</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                  </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Spectral Math currently located in the Spectral Math tab of the Machine Configuration window.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Spectral Math&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set how reference scans operate on other scans.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>∑</string>
+                 </property>
+                 <property name="flat">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="save_config_button">
+                 <property name="minimumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>20</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                  </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Machine Configuration&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Configure aspects of the hardware this program controls.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="toolTipDuration">
+                  <number>-1</number>
+                 </property>
+                 <property name="statusTip">
+                  <string extracomment="status tip"/>
+                 </property>
+                 <property name="whatsThis">
+                  <string extracomment="whats this"/>
+                 </property>
+                 <property name="text">
+                  <string>🛠</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
             </layout>
            </widget>
@@ -3059,26 +3098,71 @@
              <enum>QFrame::Raised</enum>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
              <item>
-              <widget class="QGraphicsView" name="data_graph">
-               <property name="cursor" stdset="0">
-                <cursorShape>CrossCursor</cursorShape>
+              <widget class="QTabWidget" name="graph_tabs">
+               <property name="font">
+                <font>
+                 <pointsize>14</pointsize>
+                </font>
                </property>
+               <property name="currentIndex">
+                <number>1</number>
+               </property>
+               <widget class="QWidget" name="tab_3">
+                <attribute name="title">
+                 <string>Result</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_25">
+                 <item>
+                  <widget class="QGraphicsView" name="data_graph_2">
+                   <property name="cursor" stdset="0">
+                    <cursorShape>CrossCursor</cursorShape>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="tab_4">
+                <attribute name="title">
+                 <string>Detector 1</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_26">
+                 <item>
+                  <widget class="QGraphicsView" name="data_graph_3">
+                   <property name="cursor" stdset="0">
+                    <cursorShape>CrossCursor</cursorShape>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
               </widget>
              </item>
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0">
                <property name="leftMargin">
-                <number>5</number>
+                <number>0</number>
                </property>
                <property name="topMargin">
-                <number>5</number>
+                <number>0</number>
                </property>
                <property name="rightMargin">
-                <number>5</number>
+                <number>0</number>
                </property>
                <property name="bottomMargin">
-                <number>5</number>
+                <number>0</number>
                </property>
                <item>
                 <spacer name="horizontalSpacer_21">
@@ -3108,7 +3192,7 @@
                   </font>
                  </property>
                  <property name="text">
-                  <string>Clear Plots</string>
+                  <string>Clear Plot</string>
                  </property>
                 </widget>
                </item>

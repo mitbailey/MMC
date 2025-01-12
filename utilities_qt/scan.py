@@ -60,9 +60,9 @@ class Scan(QThread):
     SIGNAL_progress = pyqtSignal(int)
     SIGNAL_complete = pyqtSignal()
 
-    SIGNAL_data_begin = pyqtSignal(int, int, dict) # scan index, which detector, redundant
-    SIGNAL_data_update = pyqtSignal(int, int, float, float) # scan index, which detector, xdata, ydata (to be appended into index)
-    SIGNAL_data_complete = pyqtSignal(int, str) # scan index, which detector, redundant
+    SIGNAL_data_begin = pyqtSignal(int, int, int, dict) # scan index, which detector, redundant
+    SIGNAL_data_update = pyqtSignal(int, int, int, float, float) # scan index, which detector, xdata, ydata (to be appended into index)
+    SIGNAL_data_complete = pyqtSignal(int, int, str) # scan index, which detector, redundant
 
     SIGNAL_error = pyqtSignal(str, str)
 
@@ -243,9 +243,9 @@ class Scan(QThread):
         log.info('Emitting data begin signal.')
 
         # This ensures that the 'i' is the index of the detector in the Main GUI's list, not just always 0 if we only have one active detector.
-        for i, det in enumerate(self.other.detectors):
+        for det_idx, det in enumerate(self.other.detectors):
             if det in active_detectors:
-                self.SIGNAL_data_begin.emit(i, self.last_global_scan_id, metadata)
+                self.SIGNAL_data_begin.emit(which_detector, det_idx, self.last_global_scan_id, metadata)
 
         # log.info('Waiting for scan ID to change.')
 
@@ -331,7 +331,15 @@ class Scan(QThread):
                     self._xdata[i].append((((pos))))
                 self._ydata[i].append(self.other.mes_sign * mes)
                 log.debug(f'_ydata[i][-1]: {self._ydata[i][-1]}')
-                self.SIGNAL_data_update.emit(self.last_global_scan_id, i, self._xdata[i][-1], self._ydata[i][-1])
+                
+                # Find what detector index we are currently dealing with.
+                det_idx = -1
+                for j, det in enumerate(self.other.detectors):
+                    if det == detector:
+                        det_idx = j
+                if det_idx == -1:
+                    log.error('Could not find detector index.')
+                self.SIGNAL_data_update.emit(which_detector, self.last_global_scan_id, det_idx, self._xdata[i][-1], self._ydata[i][-1])
 
                 log.debug(sav_files)
                 if len(sav_files) > 0 and sav_files[i] is not None:
@@ -372,7 +380,9 @@ class Scan(QThread):
         self.other.num_scans += 1
 
         self.SIGNAL_complete.emit()
-        self.SIGNAL_data_complete.emit(self.last_global_scan_id, 'main')
+        
+        self.SIGNAL_data_complete.emit(which_detector, self.last_global_scan_id, 'main')
+
         log.debug('mainWindow reference in scan end: %d'%(sys.getrefcount(self.other) - 1))
 
         self.done = True
