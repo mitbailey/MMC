@@ -597,6 +597,8 @@ class MMC_Main(QMainWindow):
         self.previous_position = -9999
         self.immobile_count = 0
 
+        self.ref_data = None
+
         self.autosave_data_bool = False
         self.pop_out_table = False
         self.pop_out_plot = False
@@ -901,15 +903,24 @@ class MMC_Main(QMainWindow):
         # palette.setColor(palette.Dark, QColor(0, 255, 0))
         # self.UIE_mgw_currpos_nm_disp_ql.setPalette(palette)
 
-
-
-
-
-
-
-
+        # # #
 
         self.UIE_mgw_graph_qtw: QTabWidget = self.findChild(QTabWidget, "graph_tabs")
+
+        # Setup the results graph.
+        self.UIE_mgw_plot_result_frame_qw: QWidget = self.findChild(QWidget, "data_graph_result")
+        graph_result = MplCanvas(self, width=5, height=4, dpi=100)
+        graph_result.clear_plot_fcn()
+        graph_result.set_table_clear_cb(table.plotsClearedCb)
+        toolbar = graph_result.get_toolbar()
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(toolbar)
+        layout.addWidget(graph_result)
+        self.UIE_mgw_graph_qtw.widget(0).findChildren(QGraphicsView)[0].setLayout(layout)
+        self.graph_result = graph_result
+
+        # # #
+        # Setup other tabs.
 
         self.UIEL_mgw_plot_frames = []
         self.UIE_mgw_plot_frame_qw: QWidget = self.findChild(QWidget, "data_graph")
@@ -948,7 +959,7 @@ class MMC_Main(QMainWindow):
         # Hmm, maybe make a different button for each graph?
         # self.UIE_mgw_plot_clear_plots_qpb.clicked.connect(self.plotCanvas.clear_plot_fcn)
 
-
+        # # #
 
         # # # Setup the single graph.
         # self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
@@ -1063,6 +1074,8 @@ class MMC_Main(QMainWindow):
 
         self.update_movement_limits_gui()
 
+
+        self.table_result.updatePlots(0)
         for table in self.table_list:
             table.updatePlots(0)
         # self.table.updatePlots()
@@ -1808,6 +1821,24 @@ class MMC_Main(QMainWindow):
     def pop_out_plot_toggled(self, state):
         self.pop_out_plot = state
 
+    # This is the data that will be used to operate on all other scans.
+    # The way this will works is as follows:
+    #   - All scans will be displayed in the results tab. They will be marked w/ detector and scan #s.
+    #   - If ref_data is None, then nothing will be done to the data. 
+    #   - If ref_data is not None, then the data will be adjusted based on the reference data.
+    # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
+    def register_ref_data(self, ref_data):
+        self.ref_data = ref_data
+        self.graph_result.ref_data = ref_data
+        # self.graph_result.update_plots(ref_data)
+        # TODO: Figure out how to update the reference / result plot.
+
+    # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
+    def unregister_ref_data(self):
+        self.ref_data = None
+        self.graph_result.ref_data = None
+        # self.graph_result.update_plots()
+
     def update_plots(self, det_idx: int, data: list):
         # if self.plotCanvas is None:
         #     return
@@ -1816,7 +1847,10 @@ class MMC_Main(QMainWindow):
         if self.graph_list is None or len(self.graph_list) == 0:
             return
 
-        self.graph_list[det_idx].update_plots(data)
+        if det_idx == -1:
+            self.graph_result.update_plots(data)
+        else:
+            self.graph_list[det_idx].update_plots(data)
 
     def scan_status_update(self, status):
         self.UIE_mgw_scan_status_ql.setText('<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>'%(status))
@@ -1835,7 +1869,7 @@ class MMC_Main(QMainWindow):
         if scans_global_scan_id != self.global_scan_id:
             log.error('Global scan ID mismatch %d != %d'%(scans_global_scan_id, self.global_scan_id))
         
-        
+        self.table_result.insertData(det_idx, self.global_scan_id, None, None, metadata)
         self.table_list[det_idx].insertData(det_idx, self.global_scan_id, None, None, metadata)
         
         # n_scan_idx = self.table_list[det_idx].insertData(None, None, metadata)
@@ -1850,6 +1884,7 @@ class MMC_Main(QMainWindow):
         log.debug(f'Data received from detector #{det_idx}: {xdata}; {ydata}')
 
         # This is where we handle all detectors.
+        self.table_result.insertDataAt(det_idx, scan_idx, xdata, ydata)
         self.table_list[det_idx].insertDataAt(det_idx, scan_idx, xdata, ydata)
         log.info("Data from detector #%d received."%(det_idx))
 
@@ -1862,11 +1897,19 @@ class MMC_Main(QMainWindow):
         # Which detector is just the index of the active detector spinbox when the scan began.
         
         if which_detector == 0:
+            # The results tab case.
+            self.table_result.markInsertFinished(-1, scan_idx)
+            self.table_result.updateTableDisplay(-1, self.global_scan_id)
+            # All other tabs case.
             for det_idx, table in enumerate(self.table_list):
                 table.markInsertFinished(det_idx, scan_idx)
                 table.updateTableDisplay(det_idx, self.global_scan_id)
         else:
             det_idx = which_detector - 1
+            # The results tab case.
+            self.table_result.markInsertFinished(det_idx, scan_idx)
+            self.table_result.updateTableDisplay(det_idx, self.global_scan_id)
+            # All other tabs case.
             self.table_list[det_idx].markInsertFinished(det_idx, scan_idx)
             self.table_list[det_idx].updateTableDisplay(det_idx, self.global_scan_id)
         
