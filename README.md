@@ -36,6 +36,20 @@ If running directly via source code you will also need Python 3.9.7.
 3). Move and Home the KST201.  
 The MMC Software can now be used as usual.  
 
+# Troubleshooting
+### Issue 1:   
+The program crashes on startup. 
+
+Solution 1A:  
+Some systems may require that `Python.Runtime.dll` is 'unblocked' manually.   
+To do this:  
+    1). Navigate to MMCS\pythonnet\runtime  
+    2). Right-click the file `Python.Runtime.dll` and select Properties.    
+    3). Check Unblock in the bottom right-hand corner.  
+
+Solution 1B:  
+Some systems may require administrative privileges to run the program. Right click `MMCS.exe` and press "Run as Administrator."
+
 # Usage
 ## via Executable
 The executable is available within the MMCS zip archive included with each release. Download and extract the archive to access and run MMCS.exe. See the [releases page](https://github.com/mitbailey/MMC/releases) for details.  

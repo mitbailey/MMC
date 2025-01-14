@@ -665,15 +665,15 @@ class MP_789A_4_DUMMY(StageDevice):
     def stop(self):
         # self.s.write(b'@\r')
         log.info('Stopping.')
-        time.sleep(MP_789A_4_DUMMY.WR_DLY)
+        time.sleep(MP_789A_4.WR_DLY)
 
         # self.s.write(b'@\r')
         log.info('Stopping.')
-        time.sleep(MP_789A_4_DUMMY.WR_DLY)
+        time.sleep(MP_789A_4.WR_DLY)
 
         # self.s.write(b'@\r')
         log.info('Stopping.')
-        time.sleep(MP_789A_4_DUMMY.WR_DLY)
+        time.sleep(MP_789A_4.WR_DLY)
 
     def is_moving(self):
         log.debug('func: is_moving')
