@@ -222,7 +222,12 @@ class SR810_DUMMY:
         pass
 
     def detect(self):
-        return 3.7
+        import numpy as np
+
+        mes = self.prev_mes + np.random.normal(0, 1)
+        self.prev_mes = mes
+
+        return mes
 
     def __del__(self):
         pass

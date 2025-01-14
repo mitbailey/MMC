@@ -705,7 +705,7 @@ class MP_789A_4_DUMMY(StageDevice):
         # moving = True
         while i<15:
             log.debug('BLOCKING')
-            time.sleep(MP_789A_4.WR_DLY * 5)
+            time.sleep(MP_789A_4.WR_DLY)
             if not self.is_moving():
                 log.info('Found to be NOT MOVING.',i)
                 i+=1
@@ -713,7 +713,7 @@ class MP_789A_4_DUMMY(StageDevice):
                 log.info('Found to be MOVING',i)
                 i=0
         log.debug('FINISHED BLOCKING because moving is', i)
-        time.sleep(MP_789A_4.WR_DLY * 2.5)
+        time.sleep(MP_789A_4.WR_DLY)
 
 
     def short_name(self):

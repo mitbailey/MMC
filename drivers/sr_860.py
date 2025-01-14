@@ -273,11 +273,16 @@ class SR860:
 
 class SR860_DUMMY:
     def __init__(self, man_port: str = None):
-        pass
+        self.prev_mes = 0
 
     def detect(self):
-        return 3.7*5
+        import numpy as np
 
+        mes = self.prev_mes + np.random.normal(0, 1)
+        self.prev_mes = mes
+
+        return mes
+    
     def __del__(self):
         pass
 

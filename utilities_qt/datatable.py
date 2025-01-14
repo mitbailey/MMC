@@ -88,6 +88,7 @@ class DataTableWidget(QTableWidget):
         self.currentRefId = -1
         # self.scan_idx = 0
         self.ref_data = None
+        self.is_result = False
 
     def insertData(self, det_idx: int, global_scan_id: int, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         
@@ -151,13 +152,19 @@ class DataTableWidget(QTableWidget):
         return global_scan_id
 
     def markInsertFinished(self, det_idx: int, global_scan_id: int):
+        log.debug('Marking insert finished for scan ID %d'%(global_scan_id))
         self.__enablePlotBtn(det_idx, global_scan_id)
 
     def __enablePlotBtn(self, det_idx: int, global_scan_id: int):
-        if global_scan_id not in self.recordedData.keys():
+        if (global_scan_id, det_idx) not in self.recordedData.keys():
+            log.error('Scan ID (%d, %d) not found in recorded data!'%(global_scan_id, det_idx))
+            log.error('Recorded data keys: ', self.recordedData.keys())
             return
         self.recordedData[(global_scan_id, det_idx)]['plotted'] = True # plot by default if plot button is disabled
         self.recordedData[(global_scan_id, det_idx)]['plot_cb'].setChecked(True) # it is checked at this point
+
+        log.debug('Enabling plot button for scan ID %d'%(global_scan_id))
+
         self.recordedData[(global_scan_id, det_idx)]['plot_cb'].setDisabled(False)
         # update just this row in the table
         if self.rowMap is None or global_scan_id not in self.rowMap:
@@ -328,7 +335,7 @@ class DataTableWidget(QTableWidget):
                 
                 # This is the new way we send the data - by applying the reference operation first. This is also done in saveDataCb(...)
                 # self.recordedData[self.currentRefId]
-                if (self.ref_data is not None) and np.array_equal(self.recordedData[scan_idx]['x'], self.ref_data['x']):
+                if (self.ref_data is not None) and np.array_equal(self.recordedData[scan_idx]['x'], self.ref_data[0][0]):
                     log.debug('Current reference ID is set (%d), so performing operation...'%(self.currentRefId))
                     # First we set which operands we want in which order based on the QRadioButtons.
                     opx = np.copy(self.recordedData[scan_idx]['x'])
@@ -336,20 +343,24 @@ class DataTableWidget(QTableWidget):
                         # op1x = np.copy(self.recordedData[scan_idx]['x'])
                         op1y = np.copy(self.recordedData[scan_idx]['y'])
                         # op2x = np.copy(self.recordedData[self.currentRefId]['x'])
-                        op2y = np.copy(self.ref_data['y'])
+                        op2y = np.copy(self.ref_data[0][1])
                     else:
                         # op1x = np.copy(self.recordedData[self.currentRefId]['x'])
-                        op1y = np.copy(self.ref_data['y'])
+                        op1y = np.copy(self.ref_data[0][1])
                         # op2x = np.copy(self.recordedData[scan_idx]['x'])
                         op2y = np.copy(self.recordedData[scan_idx]['y'])
 
                     # Then we operate based on the operation selected in the QComboBox and append.
-                    if self.parent.reference_operation == 0:
+                    if self.parent.reference_operation == 0: # Multiply
                         # Multiply
                         data.append([opx, np.multiply(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                    elif self.parent.reference_operation == 1:
+                    elif self.parent.reference_operation == 1: # Divide
                         # Divide
                         data.append([opx, np.divide(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                    elif self.parent.reference_operation == 2: # Add
+                        data.append([opx, np.add(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                    elif self.parent.reference_operation == 3: # Subtract
+                        data.append([opx, np.subtract(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
                     else:
                         # Unknown
                         log.error('Unknown operation index:', self.parent.reference_operation)
@@ -359,7 +370,7 @@ class DataTableWidget(QTableWidget):
                     data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx[0]])
 
         # This updates the main plot in MainGUIWindow with the data we are passing to it.
-        self.parent.update_plots(det_idx, data) # updatePlots in Ui(QMainWindow)
+        self.parent.update_plots(det_idx, data, self.is_result) # updatePlots in Ui(QMainWindow)
 
     def __nameUpdated(self):
         src: CustomQLineEdit = self.sender()
@@ -408,10 +419,21 @@ class DataTableWidget(QTableWidget):
         # self.updatePlots(det_idx)
 
         if state == Qt.Checked:
-            ref_data = {}
-            ref_data['x'] = self.recordedData[(self.currentRefId, det_idx)]['x']
-            ref_data['y'] = self.recordedData[(self.currentRefId, det_idx)]['y']
+            ref_data = []
+            
+            # [[array([0. , 0.1, 0.2, 0.3]), array([7.673988e+11, 6.499859e+11, 1.845185e+11, 8.461278e+11]), 'Scan #1', 0]]
+            # [{'id': 0, 'name': '', 'x': array([0. , 0.1, 0.2, 0.3]), 'y': array([9.275461e+11, 9.555003e+11, 9.593626e+11, 8.850503e+11]), 'plotted': True, 'plot_cb': <utilities_qt.datatable.CustomQCheckBox object at 0x00000264D08083A0>, 'ref_cb': <utilities_qt.datatable.CustomQCheckBox object at 0x00000264D0808310>}]
+            
+            _data = [
+                self.recordedData[(self.currentRefId, det_idx)]['x'],
+                self.recordedData[(self.currentRefId, det_idx)]['y'],
+                f'Scan #{self.currentRefId + 1}',
+                self.currentRefId
+            ]
+
+            ref_data.append(_data)
             self.parent.register_ref_data(ref_data)
+        
         else:
             self.parent.unregister_ref_data()
 

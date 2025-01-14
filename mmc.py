@@ -178,7 +178,9 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes.set_xlabel('Location (nm, deg)')
         # self.axes.set_ylabel('Photo Current (pA)')
         self.axes.set_ylabel('Magnitude (pA, etc.)')
+        log.debug('data:', data)
         for row in data:
+            log.debug('row:', row)
             c = self.colors[row[-1] % len(self.colors)]
             self.lines[row[-1]], = self.axes.plot(row[0], row[1], label=row[2], color = c)
         self.axes.legend()
@@ -711,6 +713,7 @@ class MMC_Main(QMainWindow):
         VLayout.addWidget(table)
         self.UIE_mgw_table_qtw.widget(0).setLayout(VLayout)
         self.table_result = table
+        self.table_result.is_result = True
         self.UIE_mgw_table_result_tab = self.UIE_mgw_table_qtw.widget(0)
 
         self.table_list = []        
@@ -958,6 +961,7 @@ class MMC_Main(QMainWindow):
 
         # Hmm, maybe make a different button for each graph?
         # self.UIE_mgw_plot_clear_plots_qpb.clicked.connect(self.plotCanvas.clear_plot_fcn)
+        self.UIE_mgw_plot_clear_plots_qpb.clicked.connect(self.clear_all_graphs)
 
         # # #
 
@@ -1210,6 +1214,11 @@ class MMC_Main(QMainWindow):
         self.main_gui_booted = True
         self.show()  
         self.dmw.close()
+
+    def clear_all_graphs(self):
+        for graph in self.graph_list:
+            graph.clear_plot_fcn()
+        self.graph_result.clear_plot_fcn()
 
     def config_import(self):
         loadFileName, _ = QFileDialog.getOpenFileName(self, "Load CSV", directory=self.selected_config_save_path)
@@ -1829,17 +1838,23 @@ class MMC_Main(QMainWindow):
     # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
     def register_ref_data(self, ref_data):
         self.ref_data = ref_data
-        self.graph_result.ref_data = ref_data
+        # self.graph_result.ref_data = ref_data
+        self.table_result.ref_data = ref_data
+        self.table_result.updatePlots(-1)
+
+
         # self.graph_result.update_plots(ref_data)
         # TODO: Figure out how to update the reference / result plot.
 
     # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
     def unregister_ref_data(self):
         self.ref_data = None
-        self.graph_result.ref_data = None
+        # self.graph_result.ref_data = None
         # self.graph_result.update_plots()
+        self.table_result.ref_data = None
+        self.table_result.updatePlots(-1)
 
-    def update_plots(self, det_idx: int, data: list):
+    def update_plots(self, det_idx: int, data: list, is_result: bool = False):
         # if self.plotCanvas is None:
         #     return
         # self.plotCanvas.update_plots(data)
@@ -1847,7 +1862,8 @@ class MMC_Main(QMainWindow):
         if self.graph_list is None or len(self.graph_list) == 0:
             return
 
-        if det_idx == -1:
+        # if det_idx == -1:
+        if is_result:
             self.graph_result.update_plots(data)
         else:
             self.graph_list[det_idx].update_plots(data)
@@ -1897,16 +1913,27 @@ class MMC_Main(QMainWindow):
         # Which detector is just the index of the active detector spinbox when the scan began.
         
         if which_detector == 0:
+            log.warn('! Scan complete.')
+            log.warn('! Scan complete.')
+            log.warn('! Scan complete.')
+
             # The results tab case.
-            self.table_result.markInsertFinished(-1, scan_idx)
-            self.table_result.updateTableDisplay(-1, self.global_scan_id)
+            # self.table_result.markInsertFinished(-1, scan_idx)
+            # self.table_result.updateTableDisplay(-1, self.global_scan_id)
             # All other tabs case.
             for det_idx, table in enumerate(self.table_list):
+                self.table_result.markInsertFinished(det_idx, scan_idx)
+                self.table_result.updateTableDisplay(det_idx, self.global_scan_id)
+
                 table.markInsertFinished(det_idx, scan_idx)
                 table.updateTableDisplay(det_idx, self.global_scan_id)
         else:
             det_idx = which_detector - 1
             # The results tab case.
+            log.warn('! Detector %d scan complete.'%(det_idx))
+            log.warn('! Detector %d scan complete.'%(det_idx))
+            log.warn('! Detector %d scan complete.'%(det_idx))
+
             self.table_result.markInsertFinished(det_idx, scan_idx)
             self.table_result.updateTableDisplay(det_idx, self.global_scan_id)
             # All other tabs case.

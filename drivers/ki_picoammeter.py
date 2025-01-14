@@ -249,6 +249,7 @@ class KI_Picoammeter_Dummy:
         #     samples = 2
         # elif samples > 20:
         #     samples = 20
+        self.prev_mes = 0
         self.set_samples(samples)
 
         # self.samples = samples
@@ -353,6 +354,9 @@ class KI_Picoammeter_Dummy:
 
         mes *= 1e12 # Converts from A to pA
  
+        mes = self.prev_mes + np.random.normal(0, 1)
+        self.prev_mes = mes
+
         return mes
 
     def __del__(self):
