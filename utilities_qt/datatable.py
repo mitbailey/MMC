@@ -173,10 +173,10 @@ class DataTableWidget(QTableWidget):
             del self.rowMap[self.rowMap.index(global_scan_id)]
             self.updateTableDisplay(det_idx, global_scan_id)
 
-    def plotsClearedCb(self, det_idx: int):
-        for global_scan_id in self.recordedData.keys():
-            self.recordedData[(global_scan_id, det_idx)]['plotted'] = False
-            self.recordedData[(global_scan_id, det_idx)]['plot_cb'].setChecked(False)
+    def plotsClearedCb(self):
+        for key in self.recordedData.keys():
+            self.recordedData[key]['plotted'] = False
+            self.recordedData[key]['plot_cb'].setChecked(False)
 
     def updateTableDisplay(self, det_idx: int, global_scan_id: int = None, name_editable: bool = True):
         if global_scan_id is not None and isinstance(global_scan_id, int):

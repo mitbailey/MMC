@@ -8,5 +8,9 @@
 # STA - Sample translation axis
 # DRA - Detector rotation axis
 
-RUN MDA 0 100 1.0
+RUN MDA 0 1 0.1
+RUN MDA 0 10 1.0
+RUN MDA 5 20 2.0
+RUN MDA 0 50 5.0
+RUN MDA 0 100 5.0
 RUN MDA 10 20.0 4.0

@@ -245,8 +245,8 @@
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>630</width>
-                      <height>1188</height>
+                      <width>624</width>
+                      <height>1274</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1158,7 +1158,7 @@
                                <rect>
                                 <x>0</x>
                                 <y>0</y>
-                                <width>594</width>
+                                <width>586</width>
                                 <height>148</height>
                                </rect>
                               </property>
@@ -3046,7 +3046,7 @@
                <item>
                 <widget class="QPushButton" name="home_all_axes">
                  <property name="enabled">
-                  <bool>false</bool>
+                  <bool>true</bool>
                  </property>
                  <property name="minimumSize">
                   <size>
@@ -4153,7 +4153,7 @@
      <x>0</x>
      <y>0</y>
      <width>1398</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

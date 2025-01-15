@@ -161,7 +161,7 @@ class MplCanvas(FigureCanvasQTAgg):
     def set_table_clear_cb(self, fcn):
         self._tableClearCb = fcn
 
-    def clear_plot_fcn(self):
+    def clear_plot_fcn(self, det_idx):
         if not self._parent.scanRunning:
             self.axes.cla()
             self.axes.set_xlabel('Location (nm, deg)')
@@ -743,6 +743,7 @@ class MMC_Main(QMainWindow):
 
 
         self.UIE_mgw_home_qpb: QPushButton = self.findChild(QPushButton, "home_button")
+        self.UIE_mgw_home_all_axes_qpb: QPushButton = self.findChild(QPushButton, "home_all_axes")
 
         # The "Active Detectors" combo-box. Determines which detectors will run in a scan.
         self.UIE_mgw_enabled_detectors_qcb: QComboBox = self.findChild(QComboBox, "enabled_detectors")
@@ -919,7 +920,7 @@ class MMC_Main(QMainWindow):
         # Setup the results graph.
         self.UIE_mgw_plot_result_frame_qw: QWidget = self.findChild(QWidget, "data_graph_result")
         graph_result = MplCanvas(self, width=5, height=4, dpi=100)
-        graph_result.clear_plot_fcn()
+        graph_result.clear_plot_fcn(-1)
         graph_result.set_table_clear_cb(table.plotsClearedCb)
         toolbar = graph_result.get_toolbar()
         layout = QtWidgets.QVBoxLayout()
@@ -945,7 +946,7 @@ class MMC_Main(QMainWindow):
                 self.UIE_mgw_graph_qtw.widget(i+1).setLayout(primary_layout)
 
             plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
-            plotCanvas.clear_plot_fcn()
+            plotCanvas.clear_plot_fcn(i)
             
             for table in self.table_list:
                 plotCanvas.set_table_clear_cb(table.plotsClearedCb)
@@ -1021,6 +1022,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_about_source_qa.triggered.connect(self.open_source_hyperlink)
 
         self.UIE_mgw_home_qpb.clicked.connect(self.manual_home)
+
+        self.UIE_mgw_home_all_axes_qpb.clicked.connect(self.home_all)
 
         # Other stuff.
         self.scan = scan.Scan(weakref.proxy(self))
@@ -1222,9 +1225,9 @@ class MMC_Main(QMainWindow):
         self.dmw.close()
 
     def clear_all_graphs(self):
-        for graph in self.graph_list:
-            graph.clear_plot_fcn()
-        self.graph_result.clear_plot_fcn()
+        for i, graph in enumerate(self.graph_list):
+            graph.clear_plot_fcn(i)
+        self.graph_result.clear_plot_fcn(-1)
 
     def config_import(self):
         loadFileName, _ = QFileDialog.getOpenFileName(self, "Load CSV", directory=self.selected_config_save_path)
@@ -1723,6 +1726,25 @@ class MMC_Main(QMainWindow):
         if self.UIE_mgw_home_qpb is not None:
             self.UIE_mgw_home_qpb.setDisabled(disable)
 
+    def home_all(self):
+        log.info('Homing all axes!')
+
+        if self.motion_controllers.main_drive_axis is not None:
+            log.info('Homing main drive axis.')
+            self.manual_home()
+        if self.motion_controllers.sample_rotation_axis is not None:
+            log.info('Homing sample rotation axis.')
+            self.manual_home_smr()
+        if self.motion_controllers.sample_angle_axis is not None:
+            log.info('Homing sample angle axis.')
+            self.manual_home_sma()
+        if self.motion_controllers.sample_translation_axis is not None:
+            log.info('Homing sample translation axis.')
+            self.manual_home_smt()
+        if self.motion_controllers.detector_rotation_axis is not None:
+            log.info('Homing detector rotation axis.')
+            self.manual_home_dmr()
+
     def manual_home(self):
         log.info('Manual home pressed!')
         self.scan_status_update("HOMING")
@@ -1881,6 +1903,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_scan_qpbar.setValue(curr_percent)
 
     def scan_complete(self):
+        log.debug('Setting scanRunning to False.')
         self.scanRunning = False
         # self.disable_movement_sensitive_buttons(False)
         self.UIE_mgw_scan_qpb.setText('Begin Scan')
@@ -2037,6 +2060,7 @@ class MMC_Main(QMainWindow):
         self.scan_repeats.setValue(0)
 
         if self.scanRunning:
+            log.debug('Setting scanRunning to False.')
             self.scanRunning = False
             return
 

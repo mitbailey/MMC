@@ -257,7 +257,7 @@ class Scan(QThread):
             log.warn('!!! STARTING SCAN LOOP SECTION')
 
             if not self.other.scanRunning:
-                log.debug('scanRunning False, stop button may have been pressed (A).')
+                log.error('scanRunning False, stop button may have been pressed (A). Scan stopped before it started.')
                 break
             self.SIGNAL_status_update.emit("MOVING")
             
@@ -423,7 +423,8 @@ class QueueExecutor(QThread):
             if cmd.startswith('#') or cmd == '':
                 log.info('QueueExecutor - Skipping comment or empty line.')
                 continue
-
+            
+            log.debug('Setting scanRunning to True.')
             self.other.scanRunning = True
             self.other.disable_movement_sensitive_buttons(True)
 
@@ -438,9 +439,14 @@ class QueueExecutor(QThread):
 
                     self.other.scan.done = False
 
+                    if self.other.scanRunning == False:
+                        log.error('QueueExecutor - Scan was stopped before it started.')
+                        log.debug('Setting scanRunning to True (again).')
+                        self.other.scanRunning = True
+
                     self.other.scan.start()
 
-                    while not self.other.scan.done:
+                    while not self.other.scan.done or self.other.scanRunning:
                         log.debug('QueueExecutor - Waiting for scan to finish.')
                         sleep(0.1)
                 else:
