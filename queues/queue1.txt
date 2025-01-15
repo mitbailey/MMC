@@ -1,6 +1,7 @@
 # SCAN QUEUE
 # Syntax
 # RUN [axis] [start] [stop] [step]
+# WAIT [time (s)]
 # [axis]
 # MDA - main drive axis 
 # SRA - Sample rotation axis
