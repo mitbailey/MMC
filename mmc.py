@@ -416,6 +416,12 @@ class MMC_Main(QMainWindow):
             # TODO: Is this causing the lag when a KST201 is connected? Fix this if so. It may need a longer timeout than 1000 ms.
             self.device_timer.start(10000)
 
+        if log.logging_to_file():
+            log.info('Log file is active.')
+        else:
+            log.warn('Log file is not active.')
+            self.QMessageBoxCritical('Log File Error', 'The software was unable to create the log file. This is likely due to a lack of permissions. Try running the program as an Administrator or no error logs will be produced.')
+
     # Called when the main GUI window is closed.
     def closeEvent(self, event):
         answer = self.QMessageBoxYNC('Exit Confirmation', "Do you want to save all current settings and values?")
@@ -2967,16 +2973,16 @@ if __name__ == '__main__':
     try:
         application = QApplication(sys.argv)
 
-        # Finding and setting of fonts.
-        try:
-            fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono italic).ttf')
-        except Exception as e:
-            log.error(e)
+        # # Finding and setting of fonts.
+        # try:
+        #     fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono italic).ttf')
+        # except Exception as e:
+        #     log.error(e)
 
-        try:
-            fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono).ttf')
-        except Exception as e:
-            log.error(e)
+        # try:
+        #     fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono).ttf')
+        # except Exception as e:
+        #     log.error(e)
 
         # Main GUI and child-window setup.
         ui_file_name = exeDir + '/ui/machine_config.ui'

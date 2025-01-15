@@ -75,14 +75,28 @@ def register():
             os.remove('%s/%s'%(logdir, filename))
     logname = time.strftime('%Y%m%dT%H%M%S')
     global __logfile
-    __logfile = open('%s/%s_%s.txt'%(logdir, logname, version.__version__), 'a')
-    info('Logger opened log file.')
+    __logfile = None
+    try:
+        __logfile = open('%s/%s_%s.txt'%(logdir, logname, version.__version__), 'a')
+    except Exception as e:    
+        error('Failed to open log file. This is most likely due to a lack of privileges. Try running the program as Administrator. Exception reported as:', e)
+        __logfile = None
 
-    info('Logger initialized. Log level: %d.'%(LOG_LEVEL))
-    if log_file_found:
-        info('Log configuration file found.')
+        error('Logger failed to initialize. This will be reported.')
     else:
-        warn('No log configuration file found.')
+        info('Logger opened log file.')
+
+        info('Logger initialized. Log level: %d.'%(LOG_LEVEL))
+        if log_file_found:
+            info('Log configuration file found.')
+        else:
+            warn('No log configuration file found.')
+
+def logging_to_file():
+    if __logfile is not None:
+        return True
+    else:
+        return False
 
 def debug(*arg, **end):
     global LOG_LEVEL
@@ -116,6 +130,7 @@ def fatal(*arg, **end):
 
 def _out(_l, _m, _t = False):
     global __logfile
+    print(__logfile)
 
     cstack = ''
     if _t:
@@ -155,7 +170,9 @@ def _out(_l, _m, _t = False):
     # Prints are NOT guaranteed to be in order or meaningfully timestamped. This just provides a general duration between things.
     ts = datetime.datetime.now().time().strftime('%H:%M:%S.%f')
 
-    __logfile.write(ts + ' ' + out)
+    if __logfile is not None:
+        __logfile.write(ts + ' ' + out)
+
     out = out.lstrip()
     out = ''.join(out.split(_l))
     if _l == '[DEBUG]':
@@ -173,8 +190,10 @@ def _out(_l, _m, _t = False):
     print(col, end='')
     print(out, end='\n')
 
-    __logfile.flush()
+    if __logfile is not None:
+        __logfile.flush()
 
 def finish():
     info('Program complete; logger closing log file.')
-    __logfile.close()
+    if __logfile is not None:
+        __logfile.close()
