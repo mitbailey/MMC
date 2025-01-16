@@ -429,9 +429,22 @@ class QueueExecutor(QThread):
             self.other.disable_movement_sensitive_buttons(True)
 
             if args[0] == 'RUN':
-                if args[1] == 'MDA':
-                    log.info('QueueExecutor - Running MDA scan.')
-                    self.other.scan.ctrl_axis = ScanAxis.MAIN
+                if args[1] == 'MDA' or args[1] == 'SRA' or args[1] == 'SAA' or args[1] == 'STA' or args[1] == 'DRA':
+                    if args[1] == 'MDA':
+                        log.info('QueueExecutor - Running MDA scan.')
+                        self.other.scan.ctrl_axis = ScanAxis.MAIN
+                    elif args[1] == 'SRA':
+                        log.info('QueueExecutor - Running SRA scan.')
+                        self.other.scan.ctrl_axis = ScanAxis.SAMPLE
+                        self.other.scan.type = SampleScanType.ROTATION
+                    elif args[1] == 'STA':
+                        log.info('QueueExecutor - Running STA scan.')
+                        self.other.scan.ctrl_axis = ScanAxis.SAMPLE
+                        self.other.scan.type = SampleScanType.TRANSLATION
+                    elif args[1] == 'DRA':
+                        log.info('QueueExecutor - Running DRA scan.')
+                        self.other.scan.ctrl_axis = ScanAxis.DETECTOR
+
                     # TODO: which detector
                     self.other.UIE_mgw_start_qdsb.setValue(float(args[2]))
                     self.other.UIE_mgw_stop_qdsb.setValue(float(args[3]))

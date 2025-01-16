@@ -5,7 +5,7 @@
 # [axis]
 # MDA - main drive axis 
 # SRA - Sample rotation axis
-# SAA - Sample angle axis
+# SAA - Sample angle axis <-- Doesnt exist
 # STA - Sample translation axis
 # DRA - Detector rotation axis
 
