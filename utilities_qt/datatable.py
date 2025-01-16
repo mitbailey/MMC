@@ -451,16 +451,22 @@ class DataTableWidget(QTableWidget):
         return (data, metadata)
 
     def saveDataCb(self) -> tuple: # just return the data and the metadata, let main handle the saving
+        return self.save_data_auto()
+
+    def save_data_auto(self, scanIdx=None) -> tuple:
 
         # Reference Data Note - With the addition of reference data and operations, this becomes slightly more complex. 
 
-        if self.selectedItem is None:
-            return (None, None)
-        row = self.selectedItem
+        if scanIdx is None:
+            if self.selectedItem is None:
+                log.error('self.selectedItem is None!')
+                return (None, None)
+            row = self.selectedItem
 
-        if row >= len(self.rowMap):
-            return (None, None)
-        scanIdx = self.rowMap[row]
+            if row >= len(self.rowMap):
+                log.error('Trying to save row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
+                return (None, None)
+            scanIdx = self.rowMap[row]
 
         if scanIdx in self.recordedData:
             data = self.recordedData[scanIdx]
@@ -503,10 +509,13 @@ class DataTableWidget(QTableWidget):
             metadata = None
 
         if data is None:
+            log.error('No data found for scan ID %d!'%(scanIdx))
             return (None, None)
         elif not data['plot_cb'].isEnabled():
+            log.error('Plot button is disabled for scan ID %d!'%(scanIdx))
             return (None, None)
         else:
+            log.info('Normal return from saveDataCb()')
             return (data, metadata)
 
 
@@ -676,6 +685,8 @@ class DataTableWidget(QTableWidget):
         
         selset = list(set(selset))
         deselset = list(set(deselset))
+
+        log.debug(selset)
 
         if len(selset) == 1:
             self.selectedItem = selset[0]

@@ -246,6 +246,7 @@ class MMC_Main(QMainWindow):
 
         self.queue_executor_thread = scan.QueueExecutor(weakref.proxy(self))
         
+        self.autosave_next_scan = False
 
         self.application: QApplication = application
         self._startup_args = self.application.arguments()
@@ -261,6 +262,7 @@ class MMC_Main(QMainWindow):
         self.dev_finder = None
 
         self.scan_queue = None
+        self.autosave_next_dir = None
 
         self.motion_controllers = mcl.MotionControllerList()
 
@@ -1351,6 +1353,8 @@ class MMC_Main(QMainWindow):
         self.sr_offset = load_dict['srOffset']
         self.sa_offset = load_dict['saOffset']
         self.dr_offset = load_dict['drOffset']
+        log.error('load_dict[drOffset]:', load_dict['drOffset'])
+        log.error('dr_offset:', self.dr_offset)
 
         if self.motion_controllers.main_drive_axis is not None:
             self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
@@ -1435,6 +1439,11 @@ class MMC_Main(QMainWindow):
 
     def load_queue_file(self):
         queueFileName, _ = QFileDialog.getOpenFileName(self, "Open Queue File", directory='./queues', filter='*.txt')
+
+        if queueFileName == '':
+            log.debug('No file selected.')
+            self.QMessageBoxInformation('No File Selected', 'No queue file was selected.')
+            return
 
         with open(queueFileName, 'r') as file:
             lines = file.readlines()
@@ -1643,51 +1652,81 @@ class MMC_Main(QMainWindow):
     #     # TODO: Use the ref data
 
     def save_data_cb(self):
-        for i, table in enumerate(self.table_list):
-            # if self.table_list[i] is None:
-            #     return
-            
+        if self.UIE_mgw_table_qtw.currentIndex() == 0:
+            log.warn('No table selected.')
+            # show message box
+            self.QMessageBoxWarning('Cannot Save', 'Cannot save data entry from Result tab. Please select a detector table entry.')
+            return
+
+        table = self.table_list[self.UIE_mgw_table_qtw.currentIndex() - 1]
+        return self.save_data_auto(table, self.UIE_mgw_table_qtw.currentIndex() - 1)
+
+    def save_data_auto(self, table, which_detector, scanIdx=None):
+        # for i, table in enumerate(self.table_list):
+        # if self.table_list[i] is None:
+        #     return
+
+        # TODO: Figure out which table were on currently.
+        
+        if scanIdx is None:
+            log.debug(f'scanIdx: {scanIdx}')
             data, metadata = table.saveDataCb()
-            log.debug(data, metadata)
-            if data is None:
-                return
-            if metadata is not None:
-                try:
-                    tstamp = metadata['tstamp']
-                    scan_id = metadata['scan_id']
-                except Exception:
-                    tstamp = dt.datetime.now()
-                    scan_id = 100
-            savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/%s_det-%d_%d.csv'%(tstamp.strftime('%Y%m%d%H%M%S'), i, scan_id), filter='*.csv')
-            fileInfo = QFileInfo(savFileName)
+        else:
+            log.debug(f'scanIdx is None')
+            data, metadata = table.save_data_auto(scanIdx)
+
+        log.debug(data, metadata)
+        if data is None:
+            log.error('Data is None.')
+            return
+        if metadata is not None:
             try:
-                ofile = open(fileInfo.absoluteFilePath(), 'w', encoding='utf-8')
+                tstamp = metadata['tstamp']
+                scan_id = metadata['scan_id']
             except Exception:
-                self.QMessageBoxCritical('Error', 'Could not open file %s'%(fileInfo.fileName()))
-                return
-            ofile.write('# DATA RECORDED IN SOFTWARE VERSION: %sv%s'%(version.__short_name__, version.__version__))
-            ofile.write('# %s det#%d\n'%(tstamp.strftime('%Y-%m-%d %H:%M:%S'), i))
+                tstamp = dt.datetime.now()
+                scan_id = 100
+        
+        if self.autosave_next_dir is not None:
+            log.debug('Autosave next directory is not None.')
+            savFileName = self.autosave_next_dir + '/%s_det-%d_%d.csv'%(tstamp.strftime('%Y%m%d%H%M%S'), which_detector, scan_id)
+            self.autosave_next_dir = None
+        elif self.autosave_data_bool:
+            log.debug('Autosave data bool is True.')
+            savFileName = self.data_save_directory + '/%s_det-%d_%d.csv'%(tstamp.strftime('%Y%m%d%H%M%S'), which_detector, scan_id)
+        else:
+            log.debug('Autosave data bool is False.')
+            savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/%s_det-%d_%d.csv'%(tstamp.strftime('%Y%m%d%H%M%S'), which_detector, scan_id), filter='*.csv')
+        fileInfo = QFileInfo(savFileName)
+        
+        try:
+            ofile = open(fileInfo.absoluteFilePath(), 'w', encoding='utf-8')
+        except Exception:
+            self.QMessageBoxCritical('Error', 'Could not open file %s'%(fileInfo.fileName()))
+            return
+        ofile.write('# DATA RECORDED IN SOFTWARE VERSION: %sv%s'%(version.__short_name__, version.__version__))
+        ofile.write('# %s det#%d\n'%(tstamp.strftime('%Y-%m-%d %H:%M:%S'), which_detector))
+        try:
+            ofile.write('# Steps/mm: %f\n'%(metadata['steps_per_value']))
+        except Exception:
+            pass
+        try:
+            ofile.write('# mm/nm: %e; '%(metadata['mm_per_nm']))
+        except Exception:
+            pass
+        try:
+            ofile.write('lambda_0 (nm): %.4f\n'%(metadata['zero_ofst']))
+        except Exception:
+            pass
+        ofile.write('# Position (nm),Mean Current(A)\n')
+        xdata = data['x']
+        ydata = data['y']
+        for i in range(len(xdata)):
             try:
-                ofile.write('# Steps/mm: %f\n'%(metadata['steps_per_value']))
+                ofile.write('%e, %e\n'%(xdata[i], ydata[i]))
             except Exception:
-                pass
-            try:
-                ofile.write('# mm/nm: %e; '%(metadata['mm_per_nm']))
-            except Exception:
-                pass
-            try:
-                ofile.write('lambda_0 (nm): %.4f\n'%(metadata['zero_ofst']))
-            except Exception:
-                pass
-            ofile.write('# Position (nm),Mean Current(A)\n')
-            xdata = data['x']
-            ydata = data['y']
-            for i in range(len(xdata)):
-                try:
-                    ofile.write('%e, %e\n'%(xdata[i], ydata[i]))
-                except Exception:
-                    continue
-            ofile.close()
+                continue
+        ofile.close()
 
     def delete_data_cb(self):
         # TODO: Move delete button within the tabs and have one per tab.
@@ -1956,6 +1995,13 @@ class MMC_Main(QMainWindow):
 
                 table.markInsertFinished(det_idx, scan_idx)
                 table.updateTableDisplay(det_idx, self.global_scan_id)
+
+                if self.autosave_data_bool:
+                    self.save_data_auto(table, scan_idx)
+                if self.autosave_next_scan:
+                    self.save_data_auto(table, scan_idx)
+                    self.autosave_next_scan = False
+
         else:
             det_idx = which_detector - 1
             # The results tab case.
@@ -1968,6 +2014,12 @@ class MMC_Main(QMainWindow):
             # All other tabs case.
             self.table_list[det_idx].markInsertFinished(det_idx, scan_idx)
             self.table_list[det_idx].updateTableDisplay(det_idx, self.global_scan_id)
+
+            if self.autosave_data_bool:
+                self.save_data_auto(self.table_list[det_idx], scan_idx)
+            if self.autosave_next_scan:
+                self.save_data_auto(self.table_list[det_idx], scan_idx)
+                self.autosave_next_scan = False
         
         for table in self.table_list:
             # table.markInsertFinished(which_detector, scan_idx)

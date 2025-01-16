@@ -199,6 +199,7 @@ def save_config(path: str, mes_sign: int = 1, autosave_data: bool = True, data_s
                               'srOffset': sr_offset,
                               'saOffset': sa_offset,
                               'drOffset': dr_offset}
+    log.error('drOffset:', dr_offset)
     save_config['STEP CONVERSIONS'] = {'mdSp': md_sp,
                                        'fwSp': fw_sp,
                                        'srSp': sr_sp,
@@ -318,6 +319,7 @@ def load_config(path: str, is_import: bool) -> dict:
             sr_offset = float(config['OFFSETS']['srOffset'])
             sa_offset = float(config['OFFSETS']['saOffset'])
             dr_offset = float(config['OFFSETS']['drOffset'])
+            log.error('dr_offset:', dr_offset)
 
             md_sp = float(config['STEP CONVERSIONS']['mdSp'])
             fw_sp = float(config['STEP CONVERSIONS']['fwSp'])

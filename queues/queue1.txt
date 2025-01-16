@@ -1,15 +1,31 @@
-# SCAN QUEUE
-# Syntax
+# EXAMPLE SCAN QUEUE FILE
+#
+# Commands and Syntax
+#
 # RUN [axis] [start] [stop] [step]
+#
 # WAIT [time (s)]
+#
+# MOVE [axis] [position]
+#
+# SAVENEXT [directory]              
+#
+# The [directory] should be the path to the folder. This can
+# be either relative from the executable directory or absolute.
+# The name of the file itself will be automatically generated.
+# Example: C:\Users\YourName\Desktop\my_scans
+#
 # [axis]
 # MDA - main drive axis 
 # SRA - Sample rotation axis
-# SAA - Sample angle axis <-- Doesnt exist
+# SAA - Sample angle axis           <-- Doesnt exist
 # STA - Sample translation axis
 # DRA - Detector rotation axis
 
+MOVE MDA 10
+SAVENEXT ./script_saves
 RUN MDA 0 1 0.1
+MOVE MDA 20
 RUN MDA 0 10 1.0
 RUN MDA 5 20 2.0
 RUN MDA 0 50 5.0

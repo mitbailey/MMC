@@ -465,6 +465,30 @@ class QueueExecutor(QThread):
                 else:
                     log.error('QueueExecutor - Unknown scan type: %s'%(args[1]))
 
+            elif args[0] == 'MOVE':
+                if args[1] == 'MDA' or args[1] == 'SRA' or args[1] == 'SAA' or args[1] == 'STA' or args[1] == 'DRA':
+
+                    pos = float(args[2])
+
+                    if args[1] == 'MDA':
+                        log.info('QueueExecutor - Moving MDA axis.')
+                        self.other.motion_controllers.main_drive_axis.move_to(pos, True)
+                    elif args[1] == 'SRA':
+                        log.info('QueueExecutor - Moving SRA axis.')
+                        self.other.motion_controllers.sample_rotation_axis.move_to(pos, True)
+                    elif args[1] == 'STA':
+                        log.info('QueueExecutor - Moving STA axis.')
+                        self.other.motion_controllers.sample_translation_axis.move_to(pos, True)
+                    elif args[1] == 'DRA':
+                        log.info('QueueExecutor - Moving DRA axis.')
+                        self.other.motion_controllers.detector_rotation_axis.move_to(pos, True)
+
+                else:
+                    log.error('QueueExecutor - Unknown scan type: %s'%(args[1]))
+
+            elif args[0] == 'SAVENEXT':
+                self.other.autosave_next_scan = True
+                self.other.autosave_next_dir = args[1]
             elif args[0] == 'WAIT':
                 sleep(float(args[1]))
             else:

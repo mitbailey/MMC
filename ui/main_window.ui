@@ -244,9 +244,9 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>0</y>
-                      <width>624</width>
-                      <height>1274</height>
+                      <y>-664</y>
+                      <width>630</width>
+                      <height>1188</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1158,7 +1158,7 @@
                                <rect>
                                 <x>0</x>
                                 <y>0</y>
-                                <width>586</width>
+                                <width>594</width>
                                 <height>148</height>
                                </rect>
                               </property>
@@ -4153,7 +4153,7 @@
      <x>0</x>
      <y>0</y>
      <width>1398</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -4287,7 +4287,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Auto-log data?</string>
+    <string>Autosave Scans</string>
    </property>
   </action>
   <action name="autosave_dir_prompt">
