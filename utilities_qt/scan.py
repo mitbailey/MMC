@@ -400,11 +400,16 @@ class Scan(QThread):
     #     return self.last_global_scan_id
 
 class QueueExecutor(QThread):
+    SIGNAL_error = pyqtSignal(str, str)
+    SIGNAL_complete = pyqtSignal()
+
     def __init__(self, parent: QMainWindow):
         super(QueueExecutor, self).__init__()
         self.other: MMC_Main = parent
         self._queue = []
         self._running = False
+        self.SIGNAL_error.connect(self.other.QMessageBoxCritical)
+        self.SIGNAL_complete.connect(self.other.scan_complete)
 
     def set_scan_obj(self, scan_obj: Scan):
         self._scan_obj = scan_obj
@@ -464,27 +469,39 @@ class QueueExecutor(QThread):
                         sleep(0.1)
                 else:
                     log.error('QueueExecutor - Unknown scan type: %s'%(args[1]))
+                    self.SIGNAL_error.emit('Unknown Command', 'Unknown command argument: %s'%(args[1]))
+                    self.SIGNAL_complete.emit()
+                    return
 
             elif args[0] == 'MOVE':
                 if args[1] == 'MDA' or args[1] == 'SRA' or args[1] == 'SAA' or args[1] == 'STA' or args[1] == 'DRA':
 
                     pos = float(args[2])
 
-                    if args[1] == 'MDA':
-                        log.info('QueueExecutor - Moving MDA axis.')
-                        self.other.motion_controllers.main_drive_axis.move_to(pos, True)
-                    elif args[1] == 'SRA':
-                        log.info('QueueExecutor - Moving SRA axis.')
-                        self.other.motion_controllers.sample_rotation_axis.move_to(pos, True)
-                    elif args[1] == 'STA':
-                        log.info('QueueExecutor - Moving STA axis.')
-                        self.other.motion_controllers.sample_translation_axis.move_to(pos, True)
-                    elif args[1] == 'DRA':
-                        log.info('QueueExecutor - Moving DRA axis.')
-                        self.other.motion_controllers.detector_rotation_axis.move_to(pos, True)
+                    try:
+                        if args[1] == 'MDA':
+                            log.info('QueueExecutor - Moving MDA axis.')
+                            self.other.motion_controllers.main_drive_axis.move_to(pos, True)
+                        elif args[1] == 'SRA':
+                            log.info('QueueExecutor - Moving SRA axis.')
+                            self.other.motion_controllers.sample_rotation_axis.move_to(pos, True)
+                        elif args[1] == 'STA':
+                            log.info('QueueExecutor - Moving STA axis.')
+                            self.other.motion_controllers.sample_translation_axis.move_to(pos, True)
+                        elif args[1] == 'DRA':
+                            log.info('QueueExecutor - Moving DRA axis.')
+                            self.other.motion_controllers.detector_rotation_axis.move_to(pos, True)
+                    except Exception as e:
+                        log.error('QueueExecutor - Exception: Move Failure - Axis failed to move: %s'%(e))
+                        self.SIGNAL_error.emit('Move Failure', 'Failure occurred while attempting to process the queue command:\n%s\nAxis failed to move: %s'%(cmd, e))
+                        self.SIGNAL_complete.emit()
+                        return
 
                 else:
                     log.error('QueueExecutor - Unknown scan type: %s'%(args[1]))
+                    self.SIGNAL_error.emit('Unknown Command', 'Unknown command argument: %s'%(args[1]))
+                    self.SIGNAL_complete.emit()
+                    return
 
             elif args[0] == 'SAVENEXT':
                 self.other.autosave_next_scan = True
@@ -493,6 +510,9 @@ class QueueExecutor(QThread):
                 sleep(float(args[1]))
             else:
                 log.error('QueueExecutor - Unknown command argument: %s'%(args[0]))
+                self.SIGNAL_error.emit('Unknown Command', 'Unknown command argument: %s'%(args[0]))
+                self.SIGNAL_complete.emit()
+                return
 
             log.info('QueueExecutor - Finished command: %s'%(cmd))
 

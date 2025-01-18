@@ -1456,9 +1456,11 @@ class MMC_Main(QMainWindow):
 
     def begin_queue(self):
         if self.scan_queue is None:
+            log.warn('Cannot Execute Scan Queue: No queue file loaded.')
             self.QMessageBoxWarning('Cannot Execute Scan Queue', 'No queue file loaded.')
             return
 
+        log.info('Queue Executor Thread starting.')
         self.queue_executor_thread.set_queue(self.scan_queue)
         self.queue_executor_thread.start()
 
@@ -1669,11 +1671,11 @@ class MMC_Main(QMainWindow):
         # TODO: Figure out which table were on currently.
         
         if scanIdx is None:
-            log.debug(f'scanIdx: {scanIdx}')
+            log.debug(f'scanIdx is None')
             data, metadata = table.saveDataCb()
         else:
-            log.debug(f'scanIdx is None')
-            data, metadata = table.save_data_auto(scanIdx)
+            log.debug(f'scanIdx: {scanIdx}')
+            data, metadata = table.save_data_auto(scanIdx=scanIdx, which_detector=which_detector)
 
         log.debug(data, metadata)
         if data is None:
@@ -1686,7 +1688,10 @@ class MMC_Main(QMainWindow):
             except Exception:
                 tstamp = dt.datetime.now()
                 scan_id = 100
-        
+        else:
+            log.error('Metadata is None.')
+            return
+
         if self.autosave_next_dir is not None:
             log.debug('Autosave next directory is not None.')
             savFileName = self.autosave_next_dir + '/%s_det-%d_%d.csv'%(tstamp.strftime('%Y%m%d%H%M%S'), which_detector, scan_id)
@@ -1985,6 +1990,8 @@ class MMC_Main(QMainWindow):
             log.warn('! Scan complete.')
             log.warn('! Scan complete.')
 
+            log.debug(f'which_detector: {which_detector}; scan_idx: {scan_idx}; scan_class: {scan_class}')
+
             # The results tab case.
             # self.table_result.markInsertFinished(-1, scan_idx)
             # self.table_result.updateTableDisplay(-1, self.global_scan_id)
@@ -1997,9 +2004,11 @@ class MMC_Main(QMainWindow):
                 table.updateTableDisplay(det_idx, self.global_scan_id)
 
                 if self.autosave_data_bool:
-                    self.save_data_auto(table, scan_idx)
+                    log.debug('Autosaving data...')
+                    self.save_data_auto(table, which_detector, scanIdx=scan_idx)
                 if self.autosave_next_scan:
-                    self.save_data_auto(table, scan_idx)
+                    log.debug('Autosaving "next" (this last) scan...')
+                    self.save_data_auto(table, which_detector, scanIdx=scan_idx)
                     self.autosave_next_scan = False
 
         else:
@@ -2016,9 +2025,9 @@ class MMC_Main(QMainWindow):
             self.table_list[det_idx].updateTableDisplay(det_idx, self.global_scan_id)
 
             if self.autosave_data_bool:
-                self.save_data_auto(self.table_list[det_idx], scan_idx)
+                self.save_data_auto(self.table_list[det_idx], which_detector, scanIdx=scan_idx)
             if self.autosave_next_scan:
-                self.save_data_auto(self.table_list[det_idx], scan_idx)
+                self.save_data_auto(self.table_list[det_idx], which_detector, scanIdx=scan_idx)
                 self.autosave_next_scan = False
         
         for table in self.table_list:

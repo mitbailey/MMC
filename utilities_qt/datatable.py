@@ -453,7 +453,7 @@ class DataTableWidget(QTableWidget):
     def saveDataCb(self) -> tuple: # just return the data and the metadata, let main handle the saving
         return self.save_data_auto()
 
-    def save_data_auto(self, scanIdx=None) -> tuple:
+    def save_data_auto(self, scanIdx=None, which_detector=None) -> tuple:
 
         # Reference Data Note - With the addition of reference data and operations, this becomes slightly more complex. 
 
@@ -468,19 +468,24 @@ class DataTableWidget(QTableWidget):
                 return (None, None)
             scanIdx = self.rowMap[row]
 
-        if scanIdx in self.recordedData:
-            data = self.recordedData[scanIdx]
-            if (self.currentRefId > -1) and np.array_equal(data['x'], self.recordedData[self.currentRefId]['x']):
+            which_detector = self.parent.UIE_mgw_table_qtw.currentIndex()
+
+        log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}')
+        log.debug('self.recordedData keys:', self.recordedData.keys())
+
+        if (scanIdx, which_detector) in self.recordedData:
+            data = self.recordedData[(scanIdx, which_detector)]
+            if (self.currentRefId > -1) and np.array_equal(data['x'], self.recordedData[(self.currentRefId, which_detector)]['x']):
                 # opx = np.copy(data['x'])
                 # First we set which operands we want in which order based on the QRadioButtons.
                 if self.parent.reference_order_meas_ref:
                     # op1x = np.copy(data['x'])
                     op1y = np.copy(data['y'])
                     # op2x = np.copy(self.recordedData[self.currentRefId]['x'])
-                    op2y = np.copy(self.recordedData[self.currentRefId]['y'])
+                    op2y = np.copy(self.recordedData[(self.currentRefId, which_detector)]['y'])
                 else:
                     # op1x = np.copy(self.recordedData[self.currentRefId]['x'])
-                    op1y = np.copy(self.recordedData[self.currentRefId]['y'])
+                    op1y = np.copy(self.recordedData[(self.currentRefId, which_detector)]['y'])
                     # op2x = np.copy(data['x'])
                     op2y = np.copy(data['y'])
 
@@ -502,9 +507,10 @@ class DataTableWidget(QTableWidget):
                 pass
         else:
             data = None
+            log.error('No data found for scan ID %d!'%(scanIdx))
 
-        if scanIdx in self.recordedMetaData:
-            metadata = self.recordedMetaData[scanIdx]
+        if (scanIdx, which_detector) in self.recordedMetaData:
+            metadata = self.recordedMetaData[(scanIdx, which_detector)]
         else:
             metadata = None
 
