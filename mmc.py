@@ -1222,6 +1222,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_steps_per_nm_ql = None
         self.calculate_and_apply_steps_per_nm()
 
+        self.load_config(appDir, False)
+
         self.main_gui_booted = True
         self.show()  
         self.dmw.close()
@@ -1353,21 +1355,33 @@ class MMC_Main(QMainWindow):
         self.sr_offset = load_dict['srOffset']
         self.sa_offset = load_dict['saOffset']
         self.dr_offset = load_dict['drOffset']
-        log.error('load_dict[drOffset]:', load_dict['drOffset'])
-        log.error('dr_offset:', self.dr_offset)
+        log.debug('load_dict[drOffset]:', load_dict['drOffset'])
+        log.debug('dr_offset:', self.dr_offset)
 
         if self.motion_controllers.main_drive_axis is not None:
             self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
+        else:
+            log.info(f'Main Drive Axis is None; cannot set offset to {self.zero_ofst}.')
         if self.motion_controllers.filter_wheel_axis is not None:
             self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
+        else:
+            log.info(f'Filter Wheel Axis is None; cannot set offset to {self.fw_offset}.')
         if self.motion_controllers.sample_translation_axis is not None:
             self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
+        else:
+            log.info(f'Sample Translation Axis is None; cannot set offset to {self.st_offset}.')
         if self.motion_controllers.sample_rotation_axis is not None:
             self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
+        else:
+            log.info(f'Sample Rotation Axis is None; cannot set offset to {self.sr_offset}.')
         if self.motion_controllers.sample_angle_axis is not None:
             self.motion_controllers.sample_angle_axis.set_offset(self.sa_offset)
+        else:
+            log.info(f'Sample Angle Axis is None; cannot set offset to {self.sa_offset}.')
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
+        else:
+            log.info(f'Detector Rotation Axis is None; cannot set offset to {self.dr_offset}.')
 
         self.md_sp = load_dict['mdSp']
         self.fw_sp = load_dict['fwSp']
@@ -1378,16 +1392,28 @@ class MMC_Main(QMainWindow):
 
         if self.motion_controllers.main_drive_axis is not None:
             self.motion_controllers.main_drive_axis.set_steps_per_value(self.md_sp)
+        else:
+            log.info(f'Main Drive Axis is None; cannot set steps per value to {self.md_sp}.')
         if self.motion_controllers.filter_wheel_axis is not None:
             self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.fw_sp)
+        else:
+            log.info(f'Filter Wheel Axis is None; cannot set steps per value to {self.fw_sp}.')
         if self.motion_controllers.sample_rotation_axis is not None:
             self.motion_controllers.sample_rotation_axis.set_steps_per_value(self.sr_sp)
+        else:
+            log.info(f'Sample Rotation Axis is None; cannot set steps per value to {self.sr_sp}.')
         if self.motion_controllers.sample_angle_axis is not None:
             self.motion_controllers.sample_angle_axis.set_steps_per_value(self.sa_sp)
+        else:
+            log.info(f'Sample Angle Axis is None; cannot set steps per value to {self.sa_sp}.')
         if self.motion_controllers.sample_translation_axis is not None:
             self.motion_controllers.sample_translation_axis.set_steps_per_value(self.st_sp)
+        else:
+            log.info(f'Sample Translation Axis is None; cannot set steps per value to {self.st_sp}.')
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.dr_sp)
+        else:
+            log.info(f'Detector Rotation Axis is None; cannot set steps per value to {self.dr_sp}.')
         
     def save_config_devman(self, path: str):
         pass
@@ -2258,8 +2284,12 @@ class MMC_Main(QMainWindow):
         self.model_index = self.UIE_mcw_model_qcb.currentIndex()
 
     def show_window_machine_config(self):
+        log.debug(f'dr_offset: {self.dr_offset}')
         steps_per_nm = None
+        first_time = False
+        
         if self.machine_conf_win is None:
+            first_time = True
             log.info('Setting up machine configuration window.')
             
             ui_file_name = exeDir + '/ui/machine_config.ui'
@@ -2275,7 +2305,7 @@ class MMC_Main(QMainWindow):
 
             self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'models')
             self.UIE_mcw_model_qcb.addItems(McPherson.MONO_MODELS)
-            self.UIE_mcw_model_qcb.currentIndexChanged.connect(self.update_model_index)
+            # self.UIE_mcw_model_qcb.currentIndexChanged.connect(self.update_model_index)
 
             self.UIE_mcw_grating_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'grating_density')
             
@@ -2286,7 +2316,7 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_min_pos_in_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'min_pos_sbox')
 
             self.UIE_mcw_machine_conf_qpb = self.machine_conf_win.findChild(QPushButton, 'update_conf_btn')
-            self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
+            # self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
 
             self.UIE_mcw_steps_per_nm_ql = self.machine_conf_win.findChild(QLabel, 'steps_per_nm')
 
@@ -2297,13 +2327,13 @@ class MMC_Main(QMainWindow):
             
             self.UIE_mcw_steps_per_nm_override_qdsb = self.machine_conf_win.findChild(QDoubleSpinBox, 'steps_per_nm_override')
             self.UIE_mcw_override_steps_per_nm_qckbx = self.machine_conf_win.findChild(QCheckBox, 'override_steps_per_nm')
-            self.UIE_mcw_override_steps_per_nm_qckbx.stateChanged.connect(self.update_override_button)
+            # self.UIE_mcw_override_steps_per_nm_qckbx.stateChanged.connect(self.update_override_button)
             self.UIE_mcw_enact_override_qpb = self.machine_conf_win.findChild(QPushButton, 'enact_override')
             self.UIE_mcw_enact_override_qpb.setEnabled(False)
-            self.UIE_mcw_enact_override_qpb.clicked.connect(self.override_steps_per_nm)
+            # self.UIE_mcw_enact_override_qpb.clicked.connect(self.override_steps_per_nm)
 
             self.UIE_mcw_accept_qpb = self.machine_conf_win.findChild(QPushButton, 'mcw_accept')
-            self.UIE_mcw_accept_qpb.clicked.connect(self.accept_mcw)
+            # self.UIE_mcw_accept_qpb.clicked.connect(self.accept_mcw)
 
             # Get axes combos.
             self.UIE_mcw_main_drive_axis_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, "main_drive_axis_combo")
@@ -2336,12 +2366,12 @@ class MMC_Main(QMainWindow):
 
                     self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
 
-            self.UIE_mcw_main_drive_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_main)
-            self.UIE_mcw_filter_wheel_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_filter)
-            self.UIE_mcw_sample_rotation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_rsamp)
-            self.UIE_mcw_sample_angle_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_asamp)
-            self.UIE_mcw_sample_translation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_tsamp)
-            self.UIE_mcw_detector_rotation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_detector)
+            # self.UIE_mcw_main_drive_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_main)
+            # self.UIE_mcw_filter_wheel_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_filter)
+            # self.UIE_mcw_sample_rotation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_rsamp)
+            # self.UIE_mcw_sample_angle_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_asamp)
+            # self.UIE_mcw_sample_translation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_tsamp)
+            # self.UIE_mcw_detector_rotation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_detector)
 
             self.UIE_mcw_fw_steps_per_rot_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_steps_per_deg')
             self.UIE_mcw_fw_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_max')
@@ -2359,33 +2389,35 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_dr_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_max')
             self.UIE_mcw_dr_min_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_min')
 
+            log.debug(f'dr_offset: {self.dr_offset}')
             self.UIE_mcw_fw_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_offset')
             self.UIE_mcw_sr_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'sr_offset')
             self.UIE_mcw_sa_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'sa_offset')
             self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'st_offset')
             self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_offset')
+            log.debug(f'dr_offset: {self.dr_offset}')
 
             # UIE_mcw_fw_steps_per_rot_qdsb
-            self.UIE_mcw_sm_steps_per_rot_qdsb.valueChanged.connect(self.update_steps_per)
-            self.UIE_mcw_sm_steps_per_ang_qdsb.valueChanged.connect(self.update_steps_per)
-            self.UIE_mcw_sm_steps_per_trans_qdsb.valueChanged.connect(self.update_steps_per)
-            self.UIE_mcw_dr_steps_per_qdsb.valueChanged.connect(self.update_steps_per)
+            # self.UIE_mcw_sm_steps_per_rot_qdsb.valueChanged.connect(self.update_steps_per)
+            # self.UIE_mcw_sm_steps_per_ang_qdsb.valueChanged.connect(self.update_steps_per)
+            # self.UIE_mcw_sm_steps_per_trans_qdsb.valueChanged.connect(self.update_steps_per)
+            # self.UIE_mcw_dr_steps_per_qdsb.valueChanged.connect(self.update_steps_per)
 
-            self.UIE_mcw_zero_ofst_in_qdsb.valueChanged.connect(self.update_offsets)
-            self.UIE_mcw_fw_offset_qdsb.valueChanged.connect(self.update_offsets)
-            self.UIE_mcw_sr_offset_qdsb.valueChanged.connect(self.update_offsets)
-            self.UIE_mcw_sa_offset_qdsb.valueChanged.connect(self.update_offsets)
-            self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
-            self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
+            # self.UIE_mcw_zero_ofst_in_qdsb.valueChanged.connect(self.update_offsets)
+            # self.UIE_mcw_fw_offset_qdsb.valueChanged.connect(self.update_offsets)
+            # self.UIE_mcw_sr_offset_qdsb.valueChanged.connect(self.update_offsets)
+            # self.UIE_mcw_sa_offset_qdsb.valueChanged.connect(self.update_offsets)
+            # self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
+            # self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
 
             # Reference System
             self.UIE_mcw_operation_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'operation_qcb')
             self.UIE_mcw_meas_ref_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_meas_ref_qrb')
             self.UIE_mcw_ref_meas_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_ref_meas_qrb')
 
-            self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
-            self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
-            self.UIE_mcw_ref_meas_qrb.toggled.connect(self.reference_order_changed)
+            # self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
+            # self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
+            # self.UIE_mcw_ref_meas_qrb.toggled.connect(self.reference_order_changed)
 
             # TEMPORARY DISABLING OF UI ELEMENT UNTIL FUTURE VERSION IMPLEMENTATION. 
             tabWidget = self.machine_conf_win.findChild(QTabWidget, "tabWidget")
@@ -2401,7 +2433,9 @@ class MMC_Main(QMainWindow):
                 # Generic Detector Math [Should already exist from QtDesigner]
 
         self.UIE_mcw_model_qcb.setCurrentIndex(self.model_index)
+
         self.UIE_mcw_grating_qdsb.setValue(self.grating_density)
+        # This resets the value of the related variables because its already connected to the update_offsets function, which sets the variables to 0 because thats the default and current value in the spinboxes...
         self.UIE_mcw_zero_ofst_in_qdsb.setValue(self.zero_ofst)
         self.UIE_mcw_max_pos_in_qdsb.setValue(self.max_pos)
         self.UIE_mcw_min_pos_in_qdsb.setValue(self.min_pos)
@@ -2449,6 +2483,39 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_sm_steps_per_ang_qdsb.setValue(self.sa_sp)
         self.UIE_mcw_sm_steps_per_trans_qdsb.setValue(self.st_sp)
         self.UIE_mcw_dr_steps_per_qdsb.setValue(self.dr_sp)
+
+
+        if first_time:
+            self.UIE_mcw_model_qcb.currentIndexChanged.connect(self.update_model_index)
+            self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
+            self.UIE_mcw_override_steps_per_nm_qckbx.stateChanged.connect(self.update_override_button)
+            self.UIE_mcw_enact_override_qpb.clicked.connect(self.override_steps_per_nm)
+            self.UIE_mcw_accept_qpb.clicked.connect(self.accept_mcw)
+
+            self.UIE_mcw_main_drive_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_main)
+            self.UIE_mcw_filter_wheel_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_filter)
+            self.UIE_mcw_sample_rotation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_rsamp)
+            self.UIE_mcw_sample_angle_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_asamp)
+            self.UIE_mcw_sample_translation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_tsamp)
+            self.UIE_mcw_detector_rotation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_detector)
+
+            self.UIE_mcw_sm_steps_per_rot_qdsb.valueChanged.connect(self.update_steps_per)
+            self.UIE_mcw_sm_steps_per_ang_qdsb.valueChanged.connect(self.update_steps_per)
+            self.UIE_mcw_sm_steps_per_trans_qdsb.valueChanged.connect(self.update_steps_per)
+            self.UIE_mcw_dr_steps_per_qdsb.valueChanged.connect(self.update_steps_per)
+
+            self.UIE_mcw_zero_ofst_in_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_fw_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_sr_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_sa_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
+            self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
+
+            self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
+            self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
+            self.UIE_mcw_ref_meas_qrb.toggled.connect(self.reference_order_changed)
+
+
 
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         log.debug('Exec done')
