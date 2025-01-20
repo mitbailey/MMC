@@ -244,9 +244,9 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>-664</y>
-                      <width>630</width>
-                      <height>1188</height>
+                      <y>0</y>
+                      <width>620</width>
+                      <height>1479</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1158,7 +1158,7 @@
                                <rect>
                                 <x>0</x>
                                 <y>0</y>
-                                <width>594</width>
+                                <width>578</width>
                                 <height>148</height>
                                </rect>
                               </property>
@@ -3163,9 +3163,44 @@
                 </layout>
                </item>
                <item>
-                <widget class="QPushButton" name="spectral_math">
+                <widget class="QPushButton" name="settings">
                  <property name="enabled">
                   <bool>false</bool>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>20</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                  </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Spectral Math currently located in the Spectral Math tab of the Machine Configuration window.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Spectral Math&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set how reference scans operate on other scans.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>⚙</string>
+                 </property>
+                 <property name="flat">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="spectral_math">
+                 <property name="enabled">
+                  <bool>true</bool>
                  </property>
                  <property name="minimumSize">
                   <size>
@@ -4153,7 +4188,7 @@
      <x>0</x>
      <y>0</y>
      <width>1398</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

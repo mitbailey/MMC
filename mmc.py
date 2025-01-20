@@ -622,6 +622,7 @@ class MMC_Main(QMainWindow):
 
         self.machine_conf_win: QDialog = None
         self.grating_conf_win: QDialog = None
+        self.spectral_ops_win: QDialog = None
         self.grating_density_in: QDoubleSpinBox = None
         
         self.UIE_mcw_max_pos_in_qdsb: QDoubleSpinBox = None
@@ -2283,6 +2284,27 @@ class MMC_Main(QMainWindow):
     def update_model_index(self):
         self.model_index = self.UIE_mcw_model_qcb.currentIndex()
 
+    def show_window_spectral_ops(self):
+        if self.spectral_ops_win is None:
+            log.info('Setting up spectral operations window.')
+            
+            ui_file_name = exeDir + '/ui/spectral_ops.ui'
+            ui_file = QFile(ui_file_name)
+            if not ui_file.open(QIODevice.ReadOnly):
+                log.fatal(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
+                raise RuntimeError('Could not load grating input UI file')
+            
+            # Reference system.
+            self.UIE_mcw_operation_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'operation_qcb')
+            self.UIE_mcw_meas_ref_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_meas_ref_qrb')
+            self.UIE_mcw_ref_meas_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_ref_meas_qrb')
+
+            self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
+            self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
+            self.UIE_mcw_ref_meas_qrb.toggled.connect(self.reference_order_changed)
+
+            self.spectral_ops_win = QDialog(self)
+
     def show_window_machine_config(self):
         log.debug(f'dr_offset: {self.dr_offset}')
         steps_per_nm = None
@@ -2411,9 +2433,9 @@ class MMC_Main(QMainWindow):
             # self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
 
             # Reference System
-            self.UIE_mcw_operation_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'operation_qcb')
-            self.UIE_mcw_meas_ref_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_meas_ref_qrb')
-            self.UIE_mcw_ref_meas_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_ref_meas_qrb')
+            # self.UIE_mcw_operation_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'operation_qcb')
+            # self.UIE_mcw_meas_ref_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_meas_ref_qrb')
+            # self.UIE_mcw_ref_meas_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_ref_meas_qrb')
 
             # self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
             # self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
@@ -2511,11 +2533,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
 
-            self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
-            self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
-            self.UIE_mcw_ref_meas_qrb.toggled.connect(self.reference_order_changed)
-
-
+            # self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
+            # self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
+            # self.UIE_mcw_ref_meas_qrb.toggled.connect(self.reference_order_changed)
 
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         log.debug('Exec done')
