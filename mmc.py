@@ -673,6 +673,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_scan_status_ql = self.findChild(QLabel, "status_label")
         self.UIE_mgw_scan_qpbar = self.findChild(QProgressBar, "progressbar")
         self.UIE_mgw_save_config_qpb: QPushButton = self.findChild(QPushButton, 'save_config_button')
+        self.UIE_mgw_spectral_ops_qpb: QPushButton = self.findChild(QPushButton, 'spectral_math')
+        self.UIE_mgw_spectral_ops_qpb.clicked.connect(self.show_window_spectral_ops)
         self.UIE_mgw_pos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox") # Manual Control 'Position:' Spin Box
         self.UIE_mgw_move_to_position_qpb: QPushButton = self.findChild(QPushButton, "move_pos_button")
         # self.UIE_mgw_plot_frame_qw: QWidget = self.findChild(QWidget, "data_graph")
@@ -756,11 +758,24 @@ class MMC_Main(QMainWindow):
 
         # Get axes combos.
         self.UIE_mgw_main_drive_axis_qcb: QComboBox = self.findChild(QComboBox, "main_drive_axis")
+        self.UIE_mgw_main_drive_axis_qcb.hide()
         self.UIE_mgw_filter_wheel_axis_qcb: QComboBox = self.findChild(QComboBox, "filter_wheel_axis")
+        self.UIE_mgw_filter_wheel_axis_qcb.hide()
         self.UIE_mgw_sample_rotation_axis_qcb: QComboBox = self.findChild(QComboBox, "sample_rot_axis")
+        self.UIE_mgw_sample_rotation_axis_qcb.hide()
         self.UIE_mgw_sample_angle_axis_qcb: QComboBox = self.findChild(QComboBox, 'sample_angle_axis')
+        self.UIE_mgw_sample_angle_axis_qcb.hide()
         self.UIE_mgw_sample_translation_axis_qcb: QComboBox = self.findChild(QComboBox, "sample_trans_axis")
+        self.UIE_mgw_sample_translation_axis_qcb.hide()
         self.UIE_mgw_detector_rotation_axis_qcb: QComboBox = self.findChild(QComboBox, "detector_axis")
+        self.UIE_mgw_detector_rotation_axis_qcb.hide()
+
+        self.findChild(QLabel, "label_24").hide()
+        self.findChild(QLabel, "label_22").hide()
+        self.findChild(QLabel, "label_15").hide()
+        self.findChild(QLabel, "label_18").hide()
+        self.findChild(QLabel, "label_21").hide()
+        self.findChild(QLabel, "label_25").hide()
 
         self.UIE_mgw_main_drive_axis_qcb.addItem('%s'%('Select Main Drive Axis'))
         self.UIE_mgw_filter_wheel_axis_qcb.addItem('%s'%('Select Filter Wheel Axis'))
@@ -1495,33 +1510,33 @@ class MMC_Main(QMainWindow):
         self.mda_collapsed = not self.mda_collapsed
         self.UIE_mgw_mda_qw.setVisible(not self.mda_collapsed)
         if self.mda_collapsed:
-            self.UIE_mgw_mda_collapse_qpb.setText('<')
+            self.UIE_mgw_mda_collapse_qpb.setText('⮜')
         else:
-            self.UIE_mgw_mda_collapse_qpb.setText('v')
+            self.UIE_mgw_mda_collapse_qpb.setText('⮟')
 
     def collapse_fwa(self):
         self.fwa_collapsed = not self.fwa_collapsed
         self.UIE_mgw_fwa_qw.setVisible(not self.fwa_collapsed)
         if self.fwa_collapsed:
-            self.UIE_mgw_fwa_collapse_qpb.setText('<')
+            self.UIE_mgw_fwa_collapse_qpb.setText('⮜')
         else:
-            self.UIE_mgw_fwa_collapse_qpb.setText('v')
+            self.UIE_mgw_fwa_collapse_qpb.setText('⮟')
 
     def collapse_sa(self):
         self.sa_collapsed = not self.sa_collapsed
         self.UIE_mgw_sa_qw.setVisible(not self.sa_collapsed)
         if self.sa_collapsed:
-            self.UIE_mgw_sa_collapse_qpb.setText('<')
+            self.UIE_mgw_sa_collapse_qpb.setText('⮜')
         else:
-            self.UIE_mgw_sa_collapse_qpb.setText('v')
+            self.UIE_mgw_sa_collapse_qpb.setText('⮟')
 
     def collapse_da(self):
         self.da_collapsed = not self.da_collapsed
         self.UIE_mgw_da_qw.setVisible(not self.da_collapsed)
         if self.da_collapsed:
-            self.UIE_mgw_da_collapse_qpb.setText('<')
+            self.UIE_mgw_da_collapse_qpb.setText('⮜')
         else:
-            self.UIE_mgw_da_collapse_qpb.setText('v')
+            self.UIE_mgw_da_collapse_qpb.setText('⮟')
 
     def new_filter_wheel_rule(self):
         geq_label: QLabel = QLabel('≥')
@@ -2294,16 +2309,23 @@ class MMC_Main(QMainWindow):
                 log.fatal(f"Cannot open {ui_file_name}: {ui_file.errorString()}")
                 raise RuntimeError('Could not load grating input UI file')
             
+            self.spectral_ops_win = QDialog(self)
+            uic.loadUi(ui_file, self.spectral_ops_win)
+            
             # Reference system.
-            self.UIE_mcw_operation_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'operation_qcb')
-            self.UIE_mcw_meas_ref_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_meas_ref_qrb')
-            self.UIE_mcw_ref_meas_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_ref_meas_qrb')
+            self.UIE_mcw_operation_qcb: QComboBox = self.spectral_ops_win.findChild(QComboBox, 'operation_qcb')
+            self.UIE_mcw_meas_ref_qrb: QRadioButton = self.spectral_ops_win.findChild(QRadioButton, 'order_meas_ref_qrb')
+            self.UIE_mcw_ref_meas_qrb: QRadioButton = self.spectral_ops_win.findChild(QRadioButton, 'order_ref_meas_qrb')
 
             self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
             self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
             self.UIE_mcw_ref_meas_qrb.toggled.connect(self.reference_order_changed)
 
-            self.spectral_ops_win = QDialog(self)
+            self.UIE_sops_accept_qpb = self.spectral_ops_win.findChild(QPushButton, 'sops_accept')
+            self.UIE_sops_accept_qpb.clicked.connect(self.accept_sops)
+
+        self.spectral_ops_win.exec()
+
 
     def show_window_machine_config(self):
         log.debug(f'dr_offset: {self.dr_offset}')
@@ -2964,6 +2986,9 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_pframe_6_qf.setVisible(is_zero)
 
         return self.detector_axis_index
+
+    def accept_sops(self):
+        self.spectral_ops_win.close()
 
     def accept_mcw(self):
         log.info('~~MACHINE CONFIGURATION ACCEPT CALLED:')
