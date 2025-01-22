@@ -293,7 +293,7 @@ class MotionController:
         """
         log.debug('Attempting to set steps-per-value for %s to %f (is now %f).'%(self.short_name(), steps, self._steps_per_value))
 
-        if steps > 0:
+        if steps > -1:
             self._steps_per_value = steps
 
         log.debug('Steps-per-value for %s is now %f.'%(self.short_name(), self._steps_per_value))
@@ -407,16 +407,7 @@ class MotionController:
                 raise Exception("Already moving!")
         self._moving = True
         log.info('Moving to position:', position, 'with blocking:', block)
-        if block:
-            log.info('Blocking.')
-            return self._move_to(position)
-        else:
-            log.info('Non-blocking.')
-            move_th = threading.Thread(target=lambda: self._move_to(position))
-            move_th.start()
-            return
 
-    def _move_to(self, position):
         if self._steps_per_value == 0:
             self._moving = False
             log.error('Steps-per value has not been set for this axis (%s). This value must be set in the Machine Configuration window.'%(self.short_name()))
@@ -429,6 +420,29 @@ class MotionController:
             self._moving = False
             log.error('Position is beyond the lower limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
             raise Exception('Position is beyond the lower limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
+
+        if block:
+            log.info('Blocking.')
+            return self._move_to(position)
+        else:
+            log.info('Non-blocking.')
+            move_th = threading.Thread(target=lambda: self._move_to(position))
+            move_th.start()
+            return
+
+    def _move_to(self, position):
+        # if self._steps_per_value == 0:
+        #     self._moving = False
+        #     log.error('Steps-per value has not been set for this axis (%s). This value must be set in the Machine Configuration window.'%(self.short_name()))
+        #     raise Exception('Steps-per value has not been set for this axis. This value must be set in the Machine Configuration window.')
+        # if position > self._max_pos:
+        #     self._moving = False
+        #     log.error('Position is beyond the upper limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
+        #     raise Exception('Position is beyond the upper limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
+        # if position < self._min_pos:
+        #     self._moving = False
+        #     log.error('Position is beyond the lower limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
+        #     raise Exception('Position is beyond the lower limit of this %s axis [%f < %f < %f].'%(self.short_name(), self._min_pos, position, self._max_pos))
 
         backlash = (position * self._steps_per_value) - (self._min_pos * self._steps_per_value) # Steps until we hit minimum.
         backlash *= self._manual_backlash # If we have automatic backlash correction, _manual_backlash will be set to 0. A zero sent to the move_to() function will simply disable backlash.

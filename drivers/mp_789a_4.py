@@ -642,7 +642,7 @@ class MP_789A_4_DUMMY(StageDevice):
         self._moving = False
         self._homing = False
         self.home()
-        time.sleep(MP_789A_4.WR_DLY * 50)
+        time.sleep(MP_789A_4.WR_DLY * 5)
 
     def home(self)->bool:
         self._homing = True
@@ -713,7 +713,7 @@ class MP_789A_4_DUMMY(StageDevice):
                 log.info('Found to be MOVING',i)
                 i=0
         log.debug('FINISHED BLOCKING because moving is', i)
-        time.sleep(MP_789A_4.WR_DLY)
+        time.sleep(MP_789A_4.WR_DLY * steps * 0.01)
 
 
     def short_name(self):

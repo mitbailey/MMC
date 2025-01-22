@@ -84,9 +84,10 @@ class ConnectDevices(QThread):
         log.info('Motion controllers: %d'%(self.num_motion_controllers))
         self.SIGNAL_status.emit('Detectors: %d; Motion controllers: %d'%(self.num_detectors, self.num_motion_controllers))
 
-        load_increment = (10000 / (self.num_detectors + self.num_motion_controllers)) * 0.8
+        load_increment = (10000 / (self.num_detectors + self.num_motion_controllers)) * 1.0
         load = load_increment
         self.SIGNAL_load_bar.emit(load)
+        log.debug('load:', load)
 
         for i in range(self.num_detectors):
             log.info('Instantiation attempt for detector #%d.'%(i))
@@ -115,6 +116,7 @@ class ConnectDevices(QThread):
 
             load+=load_increment
             self.SIGNAL_load_bar.emit(load)
+            log.debug('load:', load)
 
         # for i, combo in self.dm_detector_combos:
         for i in range(self.num_motion_controllers):
@@ -152,6 +154,7 @@ class ConnectDevices(QThread):
 
             load+=load_increment
             self.SIGNAL_load_bar.emit(load)
+            log.debug('load:', load)
 
         log.info('detectors_connected:', detectors_connected)
         log.info('mtn_ctrls_connected:', mtn_ctrls_connected)

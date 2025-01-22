@@ -142,14 +142,16 @@ class NavigationToolbar(NavigationToolbar2QT):
 
 # Sets up the canvas for the graph.
 class MplCanvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
+    def __init__(self, parent=None, width=5, height=4, dpi=100, xlabel='Position (nm or deg)', ylabel='Magnitude (pA or V)'):
 
         fig = Figure(figsize=(width, height), dpi=dpi, tight_layout = True)
 
         self._parent = parent
         self.axes = fig.add_subplot(111)
-        self.axes.set_xlabel('Position (nm)')
-        self.axes.set_ylabel('Current (pA)')
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+        self.axes.set_xlabel(self.xlabel)
+        self.axes.set_ylabel(self.ylabel)
         self.axes.grid()
         self.lines = dict()
         self.colors = ['b', 'r', 'k', 'c', 'g', 'm', 'tab:orange']
@@ -166,9 +168,9 @@ class MplCanvas(FigureCanvasQTAgg):
     def clear_plot_fcn(self, det_idx):
         if not self._parent.scanRunning:
             self.axes.cla()
-            self.axes.set_xlabel('Location (nm, deg)')
+            self.axes.set_xlabel(self.xlabel)
             # self.axes.set_ylabel('Photo Current (pA)')
-            self.axes.set_ylabel('Magnitude (pA, etc.)')
+            self.axes.set_ylabel(self.ylabel)
             self.axes.grid()
             self.draw()
             if self._tableClearCb is not None:
@@ -414,9 +416,15 @@ class MMC_Main(QMainWindow):
             self.UIE_dmw_mtn_ctrl_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
             self.UIE_dmw_load_bar_qpb: QProgressBar = self.dmw.findChild(QProgressBar, "loading_bar")
 
+            self.UIE_dmw_load_spinner_ql: QLabel = self.dmw.findChild(QLabel, "load_spinner")
+
             self.devman_list_devices(True)
 
             self.dmw.show()
+
+        # UIE_dmw_load_spinner_ql
+        self.anim_dmw_load_spinner = QtGui.QMovie(exeDir + '/res/Chasing arrows.gif')
+        self.UIE_dmw_load_spinner_ql.setMovie(self.anim_dmw_load_spinner)
 
         self.application.processEvents()
 
@@ -525,6 +533,8 @@ class MMC_Main(QMainWindow):
         - Spinbox index 
         """
 
+        self.anim_dmw_load_spinner.start()
+
         if self.num_detectors == 1 and self.UIEL_dmw_detector_qcb[0].currentIndex() == 0:
             self.QMessageBoxInformation('No Detectors Selected', 'No detectors selected: will run without a detector.')
             self.detectors = [] # This should allow for loops to auto-skip.
@@ -533,11 +543,13 @@ class MMC_Main(QMainWindow):
             for i in range(self.num_detectors):
                 if self.UIEL_dmw_detector_qcb[i].currentIndex() == 0:
                     self.QMessageBoxInformation('Connection Failure', 'No detector was selected for entry #%d.'%(i))
+                    self.anim_dmw_load_spinner.stop()
                     return
                 
         for i in range(self.num_motion_controllers):
             if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() == 0:
                 self.QMessageBoxInformation('Connection Failure', 'No motion controller was selected for entry #%d.'%(i))
+                self.anim_dmw_load_spinner.stop()
                 return
 
         # Save config here.
@@ -728,6 +740,36 @@ class MMC_Main(QMainWindow):
 
         self.UIE_mgw_table_qtw: QTabWidget = self.findChild(QTabWidget, "table_tabs")
         # self.UIE_mgw_table_qtw.addTab(QWidget(), 'Data Table')
+
+        self.UIE_mgw_mda_load_spinner_ql: QLabel = self.findChild(QLabel, "mda_load_spinner")
+        self.anim_mgw_mda_load_spinner = QtGui.QMovie(exeDir + '/res/Thin stripes.gif')
+        self.UIE_mgw_mda_load_spinner_ql.setMovie(self.anim_mgw_mda_load_spinner)
+        self.anim_mgw_mda_load_spinner_running = False
+
+        self.UIE_mgw_fwa_load_spinner_ql: QLabel = self.findChild(QLabel, "fwa_load_spinner")
+        self.anim_mgw_fwa_load_spinner = QtGui.QMovie(exeDir + '/res/Thin stripes.gif')
+        self.UIE_mgw_fwa_load_spinner_ql.setMovie(self.anim_mgw_fwa_load_spinner)
+        self.anim_mgw_fwa_load_spinner_running = False
+
+        self.UIE_mgw_sra_load_spinner_ql: QLabel = self.findChild(QLabel, "sra_load_spinner")
+        self.anim_mgw_sra_load_spinner = QtGui.QMovie(exeDir + '/res/Thin stripes.gif')
+        self.UIE_mgw_sra_load_spinner_ql.setMovie(self.anim_mgw_sra_load_spinner)
+        self.anim_mgw_sra_load_spinner_running = False
+
+        self.UIE_mgw_saa_load_spinner_ql: QLabel = self.findChild(QLabel, "saa_load_spinner")
+        self.anim_mgw_saa_load_spinner = QtGui.QMovie(exeDir + '/res/Thin stripes.gif')
+        self.UIE_mgw_saa_load_spinner_ql.setMovie(self.anim_mgw_saa_load_spinner)
+        self.anim_mgw_saa_load_spinner_running = False
+
+        self.UIE_mgw_sta_load_spinner_ql: QLabel = self.findChild(QLabel, "sta_load_spinner")
+        self.anim_mgw_sta_load_spinner = QtGui.QMovie(exeDir + '/res/Thin stripes.gif')
+        self.UIE_mgw_sta_load_spinner_ql.setMovie(self.anim_mgw_sta_load_spinner)
+        self.anim_mgw_sta_load_spinner_running = False
+
+        self.UIE_mgw_dra_load_spinner_ql: QLabel = self.findChild(QLabel, "dra_load_spinner")
+        self.anim_mgw_dra_load_spinner = QtGui.QMovie(exeDir + '/res/Thin stripes.gif')
+        self.UIE_mgw_dra_load_spinner_ql.setMovie(self.anim_mgw_dra_load_spinner)
+        self.anim_mgw_dra_load_spinner_running = False
 
         # Setup the first (result) table tab.
         table = DataTableWidget(self)
@@ -966,7 +1008,17 @@ class MMC_Main(QMainWindow):
                 primary_layout.addWidget(QGraphicsView())
                 self.UIE_mgw_graph_qtw.widget(i+1).setLayout(primary_layout)
 
-            plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
+            log.info(f'Creating graph for detector {i}: {self.detectors[i].model}.')
+            if self.detectors[i].model == mw.Detector.SupportedDevices[0]:
+                log.info(f'Creating graph canvas for detector {i}: {self.detectors[i].model}.')
+                plotCanvas = MplCanvas(self, width=5, height=4, dpi=100, ylabel='Photocurrent (pA)')
+            elif self.detectors[i].model == mw.Detector.SupportedDevices[1] or self.detectors[i].model == mw.Detector.SupportedDevices[2]:
+                log.info(f'Creating graph canvas for detector {i}: {self.detectors[i].model}.')
+                plotCanvas = MplCanvas(self, width=5, height=4, dpi=100, ylabel='Amplitude (V)')
+            else:
+                log.info(f'Creating graph canvas for detector {i}: {self.detectors[i].model}.')
+                plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
+    
             plotCanvas.clear_plot_fcn(i)
             
             for table in self.table_list:
@@ -1786,6 +1838,13 @@ class MMC_Main(QMainWindow):
             self.manual_home_dmr()
 
     def manual_home(self):
+        if self.motion_controllers.main_drive_axis is None:
+            log.error('Main drive axis is not set to any motion control channel.')
+            self.QMessageBoxCritical('Error', 'Main drive axis is not set to any motion control channel.')
+            return
+
+        self.anim_mgw_mda_load_spinner_start(True)
+
         log.info('Manual home pressed!')
         self.scan_status_update("HOMING")
         self.homing_started = True
@@ -1797,6 +1856,13 @@ class MMC_Main(QMainWindow):
             pass
 
     def manual_home_smr(self):
+        if self.motion_controllers.sample_rotation_axis is None:
+            log.error('Sample rotation axis is not set to any motion control channel.')
+            self.QMessageBoxCritical('Error', 'Sample rotation axis is not set to any motion control channel.')
+            return
+        
+        self.anim_mgw_sra_load_spinner_start(True)
+
         self.scan_status_update("HOMING SR")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
@@ -1806,6 +1872,13 @@ class MMC_Main(QMainWindow):
             self.QMessageBoxWarning('Homing Failed', e)
 
     def manual_home_sma(self):
+        if self.motion_controllers.sample_angle_axis is None:
+            log.error('Sample angle axis is not set to any motion control channel.')
+            self.QMessageBoxCritical('Error', 'Sample angle axis is not set to any motion control channel.')
+            return
+
+        self.anim_mgw_saa_load_spinner_start(True)
+
         self.scan_status_update("HOMING SA")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
@@ -1815,6 +1888,13 @@ class MMC_Main(QMainWindow):
             self.QMessageBoxWarning('Homing Failed', e)
 
     def manual_home_smt(self):
+        if self.motion_controllers.sample_translation_axis is None:
+            log.error('Sample translation axis is not set to any motion control channel.')
+            self.QMessageBoxCritical('Error', 'Sample translation axis is not set to any motion control channel.')
+            return
+
+        self.anim_mgw_sta_load_spinner_start(True)
+
         self.scan_status_update("HOMING ST")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
@@ -1824,6 +1904,13 @@ class MMC_Main(QMainWindow):
             self.QMessageBoxWarning('Homing Failed', e)
 
     def manual_home_dmr(self):
+        if self.motion_controllers.detector_rotation_axis is None:
+            log.error('Detector rotation axis is not set to any motion control channel.')
+            self.QMessageBoxCritical('Error', 'Detector rotation axis is not set to any motion control channel.')
+            return
+
+        self.anim_mgw_dra_load_spinner_start(True)
+
         self.scan_status_update("HOMING DR")
         self.homing_started = True
         self.disable_movement_sensitive_buttons(True)
@@ -1898,6 +1985,7 @@ class MMC_Main(QMainWindow):
 
     def scan_progress(self, curr_percent):
         self.UIE_mgw_scan_qpbar.setValue(curr_percent)
+        log.debug('scan_progress:', curr_percent)
 
     def scan_complete(self):
         log.debug('Setting scanRunning to False.')
@@ -2018,6 +2106,12 @@ class MMC_Main(QMainWindow):
         else:
             log.info('Nothing is moving...')
             self.disable_movement_sensitive_buttons(False)
+            self.anim_mgw_mda_load_spinner_start(False)
+            self.anim_mgw_fwa_load_spinner_start(False)
+            self.anim_mgw_saa_load_spinner_start(False)
+            self.anim_mgw_sra_load_spinner_start(False)
+            self.anim_mgw_sta_load_spinner_start(False)
+            self.anim_mgw_dra_load_spinner_start(False)
 
         self.current_position = mda_pos
         self.moving = mda_moving
@@ -2082,7 +2176,111 @@ class MMC_Main(QMainWindow):
         if self.motion_controllers.sample_angle_axis is not None:
             self.motion_controllers.sample_angle_axis.stop()
 
+    def anim_mgw_mda_load_spinner_start(self, run: bool):
+        if run and not self.anim_mgw_mda_load_spinner_running:
+            self.anim_mgw_mda_load_spinner.start()
+            self.UIE_mgw_mda_load_spinner_ql.setVisible(True)
+            self.anim_mgw_mda_load_spinner_running = True
+        elif not run and self.anim_mgw_mda_load_spinner_running:
+            self.anim_mgw_mda_load_spinner.stop()
+            self.UIE_mgw_mda_load_spinner_ql.setVisible(False)
+            self.anim_mgw_mda_load_spinner_running = False
+        elif run and self.anim_mgw_mda_load_spinner_running:
+            log.warn('Animation already running.')
+        elif not run and not self.anim_mgw_mda_load_spinner_running:
+            log.warn('Animation already stopped.')
+        else:
+            log.error('Unknown animation state.')
+
+    def anim_mgw_fwa_load_spinner_start(self, run: bool):
+        if run and not self.anim_mgw_fwa_load_spinner_running:
+            self.anim_mgw_fwa_load_spinner.start()
+            self.UIE_mgw_fwa_load_spinner_ql.setVisible(True)
+            self.anim_mgw_fwa_load_spinner_running = True
+        elif not run and self.anim_mgw_fwa_load_spinner_running:
+            self.anim_mgw_fwa_load_spinner.stop()
+            self.UIE_mgw_fwa_load_spinner_ql.setVisible(False)
+            self.anim_mgw_fwa_load_spinner_running = False
+        elif run and self.anim_mgw_fwa_load_spinner_running:
+            log.warn('Animation already running.')
+        elif not run and not self.anim_mgw_fwa_load_spinner_running:
+            log.warn('Animation already stopped.')
+        else:
+            log.error('Unknown animation state.')
+
+    def anim_mgw_saa_load_spinner_start(self, run: bool):
+        if run and not self.anim_mgw_saa_load_spinner_running:
+            self.anim_mgw_saa_load_spinner.start()
+            self.UIE_mgw_saa_load_spinner_ql.setVisible(True)
+            self.anim_mgw_saa_load_spinner_running = True
+        elif not run and self.anim_mgw_saa_load_spinner_running:
+            self.anim_mgw_saa_load_spinner.stop()
+            self.UIE_mgw_saa_load_spinner_ql.setVisible(False)
+            self.anim_mgw_saa_load_spinner_running = False
+        elif run and self.anim_mgw_saa_load_spinner_running:
+            log.warn('Animation already running.')
+        elif not run and not self.anim_mgw_saa_load_spinner_running:
+            log.warn('Animation already stopped.')
+        else:
+            log.error('Unknown animation state.')
+
+    def anim_mgw_sra_load_spinner_start(self, run: bool):
+        if run and not self.anim_mgw_sra_load_spinner_running:
+            self.anim_mgw_sra_load_spinner.start()
+            self.UIE_mgw_sra_load_spinner_ql.setVisible(True)
+            self.anim_mgw_sra_load_spinner_running = True
+        elif not run and self.anim_mgw_sra_load_spinner_running:
+            self.anim_mgw_sra_load_spinner.stop()
+            self.UIE_mgw_sra_load_spinner_ql.setVisible(False)
+            self.anim_mgw_sra_load_spinner_running = False
+        elif run and self.anim_mgw_sra_load_spinner_running:
+            log.warn('Animation already running.')
+        elif not run and not self.anim_mgw_sra_load_spinner_running:
+            log.warn('Animation already stopped.')
+        else:
+            log.error('Unknown animation state.')
+
+    def anim_mgw_sta_load_spinner_start(self, run: bool):
+        if run and not self.anim_mgw_sta_load_spinner_running:
+            self.anim_mgw_sta_load_spinner.start()
+            self.UIE_mgw_sta_load_spinner_ql.setVisible(True)
+            self.anim_mgw_sta_load_spinner_running = True
+        elif not run and self.anim_mgw_sta_load_spinner_running:
+            self.anim_mgw_sta_load_spinner.stop()
+            self.UIE_mgw_sta_load_spinner_ql.setVisible(False)
+            self.anim_mgw_sta_load_spinner_running = False
+        elif run and self.anim_mgw_sta_load_spinner_running:
+            log.warn('Animation already running.')
+        elif not run and not self.anim_mgw_sta_load_spinner_running:
+            log.warn('Animation already stopped.')
+        else:
+            log.error('Unknown animation state.')
+
+    def anim_mgw_dra_load_spinner_start(self, run: bool):
+        if run and not self.anim_mgw_dra_load_spinner_running:
+            self.anim_mgw_dra_load_spinner.start()
+            self.UIE_mgw_dra_load_spinner_ql.setVisible(True)
+            self.anim_mgw_dra_load_spinner_running = True
+        elif not run and self.anim_mgw_dra_load_spinner_running:
+            self.anim_mgw_dra_load_spinner.stop()
+            self.UIE_mgw_dra_load_spinner_ql.setVisible(False)
+            self.anim_mgw_dra_load_spinner_running = False
+        elif run and self.anim_mgw_dra_load_spinner_running:
+            log.warn('Animation already running.')
+        elif not run and not self.anim_mgw_dra_load_spinner_running:
+            log.warn('Animation already stopped.')
+        else:
+            log.error('Unknown animation state.')
+
     def move_to_position_button_pressed(self):
+
+        if self.motion_controllers.main_drive_axis is None:
+            log.error('Main drive axis is not set to any motion control channel.')
+            self.QMessageBoxCritical('Error', 'Main drive axis is not set to any motion control channel.')
+            return
+
+        self.anim_mgw_mda_load_spinner_start(True)
+
         self.moving = True
         self.disable_movement_sensitive_buttons(True)
 
@@ -2102,6 +2300,13 @@ class MMC_Main(QMainWindow):
         self.moving = False
 
     def move_to_position_button_pressed_sr(self):
+        if self.motion_controllers.sample_rotation_axis is None:
+            log.error('Sample rotation axis is not set to any motion control channel.')
+            self.QMessageBoxCritical('Error', 'Sample rotation axis is not set to any motion control channel.')
+            return
+
+        self.anim_mgw_sra_load_spinner_start(True)
+
         if (self.moving):
             log.warn('ALREADY MOVING!')
             return
@@ -2120,6 +2325,13 @@ class MMC_Main(QMainWindow):
         self.moving = False
 
     def move_to_position_button_pressed_sa(self):
+        if self.motion_controllers.sample_angle_axis is None:
+            log.error('Sample angle axis is not set to any motion control channel.')
+            self.QMessageBoxCritical('Error', 'Sample angle axis is not set to any motion control channel.')
+            return
+
+        self.anim_mgw_saa_load_spinner_start(True)
+
         if (self.moving):
             log.warn('ALREADY MOVING!')
             return
@@ -2139,6 +2351,13 @@ class MMC_Main(QMainWindow):
         log.debug('Completed move_to_position_button_pressed_sa() function.')
 
     def move_to_position_button_pressed_st(self):
+        if self.motion_controllers.sample_translation_axis is None:
+            log.error('Sample translation axis is not set to any motion control channel.')
+            self.QMessageBoxCritical('Error', 'Sample translation axis is not set to any motion control channel.')
+            return
+
+        self.anim_mgw_sta_load_spinner_start(True)
+
         if (self.moving):
             log.warn('ALREADY MOVING!')
             return
@@ -2158,6 +2377,13 @@ class MMC_Main(QMainWindow):
 
 
     def move_to_position_button_pressed_dr(self):
+        if self.motion_controllers.detector_rotation_axis is None:
+            log.error('Detector rotation axis is not set to any motion control channel.')
+            self.QMessageBoxCritical('Error', 'Detector rotation axis is not set to any motion control channel.')
+            return
+
+        self.anim_mgw_dra_load_spinner_start(True)
+
         if (self.moving):
             log.warn('ALREADY MOVING!')
             return

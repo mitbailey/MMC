@@ -140,6 +140,9 @@
                 <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0">
                  <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_22" stretch="0,0,0">
+                   <property name="sizeConstraint">
+                    <enum>QLayout::SetDefaultConstraint</enum>
+                   </property>
                    <property name="leftMargin">
                     <number>0</number>
                    </property>
@@ -244,9 +247,9 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>-1004</y>
-                      <width>620</width>
-                      <height>1479</height>
+                      <y>-1053</y>
+                      <width>624</width>
+                      <height>1274</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -551,17 +554,63 @@
                               </widget>
                              </item>
                              <item>
-                              <spacer name="horizontalSpacer_2">
-                               <property name="orientation">
-                                <enum>Qt::Horizontal</enum>
+                              <layout class="QVBoxLayout" name="verticalLayout_33">
+                               <property name="spacing">
+                                <number>0</number>
                                </property>
-                               <property name="sizeHint" stdset="0">
-                                <size>
-                                 <width>40</width>
-                                 <height>20</height>
-                                </size>
+                               <property name="leftMargin">
+                                <number>0</number>
                                </property>
-                              </spacer>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <spacer name="horizontalSpacer_2">
+                                 <property name="orientation">
+                                  <enum>Qt::Horizontal</enum>
+                                 </property>
+                                 <property name="sizeHint" stdset="0">
+                                  <size>
+                                   <width>40</width>
+                                   <height>0</height>
+                                  </size>
+                                 </property>
+                                </spacer>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="mda_load_spinner">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="maximumSize">
+                                  <size>
+                                   <width>16777215</width>
+                                   <height>58</height>
+                                  </size>
+                                 </property>
+                                 <property name="font">
+                                  <font>
+                                   <pointsize>14</pointsize>
+                                  </font>
+                                 </property>
+                                 <property name="text">
+                                  <string/>
+                                 </property>
+                                 <property name="alignment">
+                                  <set>Qt::AlignCenter</set>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
                              </item>
                              <item>
                               <widget class="QPushButton" name="home_button">
@@ -1084,17 +1133,34 @@
                               </widget>
                              </item>
                              <item>
-                              <spacer name="horizontalSpacer_9">
-                               <property name="orientation">
-                                <enum>Qt::Horizontal</enum>
+                              <layout class="QVBoxLayout" name="verticalLayout_34">
+                               <property name="spacing">
+                                <number>0</number>
                                </property>
-                               <property name="sizeHint" stdset="0">
-                                <size>
-                                 <width>40</width>
-                                 <height>20</height>
-                                </size>
+                               <property name="rightMargin">
+                                <number>5</number>
                                </property>
-                              </spacer>
+                               <item>
+                                <spacer name="horizontalSpacer_9">
+                                 <property name="orientation">
+                                  <enum>Qt::Horizontal</enum>
+                                 </property>
+                                 <property name="sizeHint" stdset="0">
+                                  <size>
+                                   <width>40</width>
+                                   <height>0</height>
+                                  </size>
+                                 </property>
+                                </spacer>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="fwa_load_spinner">
+                                 <property name="text">
+                                  <string/>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
                              </item>
                              <item>
                               <widget class="QPushButton" name="filter_wheel_home_button">
@@ -1161,7 +1227,7 @@
                                <rect>
                                 <x>0</x>
                                 <y>0</y>
-                                <width>578</width>
+                                <width>586</width>
                                 <height>148</height>
                                </rect>
                               </property>
@@ -1644,17 +1710,34 @@
                               </widget>
                              </item>
                              <item>
-                              <spacer name="horizontalSpacer_8">
-                               <property name="orientation">
-                                <enum>Qt::Horizontal</enum>
+                              <layout class="QVBoxLayout" name="verticalLayout_35">
+                               <property name="spacing">
+                                <number>0</number>
                                </property>
-                               <property name="sizeHint" stdset="0">
-                                <size>
-                                 <width>40</width>
-                                 <height>20</height>
-                                </size>
+                               <property name="rightMargin">
+                                <number>5</number>
                                </property>
-                              </spacer>
+                               <item>
+                                <spacer name="horizontalSpacer_8">
+                                 <property name="orientation">
+                                  <enum>Qt::Horizontal</enum>
+                                 </property>
+                                 <property name="sizeHint" stdset="0">
+                                  <size>
+                                   <width>40</width>
+                                   <height>0</height>
+                                  </size>
+                                 </property>
+                                </spacer>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="sra_load_spinner">
+                                 <property name="text">
+                                  <string/>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
                              </item>
                              <item>
                               <widget class="QPushButton" name="sample_rotate_home_button">
@@ -1755,17 +1838,34 @@
                               </widget>
                              </item>
                              <item>
-                              <spacer name="horizontalSpacer_19">
-                               <property name="orientation">
-                                <enum>Qt::Horizontal</enum>
+                              <layout class="QVBoxLayout" name="verticalLayout_36">
+                               <property name="spacing">
+                                <number>0</number>
                                </property>
-                               <property name="sizeHint" stdset="0">
-                                <size>
-                                 <width>40</width>
-                                 <height>20</height>
-                                </size>
+                               <property name="rightMargin">
+                                <number>5</number>
                                </property>
-                              </spacer>
+                               <item>
+                                <spacer name="horizontalSpacer_25">
+                                 <property name="orientation">
+                                  <enum>Qt::Horizontal</enum>
+                                 </property>
+                                 <property name="sizeHint" stdset="0">
+                                  <size>
+                                   <width>40</width>
+                                   <height>0</height>
+                                  </size>
+                                 </property>
+                                </spacer>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="saa_load_spinner">
+                                 <property name="text">
+                                  <string/>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
                              </item>
                              <item>
                               <widget class="QPushButton" name="sample_angle_home_button">
@@ -1866,17 +1966,34 @@
                               </widget>
                              </item>
                              <item>
-                              <spacer name="horizontalSpacer_11">
-                               <property name="orientation">
-                                <enum>Qt::Horizontal</enum>
+                              <layout class="QVBoxLayout" name="verticalLayout_37">
+                               <property name="spacing">
+                                <number>0</number>
                                </property>
-                               <property name="sizeHint" stdset="0">
-                                <size>
-                                 <width>40</width>
-                                 <height>20</height>
-                                </size>
+                               <property name="rightMargin">
+                                <number>5</number>
                                </property>
-                              </spacer>
+                               <item>
+                                <spacer name="horizontalSpacer_27">
+                                 <property name="orientation">
+                                  <enum>Qt::Horizontal</enum>
+                                 </property>
+                                 <property name="sizeHint" stdset="0">
+                                  <size>
+                                   <width>40</width>
+                                   <height>0</height>
+                                  </size>
+                                 </property>
+                                </spacer>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="sta_load_spinner">
+                                 <property name="text">
+                                  <string/>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
                              </item>
                              <item>
                               <widget class="QPushButton" name="sample_trans_home_button">
@@ -2463,17 +2580,31 @@
                               </widget>
                              </item>
                              <item>
-                              <spacer name="horizontalSpacer_12">
-                               <property name="orientation">
-                                <enum>Qt::Horizontal</enum>
+                              <layout class="QVBoxLayout" name="verticalLayout_38">
+                               <property name="rightMargin">
+                                <number>5</number>
                                </property>
-                               <property name="sizeHint" stdset="0">
-                                <size>
-                                 <width>40</width>
-                                 <height>20</height>
-                                </size>
-                               </property>
-                              </spacer>
+                               <item>
+                                <spacer name="horizontalSpacer_12">
+                                 <property name="orientation">
+                                  <enum>Qt::Horizontal</enum>
+                                 </property>
+                                 <property name="sizeHint" stdset="0">
+                                  <size>
+                                   <width>40</width>
+                                   <height>0</height>
+                                  </size>
+                                 </property>
+                                </spacer>
+                               </item>
+                               <item>
+                                <widget class="QLabel" name="dra_load_spinner">
+                                 <property name="text">
+                                  <string/>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
                              </item>
                              <item>
                               <widget class="QPushButton" name="detector_rotate_home_button">
