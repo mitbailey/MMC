@@ -77,7 +77,7 @@ enable.dev
 # Program Generated Files #
 ###########################
 **/*.fits
-**/*.png
+# **/*.png
 **/*.dat
 # **/*.txt
 **/*.csv

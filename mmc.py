@@ -75,6 +75,7 @@ from PyQt5.QtGui import QColor, QFontDatabase, QFont
 from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QRadioButton, QSizePolicy, QStyle, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QTabWidget, QTableWidgetItem, QFrame, QProgressBar, QCheckBox, QSpinBox, QStatusBar, QAction, QSpacerItem)
 from PyQt5.QtCore import QTimer
 from PyQt5 import QtWidgets
+from PyQt5 import QtGui
 
 # More Standard Imports
 import weakref
@@ -126,7 +127,8 @@ digital_7_16 = None
 
 # Determines which enabler files exist - these will enable certain experimental or advanced sections of the program.
 SHOW_FILTER_WHEEL = os.path.isfile('enable.exp')
-SHOW_SAMPLE_MOVEMENT = os.path.isfile('enable.adv')
+# SHOW_SAMPLE_MOVEMENT = os.path.isfile('enable.adv')
+SHOW_SAMPLE_MOVEMENT = True
 # SHOW_DETECTOR_ROTATION = os.path.isfile('enable.adv')
 SHOW_DETECTOR_ROTATION = True
 ALLOW_DUMMY_MODE = os.path.isfile('enable.dev')
@@ -250,8 +252,19 @@ class MMC_Main(QMainWindow):
 
         self.application: QApplication = application
         self._startup_args = self.application.arguments()
+
         super(MMC_Main, self).__init__()
         uic.loadUi(uiresource, self)
+        
+        self.setWindowIcon(QtGui.QIcon(exeDir + '/res/faviconV2.png'))
+        # app_icon = QtGui.QIcon()
+        # app_icon.addFile(exeDir + '/res/MMCS_Icon_16.png', QtCore.QSize(16,16))
+        # app_icon.addFile(exeDir + '/res/MMCS_Icon_24.png', QtCore.QSize(24,24))
+        # app_icon.addFile(exeDir + '/res/MMCS_Icon_32.png', QtCore.QSize(32,32))
+        # app_icon.addFile(exeDir + '/res/MMCS_Icon_48.png', QtCore.QSize(48,48))
+        # app_icon.addFile(exeDir + '/res/MMCS_Icon_256.png', QtCore.QSize(256,256))
+        # self.setWindowIcon(app_icon)
+
         self.SIGNAL_device_manager_ready.connect(self.connect_devices)
         self.SIGNAL_devices_connection_check.connect(self.devices_connection_check)
 
@@ -350,7 +363,7 @@ class MMC_Main(QMainWindow):
             self.dmw = QDialog(self) # pass parent window
             uic.loadUi(ui_file, self.dmw)
 
-            self.dmw.setWindowTitle('Device Manager (%sv%s)'%(version.__short_name__, version.__version__))
+            self.dmw.setWindowTitle('%s (%sv%s)'%(version.__long_name__, version.__short_name__, version.__version__))
             self.dmw_list = ''
 
 
@@ -400,8 +413,6 @@ class MMC_Main(QMainWindow):
             self.UIE_dmw_detector_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "detector_combo_layout")
             self.UIE_dmw_mtn_ctrl_combo_qvbl: QVBoxLayout = self.dmw.findChild(QVBoxLayout, "mtn_ctrl_combo_layout")
             self.UIE_dmw_load_bar_qpb: QProgressBar = self.dmw.findChild(QProgressBar, "loading_bar")
-
-
 
             self.devman_list_devices(True)
 
@@ -635,11 +646,11 @@ class MMC_Main(QMainWindow):
 
         if ALLOW_DUMMY_MODE:
             if dummy:
-                self.setWindowTitle('McPherson Monochromator Control (Debug Mode) (%sv%s)'%(version.__short_name__, version.__version__))
+                self.setWindowTitle('%s (Debug Mode) (%sv%s)'%(version.__long_name__, version.__short_name__, version.__version__))
             else:
-                self.setWindowTitle('McPherson Monochromator Control (Hardware Mode) (%sv%s)'%(version.__short_name__, version.__version__))
+                self.setWindowTitle('%s (Hardware Mode) (%sv%s)'%(version.__long_name__, version.__short_name__, version.__version__))
         else:
-                self.setWindowTitle('McPherson Monochromator Control (%sv%s)'%(version.__short_name__, version.__version__))
+                self.setWindowTitle('%s (%sv%s)'%(version.__long_name__, version.__short_name__, version.__version__))
 
         self.is_conv_set = False # Use this flag to set conversion
 
@@ -923,14 +934,6 @@ class MMC_Main(QMainWindow):
             # self.motion_controllers.main_drive_axis.home() # Handled individually by driver.
         self.current_position = -1900
 
-        # Get and set the palette.
-        # palette = self.UIE_mgw_currpos_nm_disp_ql.palette()
-        # palette.setColor(palette.WindowText, QColor(255, 0, 0))
-        # palette.setColor(palette.Background, QColor(0, 170, 255))
-        # palette.setColor(palette.Light, QColor(80, 80, 255))
-        # palette.setColor(palette.Dark, QColor(0, 255, 0))
-        # self.UIE_mgw_currpos_nm_disp_ql.setPalette(palette)
-
         # # #
 
         self.UIE_mgw_graph_qtw: QTabWidget = self.findChild(QTabWidget, "graph_tabs")
@@ -990,30 +993,6 @@ class MMC_Main(QMainWindow):
 
         # # #
 
-        # # # Setup the single graph.
-        # self.plotCanvas = MplCanvas(self, width=5, height=4, dpi=100)
-        # self.plotCanvas.clear_plot_fcn()
-        # # for i in range(self.UIE_mgw_table_qtw.count()):
-        # for table in self.table_list:
-        #     self.plotCanvas.set_table_clear_cb(table.plotsClearedCb)
-        # # self.plotCanvas.set_table_clear_cb(self.table.plotsClearedCb)
-        # toolbar = self.plotCanvas.get_toolbar()
-        # layout = QtWidgets.QVBoxLayout()
-        # layout.addWidget(toolbar)
-        # layout.addWidget(self.plotCanvas)
-        # self.UIE_mgw_plot_frame_qw.setLayout(layout)
-
-        # self.UIE_mgw_plot_clear_plots_qpb.clicked.connect(self.plotCanvas.clear_plot_fcn)
-
-
-
-
-
-
-
-
-
-
         # Set the initial value of the Manual Control 'Position:' spin box.
         self.UIE_mgw_pos_qdsb.setValue(0)
 
@@ -1045,10 +1024,6 @@ class MMC_Main(QMainWindow):
 
         # Other stuff.
         self.scan = scan.Scan(weakref.proxy(self))
-        # self.sm_scan = scan.ScanSM(weakref.proxy(self))
-        # self.dm_scan = scan.ScanDM(weakref.proxy(self))
-        
-        # self.queue_executor_thread.set_scan_obj(self.scan)
 
         log.debug('UpdatePositionDisplays: Thread start() called.')
         self.update_position_displays_thread.start()
@@ -1109,7 +1084,6 @@ class MMC_Main(QMainWindow):
         self.table_result.updatePlots(0)
         for table in self.table_list:
             table.updatePlots(0)
-        # self.table.updatePlots()
 
         self.UIE_mgw_mda_qw: QWidget = self.findChild(QWidget, 'main_drive_area')
         self.UIE_mgw_mda_collapse_qpb: QPushButton = self.findChild(QPushButton, 'main_drive_area_collap')
@@ -1284,9 +1258,6 @@ class MMC_Main(QMainWindow):
         if answer == QMessageBox.Yes:
             self.save_config(appDir + '/config.ini')
 
-        # if answer == 0:
-            # self.save_config(appDir + '/config.ini')
-        
     def save_config(self, path: str):
         md_sp = 0.0
         fw_sp = 0.0
@@ -1676,23 +1647,6 @@ class MMC_Main(QMainWindow):
             # Attempt a load of the device manager configuration file.
             self.load_config_devman(appDir + '/devman.ini')
 
-    # def get_ref_data(self):
-    #     if self.table is None:
-    #         return
-        
-    #     # Extract ref data/metadata
-    #     data, metadata = self.table.getRefData()
-    #     log.debug(data, metadata)
-    #     if data is None:
-    #         return
-    #     if metadata is not None:
-    #         try:
-    #             tstamp = metadata['tstamp']
-    #             scan_id = metadata['scan_id']
-    #         except Exception:
-    #             tstamp = dt.datetime.now()
-    #             scan_id = 100
-
     #     # TODO: Use the ref data
 
     def save_data_cb(self):
@@ -1878,49 +1832,6 @@ class MMC_Main(QMainWindow):
         except Exception as e:
             self.QMessageBoxWarning('Homing Failed', e)
 
-    # def table_log(self, data, scan_type: str, start: float, stop: float = -1, step: float = -1, data_points: int = 1):
-    #     self.scan_number += 1
-
-    #     if scan_type == 'Automatic':
-    #         row_pos = 0
-    #         if self.table_has_manual_entry:
-    #             row_pos = 1
-    #         self.table.insertRow(row_pos)
-    #         self.table.setItem(row_pos, 0, QTableWidgetItem(str(self.scan_number)))
-    #         self.table.setItem(row_pos, 1, QTableWidgetItem(scan_type))
-    #         self.table.setItem(row_pos, 2, QTableWidgetItem(str(data_points)))
-    #         self.table.setItem(row_pos, 3, QTableWidgetItem(str(start)))
-    #         self.table.setItem(row_pos, 4, QTableWidgetItem(str(stop)))
-    #         self.table.setItem(row_pos, 5, QTableWidgetItem(str(step)))
-
-    #         # Add or update data entry.
-    #         self.auto_data_dict.update({self.scan_number: data})
-    #         log.debug(self.auto_data_dict)
-
-    #     elif scan_type == 'Manual':
-    #         if self.table_has_manual_entry:
-    #             self.table_manual_points += 1
-    #             log.info("TABLE MANUAL POINTS: " + str(self.table_manual_points))
-    #             self.table.setItem(self.table_manual_row, 2, QTableWidgetItem(str(self.table_manual_points)))
-
-    #             # Append to manual data CSV string.
-    #             self.man_data_str += data
-    #             log.debug(self.man_data_str)
-
-    #         else:
-    #             self.table_has_manual_entry = True
-    #             self.table.insertRow(0)
-    #             self.table.setItem(0, 0, QTableWidgetItem(str(self.scan_number)))
-    #             self.table.setItem(0, 1, QTableWidgetItem(scan_type))
-    #             self.table.setItem(0, 2, QTableWidgetItem(str(data_points)))
-    #             self.table.setItem(0, 3, QTableWidgetItem(str(start)))
-    #             self.table.setItem(0, 4, QTableWidgetItem(str(stop)))
-    #             self.table.setItem(0, 5, QTableWidgetItem(str(step)))
-
-    #             # Set manual data CSV string.
-    #             self.man_data_str = data
-    #             log.debug(self.man_data_str)
-
     def autosave_dir_triggered(self):
         self.data_save_directory = QFileDialog.getExistingDirectory(self, 'Auto logging files location', self.data_save_directory, options=QFileDialog.ShowDirsOnly)
 
@@ -2003,10 +1914,6 @@ class MMC_Main(QMainWindow):
         self.table_result.insertData(det_idx, self.global_scan_id, None, None, metadata)
         self.table_list[det_idx].insertData(det_idx, self.global_scan_id, None, None, metadata)
         
-        # n_scan_idx = self.table_list[det_idx].insertData(None, None, metadata)
-        # if n_scan_idx != scan_idx:
-        #     log.warn('\n\n CHECK INSERTION ID MISMATCH %d != %d\n\n'%(scan_idx, n_scan_idx))
-
     # This function is called via a signal emission from scan.py.
     # The data is actually stored in datatable.py's recordedData.
     def scan_data_update(self, which_detector: int, scan_idx: int, det_idx: int, xdata: float, ydata: float):
@@ -2018,11 +1925,6 @@ class MMC_Main(QMainWindow):
         self.table_result.insertDataAt(det_idx, scan_idx, xdata, ydata)
         self.table_list[det_idx].insertDataAt(det_idx, scan_idx, xdata, ydata)
         log.info("Data from detector #%d received."%(det_idx))
-
-        # if which_detector == 0:
-        #     self.table.insertDataAt(scan_idx, xdata, ydata)
-        # elif which_detector == 1:
-        #     log.info("Detector 1 data received.")
 
     def scan_data_complete(self, which_detector: int, scan_idx: int, scan_class: str):
         # Which detector is just the index of the active detector spinbox when the scan began.
@@ -2410,13 +2312,6 @@ class MMC_Main(QMainWindow):
 
                     self.UIE_mcw_main_drive_axis_qcb.setCurrentIndex(1)
 
-            # self.UIE_mcw_main_drive_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_main)
-            # self.UIE_mcw_filter_wheel_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_filter)
-            # self.UIE_mcw_sample_rotation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_rsamp)
-            # self.UIE_mcw_sample_angle_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_asamp)
-            # self.UIE_mcw_sample_translation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_tsamp)
-            # self.UIE_mcw_detector_rotation_axis_qcb.currentIndexChanged.connect(self.mcw_axis_change_detector)
-
             self.UIE_mcw_fw_steps_per_rot_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_steps_per_deg')
             self.UIE_mcw_fw_max_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_max')
             self.UIE_mcw_fw_min_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'fw_min')
@@ -2440,28 +2335,6 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'st_offset')
             self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'dr_offset')
             log.debug(f'dr_offset: {self.dr_offset}')
-
-            # UIE_mcw_fw_steps_per_rot_qdsb
-            # self.UIE_mcw_sm_steps_per_rot_qdsb.valueChanged.connect(self.update_steps_per)
-            # self.UIE_mcw_sm_steps_per_ang_qdsb.valueChanged.connect(self.update_steps_per)
-            # self.UIE_mcw_sm_steps_per_trans_qdsb.valueChanged.connect(self.update_steps_per)
-            # self.UIE_mcw_dr_steps_per_qdsb.valueChanged.connect(self.update_steps_per)
-
-            # self.UIE_mcw_zero_ofst_in_qdsb.valueChanged.connect(self.update_offsets)
-            # self.UIE_mcw_fw_offset_qdsb.valueChanged.connect(self.update_offsets)
-            # self.UIE_mcw_sr_offset_qdsb.valueChanged.connect(self.update_offsets)
-            # self.UIE_mcw_sa_offset_qdsb.valueChanged.connect(self.update_offsets)
-            # self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
-            # self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
-
-            # Reference System
-            # self.UIE_mcw_operation_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'operation_qcb')
-            # self.UIE_mcw_meas_ref_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_meas_ref_qrb')
-            # self.UIE_mcw_ref_meas_qrb: QRadioButton = self.machine_conf_win.findChild(QRadioButton, 'order_ref_meas_qrb')
-
-            # self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
-            # self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
-            # self.UIE_mcw_ref_meas_qrb.toggled.connect(self.reference_order_changed)
 
             # TEMPORARY DISABLING OF UI ELEMENT UNTIL FUTURE VERSION IMPLEMENTATION. 
             tabWidget = self.machine_conf_win.findChild(QTabWidget, "tabWidget")
@@ -2554,10 +2427,6 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_sa_offset_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_st_offset_qdsb.valueChanged.connect(self.update_offsets)
             self.UIE_mcw_dr_offset_qdsb.valueChanged.connect(self.update_offsets)
-
-            # self.UIE_mcw_operation_qcb.currentIndexChanged.connect(self.reference_operation_changed)
-            # self.UIE_mcw_meas_ref_qrb.toggled.connect(self.reference_order_changed)
-            # self.UIE_mcw_ref_meas_qrb.toggled.connect(self.reference_order_changed)
 
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         log.debug('Exec done')
@@ -2652,30 +2521,6 @@ class MMC_Main(QMainWindow):
         self.update_movement_limits_gui()
 
         self.update_offsets()
-
-        # self.zero_ofst = self.UIE_mcw_zero_ofst_in_qdsb.value()
-        # self.fw_offset = self.UIE_mcw_fw_offset_qdsb.value()
-        # self.st_offset = self.UIE_mcw_st_offset_qdsb.value()
-        # self.sr_offset = self.UIE_mcw_sr_offset_qdsb.value()
-        # self.dr_offset = self.UIE_mcw_dr_offset_qdsb.value()
-
-        # if self.motion_controllers.main_drive_axis is not None:
-
-        #     log.debug('Main drive offset before --- ', self.motion_controllers.main_drive_axis.get_offset(), self.motion_controllers.main_drive_axis._offset)
-
-        #     self.motion_controllers.main_drive_axis.set_offset(self.zero_ofst)
-
-        #     log.debug('Main drive offset before --- ', self.motion_controllers.main_drive_axis.get_offset(), self.motion_controllers.main_drive_axis._offset)
-
-        # if self.motion_controllers.filter_wheel_axis is not None:
-        #     self.motion_controllers.filter_wheel_axis.set_offset(self.fw_offset)
-        # if self.motion_controllers.sample_translation_axis is not None:
-        #     self.motion_controllers.sample_translation_axis.set_offset(self.st_offset)
-        # if self.motion_controllers.sample_rotation_axis is not None:
-        #     self.motion_controllers.sample_rotation_axis.set_offset(self.sr_offset)
-        # if self.motion_controllers.detector_rotation_axis is not None:
-        #     self.motion_controllers.detector_rotation_axis.set_offset(self.dr_offset)
-
 
         self.calculate_and_apply_steps_per_nm()
 
@@ -3053,10 +2898,6 @@ class MMC_Main(QMainWindow):
 
         self.update_movement_limits_gui()
 
-        # # Set conversion factors.
-        # if not self.UIE_mcw_override_steps_per_nm_qckbx.isChecked():
-        #     self.calculate_and_apply_steps_per_nm()
-
         if self.motion_controllers.filter_wheel_axis is not None:
             self.motion_controllers.filter_wheel_axis.set_steps_per_value(self.UIE_mcw_fw_steps_per_rot_qdsb.value())
         if self.motion_controllers.sample_rotation_axis is not None:
@@ -3067,12 +2908,6 @@ class MMC_Main(QMainWindow):
             self.motion_controllers.sample_translation_axis.set_steps_per_value(self.UIE_mcw_sm_steps_per_trans_qdsb.value())
         if self.motion_controllers.detector_rotation_axis is not None:
             self.motion_controllers.detector_rotation_axis.set_steps_per_value(self.UIE_mcw_dr_steps_per_qdsb.value())
-
-        # log.info('Main Drive Axis:           [%f < %f < %f]'%(self.motion_controllers.))
-        # log.info('Filter Wheel Axis:         [%f < %f < %f]')
-        # log.info('Sample Rotation Axis:      [%f < %f < %f]')
-        # log.info('Sample Translation Axis:   [%f < %f < %f]')
-        # log.info('Detector Rotation Axis:    [%f < %f < %f]')
 
         log.info('APPLIED GRAT DENSITY:', self.grating_density)
         if self.motion_controllers.main_drive_axis is not None:
@@ -3169,17 +3004,6 @@ if __name__ == '__main__':
     
     try:
         application = QApplication(sys.argv)
-
-        # # Finding and setting of fonts.
-        # try:
-        #     fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono italic).ttf')
-        # except Exception as e:
-        #     log.error(e)
-
-        # try:
-        #     fid = QFontDatabase.addApplicationFont(exeDir + '/fonts/digital-7 (mono).ttf')
-        # except Exception as e:
-        #     log.error(e)
 
         # Main GUI and child-window setup.
         ui_file_name = exeDir + '/ui/machine_config.ui'
