@@ -57,8 +57,6 @@ class TableRowRaw(TypedDict):
     y: np.ndarray
     plotted: bool
     plot_cb: CustomQCheckBox
-    ref_cb: CustomQCheckBox
-
 
 class DataTableWidget(QTableWidget):
     def __init__(self, parent):
@@ -86,50 +84,33 @@ class DataTableWidget(QTableWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.selectionModel().selectionChanged.connect(self.__tableSelectAction)
         self.currentRefId = -1
-        # self.scan_idx = 0
         self.ref_data = None
         self.is_result = False
         self.reference_operation = 0
 
     def insertData(self, det_idx: int, global_scan_id: int, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         
-        # scanId = self._scanId
-        # self._scanId += 1
-
-
         if not self._internal_insert_exec:
             self.recordedMetaData[(global_scan_id, det_idx)] = metadata
         if xdata is None:
             xdata = np.array([], dtype = float)
         if ydata is None:
             ydata = np.array([], dtype = float)
-        self.recordedData[(global_scan_id, det_idx)] = {'id': global_scan_id, 'name': '', 'x': xdata, 'y': ydata, 'plotted': True, 'plot_cb': CustomQCheckBox(global_scan_id), 'ref_cb': CustomQCheckBox(global_scan_id)}
+        self.recordedData[(global_scan_id, det_idx)] = {'id': global_scan_id, 'name': '', 'x': xdata, 'y': ydata, 'plotted': True, 'plot_cb': CustomQCheckBox(global_scan_id)}
         
         self.recordedData[(global_scan_id, det_idx)]['plot_cb'].setChecked(True)
         self.recordedData[(global_scan_id, det_idx)]['plot_cb'].setDisabled(btn_disabled)
         self.recordedData[(global_scan_id, det_idx)]['plot_cb'].stateChanged.connect(lambda: self.__plotCheckboxCb(det_idx)) # connect callback
 
-        self.recordedData[(global_scan_id, det_idx)]['ref_cb'].setChecked(False)
-        self.recordedData[(global_scan_id, det_idx)]['ref_cb'].setDisabled(False)
-        self.recordedData[(global_scan_id, det_idx)]['ref_cb'].stateChanged.connect(lambda: self.__refCheckboxCb(det_idx)) # connect callback
-        log.debug('Ref Checkbox ID:', global_scan_id)
         log.debug('Plot Checkbox:', self.recordedData[(global_scan_id, det_idx)]['plot_cb'])
-        log.debug('Ref Checkbox:', self.recordedData[(global_scan_id, det_idx)]['ref_cb'])
 
         self.updateTableDisplay(det_idx, global_scan_id, name_editable)
-
-        # self.scan_idx += 1
-        # return (scanId)
-    
-    # @property
-    # def scanId(self):
-    #     return self._scanId
 
     # This is called from mmc.py which is called from scan.py. The data is stored here in recordedData.
     def insertDataAt(self, det_idx: int, global_scan_id: int, xdata: np.ndarray | float, ydata: np.ndarray | float) -> int:
         log.debug(f'global_scan_id: {global_scan_id}')
         log.debug(f'self.recordedData.keys(): {self.recordedData.keys()}')
-        # self._scanId = scanId
+
         if (global_scan_id, det_idx) not in self.recordedData.keys():
             self._scanId = global_scan_id
             self._internal_insert_exec = True
@@ -199,22 +180,12 @@ class DataTableWidget(QTableWidget):
             self.rowMap += namedIds
             self.rowMap += unnamedIds
             log.debug("Row Map:", self.rowMap)
-            checkpoint = 0
-
-            # log.debug('Checkpoint A: %d'%(checkpoint))
-            checkpoint+=1
 
             if len(self.rowMap) > self.num_rows:
                     
-                # log.debug('Checkpoint B: %d'%(checkpoint))
-                checkpoint+=1
-
                 log.debug('Allocating rows:', len(self.rowMap), self.num_rows)
                 for ii in range(self.num_rows, len(self.rowMap)):
                     
-                    # log.debug('Checkpoint C: %d'%(checkpoint))
-                    checkpoint+=1
-
                     self.insertRow(ii)
                     log.debug("Adding new row for row_idx %d."%(ii))
                     self.num_rows += 1
@@ -222,101 +193,39 @@ class DataTableWidget(QTableWidget):
             
             for row_idx, (scan_idx, key_det_idx) in enumerate(self.rowMap):
                 
-                # log.debug('Checkpoint D: %d'%(checkpoint))
-                checkpoint+=1
-
                 text = 'Scan #%d'%(scan_idx + 1) if len(self.recordedData[(scan_idx, key_det_idx)]['name']) == 0 else '%s #%d'%(self.recordedData[(scan_idx, key_det_idx)]['name'], scan_idx)
-                # text = 'Scan #%d'%(scanId) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx)
 
-                # log.debug('Checkpoint E: %d'%(checkpoint))
-                checkpoint+=1
 
                 if name_editable:
-
-                    # log.debug('Checkpoint F: %d'%(checkpoint))
-                    checkpoint+=1
-
                     textEditor = CustomQLineEdit(scan_idx, text)
-
-                    # log.debug('Checkpoint G: %d'%(checkpoint))
-                    checkpoint+=1
-
                     textEditor.editingFinished.connect(self.__nameUpdated)
-
-                    # log.debug('Checkpoint H: %d'%(checkpoint))
-                    checkpoint+=1
-
                     self.setCellWidget(row_idx, 0, textEditor)
-
-                    # log.debug('Checkpoint I: %d'%(checkpoint))
-                    checkpoint+=1
                 else:
-                    # log.debug('Checkpoint J: %d'%(checkpoint))
-                    checkpoint+=1
-
                     self.setItem(row_idx, 0, QTableWidgetItem(text))
 
-                    # log.debug('Checkpoint K: %d'%(checkpoint))
-                    checkpoint+=1
                 xmin = 0
                 try:
-                    # log.debug('Checkpoint L: %d'%(checkpoint))
-                    checkpoint+=1
-
                     xmin = round(self.recordedData[(scan_idx, key_det_idx)]['x'].min(), 4)
-
-                    # log.debug('Checkpoint M: %d'%(checkpoint))
-                    checkpoint+=1
                 except Exception as e:
                     pass
                 
                 xmax = 0
                 try:
-                    # log.debug('Checkpoint N: %d'%(checkpoint))
-                    checkpoint+=1
-                    
                     xmax = round(self.recordedData[(scan_idx, key_det_idx)]['x'].max(), 4)
-                    
-                    # log.debug('Checkpoint O: %d'%(checkpoint))
-                    checkpoint+=1
                 except Exception:
                     pass
 
-                # log.debug('Checkpoint P: %d'%(checkpoint))
-                checkpoint+=1
-
                 self.setItem(row_idx, 1, QTableWidgetItem(str(xmin)))
-
-                # log.debug('Checkpoint Q: %d'%(checkpoint))
-                checkpoint+=1
 
                 self.setItem(row_idx, 2, QTableWidgetItem(str(xmax)))
                 try:
-
-                    # log.debug('Checkpoint R: %d'%(checkpoint))
-                    checkpoint+=1
-
                     self.setItem(row_idx, 3, QTableWidgetItem(str(round(np.diff(self.recordedData[(scan_idx, key_det_idx)]['x'])[0], 4))))
-
-                    # log.debug('Checkpoint S: %d'%(checkpoint))
-                    checkpoint+=1
 
                 except Exception:
                     self.setItem(row_idx, 3, QTableWidgetItem(str(0)))
                 if name_editable:
 
-                    # log.debug('Checkpoint T: %d'%(checkpoint))
-                    checkpoint+=1
-
                     self.setCellWidget(row_idx, 4, self.recordedData[(scan_idx, key_det_idx)]['plot_cb'])
-
-                try:
-                    self.setCellWidget(row_idx, 5, self.recordedData[(scan_idx, key_det_idx)]['ref_cb'])
-                except Exception:
-                    self.setItem(row_idx, 5, QTableWidgetItem(str(0)))
-
-                # log.debug('Checkpoint U: %d'%(checkpoint))
-                checkpoint+=1
 
             self.newItem = False
 
@@ -331,11 +240,7 @@ class DataTableWidget(QTableWidget):
             if self.recordedData[scan_idx]['plotted']:
                 text = 'Scan #%d'%(scan_idx[0] + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx[0] + 1)
                 
-                # This next line is how we used to prepare and send the data before references and operations existed...
-                # data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx])
-                
                 # This is the new way we send the data - by applying the reference operation first. This is also done in saveDataCb(...)
-                # self.recordedData[self.currentRefId]
                 if self.ref_data is not None: # The GUI has set our reference data, so we should use it.
                     if np.shape(self.ref_data['y']) != np.shape(self.recordedData[scan_idx]['y']):
                         log.error(f"Reference data shape {np.shape(self.ref_data['y'])} does not match data shape {np.shape(self.recordedData[scan_idx]['y'])}!")
@@ -365,40 +270,6 @@ class DataTableWidget(QTableWidget):
                     log.debug('No reference data set, so no operation necessary...')
                     data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx[0]])
 
-                # if (self.ref_data is not None) and np.array_equal(self.recordedData[scan_idx]['x'], self.ref_data[0][0]):
-                #     log.debug('Current reference ID is set (%d), so performing operation...'%(self.currentRefId))
-                #     # First we set which operands we want in which order based on the QRadioButtons.
-                #     opx = np.copy(self.recordedData[scan_idx]['x'])
-                #     if self.parent.reference_operation:
-                #         # op1x = np.copy(self.recordedData[scan_idx]['x'])
-                #         op1y = np.copy(self.recordedData[scan_idx]['y'])
-                #         # op2x = np.copy(self.recordedData[self.currentRefId]['x'])
-                #         op2y = np.copy(self.ref_data[0][1])
-                #     else:
-                #         # op1x = np.copy(self.recordedData[self.currentRefId]['x'])
-                #         op1y = np.copy(self.ref_data[0][1])
-                #         # op2x = np.copy(self.recordedData[scan_idx]['x'])
-                #         op2y = np.copy(self.recordedData[scan_idx]['y'])
-
-                #     # Then we operate based on the operation selected in the QComboBox and append.
-                #     if self.parent.reference_operation == 0: # Multiply
-                #         # Multiply
-                #         data.append([opx, np.multiply(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                #     elif self.parent.reference_operation == 1: # Divide
-                #         # Divide
-                #         data.append([opx, np.divide(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                #     elif self.parent.reference_operation == 2: # Add
-                #         data.append([opx, np.add(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                #     elif self.parent.reference_operation == 3: # Subtract
-                #         data.append([opx, np.subtract(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                #     else:
-                #         # Unknown
-                #         log.error('Unknown operation index:', self.parent.reference_operation)
-                # else:
-                #     log.debug('No reference ID set (%d), so no operation necessary...'%(self.currentRefId))
-                #     # No operation necessary.
-                #     data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx[0]])
-
         # This updates the main plot in MainGUIWindow with the data we are passing to it.
         self.parent.update_plots(det_idx, data, self.is_result) # updatePlots in Ui(QMainWindow)
 
@@ -418,54 +289,6 @@ class DataTableWidget(QTableWidget):
         self.recordedData[(global_scan_id, det_idx)]['plotted'] = state == Qt.Checked
         log.debug(self.recordedData[(global_scan_id, det_idx)]['plotted'])
         self.updatePlots(det_idx)
-
-    def __refCheckboxCb(self, det_idx: int):
-        src: CustomQCheckBox = self.sender()
-        state = src.checkState()
-        global_scan_id = src.id
-
-        log.debug(f'BEFORE currentRefId: {self.currentRefId}, global_scan_id: {global_scan_id}')
-
-        if self.currentRefId > -1:
-            self.recordedData[(self.currentRefId, det_idx)]['ref_cb'].setChecked(False)
-
-        if global_scan_id == self.currentRefId:
-            # self.recordedData[self.currentRefId]['ref_cb'].setChecked(False)
-            self.currentRefId = -1
-        else:
-            self.currentRefId = global_scan_id
-
-        log.debug(f'AFTER currentRefId: {self.currentRefId}, global_scan_id: {global_scan_id}')
-
-        # To retrieve the data from a row:
-        # self.recordedData[scanId]
-
-        # log.debug(state, scanId)
-        # self.recordedData[scanId]['plotted'] = state == Qt.Checked
-        # log.debug(self.recordedData[scanId]['plotted'])
-
-        # TODO: This will need to update only the Results tabs, not the raw tabs.
-        log.error('Reference checkbox callback not implemented for multiple tabs yet.')
-        # self.updatePlots(det_idx)
-
-        if state == Qt.Checked:
-            ref_data = []
-            
-            # [[array([0. , 0.1, 0.2, 0.3]), array([7.673988e+11, 6.499859e+11, 1.845185e+11, 8.461278e+11]), 'Scan #1', 0]]
-            # [{'id': 0, 'name': '', 'x': array([0. , 0.1, 0.2, 0.3]), 'y': array([9.275461e+11, 9.555003e+11, 9.593626e+11, 8.850503e+11]), 'plotted': True, 'plot_cb': <utilities_qt.datatable.CustomQCheckBox object at 0x00000264D08083A0>, 'ref_cb': <utilities_qt.datatable.CustomQCheckBox object at 0x00000264D0808310>}]
-            
-            _data = [
-                self.recordedData[(self.currentRefId, det_idx)]['x'],
-                self.recordedData[(self.currentRefId, det_idx)]['y'],
-                f'Scan #{self.currentRefId + 1}',
-                self.currentRefId
-            ]
-
-            ref_data.append(_data)
-            self.parent.register_ref_data(ref_data)
-        
-        else:
-            self.parent.unregister_ref_data()
 
     def getRefData(self) -> tuple: # Return the data and the metadata
         if self.currentRefId in self.recordedData:
@@ -538,36 +361,6 @@ class DataTableWidget(QTableWidget):
                 log.debug('No reference data set, so no operation necessary...')
                 pass
 
-            # if (self.currentRefId > -1) and np.array_equal(data['x'], self.recordedData[(self.currentRefId, which_detector)]['x']):
-            #     # opx = np.copy(data['x'])
-            #     # First we set which operands we want in which order based on the QRadioButtons.
-            #     if self.parent.reference_order_meas_ref:
-            #         # op1x = np.copy(data['x'])
-            #         op1y = np.copy(data['y'])
-            #         # op2x = np.copy(self.recordedData[self.currentRefId]['x'])
-            #         op2y = np.copy(self.recordedData[(self.currentRefId, which_detector)]['y'])
-            #     else:
-            #         # op1x = np.copy(self.recordedData[self.currentRefId]['x'])
-            #         op1y = np.copy(self.recordedData[(self.currentRefId, which_detector)]['y'])
-            #         # op2x = np.copy(data['x'])
-            #         op2y = np.copy(data['y'])
-
-            #     # Then we operate based on the operation selected in the QComboBox and append.
-            #     # TODONOW CHANGE FROM UIE_ CHECK DIRECTLY TO SELF.REFERENCE_OPERATION CHECK
-            #     if self.parent.reference_operation == 0:
-            #         # Multiply
-            #         # data['x'] = np.multiply(op1x, op2x)
-            #         data['y'] = np.multiply(op1y, op2y)
-            #     elif self.parent.reference_operation == 1:
-            #         # Divide
-            #         # data['x'] = np.divide(op1x, op2x)
-            #         data['y'] = np.divide(op1y, op2y)
-            #     else:
-            #         # Unknown
-            #         log.error('Unknown operation index:', self.parent.reference_operation)
-            # else:
-            #     # No operation necessary.
-            #     pass
         else:
             data = None
             log.error(f'No data found for scan ID {scanIdx}')
