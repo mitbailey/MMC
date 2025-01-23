@@ -409,6 +409,15 @@ class MMC_Main(QMainWindow):
             self.UIE_dmw_num_detectors_qsb.valueChanged.connect(self.update_num_detectors_ui)
             self.num_detectors = 1
 
+            self.UIE_dmw_mc_add_qpb: QPushButton = self.dmw.findChild(QPushButton, "mc_add")
+            self.UIE_dmw_mc_add_qpb.clicked.connect(self.mc_add_fn)
+            self.UIE_dmw_mc_sub_qpb: QPushButton = self.dmw.findChild(QPushButton, "mc_sub")
+            self.UIE_dmw_mc_sub_qpb.clicked.connect(self.mc_sub_fn)
+            self.UIE_dmw_d_add_qpb: QPushButton = self.dmw.findChild(QPushButton, "d_add")
+            self.UIE_dmw_d_add_qpb.clicked.connect(self.d_add_fn)
+            self.UIE_dmw_d_sub_qpb: QPushButton = self.dmw.findChild(QPushButton, "d_sub")
+            self.UIE_dmw_d_sub_qpb.clicked.connect(self.d_sub_fn)
+
             self.UIE_dmw_num_motion_controllers_qsb: QSpinBox = self.dmw.findChild(QSpinBox, "num_motion_controllers")
             self.UIE_dmw_num_motion_controllers_qsb.valueChanged.connect(self.update_num_motion_controllers_ui)
             self.num_motion_controllers = 1
@@ -424,7 +433,7 @@ class MMC_Main(QMainWindow):
             self.dmw.show()
 
         # UIE_dmw_load_spinner_ql
-        self.anim_dmw_load_spinner = QtGui.QMovie(exeDir + '/res/Chasing arrows.gif')
+        self.anim_dmw_load_spinner = QtGui.QMovie(exeDir + '/res/131.gif')
         self.UIE_dmw_load_spinner_ql.setMovie(self.anim_dmw_load_spinner)
 
         self.application.processEvents()
@@ -457,6 +466,24 @@ class MMC_Main(QMainWindow):
             event.accept()
         else:
             log.info('Canceling program exit.')
+
+    # UIE_dmw_num_detectors_qsb
+    # UIE_dmw_num_motion_controllers_qsb
+    def d_add_fn(self):
+        self.UIE_dmw_num_detectors_qsb.setValue(self.UIE_dmw_num_detectors_qsb.value() + 1)
+        pass
+
+    def d_sub_fn(self):
+        self.UIE_dmw_num_detectors_qsb.setValue(self.UIE_dmw_num_detectors_qsb.value() - 1)
+        pass
+
+    def mc_add_fn(self):
+        self.UIE_dmw_num_motion_controllers_qsb.setValue(self.UIE_dmw_num_motion_controllers_qsb.value() + 1)
+        pass
+
+    def mc_sub_fn(self):
+        self.UIE_dmw_num_motion_controllers_qsb.setValue(self.UIE_dmw_num_motion_controllers_qsb.value() - 1)
+        pass
 
     def update_num_detectors_ui(self, force: bool = False):
         if (self.num_detectors != self.UIE_dmw_num_detectors_qsb.value()) or (force):
@@ -534,6 +561,7 @@ class MMC_Main(QMainWindow):
         - Spinbox index 
         """
 
+        self.UIE_dmw_load_spinner_ql.show()
         self.anim_dmw_load_spinner.start()
 
         if self.num_detectors == 1 and self.UIEL_dmw_detector_qcb[0].currentIndex() == 0:
@@ -541,16 +569,32 @@ class MMC_Main(QMainWindow):
             self.detectors = [] # This should allow for loops to auto-skip.
             self.num_detectors = 0
         else:
-            for i in range(self.num_detectors):
-                if self.UIEL_dmw_detector_qcb[i].currentIndex() == 0:
-                    self.QMessageBoxInformation('Connection Failure', 'No detector was selected for entry #%d.'%(i))
-                    self.anim_dmw_load_spinner.stop()
-                    return
+            try:
+                for i in range(self.num_detectors):
+                    if self.UIEL_dmw_detector_qcb[i].currentIndex() == 0:
+                        self.QMessageBoxInformation('Connection Failure', 'No detector was selected for entry #%d.'%(i))
+                        self.anim_dmw_load_spinner.stop()
+                        self.UIE_dmw_load_spinner_ql.hide()
+                        return
+            except Exception as e:
+                log.error(str(e))
+                self.QMessageBoxCritical('Connection Failure', 'An error occurred while attempting to connect to the detector.\n%s'%(str(e)))
+                self.anim_dmw_load_spinner.stop()
+                self.UIE_dmw_load_spinner_ql.hide()
+                return
                 
         for i in range(self.num_motion_controllers):
-            if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() == 0:
-                self.QMessageBoxInformation('Connection Failure', 'No motion controller was selected for entry #%d.'%(i))
+            try:
+                if self.UIEL_dmw_mtn_ctrl_qcb[i].currentIndex() == 0:
+                    self.QMessageBoxInformation('Connection Failure', 'No motion controller was selected for entry #%d.'%(i))
+                    self.anim_dmw_load_spinner.stop()
+                    self.UIE_dmw_load_spinner_ql.hide()
+                    return
+            except Exception as e:
+                log.error(str(e))
+                self.QMessageBoxCritical('Connection Failure', 'An error occurred while attempting to connect to the motion controller.\n%s'%(str(e)))
                 self.anim_dmw_load_spinner.stop()
+                self.UIE_dmw_load_spinner_ql.hide()
                 return
 
         # Save config here.
@@ -582,6 +626,8 @@ class MMC_Main(QMainWindow):
         self.connecting_devices = False
         self.UIE_dmw_cancel_qpb.setEnabled(False)
         self.UIE_dmw_accept_qpb.setEnabled(True)
+        self.anim_dmw_load_spinner.stop()
+        self.UIE_dmw_load_spinner_ql.hide()
 
     def _connect_devices_status(self, message):
         self.UIE_dmw_loading_status_ql.setText(message)
@@ -699,6 +745,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_save_config_qpb: QPushButton = self.findChild(QPushButton, 'save_config_button')
         self.UIE_mgw_spectral_ops_qpb: QPushButton = self.findChild(QPushButton, 'spectral_math')
         self.UIE_mgw_spectral_ops_qpb.clicked.connect(self.show_window_spectral_ops)
+        self.UIE_mgw_spectral_ops_qpb.hide()
         self.UIE_mgw_pos_qdsb: QDoubleSpinBox = self.findChild(QDoubleSpinBox, "pos_set_spinbox") # Manual Control 'Position:' Spin Box
         self.UIE_mgw_move_to_position_qpb: QPushButton = self.findChild(QPushButton, "move_pos_button")
         # self.UIE_mgw_plot_frame_qw: QWidget = self.findChild(QWidget, "data_graph")
@@ -1313,10 +1360,6 @@ class MMC_Main(QMainWindow):
         for i, table in enumerate(self.table_list):
             table.plotsClearedCb()
             table.updatePlots(i)
-
-        # for i, graph in enumerate(self.graph_list):
-        #     graph.clear_plot_fcn(i)
-        # self.graph_result.clear_plot_fcn(-1)
 
     def config_import(self):
         loadFileName, _ = QFileDialog.getOpenFileName(self, "Load CSV", directory=self.selected_config_save_path)

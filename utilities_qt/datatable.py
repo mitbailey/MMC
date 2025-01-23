@@ -67,7 +67,6 @@ class DataTableWidget(QTableWidget):
         self.insertColumn(2)
         self.insertColumn(3)
         self.insertColumn(4)
-        self.insertColumn(5)
         self.insertRow(0)
         self.recordedData = dict()
         self.recordedMetaData = dict()
@@ -78,7 +77,7 @@ class DataTableWidget(QTableWidget):
         self._internal_insert_exec = False
         self.num_rows = 1
         self.__del_confirm_win: QDialog = None
-        self.setHorizontalHeaderLabels(['Name', 'Start', 'Stop', 'Step', 'Plot', 'Ref'])
+        self.setHorizontalHeaderLabels(['Name', 'Start', 'Stop', 'Step', 'Plot'])
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.horizontalHeader().setStretchLastSection(False)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)

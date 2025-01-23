@@ -157,14 +157,18 @@
          <widget class="QSpinBox" name="num_detectors">
           <property name="minimumSize">
            <size>
-            <width>44</width>
+            <width>30</width>
             <height>30</height>
            </size>
           </property>
           <property name="font">
            <font>
             <family>Bahnschrift</family>
+            <pointsize>14</pointsize>
            </font>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::NoButtons</enum>
           </property>
           <property name="minimum">
            <number>1</number>
@@ -175,9 +179,9 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="mc_add_2">
+         <widget class="QPushButton" name="d_add">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="minimumSize">
            <size>
@@ -207,9 +211,9 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="mc_sub_2">
+         <widget class="QPushButton" name="d_sub">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="minimumSize">
            <size>
@@ -278,8 +282,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>891</width>
-           <height>138</height>
+           <width>895</width>
+           <height>147</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -386,17 +390,18 @@
          <widget class="QSpinBox" name="num_motion_controllers">
           <property name="minimumSize">
            <size>
-            <width>44</width>
+            <width>30</width>
             <height>30</height>
            </size>
           </property>
           <property name="font">
            <font>
             <family>Bahnschrift</family>
+            <pointsize>14</pointsize>
            </font>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::UpDownArrows</enum>
+           <enum>QAbstractSpinBox::NoButtons</enum>
           </property>
           <property name="minimum">
            <number>1</number>
@@ -409,7 +414,7 @@
         <item>
          <widget class="QPushButton" name="mc_add">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="minimumSize">
            <size>
@@ -441,7 +446,7 @@
         <item>
          <widget class="QPushButton" name="mc_sub">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="minimumSize">
            <size>
@@ -513,8 +518,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>891</width>
-           <height>137</height>
+           <width>895</width>
+           <height>147</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -607,6 +612,12 @@
      </property>
      <item>
       <widget class="QLabel" name="load_spinner">
+       <property name="minimumSize">
+        <size>
+         <width>32</width>
+         <height>32</height>
+        </size>
+       </property>
        <property name="text">
         <string/>
        </property>

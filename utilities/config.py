@@ -319,7 +319,7 @@ def load_config(path: str, is_import: bool) -> dict:
             sr_offset = float(config['OFFSETS']['srOffset'])
             sa_offset = float(config['OFFSETS']['saOffset'])
             dr_offset = float(config['OFFSETS']['drOffset'])
-            log.error('dr_offset:', dr_offset)
+            log.debug('dr_offset:', dr_offset)
 
             md_sp = float(config['STEP CONVERSIONS']['mdSp'])
             fw_sp = float(config['STEP CONVERSIONS']['fwSp'])
