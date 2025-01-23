@@ -238,7 +238,7 @@
                     <enum>Qt::ScrollBarAlwaysOn</enum>
                    </property>
                    <property name="horizontalScrollBarPolicy">
-                    <enum>Qt::ScrollBarAlwaysOn</enum>
+                    <enum>Qt::ScrollBarAsNeeded</enum>
                    </property>
                    <property name="widgetResizable">
                     <bool>true</bool>
@@ -247,9 +247,9 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>0</y>
-                      <width>620</width>
-                      <height>1479</height>
+                      <y>-185</y>
+                      <width>630</width>
+                      <height>1191</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1227,7 +1227,7 @@
                                <rect>
                                 <x>0</x>
                                 <y>0</y>
-                                <width>578</width>
+                                <width>594</width>
                                 <height>148</height>
                                </rect>
                               </property>
@@ -3065,6 +3065,12 @@
                         <property name="title">
                          <string>∑ Spectral Operations</string>
                         </property>
+                        <property name="alignment">
+                         <set>Qt::AlignCenter</set>
+                        </property>
+                        <property name="flat">
+                         <bool>true</bool>
+                        </property>
                         <layout class="QVBoxLayout" name="verticalLayout_43">
                          <property name="spacing">
                           <number>0</number>
@@ -3073,7 +3079,7 @@
                           <number>0</number>
                          </property>
                          <property name="topMargin">
-                          <number>0</number>
+                          <number>5</number>
                          </property>
                          <property name="rightMargin">
                           <number>0</number>
@@ -3157,6 +3163,9 @@
                              <property name="title">
                               <string>Single Stage</string>
                              </property>
+                             <property name="flat">
+                              <bool>false</bool>
+                             </property>
                              <layout class="QHBoxLayout" name="horizontalLayout_39">
                               <item>
                                <widget class="QPushButton" name="fir_order_ref_set">
@@ -3205,6 +3214,9 @@
                             <widget class="QGroupBox" name="advanced_opbox">
                              <property name="title">
                               <string>Two Stage</string>
+                             </property>
+                             <property name="flat">
+                              <bool>false</bool>
                              </property>
                              <layout class="QHBoxLayout" name="horizontalLayout_28">
                               <item>
@@ -3843,7 +3855,7 @@
                   </font>
                  </property>
                  <property name="text">
-                  <string>Clear Plot</string>
+                  <string>Clear Plots</string>
                  </property>
                 </widget>
                </item>
@@ -4643,7 +4655,7 @@
      <x>0</x>
      <y>0</y>
      <width>1398</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

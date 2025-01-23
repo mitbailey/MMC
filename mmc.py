@@ -180,9 +180,9 @@ class MplCanvas(FigureCanvasQTAgg):
 
     def update_plots(self, data):
         self.axes.cla()
-        self.axes.set_xlabel('Location (nm, deg)')
+        self.axes.set_xlabel(self.xlabel)
         # self.axes.set_ylabel('Photo Current (pA)')
-        self.axes.set_ylabel('Magnitude (pA, etc.)')
+        self.axes.set_ylabel(self.ylabel)
         log.debug('data:', data)
         for row in data:
             log.debug('row:', row)
@@ -749,6 +749,10 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_advanced_opbox_qgb: QGroupBox = self.findChild(QGroupBox, 'advanced_opbox')
         self.UIE_mgw_advanced_opbox_qgb.hide()
 
+        self.ref_collapsed = True
+        self.UIE_mgw_ref_area_qw.setVisible(False)
+        self.UIE_mgw_ref_collap_qpb.setText('∑ ⮜')
+
         self.ref0_data = None
         self.ref1_data = None
         self.ref2_data = None
@@ -1303,9 +1307,16 @@ class MMC_Main(QMainWindow):
         self.dmw.close()
 
     def clear_all_graphs(self):
-        for i, graph in enumerate(self.graph_list):
-            graph.clear_plot_fcn(i)
-        self.graph_result.clear_plot_fcn(-1)
+        self.table_result.plotsClearedCb()
+        self.table_result.updatePlots(-1)
+
+        for i, table in enumerate(self.table_list):
+            table.plotsClearedCb()
+            table.updatePlots(i)
+
+        # for i, graph in enumerate(self.graph_list):
+        #     graph.clear_plot_fcn(i)
+        # self.graph_result.clear_plot_fcn(-1)
 
     def config_import(self):
         loadFileName, _ = QFileDialog.getOpenFileName(self, "Load CSV", directory=self.selected_config_save_path)
@@ -1764,7 +1775,7 @@ class MMC_Main(QMainWindow):
 
         if metadata is not None:
             log.debug(metadata)
-            self.UIE_mgw_setref_qpb.setText(f'D{dn}S{metadata['scan_id']}')
+            self.UIE_mgw_setref_qpb.setText(f"D{dn}S{metadata['scan_id']}")
 
     # advanced_ref = self.UIE_mgw_ref_advanced_qrb.isChecked()
 
@@ -1777,7 +1788,7 @@ class MMC_Main(QMainWindow):
 
         if metadata is not None:
             log.debug(metadata)
-            self.UIE_mgw_setr1_qpb.setText(f'D{dn}S{metadata['scan_id']}')
+            self.UIE_mgw_setr1_qpb.setText(f"D{dn}S{metadata['scan_id']}")
 
     def set_ref2(self):
         dn = self._check_table_tab_valid()
@@ -1788,7 +1799,7 @@ class MMC_Main(QMainWindow):
 
         if metadata is not None:
             log.debug(metadata)
-            self.UIE_mgw_setr2_qpb.setText(f'D{dn}S{metadata['scan_id']}')
+            self.UIE_mgw_setr2_qpb.setText(f"D{dn}S{metadata['scan_id']}")
 
     def reset_ref(self):
         self.unregister_ref_data()

@@ -713,7 +713,7 @@ class MP_789A_4_DUMMY(StageDevice):
                 log.info('Found to be MOVING',i)
                 i=0
         log.debug('FINISHED BLOCKING because moving is', i)
-        time.sleep(MP_789A_4.WR_DLY * steps * 0.01)
+        time.sleep(MP_789A_4.WR_DLY)
 
 
     def short_name(self):

@@ -338,7 +338,7 @@ class DataTableWidget(QTableWidget):
                 # self.recordedData[self.currentRefId]
                 if self.ref_data is not None: # The GUI has set our reference data, so we should use it.
                     if np.shape(self.ref_data['y']) != np.shape(self.recordedData[scan_idx]['y']):
-                        log.error(f'Reference data shape {np.shape(self.ref_data['y'])} does not match data shape {np.shape(self.recordedData[scan_idx]['y'])}!')
+                        log.error(f"Reference data shape {np.shape(self.ref_data['y'])} does not match data shape {np.shape(self.recordedData[scan_idx]['y'])}!")
                         return (None, None)
 
                     log.debug('Reference data is set, so performing operation...')
