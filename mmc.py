@@ -72,10 +72,11 @@ elif __file__:
 from PyQt5 import uic
 from PyQt5.QtCore import (pyqtSignal, QFileInfo, QEvent, QFile, QIODevice, QTimer, QPropertyAnimation, QEasingCurve)
 from PyQt5.QtGui import QColor, QFontDatabase, QFont
-from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QRadioButton, QSizePolicy, QStyle, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QTabWidget, QTableWidgetItem, QFrame, QProgressBar, QCheckBox, QSpinBox, QStatusBar, QAction, QSpacerItem)
+from PyQt5.QtWidgets import (QMainWindow, QDoubleSpinBox, QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QRadioButton, QSizePolicy, QStyle, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QTabWidget, QTableWidgetItem, QFrame, QProgressBar, QCheckBox, QSpinBox, QStatusBar, QAction, QSpacerItem, QGroupBox)
 from PyQt5.QtCore import QTimer
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
+
 
 # More Standard Imports
 import weakref
@@ -730,7 +731,38 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_save_data_qpb.clicked.connect(self.save_data_cb)
         self.UIE_mgw_delete_data_qpb: QPushButton = self.findChild(QPushButton, 'delete_data_button')
         self.UIE_mgw_delete_data_qpb.clicked.connect(self.delete_data_cb)
-        
+
+        self.UIE_mgw_setref_qpb: QPushButton = self.findChild(QPushButton, 'fir_order_ref_set')
+        self.UIE_mgw_setop_qcb: QComboBox = self.findChild(QComboBox, 'fir_order_ref_op')
+        self.UIE_mgw_setr1_qpb: QPushButton = self.findChild(QPushButton, 'sec_order_ref_setr1')
+        self.UIE_mgw_setop1_qcb: QComboBox = self.findChild(QComboBox, 'sec_order_ref_op1')
+        self.UIE_mgw_setr2_qpb: QPushButton = self.findChild(QPushButton, 'sec_order_ref_setr2')
+        self.UIE_mgw_setop2_qcb: QComboBox = self.findChild(QComboBox, 'sec_order_ref_op2')
+        self.UIE_mgw_ref_collap_qpb: QPushButton = self.findChild(QPushButton, 'ref_collap')
+        self.ref_collapsed = False
+        self.UIE_mgw_ref_area_qw: QWidget = self.findChild(QWidget, 'ref_area')
+        self.UIE_mgw_ref_reset_qpb: QPushButton = self.findChild(QPushButton, 'ref_reset')
+        self.UIE_mgw_ref_enact_qpb: QPushButton = self.findChild(QPushButton, 'ref_enact')
+        self.UIE_mgw_ref_simple_qrb: QRadioButton = self.findChild(QRadioButton, 'ref_simple')
+        self.UIE_mgw_ref_advanced_qrb: QRadioButton = self.findChild(QRadioButton, 'ref_advanced')
+        self.UIE_mgw_simple_opbox_qgb: QGroupBox = self.findChild(QGroupBox, 'simple_opbox')
+        self.UIE_mgw_advanced_opbox_qgb: QGroupBox = self.findChild(QGroupBox, 'advanced_opbox')
+        self.UIE_mgw_advanced_opbox_qgb.hide()
+
+        self.ref0_data = None
+        self.ref1_data = None
+        self.ref2_data = None
+
+        self.UIE_mgw_setref_qpb.clicked.connect(self.set_ref)
+        self.UIE_mgw_setr1_qpb.clicked.connect(self.set_ref1)
+        self.UIE_mgw_setr2_qpb.clicked.connect(self.set_ref2)
+        self.UIE_mgw_ref_collap_qpb.clicked.connect(self.collapse_ref)
+        self.UIE_mgw_ref_reset_qpb.clicked.connect(self.reset_ref)
+        self.UIE_mgw_ref_enact_qpb.clicked.connect(self.enact_ref)
+
+        self.UIE_mgw_ref_advanced_qrb.toggled.connect(self.toggle_ref)
+
+
         # UIE_mgw_table_qf: QFrame = self.findChild(QFrame, "table_frame")
         self.UIE_mgw_open_queue_file_qpb: QPushButton = self.findChild(QPushButton, 'open_queue_file_button')
         self.UIE_mgw_open_queue_file_qpb.clicked.connect(self.load_queue_file)
@@ -1529,6 +1561,14 @@ class MMC_Main(QMainWindow):
         self.queue_executor_thread.set_queue(self.scan_queue)
         self.queue_executor_thread.start()
 
+    def collapse_ref(self):
+        self.ref_collapsed = not self.ref_collapsed
+        self.UIE_mgw_ref_area_qw.setVisible(not self.ref_collapsed)
+        if self.ref_collapsed:
+            self.UIE_mgw_ref_collap_qpb.setText('∑ ⮜')
+        else:
+            self.UIE_mgw_ref_collap_qpb.setText('∑ ⮟')
+
     def collapse_mda(self):
         self.mda_collapsed = not self.mda_collapsed
         self.UIE_mgw_mda_qw.setVisible(not self.mda_collapsed)
@@ -1700,6 +1740,123 @@ class MMC_Main(QMainWindow):
             self.load_config_devman(appDir + '/devman.ini')
 
     #     # TODO: Use the ref data
+
+    def _check_table_tab_valid(self):
+        if self.UIE_mgw_table_qtw.currentIndex() == 0:
+            log.warn('No table selected.')
+            self.QMessageBoxWarning('Cannot Set Reference', 'Cannot set reference data from Result tab. Please select a detector table entry.')
+            return
+        
+        return self.UIE_mgw_table_qtw.currentIndex()
+
+    def set_ref(self):
+        log.info('set_ref called.')
+
+        dn = self._check_table_tab_valid()
+
+        table = self.table_list[self.UIE_mgw_table_qtw.currentIndex() - 1]
+
+        # Grab the data from the table.
+        data, metadata = table.saveDataCb()
+
+        # Set the reference data.
+        self.ref0_data = data
+
+        if metadata is not None:
+            log.debug(metadata)
+            self.UIE_mgw_setref_qpb.setText(f'D{dn}S{metadata['scan_id']}')
+
+    # advanced_ref = self.UIE_mgw_ref_advanced_qrb.isChecked()
+
+    def set_ref1(self):
+        dn = self._check_table_tab_valid()
+
+        table = self.table_list[self.UIE_mgw_table_qtw.currentIndex() - 1]
+
+        self.ref1_data, metadata = table.saveDataCb()
+
+        if metadata is not None:
+            log.debug(metadata)
+            self.UIE_mgw_setr1_qpb.setText(f'D{dn}S{metadata['scan_id']}')
+
+    def set_ref2(self):
+        dn = self._check_table_tab_valid()
+
+        table = self.table_list[self.UIE_mgw_table_qtw.currentIndex() - 1]
+
+        self.ref2_data, metadata = table.saveDataCb()
+
+        if metadata is not None:
+            log.debug(metadata)
+            self.UIE_mgw_setr2_qpb.setText(f'D{dn}S{metadata['scan_id']}')
+
+    def reset_ref(self):
+        self.unregister_ref_data()
+
+        self.UIE_mgw_setref_qpb.setText('Set Reference')
+        self.UIE_mgw_setr1_qpb.setText('Set R1')
+        self.UIE_mgw_setr2_qpb.setText('Set R2')
+
+    def toggle_ref(self):
+        if self.UIE_mgw_ref_advanced_qrb.isChecked():
+            self.UIE_mgw_simple_opbox_qgb.hide()
+            self.UIE_mgw_advanced_opbox_qgb.show()
+        else:
+            self.UIE_mgw_simple_opbox_qgb.show()
+            self.UIE_mgw_advanced_opbox_qgb.hide()
+
+    def enact_ref(self):
+        advanced_ref = self.UIE_mgw_ref_advanced_qrb.isChecked()
+
+        if advanced_ref:
+
+            if self.ref1_data is None or self.ref2_data is None:
+                msg = 'Cannot enact advanced reference without two reference datasets.'
+                if self.ref1_data is None:
+                    msg += ' Reference 1 dataset is missing.'
+                if self.ref2_data is None:
+                    msg += ' Reference 2 dataset is missing.'
+                self.QMessageBoxWarning('Cannot Enact Reference', msg)
+                return
+
+            # * / - + 
+            oper1 = self.UIE_mgw_setop1_qcb.currentIndex()
+            oper2 = self.UIE_mgw_setop2_qcb.currentIndex()
+
+            ref1y = self.ref1_data['y']
+            ref2y = self.ref2_data['y']
+
+            if oper1 == 0:
+                res1 = np.multiply(ref1y, ref2y)
+            elif oper1 == 1:
+                res1 = np.divide(ref1y, ref2y)
+            elif oper1 == 2:
+                res1 = np.subtract(ref1y, ref2y)
+            elif oper1 == 3:
+                res1 = np.add(ref1y, ref2y)
+
+            if oper2 == 0:
+                res2 = np.multiply(res1, ref2y)
+            elif oper2 == 1:
+                res2 = np.divide(res1, ref2y)
+            elif oper2 == 2:
+                res2 = np.subtract(res1, ref2y)
+            elif oper2 == 3:
+                res2 = np.add(res1, ref2y)
+
+            data = self.ref1_data
+            data['y'] = res2
+
+            self.register_ref_data(data)
+        
+        else: # Simple ref
+
+            if self.ref0_data is None:
+                self.QMessageBoxWarning('Cannot Enact Reference', 'Reference data is missing.')
+                return
+            
+            self.register_ref_data(self.ref0_data)
+
 
     def save_data_cb(self):
         if self.UIE_mgw_table_qtw.currentIndex() == 0:
@@ -1952,6 +2109,12 @@ class MMC_Main(QMainWindow):
         self.ref_data = ref_data
         # self.graph_result.ref_data = ref_data
         self.table_result.ref_data = ref_data
+
+        if self.UIE_mgw_ref_advanced_qrb.isChecked():
+            self.table_result.reference_operation = self.UIE_mgw_setop2_qcb.currentIndex()
+        else:
+            self.table_result.reference_operation = self.UIE_mgw_setop_qcb.currentIndex()
+
         self.table_result.updatePlots(-1)
 
 

@@ -89,6 +89,7 @@ class DataTableWidget(QTableWidget):
         # self.scan_idx = 0
         self.ref_data = None
         self.is_result = False
+        self.reference_operation = 0
 
     def insertData(self, det_idx: int, global_scan_id: int, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         
@@ -335,39 +336,68 @@ class DataTableWidget(QTableWidget):
                 
                 # This is the new way we send the data - by applying the reference operation first. This is also done in saveDataCb(...)
                 # self.recordedData[self.currentRefId]
-                if (self.ref_data is not None) and np.array_equal(self.recordedData[scan_idx]['x'], self.ref_data[0][0]):
-                    log.debug('Current reference ID is set (%d), so performing operation...'%(self.currentRefId))
+                if self.ref_data is not None: # The GUI has set our reference data, so we should use it.
+                    if np.shape(self.ref_data['y']) != np.shape(self.recordedData[scan_idx]['y']):
+                        log.error(f'Reference data shape {np.shape(self.ref_data['y'])} does not match data shape {np.shape(self.recordedData[scan_idx]['y'])}!')
+                        return (None, None)
+
+                    log.debug('Reference data is set, so performing operation...')
+                        
                     # First we set which operands we want in which order based on the QRadioButtons.
-                    opx = np.copy(self.recordedData[scan_idx]['x'])
-                    if self.parent.reference_operation:
-                        # op1x = np.copy(self.recordedData[scan_idx]['x'])
+                    if self.parent.reference_order_meas_ref:
                         op1y = np.copy(self.recordedData[scan_idx]['y'])
-                        # op2x = np.copy(self.recordedData[self.currentRefId]['x'])
-                        op2y = np.copy(self.ref_data[0][1])
+                        op2y = np.copy(self.ref_data['y'])
                     else:
-                        # op1x = np.copy(self.recordedData[self.currentRefId]['x'])
-                        op1y = np.copy(self.ref_data[0][1])
-                        # op2x = np.copy(self.recordedData[scan_idx]['x'])
+                        op1y = np.copy(self.ref_data['y'])
                         op2y = np.copy(self.recordedData[scan_idx]['y'])
 
-                    # Then we operate based on the operation selected in the QComboBox and append.
-                    if self.parent.reference_operation == 0: # Multiply
-                        # Multiply
-                        data.append([opx, np.multiply(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                    elif self.parent.reference_operation == 1: # Divide
-                        # Divide
-                        data.append([opx, np.divide(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                    elif self.parent.reference_operation == 2: # Add
-                        data.append([opx, np.add(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                    elif self.parent.reference_operation == 3: # Subtract
-                        data.append([opx, np.subtract(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                    if self.reference_operation == 0: # Multiply
+                        data.append([self.recordedData[scan_idx]['x'], np.multiply(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                    elif self.reference_operation == 1: # Divide
+                        data.append([self.recordedData[scan_idx]['x'], np.divide(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                    elif self.reference_operation == 2: # Add
+                        data.append([self.recordedData[scan_idx]['x'], np.add(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                    elif self.reference_operation == 3: # Subtract
+                        data.append([self.recordedData[scan_idx]['x'], np.subtract(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
                     else:
-                        # Unknown
-                        log.error('Unknown operation index:', self.parent.reference_operation)
+                        log.error('Unknown operation index:', self.reference_operation)
                 else:
-                    log.debug('No reference ID set (%d), so no operation necessary...'%(self.currentRefId))
-                    # No operation necessary.
+                    log.debug('No reference data set, so no operation necessary...')
                     data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx[0]])
+
+                # if (self.ref_data is not None) and np.array_equal(self.recordedData[scan_idx]['x'], self.ref_data[0][0]):
+                #     log.debug('Current reference ID is set (%d), so performing operation...'%(self.currentRefId))
+                #     # First we set which operands we want in which order based on the QRadioButtons.
+                #     opx = np.copy(self.recordedData[scan_idx]['x'])
+                #     if self.parent.reference_operation:
+                #         # op1x = np.copy(self.recordedData[scan_idx]['x'])
+                #         op1y = np.copy(self.recordedData[scan_idx]['y'])
+                #         # op2x = np.copy(self.recordedData[self.currentRefId]['x'])
+                #         op2y = np.copy(self.ref_data[0][1])
+                #     else:
+                #         # op1x = np.copy(self.recordedData[self.currentRefId]['x'])
+                #         op1y = np.copy(self.ref_data[0][1])
+                #         # op2x = np.copy(self.recordedData[scan_idx]['x'])
+                #         op2y = np.copy(self.recordedData[scan_idx]['y'])
+
+                #     # Then we operate based on the operation selected in the QComboBox and append.
+                #     if self.parent.reference_operation == 0: # Multiply
+                #         # Multiply
+                #         data.append([opx, np.multiply(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                #     elif self.parent.reference_operation == 1: # Divide
+                #         # Divide
+                #         data.append([opx, np.divide(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                #     elif self.parent.reference_operation == 2: # Add
+                #         data.append([opx, np.add(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                #     elif self.parent.reference_operation == 3: # Subtract
+                #         data.append([opx, np.subtract(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                #     else:
+                #         # Unknown
+                #         log.error('Unknown operation index:', self.parent.reference_operation)
+                # else:
+                #     log.debug('No reference ID set (%d), so no operation necessary...'%(self.currentRefId))
+                #     # No operation necessary.
+                #     data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx[0]])
 
         # This updates the main plot in MainGUIWindow with the data we are passing to it.
         self.parent.update_plots(det_idx, data, self.is_result) # updatePlots in Ui(QMainWindow)
@@ -453,9 +483,12 @@ class DataTableWidget(QTableWidget):
     def saveDataCb(self) -> tuple: # just return the data and the metadata, let main handle the saving
         return self.save_data_auto()
 
+    # TODO: Since we take into account any references prior to returning the data, we need a way to bypass this, since we use this function to obtain the pre-reference-operated data for any new referencing.
     def save_data_auto(self, scanIdx=None, which_detector=None) -> tuple:
 
         # Reference Data Note - With the addition of reference data and operations, this becomes slightly more complex. 
+
+        log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}')
 
         if scanIdx is None:
             if self.selectedItem is None:
@@ -464,50 +497,80 @@ class DataTableWidget(QTableWidget):
             row = self.selectedItem
 
             if row >= len(self.rowMap):
-                log.error('Trying to save row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
+                log.error(f'Trying to save row {row}, rowMap length {len(self.rowMap)}!', self.rowMap)
                 return (None, None)
-            scanIdx = self.rowMap[row]
+            scanIdx = self.rowMap[row][0]
 
-            which_detector = self.parent.UIE_mgw_table_qtw.currentIndex()
+            which_detector = self.parent.UIE_mgw_table_qtw.currentIndex() - 1
 
         log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}')
         log.debug('self.recordedData keys:', self.recordedData.keys())
 
         if (scanIdx, which_detector) in self.recordedData:
             data = self.recordedData[(scanIdx, which_detector)]
-            if (self.currentRefId > -1) and np.array_equal(data['x'], self.recordedData[(self.currentRefId, which_detector)]['x']):
-                # opx = np.copy(data['x'])
+
+            if self.ref_data is not None: # The GUI has set our reference data, so we should use it.
+                if np.shape(self.ref_data) != np.shape(data):
+                    log.error('Reference data shape does not match data shape!')
+                    return (None, None)
+                 
+                log.debug('Reference data is set, so performing operation...')
+                    
                 # First we set which operands we want in which order based on the QRadioButtons.
                 if self.parent.reference_order_meas_ref:
-                    # op1x = np.copy(data['x'])
                     op1y = np.copy(data['y'])
-                    # op2x = np.copy(self.recordedData[self.currentRefId]['x'])
-                    op2y = np.copy(self.recordedData[(self.currentRefId, which_detector)]['y'])
+                    op2y = np.copy(self.ref_data['y'])
                 else:
-                    # op1x = np.copy(self.recordedData[self.currentRefId]['x'])
-                    op1y = np.copy(self.recordedData[(self.currentRefId, which_detector)]['y'])
-                    # op2x = np.copy(data['x'])
+                    op1y = np.copy(self.ref_data['y'])
                     op2y = np.copy(data['y'])
 
-                # Then we operate based on the operation selected in the QComboBox and append.
-                # TODONOW CHANGE FROM UIE_ CHECK DIRECTLY TO SELF.REFERENCE_OPERATION CHECK
-                if self.parent.reference_operation == 0:
-                    # Multiply
-                    # data['x'] = np.multiply(op1x, op2x)
+                if self.reference_operation == 0: # Multiply
                     data['y'] = np.multiply(op1y, op2y)
-                elif self.parent.reference_operation == 1:
-                    # Divide
-                    # data['x'] = np.divide(op1x, op2x)
+                elif self.reference_operation == 1: # Divide
                     data['y'] = np.divide(op1y, op2y)
+                elif self.reference_operation == 2: # Add
+                    data['y'] = np.add(op1y, op2y)
+                elif self.reference_operation == 3: # Subtract
+                    data['y'] = np.subtract(op1y, op2y)
                 else:
-                    # Unknown
-                    log.error('Unknown operation index:', self.parent.reference_operation)
+                    log.error('Unknown operation index:', self.reference_operation)
             else:
-                # No operation necessary.
+                log.debug('No reference data set, so no operation necessary...')
                 pass
+
+            # if (self.currentRefId > -1) and np.array_equal(data['x'], self.recordedData[(self.currentRefId, which_detector)]['x']):
+            #     # opx = np.copy(data['x'])
+            #     # First we set which operands we want in which order based on the QRadioButtons.
+            #     if self.parent.reference_order_meas_ref:
+            #         # op1x = np.copy(data['x'])
+            #         op1y = np.copy(data['y'])
+            #         # op2x = np.copy(self.recordedData[self.currentRefId]['x'])
+            #         op2y = np.copy(self.recordedData[(self.currentRefId, which_detector)]['y'])
+            #     else:
+            #         # op1x = np.copy(self.recordedData[self.currentRefId]['x'])
+            #         op1y = np.copy(self.recordedData[(self.currentRefId, which_detector)]['y'])
+            #         # op2x = np.copy(data['x'])
+            #         op2y = np.copy(data['y'])
+
+            #     # Then we operate based on the operation selected in the QComboBox and append.
+            #     # TODONOW CHANGE FROM UIE_ CHECK DIRECTLY TO SELF.REFERENCE_OPERATION CHECK
+            #     if self.parent.reference_operation == 0:
+            #         # Multiply
+            #         # data['x'] = np.multiply(op1x, op2x)
+            #         data['y'] = np.multiply(op1y, op2y)
+            #     elif self.parent.reference_operation == 1:
+            #         # Divide
+            #         # data['x'] = np.divide(op1x, op2x)
+            #         data['y'] = np.divide(op1y, op2y)
+            #     else:
+            #         # Unknown
+            #         log.error('Unknown operation index:', self.parent.reference_operation)
+            # else:
+            #     # No operation necessary.
+            #     pass
         else:
             data = None
-            log.error('No data found for scan ID %d!'%(scanIdx))
+            log.error(f'No data found for scan ID {scanIdx}')
 
         if (scanIdx, which_detector) in self.recordedMetaData:
             metadata = self.recordedMetaData[(scanIdx, which_detector)]
