@@ -29,12 +29,21 @@ import inspect
 from termcolor import colored
 import datetime
 
-LOG_LEVEL = 0
+LOG_LEVEL_TERMINAL = 0
+LOG_LEVEL_FILE = 0
 MAX_DIR_SIZE = 1000 # MB
 TRACE = True
 
+DEBUG_LL = 0
+TRACE_LL = 0
+INFO_LL = 1
+WARN_LL = 2
+ERROR_LL = 3
+FATAL_LL = 4
+
 def register():
-    global LOG_LEVEL
+    global LOG_LEVEL_TERMINAL
+    global LOG_LEVEL_FILE
     global MAX_DIR_SIZE
     global TRACE
     
@@ -43,7 +52,7 @@ def register():
     if os.path.isfile(log_cfg):
         cfg_file = open(log_cfg, 'r')
         contents = cfg_file.read()
-        if 'LOG_LEVEL = ' in contents and 'MAX_DIR_SIZE = ' in contents:
+        if 'LOG_LEVEL_TERMINAL = ' in contents and 'LOG_LEVEL_FILE = ' in contents and 'MAX_DIR_SIZE = ' in contents:
             print('Log configuration file found.')
             log_file_found = True
             print('\n')
@@ -54,7 +63,8 @@ def register():
             contents = contents.split(',')
             print(contents)
             try:
-                LOG_LEVEL = int(contents[contents.index('LOG_LEVEL') + 1])
+                LOG_LEVEL_TERMINAL = int(contents[contents.index('LOG_LEVEL_TERMINAL') + 1])
+                LOG_LEVEL_FILE = int(contents[contents.index('LOG_LEVEL_FILE') + 1])
                 MAX_DIR_SIZE = int(contents[contents.index('MAX_DIR_SIZE') + 1])
             except Exception as e:
                 print(e)
@@ -86,7 +96,7 @@ def register():
     else:
         info('Logger opened log file.')
 
-        info('Logger initialized. Log level: %d.'%(LOG_LEVEL))
+        info('Logger initialized. Terminal log level: %d; File log level: %d.'%(LOG_LEVEL_TERMINAL, LOG_LEVEL_FILE))
         if log_file_found:
             info('Log configuration file found.')
         else:
@@ -99,38 +109,45 @@ def logging_to_file():
         return False
 
 def debug(*arg, **end):
-    global LOG_LEVEL
-    if LOG_LEVEL <= 0:
-        _out('[DEBUG]', arg)
+    global LOG_LEVEL_TERMINAL
+    global LOG_LEVEL_FILE
+    if LOG_LEVEL_TERMINAL <= DEBUG_LL or LOG_LEVEL_FILE <= DEBUG_LL:
+        _out('[DEBUG]', arg, DEBUG_LL)
 
 def trace(*arg, **end):
     global TRACE
     if TRACE:
-        _out('[TRACE]', arg, True)
+        _out('[TRACE]', arg, TRACE_LL, _t = True)
 
 def info(*arg, **end):
-    global LOG_LEVEL
-    if LOG_LEVEL <= 1:
-        _out('[INFO ]', arg)
+    global LOG_LEVEL_TERMINAL
+    global LOG_LEVEL_FILE
+    if LOG_LEVEL_TERMINAL <= INFO_LL or LOG_LEVEL_FILE <= INFO_LL:
+        _out('[INFO ]', arg, INFO_LL)
 
 def warn(*arg, **end):
-    global LOG_LEVEL
-    if LOG_LEVEL <= 2:
-        _out('[WARN ]', arg)
+    global LOG_LEVEL_TERMINAL
+    global LOG_LEVEL_FILE
+    if LOG_LEVEL_TERMINAL <= WARN_LL or LOG_LEVEL_FILE <= WARN_LL:
+        _out('[WARN ]', arg, WARN_LL)
 
 def error(*arg, **end):
-    global LOG_LEVEL
-    if LOG_LEVEL <= 3:
-        _out('[ERROR]', arg)
+    global LOG_LEVEL_TERMINAL
+    global LOG_LEVEL_FILE
+    if LOG_LEVEL_TERMINAL <= ERROR_LL or LOG_LEVEL_FILE <= ERROR_LL:
+        _out('[ERROR]', arg, ERROR_LL)
 
 def fatal(*arg, **end):
-    global LOG_LEVEL
-    if LOG_LEVEL <= 4:
-        _out('[FATAL]', arg)
+    global LOG_LEVEL_TERMINAL
+    global LOG_LEVEL_FILE
+    if LOG_LEVEL_TERMINAL <= FATAL_LL or LOG_LEVEL_FILE <= FATAL_LL:
+        _out('[FATAL]', arg, FATAL_LL)
 
-def _out(_l, _m, _t = False):
+def _out(_l, _m, _ll, _t = False):
+    global LOG_LEVEL_FILE
+    global LOG_LEVEL_TERMINAL
     global __logfile
-    print(__logfile)
+    # print(__logfile)
 
     cstack = ''
     if _t:
@@ -170,8 +187,11 @@ def _out(_l, _m, _t = False):
     # Prints are NOT guaranteed to be in order or meaningfully timestamped. This just provides a general duration between things.
     ts = datetime.datetime.now().time().strftime('%H:%M:%S.%f')
 
-    if __logfile is not None:
+    if __logfile is not None and LOG_LEVEL_FILE <= _ll:
+        # print(f'Writing to log file because {_ll} <= {LOG_LEVEL_FILE}.')
         __logfile.write(ts + ' ' + out)
+    # else:
+    #     print(f'Not writing to log file because {_ll} > {LOG_LEVEL_FILE}.')
 
     out = out.lstrip()
     out = ''.join(out.split(_l))
@@ -186,9 +206,11 @@ def _out(_l, _m, _t = False):
     elif _l == '[ERROR]':
         col = colored(_l, 'red')
 
-    print(ts + ' ', end='')
-    print(col, end='')
-    print(out, end='\n')
+    if LOG_LEVEL_TERMINAL <= _ll:
+        print(ts + ' ', end='')
+        print(col, end='')
+        # print(out, end='\n')
+        print(out, end='')
 
     if __logfile is not None:
         __logfile.flush()

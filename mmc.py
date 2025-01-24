@@ -183,9 +183,9 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes.set_xlabel(self.xlabel)
         # self.axes.set_ylabel('Photo Current (pA)')
         self.axes.set_ylabel(self.ylabel)
-        log.debug('data:', data)
+        # log.debug('data:', data)
         for row in data:
-            log.debug('row:', row)
+            # log.debug('row:', row)
             c = self.colors[row[-1] % len(self.colors)]
             self.lines[row[-1]], = self.axes.plot(row[0], row[1], label=row[2], color = c)
         self.axes.legend()
@@ -1115,9 +1115,9 @@ class MMC_Main(QMainWindow):
             self.UIEL_mgw_graph_tabs.append(self.UIE_mgw_graph_qtw.widget(i+1))
             # Get the frame within the tab and set its layout
 
-            log.warn('QGraphicsView:', self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QGraphicsView))
+            log.debug('QGraphicsView:', self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QGraphicsView))
             # log.warn('QObject:', self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QObject))
-            log.warn('QWidget:', self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QWidget))
+            log.debug('QWidget:', self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QWidget))
 
             self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QGraphicsView)[0].setLayout(layout)
             self.graph_list.append(plotCanvas)
@@ -2235,9 +2235,7 @@ class MMC_Main(QMainWindow):
         # Which detector is just the index of the active detector spinbox when the scan began.
         
         if which_detector == 0:
-            log.warn('! Scan complete.')
-            log.warn('! Scan complete.')
-            log.warn('! Scan complete.')
+            log.info('Scan complete.')
 
             log.debug(f'which_detector: {which_detector}; scan_idx: {scan_idx}; scan_class: {scan_class}')
 
@@ -2263,9 +2261,7 @@ class MMC_Main(QMainWindow):
         else:
             det_idx = which_detector - 1
             # The results tab case.
-            log.warn('! Detector %d scan complete.'%(det_idx))
-            log.warn('! Detector %d scan complete.'%(det_idx))
-            log.warn('! Detector %d scan complete.'%(det_idx))
+            log.info('Detector %d scan complete.'%(det_idx))
 
             self.table_result.markInsertFinished(det_idx, scan_idx)
             self.table_result.updateTableDisplay(det_idx, self.global_scan_id)
@@ -2299,25 +2295,27 @@ class MMC_Main(QMainWindow):
 
     def update_axes_info(self, mda_pos, mda_moving, mda_homing, fwa_pos, fwa_moving, fwa_homing, sra_pos, sra_moving, sra_homing, saa_pos, saa_moving, saa_homing, sta_pos, sta_moving, sta_homing, dra_pos, dra_moving, dra_homing):
 
-        log.info('Updating axes info...')
+        log.debug('Updating axes info...')
 
         # print((self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) or (mda_homing or fwa_homing or sra_homing or saa_homing or sta_homing or dra_homing))
 
         if (self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) or (mda_homing or fwa_homing or sra_homing or saa_homing or sta_homing or dra_homing): #  and not (self.axes_info_prev_moving)
-            log.info('Something is moving...')
-            log.debug('scanRunning:', self.scanRunning)
-            log.debug('mda_moving:', mda_moving)
-            log.debug('fwa_moving:', fwa_moving)
-            log.debug('sra_moving:', sra_moving)
-            log.debug('saa_moving:', saa_moving)
-            log.debug('sta_moving:', sta_moving)
-            log.debug('dra_moving:', dra_moving)
-            log.debug('mda_homing:', mda_homing)
-            log.debug('fwa_homing:', fwa_homing)
-            log.debug('sra_homing:', sra_homing)
-            log.debug('saa_homing:', saa_homing)
-            log.debug('sta_homing:', sta_homing)
-            log.debug('dra_homing:', dra_homing)
+            log.info('One or more axes are moving.')
+            log.debug(f'scanRunning: {self.scanRunning}; mda_moving: {mda_moving}; fwa_moving: {fwa_moving}; sra_moving: {sra_moving}; saa_moving: {saa_moving}; sta_moving: {sta_moving}; dra_moving: {dra_moving}')
+            # log.info('Something is moving...')
+            # log.debug('scanRunning:', self.scanRunning)
+            # log.debug('mda_moving:', mda_moving)
+            # log.debug('fwa_moving:', fwa_moving)
+            # log.debug('sra_moving:', sra_moving)
+            # log.debug('saa_moving:', saa_moving)
+            # log.debug('sta_moving:', sta_moving)
+            # log.debug('dra_moving:', dra_moving)
+            # log.debug('mda_homing:', mda_homing)
+            # log.debug('fwa_homing:', fwa_homing)
+            # log.debug('sra_homing:', sra_homing)
+            # log.debug('saa_homing:', saa_homing)
+            # log.debug('sta_homing:', sta_homing)
+            # log.debug('dra_homing:', dra_homing)
             # UIE_mgw_move_to_position_qpb is used to see if /all/ the buttons are disabled, since it would only be disabled if this function disabled it.
             self.disable_movement_sensitive_buttons(True)
         else:
@@ -2403,9 +2401,11 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_mda_load_spinner_ql.setVisible(False)
             self.anim_mgw_mda_load_spinner_running = False
         elif run and self.anim_mgw_mda_load_spinner_running:
-            log.warn('Animation already running.')
+            # log.warn('Animation already running.')
+            pass
         elif not run and not self.anim_mgw_mda_load_spinner_running:
-            log.warn('Animation already stopped.')
+            # log.warn('Animation already stopped.')
+            pass
         else:
             log.error('Unknown animation state.')
 
@@ -2419,9 +2419,11 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_fwa_load_spinner_ql.setVisible(False)
             self.anim_mgw_fwa_load_spinner_running = False
         elif run and self.anim_mgw_fwa_load_spinner_running:
-            log.warn('Animation already running.')
+            # log.warn('Animation already running.')
+            pass
         elif not run and not self.anim_mgw_fwa_load_spinner_running:
-            log.warn('Animation already stopped.')
+            # log.warn('Animation already stopped.')
+            pass
         else:
             log.error('Unknown animation state.')
 
@@ -2435,9 +2437,11 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_saa_load_spinner_ql.setVisible(False)
             self.anim_mgw_saa_load_spinner_running = False
         elif run and self.anim_mgw_saa_load_spinner_running:
-            log.warn('Animation already running.')
+            # log.warn('Animation already running.')
+            pass
         elif not run and not self.anim_mgw_saa_load_spinner_running:
-            log.warn('Animation already stopped.')
+            # log.warn('Animation already stopped.')
+            pass
         else:
             log.error('Unknown animation state.')
 
@@ -2451,9 +2455,11 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_sra_load_spinner_ql.setVisible(False)
             self.anim_mgw_sra_load_spinner_running = False
         elif run and self.anim_mgw_sra_load_spinner_running:
-            log.warn('Animation already running.')
+            # log.warn('Animation already running.')
+            pass
         elif not run and not self.anim_mgw_sra_load_spinner_running:
-            log.warn('Animation already stopped.')
+            # log.warn('Animation already stopped.')
+            pass
         else:
             log.error('Unknown animation state.')
 
@@ -2467,9 +2473,11 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_sta_load_spinner_ql.setVisible(False)
             self.anim_mgw_sta_load_spinner_running = False
         elif run and self.anim_mgw_sta_load_spinner_running:
-            log.warn('Animation already running.')
+            # log.warn('Animation already running.')
+            pass
         elif not run and not self.anim_mgw_sta_load_spinner_running:
-            log.warn('Animation already stopped.')
+            # log.warn('Animation already stopped.')
+            pass
         else:
             log.error('Unknown animation state.')
 
@@ -2483,9 +2491,11 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_dra_load_spinner_ql.setVisible(False)
             self.anim_mgw_dra_load_spinner_running = False
         elif run and self.anim_mgw_dra_load_spinner_running:
-            log.warn('Animation already running.')
+            # log.warn('Animation already running.')
+            pass
         elif not run and not self.anim_mgw_dra_load_spinner_running:
-            log.warn('Animation already stopped.')
+            # log.warn('Animation already stopped.')
+            pass
         else:
             log.error('Unknown animation state.')
 

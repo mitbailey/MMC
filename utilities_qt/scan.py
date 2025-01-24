@@ -104,19 +104,15 @@ class Scan(QThread):
         log.debug('which detector: %d'%(which_detector))
         log.debug('qcb index: %d'%(self.other.UIE_mgw_enabled_detectors_qcb.currentIndex()))
 
-        log.warn('!!!')
     # def run(self):
         # print('\n\n\n')
         self.other.disable_movement_sensitive_buttons(True)
-        log.warn('!!!')
         log.debug(self.other)
         log.info("Save to file? " + str(self.other.autosave_data_bool))
-        log.warn('!!!')
         self.SIGNAL_status_update.emit("PREPARING")
         sav_files = []
         tnow = dt.datetime.now()
         if (self.other.autosave_data_bool):
-            log.warn('!!!')
             log.info('Autosaving')
             filetime = tnow.strftime('%Y%m%d%H%M%S')
 
@@ -125,9 +121,7 @@ class Scan(QThread):
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 sav_files.append(open(filename, 'w'))
 
-        log.warn('!!!')
         if ctrl_axis == ScanAxis.MAIN:
-            log.warn('!!!')
             start = self.other.UIE_mgw_start_qdsb.value()
             stop = self.other.UIE_mgw_stop_qdsb.value()
             step = self.other.UIE_mgw_step_qdsb.value()
@@ -136,11 +130,9 @@ class Scan(QThread):
             stop = self.other.UIE_mgw_sm_end_set_qdsb.value()
             step = self.other.UIE_mgw_sm_step_set_qdsb.value()
         elif ctrl_axis == ScanAxis.DETECTOR:
-            log.warn('!!!')
             start = self.other.UIE_mgw_dm_start_set_qdsb.value()
             stop = self.other.UIE_mgw_dm_end_set_qdsb.value()
             step = self.other.UIE_mgw_dm_step_set_qdsb.value()
-        log.warn('!!!')
 
         log.info("SCAN QTHREAD")
         log.info("Start | Stop | Step")
@@ -252,9 +244,7 @@ class Scan(QThread):
         # while self.scanId == self.other.table_list[0].scanId: # spin until that happens
         #     continue
         for idx, dpos in enumerate(scanrange):
-            log.warn('!!! STARTING SCAN LOOP SECTION')
-            log.warn('!!! STARTING SCAN LOOP SECTION')
-            log.warn('!!! STARTING SCAN LOOP SECTION')
+            log.debug('STARTING SCAN LOOP SECTION')
 
             if not self.other.scanRunning:
                 log.error('scanRunning False, stop button may have been pressed (A). Scan stopped before it started.')
@@ -262,10 +252,9 @@ class Scan(QThread):
             self.SIGNAL_status_update.emit("MOVING")
             
             try:
-                log.info('138: Moving to', dpos)
-                log.warn('!!! MOVING TO')
-                log.warn('!!! MOVING TO')
-                log.warn('!!! MOVING TO')
+                log.debug('138: Moving to', dpos)
+                log.debug('MOVING TO')
+
                 if ctrl_axis == ScanAxis.MAIN:
                     self.other.motion_controllers.main_drive_axis.move_to(dpos, True)
                 elif ctrl_axis == ScanAxis.SAMPLE:
@@ -279,20 +268,16 @@ class Scan(QThread):
                 elif ctrl_axis == ScanAxis.DETECTOR:
                     self.other.motion_controllers.detector_rotation_axis.move_to(dpos, True)
                 
-                log.warn('!!! DONE MOVING TO')
-                log.warn('!!! DONE MOVING TO')
-                log.warn('!!! DONE MOVING TO')
+                log.debug('DONE MOVING TO')
 
-                log.info('140: Done with', dpos)
+                log.debug('140: Done with', dpos)
             except Exception as e:
                 log.error('QMessageBox.Critical: Move Failure - Axis failed to move: %s'%(e))
                 self.SIGNAL_error.emit('Move Failure', 'Axis failed to move: %s'%(e))
                 break
             log.debug("Getting axis position.")
 
-            log.warn('!!! GETTING POSITION')
-            log.warn('!!! GETTING POSITION')
-            log.warn('!!! GETTING POSITION')
+            log.debug('GETTING POSITION')
 
             if ctrl_axis == ScanAxis.MAIN:
                 pos = self.other.motion_controllers.main_drive_axis.get_position()
@@ -307,9 +292,7 @@ class Scan(QThread):
             elif ctrl_axis == ScanAxis.DETECTOR:
                 pos = self.other.motion_controllers.detector_rotation_axis.get_position()
 
-            log.warn('!!! DONE GETTING POSITION')
-            log.warn('!!! DONE GETTING POSITION')
-            log.warn('!!! DONE GETTING POSITION')
+            log.debug('DONE GETTING POSITION')
 
             log.debug("Emitting status update signal SAMPLING.")
             self.SIGNAL_status_update.emit("SAMPLING")
@@ -370,9 +353,7 @@ class Scan(QThread):
 
                 i += 1
 
-                log.warn('!!! DONE LOOP SECTION')
-                log.warn('!!! DONE LOOP SECTION')
-                log.warn('!!! DONE LOOP SECTION')
+                log.debug('DONE LOOP SECTION')
 
         for sav_file in sav_files:
             if (sav_file is not None):

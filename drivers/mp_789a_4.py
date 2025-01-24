@@ -523,8 +523,6 @@ class MP_789A_4(StageDevice):
             steps (int): Number of steps to move.
         """
 
-        log.warn('!!! CHKPT')
-
         log.debug('func: move_relative')
         log.info('Being told to move %d steps.'%(steps))
 
@@ -532,56 +530,38 @@ class MP_789A_4(StageDevice):
         # self.s.write(b']')
         # time.sleep(MP_789A_4.WR_DLY)     
         # rx = self.s.read(128).decode('utf-8')
-        log.warn('!!! CHKPT')
         rx = self.s.xfer([b']']).decode('utf-8')
-        log.warn('!!! CHKPT')
 
         if steps > 0:
-            log.warn('!!! CHKPT')
             # Verify we are not at the upper limit.
             if '64' in rx:
                 log.warn('Upper limit switch hit. Cannot move further in this direction.')
                 raise RuntimeError('Upper limit switch hit. Cannot move further in this direction.')
 
             log.info('Moving...')
-            log.warn('!!! CHKPT')
             self._moving = True
-            log.warn('!!! CHKPT')
             log.debug([b'+%d'%(steps)])
-            log.warn('!!! CHKPT')
             # self.s.write(b'+%d'%(steps))
 
             self.s.xfer([b'+%d'%(steps)])
-            log.warn('!!! CHKPT')
             time.sleep(MP_789A_4.WR_DLY)
-            log.warn('!!! CHKPT')
         elif steps < 0:
-            log.warn('!!! CHKPT')
             # Verify we are not at the lower limit.
             if '128' in rx:
                 log.warn('Lower limit switch hit. Cannot move further in this direction.')
                 raise RuntimeError('Lower limit switch hit. Cannot move further in this direction.')
 
             log.info('Moving...')
-            log.warn('!!! CHKPT')
             self._moving = True
-            log.warn('!!! CHKPT')
             log.debug(b'-%d'%(steps))
-            log.warn('!!! CHKPT')
             # self.s.write(b'-%d'%(steps * -1))
 
             self.s.xfer([b'-%d'%(steps)])
-            log.warn('!!! CHKPT')
             time.sleep(MP_789A_4.WR_DLY)
-            log.warn('!!! CHKPT')
         else:
-            log.warn('!!! CHKPT')
             log.info('Not moving (0 steps).')
-            log.warn('!!! CHKPT')
             return
-        log.warn('!!! CHKPT')
         self._position += steps
-        log.warn('!!! CHKPT')
 
         self._moving = True
         if not backlash_bypass:
@@ -594,9 +574,7 @@ class MP_789A_4(StageDevice):
                 time.sleep(0.05)
 
         log.debug('FINISHED BLOCKING because moving is', self._moving)
-        log.warn('!!! CHKPT')
         time.sleep(MP_789A_4.WR_DLY)
-        log.warn('!!! CHKPT')
         
     def short_name(self):
         """ Returns the short name of the device.
