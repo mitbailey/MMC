@@ -75,7 +75,7 @@ class MP_792:
             log.error('%s\nnot found in\n%s'%(port, ser_ports))
             raise RuntimeError('Port not valid. Is another program using the port?')
 
-        self.s = safe_serial.SafeSerial(port, 9600, timeout=0.25)
+        self.s = safe_serial.SafeSerial(port, 9600, timeout=0.5)
         rx = self.s.xfer([b' '], custom_delay=MP_792.WR_DLY)
         # self.s.write(b' \r')
         # time.sleep(MP_792.WR_DLY)
@@ -188,7 +188,7 @@ class MP_792:
             log.warn(f'Device is busy: an axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
             return False
 
-        HOME_TIME = 9999999
+        HOME_TIME = 10
 
         log.info('Beginning home for 792 axis %d.'%(axis))
         self._is_homing[axis] = True
@@ -278,6 +278,9 @@ class MP_792:
 
         log.info('Stopping.')
         time.sleep(MP_792.WR_DLY)
+
+        self._is_moving_l[axis] = False
+        self._is_homing[axis] = False
 
     # Publicly callable is_moving() function.
     def is_moving(self, axis: int):
@@ -510,6 +513,8 @@ class MP_792_DUMMY:
         # self.s.write(b'@\r')
         log.info('Stopping.')
         time.sleep(MP_792_DUMMY.WR_DLY)
+
+        
 
     def _is_moving(self, axis: int):
         # self.set_axis(axis)

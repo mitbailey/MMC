@@ -78,7 +78,7 @@ class MP_789A_4(StageDevice):
             raise RuntimeError('Port not valid. Is another program using the port?')
 
         # Get a SafeSerial connection on the port and begin communication.
-        self.s = safe_serial.SafeSerial(port, 9600, timeout=0.15)
+        self.s = safe_serial.SafeSerial(port, 9600, timeout=0.3)
 
         # self.s.write(b' ')
         # time.sleep(MP_789A_4.WR_DLY)
@@ -203,11 +203,11 @@ class MP_789A_4(StageDevice):
             # Soft stop when homing flag is located.
             # self.s.write(b'@')
             self.s.xfer([b'@'])
-            time.sleep(1) 
+            time.sleep(2) 
             # Back into home switch 2 motor revolutions.
-            self.s.write(b'-72000')
+            self.s.xfer(b'-72000')
         # self.s.xfer([b'-108000'])
-            time.sleep(1) 
+            time.sleep(2) 
             # Go 2 motor revolutions up.
             # self.s.write(b'+72000')
         # self.s.xfer([b'+72000'])
@@ -263,7 +263,10 @@ class MP_789A_4(StageDevice):
             # Soft stop when homing flag is located.
             # self.s.write(b'@')
             self.s.xfer([b'@'])
-            # time.sleep(1) 
+            time.sleep(2) 
+            # Back into home switch 2 motor revolutions.
+            self.s.xfer(b'-72000')
+            time.sleep(2)
             # Back into home switch 3 motor revolutions.
             # self.s.write(b'-108000')
         # self.s.xfer([b'-108000'])
@@ -357,6 +360,9 @@ class MP_789A_4(StageDevice):
         # self.s.write(b'@')
         log.info('Stopping.')
         time.sleep(MP_789A_4.WR_DLY)
+
+        self._moving = False
+        self._homing = False
 
     def is_moving(self):
         """_summary_
