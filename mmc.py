@@ -1920,9 +1920,9 @@ class MMC_Main(QMainWindow):
             return
 
         table = self.table_list[self.UIE_mgw_table_qtw.currentIndex() - 1]
-        return self.save_data_auto(table, self.UIE_mgw_table_qtw.currentIndex() - 1)
+        return self.save_data_auto(table, self.UIE_mgw_table_qtw.currentIndex() - 1, button=True)
 
-    def save_data_auto(self, table, which_detector, scanIdx=None):
+    def save_data_auto(self, table, which_detector, scanIdx=None, button=False):
         # for i, table in enumerate(self.table_list):
         # if self.table_list[i] is None:
         #     return
@@ -1958,8 +1958,11 @@ class MMC_Main(QMainWindow):
         elif self.autosave_data_bool:
             log.debug('Autosave data bool is True.')
             savFileName = self.data_save_directory + '/%s_det-%d_%d.csv'%(tstamp.strftime('%Y%m%d%H%M%S'), which_detector, scan_id)
-        else:
-            log.debug('Autosave data bool is False.')
+        elif button is False:
+            log.error('save_data_auto was called, but not from a button press, and yet autosave_next_dir and autosave_next_dir are both False...')
+        if button:
+            # log.debug('Autosave data bool is False.')
+            log.debug('Save data button was pushed.')
             savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser('~/Documents') + '/mcpherson_mmc/%s_det-%d_%d.csv'%(tstamp.strftime('%Y%m%d%H%M%S'), which_detector, scan_id), filter='*.csv')
         fileInfo = QFileInfo(savFileName)
         
