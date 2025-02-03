@@ -38,6 +38,7 @@ matplotlib.use('Qt5Agg')
 import middleware as mw
 from middleware import Detector
 from utilities import log
+import traceback
 
 class ConnectDevices(QThread):
     SIGNAL_complete = pyqtSignal(list, list)
@@ -140,6 +141,7 @@ class ConnectDevices(QThread):
 
             except Exception as e:
                 log.error("Failed to find motion controller #%d (%s)."%(i,e))
+                log.error(traceback.format_exc())
                 self.SIGNAL_status.emit("Failed to find motion controller (%s)."%(e))
                 self.SIGNAL_qmsg_warn.emit('Connection Failure', 'Failed to find motion controller (%s).'%(e)) 
                 self.mtn_ctrls[-1] = None
