@@ -64,6 +64,9 @@ class MP_789A_4(StageDevice):
         self.stop_queued = 0
         self._position = 0
 
+        self._home_speed_mult = 1
+        self._move_speed_mult = 1
+
         log.info('Attempting to connect to McPherson Model 789A-4 Scan Controller on port %s.'%(port))
 
         # Check if we were given a port.
@@ -582,6 +585,14 @@ class MP_789A_4(StageDevice):
         log.debug('FINISHED BLOCKING because moving is', self._moving)
         time.sleep(MP_789A_4.WR_DLY)
         
+    def set_home_speed_mult(self, speed):
+        log.info(f'Setting home speed multiplier to {speed}.')
+        self._home_speed_mult = speed
+
+    def set_move_speed_mult(self, speed):
+        log.info(f'Setting move speed multiplier to {speed}.')
+        self._move_speed_mult = speed
+
     def short_name(self):
         """ Returns the short name of the device.
 
@@ -622,6 +633,9 @@ class MP_789A_4_DUMMY(StageDevice):
         if port is not None:     
             log.info('McPherson model 789A-4 (DUMMY) Scan Controller generated.')
         
+        self._home_speed_mult = 1
+        self._move_speed_mult = 1
+
         self._position = 0
         self._moving = False
         self._homing = False
@@ -699,6 +713,13 @@ class MP_789A_4_DUMMY(StageDevice):
         log.debug('FINISHED BLOCKING because moving is', i)
         time.sleep(MP_789A_4.WR_DLY)
 
+    def set_home_speed_mult(self, speed):
+        log.info(f'Setting home speed multiplier to {speed}.')
+        self._home_speed_mult = speed
+
+    def set_move_speed_mult(self, speed):
+        log.info(f'Setting move speed multiplier to {speed}.')
+        self._move_speed_mult = speed
 
     def short_name(self):
         log.debug('func: short_name')

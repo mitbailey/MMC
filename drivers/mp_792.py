@@ -51,6 +51,8 @@ class MP_792:
             RuntimeError: _description_
         """
 
+        self._home_speed_mult_l = [1] * axes
+        self._move_speed_mult_l = [1] * axes
         self.num_axes = axes
         self.s_name = 'MP792'
         self.l_name = 'McPherson 792'
@@ -195,9 +197,17 @@ class MP_792:
         self._is_moving_l[axis] = True # we set the movement, movement_status_thread will unset
 
         if axis == 2:
-            home_cmd = b'M-5000'
+            spd = 5000
+            spd = spd * self._home_speed_mult_l[axis]
+            spd = int(spd)
+            # home_cmd = b'M-5000'
+            home_cmd = b'M-' + bytes(str(spd), 'utf-8')
         else:
-            home_cmd = b'M-10000'
+            spd = 10000
+            spd = spd * self._home_speed_mult_l[axis]
+            spd = int(spd)
+            # home_cmd = b'M-10000'
+            home_cmd = b'M-' + bytes(str(spd), 'utf-8')
 
         self.s.xfer([self.set_axis_cmd(axis), home_cmd], custom_delay=MP_792.WR_DLY)
 
@@ -424,6 +434,14 @@ class MP_792:
         log.debug('FINISHED BLOCKING because moving is', self._is_moving_l)
         time.sleep(MP_792.WR_DLY)
 
+    def set_home_speed_mult(self, speed, axis: int):
+        log.debug(f'Setting home speed multiplier for axis {axis} to {speed}.')
+        self._home_speed_mult_l[axis] = speed
+
+    def set_move_speed_mult(self, speed, axis: int):
+        log.info(f'Setting move speed multiplier for axis {axis} to {speed}.')
+        self._move_speed_mult_l[axis] = speed
+
     def short_name(self):
         return self.s_name
 
@@ -550,6 +568,13 @@ class MP_792_DUMMY:
             time.sleep(MP_792.WR_DLY * 5)
         log.debug('FINISHED BLOCKING')
 
+    def set_home_speed_mult(self, speed, axis: int):
+        log.info(f'Setting home speed multiplier for axis {axis} to {speed}.')
+        self._home_speed_mult_l[axis] = speed
+
+    def set_move_speed_mult(self, speed, axis: int):
+        log.info(f'Setting move speed multiplier for axis {axis} to {speed}.')
+        self._move_speed_mult_l[axis] = speed
 
     def short_name(self):
         return self.s_name

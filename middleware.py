@@ -463,6 +463,12 @@ class MotionController:
 
         self._moving = False
 
+    def set_home_speed_mult(self, speed):
+        self._motor_ctrl.set_home_speed_mult(speed)
+
+    def set_move_speed_mult(self, speed):
+        self._motor_ctrl.set_move_speed_mult(speed)
+
     def port_name(self) -> str:
         return self._port
 
@@ -528,6 +534,14 @@ class Detector:
 
     def is_dummy(self):
         return self._is_dummy
+
+    def set_home_speed_mult(self, speed):
+        log.info(f'Setting home speed multiplier to {speed}.')
+        self._motor_ctrl.set_home_speed_mult(speed)
+
+    def set_move_speed_mult(self, speed):
+        log.info(f'Setting move speed multiplier to {speed}.')
+        self._motor_ctrl.set_move_speed_mult(speed)
 
     def short_name(self):
         return self.pa.short_name()

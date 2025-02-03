@@ -142,6 +142,8 @@ class ThorlabsKST101(StageDevice):
                 RuntimeError: Instance of KST101 exists with this serial number
                 RuntimeError: Serial number not in device list
         """
+        self._home_speed_mult = 1
+        self._move_speed_mult = 1
         self._dev = None
         with ThorlabsKST101.LOCK:
             try:
@@ -306,6 +308,12 @@ class ThorlabsKST101(StageDevice):
         movdir = MotorDirection.Forward if steps > 0 else MotorDirection.Backward
         self._dev.MoveRelative_DeviceUnit(movdir, Int32(abs(steps)), timeout_ms)
 
+    def set_home_speed_mult(self, speed):
+        self._home_speed_mult = speed
+
+    def set_move_speed_mult(self, speed):
+        self._move_speed_mult = speed
+
     def short_name(self):
         return 'KSTX01'
 
@@ -332,7 +340,8 @@ class KSTDummy(StageDevice):
 
         if port is not None:
             log.info('McPherson model 789A-4 (DUMMY) Scan Controller generated.')
-
+        self._home_speed_mult = 1
+        self._move_speed_mult = 1
         self._position = 0
         self._moving = False
         self._homing = False
@@ -407,6 +416,12 @@ class KSTDummy(StageDevice):
                 i = 0
         log.debug('FINISHED BLOCKING because moving is', i)
         time.sleep(KSTDummy.WR_DLY)
+
+    def set_home_speed_mult(self, speed):
+        self._home_speed_mult = speed
+
+    def set_move_speed_mult(self, speed):
+        self._move_speed_mult = speed
 
     def short_name(self):
         return 'KSTX01 DUMMY'

@@ -2705,6 +2705,38 @@ class MMC_Main(QMainWindow):
             
             self.machine_conf_win.setWindowTitle('Monochromator Configuration (%sv%s)'%(version.__short_name__, version.__version__))
 
+            tabWidget = self.machine_conf_win.findChild(QTabWidget, "tabWidget")
+            groupBox = self.machine_conf_win.findChild(QGroupBox, "speed_groupBox")
+
+            vlayout = QVBoxLayout()
+            groupBox.setLayout(vlayout)
+            self.UIEL_mcw_move_speed_mults_qbsb = []
+            self.UIEL_mcw_home_speed_mults_qbsb = []
+            for dev in self.mtn_ctrls:
+                if dev is not None:
+                    # '%s: %s'%(dev.port_name(), dev.long_name())
+
+                    hlayout1 = QHBoxLayout()
+                    hlayout1.addWidget(QLabel(f'{dev.port_name()}: {dev.long_name()}'))
+                    hlayout2 = QHBoxLayout()
+                    hlayout2.addWidget(QLabel('Move:'))
+                    spinbox_move = QDoubleSpinBox()
+                    spinbox_move.setMinimum(0.0)
+                    spinbox_move.setMaximum(2.0)
+                    spinbox_move.setValue(1.0)
+                    hlayout2.addWidget(spinbox_move)
+                    hlayout2.addWidget(QLabel('Home:'))
+                    spinbox_home = QDoubleSpinBox()
+                    spinbox_home.setMinimum(0.0)
+                    spinbox_home.setMaximum(2.0)
+                    spinbox_home.setValue(1.0)
+                    hlayout2.addWidget(spinbox_home)
+                    vlayout.addLayout(hlayout1)
+                    vlayout.addLayout(hlayout2)
+
+                    self.UIEL_mcw_move_speed_mults_qbsb.append(spinbox_move)
+                    self.UIEL_mcw_home_speed_mults_qbsb.append(spinbox_home)
+
             self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'models')
             self.UIE_mcw_model_qcb.addItems(McPherson.MONO_MODELS)
             # self.UIE_mcw_model_qcb.currentIndexChanged.connect(self.update_model_index)
@@ -2793,7 +2825,7 @@ class MMC_Main(QMainWindow):
             log.debug(f'dr_offset: {self.dr_offset}')
 
             # TEMPORARY DISABLING OF UI ELEMENT UNTIL FUTURE VERSION IMPLEMENTATION. 
-            tabWidget = self.machine_conf_win.findChild(QTabWidget, "tabWidget")
+            
             if not SHOW_FILTER_WHEEL:
                 tabWidget.removeTab(tabWidget.indexOf(tabWidget.findChild(QWidget, 'filter_wheel_tab')))
             if not SHOW_SAMPLE_MOVEMENT:
@@ -3396,6 +3428,15 @@ class MMC_Main(QMainWindow):
         else:
             log.debug('Detector rotation axis is NoneType.')
 
+        for i, dev in enumerate(self.mtn_ctrls):
+            if dev is not None:
+                log.info('Device %d: %s'%(i, dev.short_name()))
+                log.info(f'Setting home speed multiplier to {self.UIEL_mcw_home_speed_mults_qbsb[i]}')
+                dev.set_home_speed_mult(self.UIEL_mcw_home_speed_mults_qbsb[i])
+                log.info(f'Setting move speed multiplier to {self.UIEL_mcw_move_speed_mults_qbsb[i]}')
+                dev.set_move_speed_mult(self.UIEL_mcw_move_speed_mults_qbsb[i])
+            else:
+                log.info('Device %d: None'%(i))
 
         self.machine_conf_win.close()
 
