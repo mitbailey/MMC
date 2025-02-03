@@ -139,7 +139,7 @@ class ConnectDevices(QThread):
                         self.mtn_ctrls.append(ctrlr)
 
             except Exception as e:
-                log.error("Failed to find motion controller (%s)."%(e))
+                log.error("Failed to find motion controller #%d (%s)."%(i,e))
                 self.SIGNAL_status.emit("Failed to find motion controller (%s)."%(e))
                 self.SIGNAL_qmsg_warn.emit('Connection Failure', 'Failed to find motion controller (%s).'%(e)) 
                 self.mtn_ctrls[-1] = None
