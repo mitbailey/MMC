@@ -3428,19 +3428,20 @@ class MMC_Main(QMainWindow):
         else:
             log.debug('Detector rotation axis is NoneType.')
 
+        s = 0
         for i, dev in enumerate(self.mtn_ctrls):
             try:
                 if dev is not None:
-                    log.info('Device %d: %s'%(i, dev.short_name()))
-                    log.info(f'Setting home speed multiplier to {self.UIEL_mcw_home_speed_mults_qbsb[i]}')
-                    dev.set_home_speed_mult(self.UIEL_mcw_home_speed_mults_qbsb[i])
-                    log.info(f'Setting move speed multiplier to {self.UIEL_mcw_move_speed_mults_qbsb[i]}')
-                    dev.set_move_speed_mult(self.UIEL_mcw_move_speed_mults_qbsb[i])
+                    log.info('Device %d: %s'%(i-s, dev.short_name()))
+                    log.info(f'Setting home speed multiplier to {self.UIEL_mcw_home_speed_mults_qbsb[i-s].value()}')
+                    dev.set_home_speed_mult(self.UIEL_mcw_home_speed_mults_qbsb[i-s].value())
+                    log.info(f'Setting move speed multiplier to {self.UIEL_mcw_move_speed_mults_qbsb[i-s].value()}')
+                    dev.set_move_speed_mult(self.UIEL_mcw_move_speed_mults_qbsb[i-s].value())
                 else:
-                    log.info('Device %d: None'%(i))
+                    log.info('Device %d: None'%(i-s))
+                    s += 1
             except Exception as e:
-                log.error(e)
-                log.error('Failed to set home/move speed multiplier for device %d'%(i))
+                log.error(f'Failed to set home/move speed multiplier for device {i-s}: {e}')
                 continue
 
         self.machine_conf_win.close()

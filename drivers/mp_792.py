@@ -198,16 +198,20 @@ class MP_792:
 
         if axis == 2:
             spd = 5000
+            log.debug(f'Speed would have been {spd} but is being multiplied by {self._home_speed_mult_l[axis]}.')
             spd = spd * self._home_speed_mult_l[axis]
             spd = int(spd)
             # home_cmd = b'M-5000'
             home_cmd = b'M-' + bytes(str(spd), 'utf-8')
+            log.debug(f'Speed is now {spd} and the command is {home_cmd}.')
         else:
             spd = 10000
+            log.debug(f'Speed would have been {spd} but is being multiplied by {self._home_speed_mult_l[axis]}.')
             spd = spd * self._home_speed_mult_l[axis]
             spd = int(spd)
             # home_cmd = b'M-10000'
             home_cmd = b'M-' + bytes(str(spd), 'utf-8')
+            log.debug(f'Speed is now {spd} and the command is {home_cmd}.')
 
         self.s.xfer([self.set_axis_cmd(axis), home_cmd], custom_delay=MP_792.WR_DLY)
 
@@ -459,6 +463,8 @@ class MP_792_DUMMY:
         self._is_homing = [False] * axes
         self._is_moving_l = [False] * axes
         self.current_axis = 0
+        self._home_speed_mult_l = [1] * axes
+        self._move_speed_mult_l = [1] * axes
 
         if port is None:
             log.error('Port is none type.')
