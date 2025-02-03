@@ -42,7 +42,7 @@ def SafeSerial(port: str, baudrate: int, timeout: float = ...):
     return safe_ports[port]
 
 class _SafeSerial:
-    READ_DELAY = 0.01
+    READ_DELAY = 0.05
     READ_SIZE = 128
 
     def __init__(self, port: str, baudrate: int, timeout: float = ...):
