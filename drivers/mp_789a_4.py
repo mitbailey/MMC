@@ -265,7 +265,7 @@ class MP_789A_4(StageDevice):
             self.s.xfer([b'@'])
             time.sleep(2) 
             # Back into home switch 2 motor revolutions.
-            self.s.xfer(b'-72000')
+            self.s.xfer([b'-72000'])
             time.sleep(2)
             # Back into home switch 3 motor revolutions.
             # self.s.write(b'-108000')
