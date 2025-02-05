@@ -126,12 +126,12 @@ class SR860:
             log.warn('Error Enable not set to 255!')
 
         # Set the time constant to 300ms.
-        self.s.write(b'OFLT 9')
+        self.s.write(b'OFLT 11')
         sleep(0.1)
 
         self.s.write(b'OFLT?')
         buf = self.s.read(128).decode('utf-8').rstrip()
-        if (buf == '9'):
+        if (buf == '11'):
             log.info('Time constant is 300ms.')
         else:
             log.warn('Time constant is not 300ms!')
@@ -191,22 +191,6 @@ class SR860:
         else:
             log.warn('Ground is not float!')
 
-        # There is no auto gain on the SR860!
-        # Set auto sensitivity.
-        # This command takes forever to complete, so we have to wait on *STB? 1 to be 1. 
-        # TODO: Comment out AGAN once we setup an option for the user to do it from within the GUI. For now, we can leave it like so.
-        # self.s.write(b'AGAN\n')
-        # sleep(0.1)
-
-        # rdy = False
-        # while (not rdy):
-        #     self.s.write(b'*STB? 1\n')
-        #     buf = self.s.read(128).decode('utf-8').rstrip()
-        #     if (buf == '1'):
-        #         rdy = True
-        #     else:
-        #         sleep(0.1)
-
         # Reserve HIGH to Vuvas.
         self.s.write(b'RMOD 1')
         sleep(0.1)
@@ -218,31 +202,7 @@ class SR860:
         else:
             log.warn('Reserve is not HIGH!')
 
-        # Not a valid command on SR860.
-        # # Set both LINE and x2 LINE notch filters ON.
-        # self.s.write(b'ILIN 3\n')
-        # sleep(0.1)
-
-        # self.s.write(b'ILIN?\n')
-        # buf = self.s.read(128).decode('utf-8').rstrip()
-        # if (buf == '1'):
-        #     log.info('Notch filters both on.')
-        # else:
-        #     log.warn('Notch filter not both on!')
-
-        # Turn both filter ON.
-        # ??? What does this mean
-            
-        # Set trigger to pos edge.
-        # No command seems to exist.
-
-        # Do not set phasing to auto.
-
         log.info('Init complete')
-
-        # print('\n\n\n\n\n\n\n\n')
-        # sleep(1)
-        # exit(0)
 
     def detect(self):
         # 0 for X, 1 for Y.
