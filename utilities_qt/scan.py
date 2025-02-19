@@ -149,48 +149,67 @@ class Scan(QThread):
 
         scan_type = SampleScanType(self.other.UIE_mgw_sm_scan_type_qcb.currentIndex())
 
-        # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
-        self.SIGNAL_status_update.emit("ZEROING")
-        # prep_pos = int((0 + self.other.zero_ofst))
 
-        prep_pos = 0
+        short_name = ''
         try:
-            log.info('107: Moving to', prep_pos)
-
-            log.debug('ctrl_axis: %s'%(ctrl_axis))
-            log.debug('scan_type: %s'%(scan_type))
-
             if ctrl_axis == ScanAxis.MAIN:
-                log.info('ctrl_axis == ScanAxis.MAIN')
-                self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
-                log.info('Complete move command.')
+                short_name = self.other.motion_controllers.main_drive_axis.short_name()
             elif ctrl_axis == ScanAxis.SAMPLE:
-                log.info('ctrl_axis == ScanAxis.SAMPLE')
-                if scan_type == SampleScanType.ROTATION:
-                    log.info('scan_type == SampleScanType.ROTATION')
-                    self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
-                elif scan_type == SampleScanType.TRANSLATION:
-                    log.info('scan_type == SampleScanType.TRANSLATION')
-                    self.other.motion_controllers.sample_translation_axis.move_to(prep_pos, True)
-                elif scan_type == SampleScanType.THETA2THETA:
-                    log.info('scan_type == SampleScanType.THETA2THETA')
-                    self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
-                    self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos * 2, True)
-                else:
-                    log.error(f'Invalid scan type for control axis: sample ({ctrl_axis}; {scan_type}).')
+                short_name = self.other.motion_controllers.sample_rotation_axis.short_name()
             elif ctrl_axis == ScanAxis.DETECTOR:
-                log.info('ctrl_axis == ScanAxis.DETECTOR')
-                self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos, True)
+                short_name = self.other.motion_controllers.detector_rotation_axis.short_name()
             else:
                 log.error(f'Invalid control axis ({ctrl_axis}; {scan_type}).')
-
-            log.info('109: Done with', prep_pos)
         except Exception as e:
-            log.error('Exception: Move Failure - Axis failed to move: %s'%(e))
-            self.SIGNAL_error.emit('Move Failure', 'Axis failed to move: %s'%(e))
+            log.error('Exception: Short Name Acquisition Failure - Failed to find axis short name: %s'%(e))
+            self.SIGNAL_error.emit('Short Name Acquisition Failure', 'Failed to find axis short name: %s'%(e))
             self.SIGNAL_complete.emit()
             return
-        
+
+        # Only perform zeroing manuever if we are the KST-x01.
+        if 'KST' in short_name: # only do zeroing if its a KST-x01.
+            # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
+            self.SIGNAL_status_update.emit("ZEROING")
+            # prep_pos = int((0 + self.other.zero_ofst))
+
+            prep_pos = 0
+            try:
+                log.info('107: Moving to', prep_pos)
+
+                log.debug('ctrl_axis: %s'%(ctrl_axis))
+                log.debug('scan_type: %s'%(scan_type))
+
+                if ctrl_axis == ScanAxis.MAIN:
+                    log.info('ctrl_axis == ScanAxis.MAIN')
+                    self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
+                    log.info('Complete move command.')
+                elif ctrl_axis == ScanAxis.SAMPLE:
+                    log.info('ctrl_axis == ScanAxis.SAMPLE')
+                    if scan_type == SampleScanType.ROTATION:
+                        log.info('scan_type == SampleScanType.ROTATION')
+                        self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
+                    elif scan_type == SampleScanType.TRANSLATION:
+                        log.info('scan_type == SampleScanType.TRANSLATION')
+                        self.other.motion_controllers.sample_translation_axis.move_to(prep_pos, True)
+                    elif scan_type == SampleScanType.THETA2THETA:
+                        log.info('scan_type == SampleScanType.THETA2THETA')
+                        self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
+                        self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos * 2, True)
+                    else:
+                        log.error(f'Invalid scan type for control axis: sample ({ctrl_axis}; {scan_type}).')
+                elif ctrl_axis == ScanAxis.DETECTOR:
+                    log.info('ctrl_axis == ScanAxis.DETECTOR')
+                    self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos, True)
+                else:
+                    log.error(f'Invalid control axis ({ctrl_axis}; {scan_type}).')
+
+                log.info('109: Done with', prep_pos)
+            except Exception as e:
+                log.error('Exception: Move Failure - Axis failed to move: %s'%(e))
+                self.SIGNAL_error.emit('Move Failure', 'Axis failed to move: %s'%(e))
+                self.SIGNAL_complete.emit()
+                return
+            
         log.info('Holding for 1 second.')
 
         self.SIGNAL_status_update.emit("HOLDING")
