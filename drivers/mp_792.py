@@ -190,7 +190,7 @@ class MP_792:
             log.warn(f'Device is busy: an axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
             return False
 
-        HOME_TIME = 120
+        HOME_TIME = 5*60 # 5 minutes - homing will timeout after 5 minutes
 
         log.info('Beginning home for 792 axis %d.'%(axis))
         self._is_homing[axis] = True
