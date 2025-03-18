@@ -247,7 +247,7 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>-185</y>
+                      <y>0</y>
                       <width>630</width>
                       <height>1191</height>
                      </rect>
@@ -3138,7 +3138,7 @@
                               <item>
                                <widget class="QRadioButton" name="ref_advanced">
                                 <property name="text">
-                                 <string>Advanced</string>
+                                 <string>Refl/Tran</string>
                                 </property>
                                </widget>
                               </item>
@@ -3207,6 +3207,13 @@
                                 </item>
                                </widget>
                               </item>
+                              <item>
+                               <widget class="QLabel" name="label_30">
+                                <property name="text">
+                                 <string>MEAS</string>
+                                </property>
+                               </widget>
+                              </item>
                              </layout>
                             </widget>
                            </item>
@@ -3220,83 +3227,71 @@
                              </property>
                              <layout class="QHBoxLayout" name="horizontalLayout_28">
                               <item>
-                               <widget class="QPushButton" name="sec_order_ref_setr1">
+                               <widget class="QComboBox" name="sample_det"/>
+                              </item>
+                              <item>
+                               <widget class="QLabel" name="label_31">
+                                <property name="font">
+                                 <font>
+                                  <pointsize>20</pointsize>
+                                 </font>
+                                </property>
                                 <property name="text">
-                                 <string>Set R1</string>
+                                 <string>÷ (</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QComboBox" name="sec_order_ref_op1">
-                                <property name="maximumSize">
-                                 <size>
-                                  <width>34</width>
-                                  <height>16777215</height>
-                                 </size>
+                               <widget class="QComboBox" name="ref_det"/>
+                              </item>
+                              <item>
+                               <widget class="QLabel" name="label_28">
+                                <property name="font">
+                                 <font>
+                                  <pointsize>20</pointsize>
+                                 </font>
                                 </property>
-                                <property name="currentText">
-                                 <string>×</string>
+                                <property name="text">
+                                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;× (&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                                 </property>
-                                <item>
-                                 <property name="text">
-                                  <string>×</string>
-                                 </property>
-                                </item>
-                                <item>
-                                 <property name="text">
-                                  <string>÷</string>
-                                 </property>
-                                </item>
-                                <item>
-                                 <property name="text">
-                                  <string>+</string>
-                                 </property>
-                                </item>
-                                <item>
-                                 <property name="text">
-                                  <string>-</string>
-                                 </property>
-                                </item>
+                               </widget>
+                              </item>
+                              <item>
+                               <widget class="QPushButton" name="sec_order_ref_setr1">
+                                <property name="text">
+                                 <string>Set S0</string>
+                                </property>
+                               </widget>
+                              </item>
+                              <item>
+                               <widget class="QLabel" name="label_27">
+                                <property name="font">
+                                 <font>
+                                  <pointsize>20</pointsize>
+                                 </font>
+                                </property>
+                                <property name="text">
+                                 <string>÷</string>
+                                </property>
                                </widget>
                               </item>
                               <item>
                                <widget class="QPushButton" name="sec_order_ref_setr2">
                                 <property name="text">
-                                 <string>Set R2</string>
+                                 <string>Set R0</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QComboBox" name="sec_order_ref_op2">
-                                <property name="maximumSize">
-                                 <size>
-                                  <width>34</width>
-                                  <height>16777215</height>
-                                 </size>
+                               <widget class="QLabel" name="label_29">
+                                <property name="font">
+                                 <font>
+                                  <pointsize>20</pointsize>
+                                 </font>
                                 </property>
-                                <property name="currentText">
-                                 <string>×</string>
+                                <property name="text">
+                                 <string>))</string>
                                 </property>
-                                <item>
-                                 <property name="text">
-                                  <string>×</string>
-                                 </property>
-                                </item>
-                                <item>
-                                 <property name="text">
-                                  <string>÷</string>
-                                 </property>
-                                </item>
-                                <item>
-                                 <property name="text">
-                                  <string>+</string>
-                                 </property>
-                                </item>
-                                <item>
-                                 <property name="text">
-                                  <string>-</string>
-                                 </property>
-                                </item>
                                </widget>
                               </item>
                              </layout>

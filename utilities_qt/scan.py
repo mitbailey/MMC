@@ -145,6 +145,7 @@ class Scan(QThread):
             self.SIGNAL_complete.emit()
             return
         scanrange = np.arange(start, stop + step, step)
+        log.info("Scan Range: %s"%(scanrange))
         nidx = len(scanrange)
 
         scan_type = SampleScanType(self.other.UIE_mgw_sm_scan_type_qcb.currentIndex())
@@ -261,7 +262,7 @@ class Scan(QThread):
         # log.info('Waiting for scan ID to change.')
 
         # while self.scanId == self.other.table_list[0].scanId: # spin until that happens
-        #     continue
+        #     continue``
         for idx, dpos in enumerate(scanrange):
             log.debug('STARTING SCAN LOOP SECTION')
 

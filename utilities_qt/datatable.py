@@ -86,6 +86,7 @@ class DataTableWidget(QTableWidget):
         self.ref_data = None
         self.is_result = False
         self.reference_operation = 0
+        self.advanced_ref = False
 
     def insertData(self, det_idx: int, global_scan_id: int, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         
@@ -240,31 +241,101 @@ class DataTableWidget(QTableWidget):
                 text = 'Scan #%d'%(scan_idx[0] + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx[0] + 1)
                 
                 # This is the new way we send the data - by applying the reference operation first. This is also done in saveDataCb(...)
+                # This means we are the result tab.
                 if self.ref_data is not None: # The GUI has set our reference data, so we should use it.
-                    if np.shape(self.ref_data['y']) != np.shape(self.recordedData[scan_idx]['y']):
+                    if not self.advanced_ref and np.shape(self.ref_data['y']) != np.shape(self.recordedData[scan_idx]['y']):
                         log.error(f"Reference data shape {np.shape(self.ref_data['y'])} does not match data shape {np.shape(self.recordedData[scan_idx]['y'])}!")
                         return (None, None)
 
                     log.debug('Reference data is set, so performing operation...')
-                        
-                    # First we set which operands we want in which order based on the QRadioButtons.
-                    if self.parent.reference_order_meas_ref:
-                        op1y = np.copy(self.recordedData[scan_idx]['y'])
-                        op2y = np.copy(self.ref_data['y'])
-                    else:
-                        op1y = np.copy(self.ref_data['y'])
-                        op2y = np.copy(self.recordedData[scan_idx]['y'])
 
-                    if self.reference_operation == 0: # Multiply
-                        data.append([self.recordedData[scan_idx]['x'], np.multiply(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                    elif self.reference_operation == 1: # Divide
-                        data.append([self.recordedData[scan_idx]['x'], np.divide(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                    elif self.reference_operation == 2: # Add
-                        data.append([self.recordedData[scan_idx]['x'], np.add(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                    elif self.reference_operation == 3: # Subtract
-                        data.append([self.recordedData[scan_idx]['x'], np.subtract(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                    # This fails if the sample is being taken before the reference.
+                    data_exists = False
+                    try:
+                        test_ref_y = self.recordedData[(scan_idx[0], self.parent.UIE_mgw_ref_det_qcb.currentIndex())]['y']
+                    except Exception as e:
+                        log.error('Unable to get the reference scan required -- Exception:', e)
+                        data_exists = False
+                        # Performing no operation.
+                        data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx[0]])
+                        log.warn(f"Data: {data}")
                     else:
-                        log.error('Unknown operation index:', self.reference_operation)
+                        data_exists = True
+
+                    if self.advanced_ref and data_exists:
+                        # self.recordedData[(global_scan_id, det_idx)]['x']
+                        # self.recordedData[(global_scan_id, det_idx)]['y']
+                        # Above is how we can access the data in recordedData from the scan ID and the detector index.
+                        # The desired operation is:
+                        # SampDet / RefDet * Samp0 / Ref0
+                        # SampData[-1] / RefData[-1] * op1y / op2y
+                        # If we aren't the reference detector, then we perform this operation.
+                        if det_idx != self.parent.UIE_mgw_ref_det_qcb.currentIndex():
+                            # Ok, we are not the reference detector.
+                            ref_det_id = self.parent.UIE_mgw_ref_det_qcb.currentIndex()
+
+                            # op1y = self.parent.ref1_data['y']
+                            # op2y = self.parent.ref2_data['y']
+                            # factor = np.divide(op1y, op2y) # op1y / op2y
+                            factor = self.ref_data['y'] # Division already done by front-end.
+
+                            # To ensure we are getting the right data, we need to:
+                            # Get the reference detector's nth piece of data.
+                            # scan_idx == (global_scan_id, det_idx)
+                            glob_scan_id = scan_idx[0] # This is the global scan ID.
+                            samp_det_id = scan_idx[1] # This is the sample detector ID.
+                            
+                            ref_y = self.recordedData[(glob_scan_id, ref_det_id)]['y']
+                            samp_y = self.recordedData[(glob_scan_id, samp_det_id)]['y']
+
+                            lim_n = 0
+                            if len(ref_y) < len(samp_y):
+                                lim_n = len(ref_y)
+                            else: 
+                                lim_n = len(samp_y)
+
+                            quotient_y = np.divide(samp_y[:lim_n], ref_y[:lim_n]) # samp_y / ref_y
+
+                            resultant = np.multiply(quotient_y[:lim_n], factor[:lim_n])
+
+                            data.append(
+                                [self.recordedData[scan_idx]['x'],
+                                resultant,
+                                text + ' (RefID#%d)'%(self.currentRefId),
+                                scan_idx[0]]
+                            )
+
+                        else:
+                            # Ok, so we're the reference detector.
+                            # DO NO MATH! Just show the raw reference value.
+                            data.append(
+                                [self.recordedData[scan_idx]['x'],
+                                self.recordedData[scan_idx]['y'],
+                                text + ' (RefID#%d)'%(self.currentRefId),
+                                scan_idx[0]]
+                            )
+
+                    elif not self.advanced_ref: # Basic referencing
+                        # First we set which operands we want in which order based on the QRadioButtons.
+                        if self.parent.reference_order_meas_ref:
+                            op1y = np.copy(self.recordedData[scan_idx]['y'])
+                            op2y = np.copy(self.ref_data['y'])
+                        else:
+                            op1y = np.copy(self.ref_data['y'])
+                            op2y = np.copy(self.recordedData[scan_idx]['y'])
+
+
+                        if self.reference_operation == 0: # Multiply
+                            data.append([self.recordedData[scan_idx]['x'], np.multiply(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                        elif self.reference_operation == 1: # Divide
+                            data.append([self.recordedData[scan_idx]['x'], np.divide(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                        elif self.reference_operation == 2: # Add
+                            data.append([self.recordedData[scan_idx]['x'], np.add(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                        elif self.reference_operation == 3: # Subtract
+                            data.append([self.recordedData[scan_idx]['x'], np.subtract(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
+                        else:
+                            log.error('Unknown operation index:', self.reference_operation)
+
                 else:
                     log.debug('No reference data set, so no operation necessary...')
                     data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx[0]])

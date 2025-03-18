@@ -187,6 +187,10 @@ class MplCanvas(FigureCanvasQTAgg):
         for row in data:
             # log.debug('row:', row)
             c = self.colors[row[-1] % len(self.colors)]
+            log.warn(f"Plotting: {row[0]} ; {row[1]}")
+            if len(row[0]) != len(row[1]):
+                log.error('X and Y data lengths do not match!')
+                continue
             self.lines[row[-1]], = self.axes.plot(row[0], row[1], label=row[2], color = c)
         self.axes.legend()
         self.axes.grid()
@@ -779,12 +783,21 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_delete_data_qpb: QPushButton = self.findChild(QPushButton, 'delete_data_button')
         self.UIE_mgw_delete_data_qpb.clicked.connect(self.delete_data_cb)
 
+        self.UIE_mgw_ref_det_qcb: QComboBox = self.findChild(QComboBox, 'ref_det')
+        self.UIE_mgw_sample_det_qcb: QComboBox = self.findChild(QComboBox, 'sample_det')
+
+        for i in range(self.num_detectors):
+            self.UIE_mgw_ref_det_qcb.addItem('Det %d'%(i+1))
+
+        for i in range(self.num_detectors):
+            self.UIE_mgw_sample_det_qcb.addItem('Det %d'%(i+1))
+
         self.UIE_mgw_setref_qpb: QPushButton = self.findChild(QPushButton, 'fir_order_ref_set')
         self.UIE_mgw_setop_qcb: QComboBox = self.findChild(QComboBox, 'fir_order_ref_op')
         self.UIE_mgw_setr1_qpb: QPushButton = self.findChild(QPushButton, 'sec_order_ref_setr1')
-        self.UIE_mgw_setop1_qcb: QComboBox = self.findChild(QComboBox, 'sec_order_ref_op1')
+        # self.UIE_mgw_setop1_qcb: QComboBox = self.findChild(QComboBox, 'sec_order_ref_op1')
         self.UIE_mgw_setr2_qpb: QPushButton = self.findChild(QPushButton, 'sec_order_ref_setr2')
-        self.UIE_mgw_setop2_qcb: QComboBox = self.findChild(QComboBox, 'sec_order_ref_op2')
+        # self.UIE_mgw_setop2_qcb: QComboBox = self.findChild(QComboBox, 'sec_order_ref_op2')
         self.UIE_mgw_ref_collap_qpb: QPushButton = self.findChild(QPushButton, 'ref_collap')
         self.ref_collapsed = False
         self.UIE_mgw_ref_area_qw: QWidget = self.findChild(QWidget, 'ref_area')
@@ -1859,6 +1872,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_simple_opbox_qgb.show()
             self.UIE_mgw_advanced_opbox_qgb.hide()
 
+    # The reference value
+    # The reference equation is:
+    # [%] = (S_i / (R_i * (S_0 / R_0))) * 100.0
     def enact_ref(self):
         advanced_ref = self.UIE_mgw_ref_advanced_qrb.isChecked()
 
@@ -1874,34 +1890,36 @@ class MMC_Main(QMainWindow):
                 return
 
             # * / - + 
-            oper1 = self.UIE_mgw_setop1_qcb.currentIndex()
-            oper2 = self.UIE_mgw_setop2_qcb.currentIndex()
+            # oper1 = self.UIE_mgw_setop1_qcb.currentIndex()
+            # oper2 = self.UIE_mgw_setop2_qcb.currentIndex()
 
             ref1y = self.ref1_data['y']
             ref2y = self.ref2_data['y']
 
-            if oper1 == 0:
-                res1 = np.multiply(ref1y, ref2y)
-            elif oper1 == 1:
-                res1 = np.divide(ref1y, ref2y)
-            elif oper1 == 2:
-                res1 = np.subtract(ref1y, ref2y)
-            elif oper1 == 3:
-                res1 = np.add(ref1y, ref2y)
+            res1 = np.divide(ref1y, ref2y)
 
-            if oper2 == 0:
-                res2 = np.multiply(res1, ref2y)
-            elif oper2 == 1:
-                res2 = np.divide(res1, ref2y)
-            elif oper2 == 2:
-                res2 = np.subtract(res1, ref2y)
-            elif oper2 == 3:
-                res2 = np.add(res1, ref2y)
+            # if oper1 == 0:
+            #     res1 = np.multiply(ref1y, ref2y)
+            # elif oper1 == 1:
+            #     res1 = np.divide(ref1y, ref2y)
+            # elif oper1 == 2:
+            #     res1 = np.subtract(ref1y, ref2y)
+            # elif oper1 == 3:
+            #     res1 = np.add(ref1y, ref2y)
+
+            # if oper2 == 0:
+            #     res2 = np.multiply(res1, ref2y)
+            # elif oper2 == 1:
+            #     res2 = np.divide(res1, ref2y)
+            # elif oper2 == 2:
+            #     res2 = np.subtract(res1, ref2y)
+            # elif oper2 == 3:
+            #     res2 = np.add(res1, ref2y)
 
             data = self.ref1_data
-            data['y'] = res2
+            data['y'] = res1
 
-            self.register_ref_data(data)
+            self.register_ref_data(data, advanced_ref)
         
         else: # Simple ref
 
@@ -2162,13 +2180,14 @@ class MMC_Main(QMainWindow):
     #   - If ref_data is None, then nothing will be done to the data. 
     #   - If ref_data is not None, then the data will be adjusted based on the reference data.
     # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
-    def register_ref_data(self, ref_data):
+    def register_ref_data(self, ref_data, advanced = False):
         self.ref_data = ref_data
         # self.graph_result.ref_data = ref_data
         self.table_result.ref_data = ref_data
 
         if self.UIE_mgw_ref_advanced_qrb.isChecked():
-            self.table_result.reference_operation = self.UIE_mgw_setop2_qcb.currentIndex()
+            self.table_result.advanced_ref = True
+            self.table_result.reference_operation = 1 # Only ever division.
         else:
             self.table_result.reference_operation = self.UIE_mgw_setop_qcb.currentIndex()
 
@@ -2177,6 +2196,10 @@ class MMC_Main(QMainWindow):
 
         # self.graph_result.update_plots(ref_data)
         # TODO: Figure out how to update the reference / result plot.
+
+    # THIS IS THE LATEST SCAN DATA FROM THE REFERENCE DETECTOR
+    def push_latest_ref_data(self, latest_ref_data):
+        self.latest_ref_data = latest_ref_data
 
     # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
     def unregister_ref_data(self):
@@ -2194,7 +2217,8 @@ class MMC_Main(QMainWindow):
         if self.graph_list is None or len(self.graph_list) == 0:
             return
 
-        # if det_idx == -1:
+
+
         if is_result:
             self.graph_result.update_plots(data)
         else:
