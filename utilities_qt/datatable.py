@@ -294,13 +294,16 @@ class DataTableWidget(QTableWidget):
                             else: 
                                 lim_n = len(samp_y)
 
-                            quotient_y = np.divide(samp_y[:lim_n], ref_y[:lim_n]) # samp_y / ref_y
+                            denom = np.multiply(ref_y[:lim_n], factor[:lim_n]) # ref_y * factor
 
-                            resultant = np.multiply(quotient_y[:lim_n], factor[:lim_n])
+                            percent = np.divide(samp_y[:lim_n], denom) * 100.0 # samp_y / denom
+
+                            # quotient_y = np.divide(samp_y[:lim_n], ref_y[:lim_n]) # samp_y / ref_y
+                            # resultant = np.multiply(quotient_y[:lim_n], factor[:lim_n])
 
                             data.append(
                                 [self.recordedData[scan_idx]['x'],
-                                resultant,
+                                percent,
                                 text + ' (RefID#%d)'%(self.currentRefId),
                                 scan_idx[0]]
                             )

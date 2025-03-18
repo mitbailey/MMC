@@ -83,6 +83,7 @@ import weakref
 import numpy as np
 import datetime as dt
 from functools import partial
+import copy
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -1889,35 +1890,23 @@ class MMC_Main(QMainWindow):
                 self.QMessageBoxWarning('Cannot Enact Reference', msg)
                 return
 
-            # * / - + 
-            # oper1 = self.UIE_mgw_setop1_qcb.currentIndex()
-            # oper2 = self.UIE_mgw_setop2_qcb.currentIndex()
-
             ref1y = self.ref1_data['y']
             ref2y = self.ref2_data['y']
 
             res1 = np.divide(ref1y, ref2y)
-
-            # if oper1 == 0:
-            #     res1 = np.multiply(ref1y, ref2y)
-            # elif oper1 == 1:
-            #     res1 = np.divide(ref1y, ref2y)
-            # elif oper1 == 2:
-            #     res1 = np.subtract(ref1y, ref2y)
-            # elif oper1 == 3:
-            #     res1 = np.add(ref1y, ref2y)
-
-            # if oper2 == 0:
-            #     res2 = np.multiply(res1, ref2y)
-            # elif oper2 == 1:
-            #     res2 = np.divide(res1, ref2y)
-            # elif oper2 == 2:
-            #     res2 = np.subtract(res1, ref2y)
-            # elif oper2 == 3:
-            #     res2 = np.add(res1, ref2y)
-
-            data = self.ref1_data
-            data['y'] = res1
+            
+            # {'id': global_scan_id, 'name': '', 'x': xdata, 'y': ydata, 'plotted': True, 'plot_cb': CustomQCheckBox(global_scan_id)}
+            # Fine, I'll do it myself.
+            data = {
+                'id': self.ref1_data['id'], 
+                'name': '', 
+                'x': np.copy(self.ref1_data['x']), 
+                'y': np.copy(res1), 
+                'plotted': self.ref1_data['plotted'], 
+                'plot_cb': self.ref1_data['plot_cb']
+            }
+            # data = self.ref1_data
+            # data['y'] = res1
 
             self.register_ref_data(data, advanced_ref)
         
