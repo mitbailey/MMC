@@ -240,6 +240,9 @@ class MMC_Main(QMainWindow):
     def __init__(self, application, uiresource = None):
 
         self.global_scan_id = 0
+        self.scan_start_delay = 0.0
+        self.detection_delay = 0.0
+        self.per_detection_averages = 1
 
         # application.setQuitOnLastWindowClosed(False)
 
@@ -2750,6 +2753,14 @@ class MMC_Main(QMainWindow):
                     self.UIEL_mcw_move_speed_mults_qbsb.append(spinbox_move)
                     self.UIEL_mcw_home_speed_mults_qbsb.append(spinbox_home)
 
+            self.UIE_mcw_scan_start_delay_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'scan_start_delay')
+            self.UIE_mcw_detection_delay_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(QDoubleSpinBox, 'detection_delay')
+            self.UIE_mcw_per_detection_averages_qsb: QSpinBox = self.machine_conf_win.findChild(QSpinBox, 'per_detection_averages')
+
+            self.UIE_mcw_scan_start_delay_qdsb.valueChanged.connect(self.update_scan_start_delay)
+            self.UIE_mcw_detection_delay_qdsb.valueChanged.connect(self.update_detection_delay)
+            self.UIE_mcw_per_detection_averages_qsb.valueChanged.connect(self.update_per_detection_averages)
+
             self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(QComboBox, 'models')
             self.UIE_mcw_model_qcb.addItems(McPherson.MONO_MODELS)
             # self.UIE_mcw_model_qcb.currentIndexChanged.connect(self.update_model_index)
@@ -2850,6 +2861,10 @@ class MMC_Main(QMainWindow):
                 # Lock-in Amplifiers (1 or 2) [Programmatically?]
                 # Generic Detector Math [Should already exist from QtDesigner]
 
+        self.UIE_mcw_scan_start_delay_qdsb.setValue(self.scan_start_delay)
+        self.UIE_mcw_detection_delay_qdsb.setValue(self.detection_delay)
+        self.UIE_mcw_per_detection_averages_qsb.setValue(self.per_detection_averages)
+
         self.UIE_mcw_model_qcb.setCurrentIndex(self.model_index)
 
         self.UIE_mcw_grating_qdsb.setValue(self.grating_density)
@@ -2932,6 +2947,23 @@ class MMC_Main(QMainWindow):
         self.machine_conf_win.exec() # synchronously run this window so parent window is disabled
         log.debug('Exec done')
 
+    def update_detection_delay(self):
+        log.info("Detection delay changed to: %s ms"%(self.UIE_mcw_detection_delay_qdsb.value()))
+        self.detection_delay = self.UIE_mcw_detection_delay_qdsb.value()
+        for det in self.detectors:
+            if det is not None:
+                det.detect_delay = self.detection_delay
+
+    def update_scan_start_delay(self):
+        log.info("Scan start delay changed to: %s ms"%(self.UIE_mcw_scan_start_delay_qdsb.value()))
+        self.scan_start_delay = self.UIE_mcw_scan_start_delay_qdsb.value()
+
+    def update_per_detection_averages(self):
+        log.info("Per detection averages changed to: %s"%(self.UIE_mcw_per_detection_averages_qsb.value()))
+        self.per_detection_averages = self.UIE_mcw_per_detection_averages_qsb.value()
+        for det in self.detectors:
+            if det is not None:
+                det.per_detection_averages = self.per_detection_averages
 
     def reference_operation_changed(self):
         self.reference_operation = self.UIE_mcw_operation_qcb.currentIndex()

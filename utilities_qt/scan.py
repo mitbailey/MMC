@@ -25,6 +25,7 @@
 # OS and SYS Imports
 import os
 import sys
+import time
 
 # PyQt Imports
 from PyQt5.QtCore import (pyqtSignal, QThread)
@@ -251,6 +252,11 @@ class Scan(QThread):
             metadata = {'tstamp': tnow, 'steps_per_value': self.other.motion_controllers.detector_rotation_axis.get_steps_per_value(), 'mm_per_nm': 0, 'lam_0': self.other.zero_ofst, 'scan_id': self.last_global_scan_id}
         else:
             log.error(f'Invalid control axis ({ctrl_axis}; {scan_type}).')
+
+        try:
+            time.sleep(self.parent.scan_start_delay)
+        except Exception as e:
+            log.error('Exception: Scan Start Delay - Failed to sleep: %s'%(e))
 
         log.info('Emitting data begin signal.')
 

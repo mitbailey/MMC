@@ -26,6 +26,7 @@
 # OS and SYS Imports
 import os
 import sys
+import time
 from utilities import log
 from collections import deque
 
@@ -501,6 +502,9 @@ class Detector:
         self.pa = None
         self._is_dummy = False
 
+        self.detect_delay = 0.0
+        self.per_detection_averages = 1
+
         # TODO: PLACEHOLDER! Change this to an xarray dataset...
         self.data = []
 
@@ -534,10 +538,18 @@ class Detector:
 
     # Only function used in mmc.py (.pa.detect())
     def detect(self):
-        # TODO: Fire out a trigger here.
-        mes = self.pa.detect()
-        # TODO: Placeholder append. Change this to an xarray dataset.
-        # self.data.append(mes)
+        time.sleep(self.detect_delay)
+        
+        mes = 0.0
+        if self.per_detection_averages == 1:
+            log.debug('Sampling (1/1).')
+            mes = self.pa.detect()
+        else:        
+            for i in range(self.per_detection_averages):
+                log.debug(f'Sampling ({i + 1}/{self.per_detection_averages}).')
+                mes += self.pa.detect()
+            mes /= self.per_detection_averages
+
         return mes
 
     def is_dummy(self):
