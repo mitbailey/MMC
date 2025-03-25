@@ -82,11 +82,11 @@ class DataTableWidget(QTableWidget):
         self.horizontalHeader().setStretchLastSection(False)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.selectionModel().selectionChanged.connect(self.__tableSelectAction)
-        self.currentRefId = -1
-        self.ref_data = None
+        # self.currentRefId = -1
+        # self.ref_data = None
         self.is_result = False
-        self.reference_operation = 0
-        self.advanced_ref = False
+        # self.reference_operation = 0
+        # self.advanced_ref = False
 
     def insertData(self, det_idx: int, global_scan_id: int, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         
@@ -233,115 +233,14 @@ class DataTableWidget(QTableWidget):
 
     def updatePlots(self, det_idx: int):
         log.debug('Update plots called...')
-        log.debug('Current reference ID is %d'%(self.currentRefId))
+        # log.debug('Current reference ID is %d'%(self.currentRefId))
         data = []
         for scan_idx in self.recordedData.keys():
             log.debug(f'Checkpoint A: {scan_idx}')
             if self.recordedData[scan_idx]['plotted']:
                 text = 'Scan #%d'%(scan_idx[0] + 1) if len(self.recordedData[scan_idx]['name']) == 0 else '%s #%d'%(self.recordedData[scan_idx]['name'], scan_idx[0] + 1)
                 
-                # This is the new way we send the data - by applying the reference operation first. This is also done in saveDataCb(...)
-                # This means we are the result tab.
-                if self.ref_data is not None: # The GUI has set our reference data, so we should use it.
-                    if not self.advanced_ref and np.shape(self.ref_data['y']) != np.shape(self.recordedData[scan_idx]['y']):
-                        log.error(f"Reference data shape {np.shape(self.ref_data['y'])} does not match data shape {np.shape(self.recordedData[scan_idx]['y'])}!")
-                        return (None, None)
-
-                    log.debug('Reference data is set, so performing operation...')
-
-                    # This fails if the sample is being taken before the reference.
-                    data_exists = False
-                    try:
-                        test_ref_y = self.recordedData[(scan_idx[0], self.parent.UIE_mgw_ref_det_qcb.currentIndex())]['y']
-                    except Exception as e:
-                        log.error('Unable to get the reference scan required -- Exception:', e)
-                        data_exists = False
-                        # Performing no operation.
-                        data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx[0]])
-                        log.warn(f"Data: {data}")
-                    else:
-                        data_exists = True
-
-                    if self.advanced_ref and data_exists:
-                        # self.recordedData[(global_scan_id, det_idx)]['x']
-                        # self.recordedData[(global_scan_id, det_idx)]['y']
-                        # Above is how we can access the data in recordedData from the scan ID and the detector index.
-                        # The desired operation is:
-                        # SampDet / RefDet * Samp0 / Ref0
-                        # SampData[-1] / RefData[-1] * op1y / op2y
-                        # If we aren't the reference detector, then we perform this operation.
-                        if det_idx != self.parent.UIE_mgw_ref_det_qcb.currentIndex():
-                            # Ok, we are not the reference detector.
-                            ref_det_id = self.parent.UIE_mgw_ref_det_qcb.currentIndex()
-
-                            # op1y = self.parent.ref1_data['y']
-                            # op2y = self.parent.ref2_data['y']
-                            # factor = np.divide(op1y, op2y) # op1y / op2y
-                            factor = self.ref_data['y'] # Division already done by front-end.
-
-                            # To ensure we are getting the right data, we need to:
-                            # Get the reference detector's nth piece of data.
-                            # scan_idx == (global_scan_id, det_idx)
-                            glob_scan_id = scan_idx[0] # This is the global scan ID.
-                            samp_det_id = scan_idx[1] # This is the sample detector ID.
-                            
-                            ref_y = self.recordedData[(glob_scan_id, ref_det_id)]['y']
-                            samp_y = self.recordedData[(glob_scan_id, samp_det_id)]['y']
-
-                            lim_n = 0
-                            if len(ref_y) < len(samp_y):
-                                lim_n = len(ref_y)
-                            else: 
-                                lim_n = len(samp_y)
-
-                            denom = np.multiply(ref_y[:lim_n], factor[:lim_n]) # ref_y * factor
-
-                            percent = np.divide(samp_y[:lim_n], denom) * 100.0 # samp_y / denom
-
-                            # quotient_y = np.divide(samp_y[:lim_n], ref_y[:lim_n]) # samp_y / ref_y
-                            # resultant = np.multiply(quotient_y[:lim_n], factor[:lim_n])
-
-                            data.append(
-                                [self.recordedData[scan_idx]['x'],
-                                percent,
-                                text + ' (RefID#%d)'%(self.currentRefId),
-                                scan_idx[0]]
-                            )
-
-                        else:
-                            # Ok, so we're the reference detector.
-                            # DO NO MATH! Just show the raw reference value.
-                            data.append(
-                                [self.recordedData[scan_idx]['x'],
-                                self.recordedData[scan_idx]['y'],
-                                text + ' (RefID#%d)'%(self.currentRefId),
-                                scan_idx[0]]
-                            )
-
-                    elif not self.advanced_ref: # Basic referencing
-                        # First we set which operands we want in which order based on the QRadioButtons.
-                        if self.parent.reference_order_meas_ref:
-                            op1y = np.copy(self.recordedData[scan_idx]['y'])
-                            op2y = np.copy(self.ref_data['y'])
-                        else:
-                            op1y = np.copy(self.ref_data['y'])
-                            op2y = np.copy(self.recordedData[scan_idx]['y'])
-
-
-                        if self.reference_operation == 0: # Multiply
-                            data.append([self.recordedData[scan_idx]['x'], np.multiply(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                        elif self.reference_operation == 1: # Divide
-                            data.append([self.recordedData[scan_idx]['x'], np.divide(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                        elif self.reference_operation == 2: # Add
-                            data.append([self.recordedData[scan_idx]['x'], np.add(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                        elif self.reference_operation == 3: # Subtract
-                            data.append([self.recordedData[scan_idx]['x'], np.subtract(op1y, op2y), text + ' (RefID#%d)'%(self.currentRefId), scan_idx[0]])
-                        else:
-                            log.error('Unknown operation index:', self.reference_operation)
-
-                else:
-                    log.debug('No reference data set, so no operation necessary...')
-                    data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx[0]])
+                data.append([self.recordedData[scan_idx]['x'], self.recordedData[scan_idx]['y'], text, scan_idx[0]])
 
         # This updates the main plot in MainGUIWindow with the data we are passing to it.
         self.parent.update_plots(det_idx, data, self.is_result) # updatePlots in Ui(QMainWindow)
@@ -351,8 +250,9 @@ class DataTableWidget(QTableWidget):
         text = src.text()
         text = text.lstrip().rstrip()
         text = text.split('#')[0].rstrip()
-        self.recordedData[src.id]['name'] = text
-        self.updatePlots()
+        which_detector = self.parent.UIE_mgw_table_qtw.currentIndex() - 1
+        self.recordedData[(src.id, which_detector)]['name'] = text
+        self.updatePlots(which_detector)
 
     def __plotCheckboxCb(self, det_idx: int):
         src: CustomQCheckBox = self.sender()
@@ -363,18 +263,18 @@ class DataTableWidget(QTableWidget):
         log.debug(self.recordedData[(global_scan_id, det_idx)]['plotted'])
         self.updatePlots(det_idx)
 
-    def getRefData(self) -> tuple: # Return the data and the metadata
-        if self.currentRefId in self.recordedData:
-            data = self.recordedData[self.currentRefId]
-        else:
-            return (None, None)
+    # def getRefData(self) -> tuple: # Return the data and the metadata
+    #     if self.currentRefId in self.recordedData:
+    #         data = self.recordedData[self.currentRefId]
+    #     else:
+    #         return (None, None)
 
-        if self.currentRefId in self.recordedMetaData:
-            metadata = self.recordedMetaData[self.currentRefId]
-        else:
-            metadata = None
+    #     if self.currentRefId in self.recordedMetaData:
+    #         metadata = self.recordedMetaData[self.currentRefId]
+    #     else:
+    #         metadata = None
         
-        return (data, metadata)
+    #     return (data, metadata)
 
     def saveDataCb(self) -> tuple: # just return the data and the metadata, let main handle the saving
         return self.save_data_auto()
@@ -405,35 +305,6 @@ class DataTableWidget(QTableWidget):
         if (scanIdx, which_detector) in self.recordedData:
             data = self.recordedData[(scanIdx, which_detector)]
 
-            if self.ref_data is not None: # The GUI has set our reference data, so we should use it.
-                if np.shape(self.ref_data) != np.shape(data):
-                    log.error('Reference data shape does not match data shape!')
-                    return (None, None)
-                 
-                log.debug('Reference data is set, so performing operation...')
-                    
-                # First we set which operands we want in which order based on the QRadioButtons.
-                if self.parent.reference_order_meas_ref:
-                    op1y = np.copy(data['y'])
-                    op2y = np.copy(self.ref_data['y'])
-                else:
-                    op1y = np.copy(self.ref_data['y'])
-                    op2y = np.copy(data['y'])
-
-                if self.reference_operation == 0: # Multiply
-                    data['y'] = np.multiply(op1y, op2y)
-                elif self.reference_operation == 1: # Divide
-                    data['y'] = np.divide(op1y, op2y)
-                elif self.reference_operation == 2: # Add
-                    data['y'] = np.add(op1y, op2y)
-                elif self.reference_operation == 3: # Subtract
-                    data['y'] = np.subtract(op1y, op2y)
-                else:
-                    log.error('Unknown operation index:', self.reference_operation)
-            else:
-                log.debug('No reference data set, so no operation necessary...')
-                pass
-
         else:
             data = None
             log.error(f'No data found for scan ID {scanIdx}')
@@ -456,6 +327,9 @@ class DataTableWidget(QTableWidget):
 
     def delDataCb(self):
         log.debug('Delete called')
+
+        which_detector = self.parent.UIE_mgw_table_qtw.currentIndex() - 1
+
         if self.selectedItem is None:
             return
         row = self.selectedItem
@@ -467,12 +341,12 @@ class DataTableWidget(QTableWidget):
         except Exception:
             log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
             return
-        if scanIdx not in self.recordedData.keys():
+        if (scanIdx, which_detector) not in self.recordedData.keys():
             log.error('%d is not in recorded data! :O ... '%(scanIdx), self.recordedData.keys())
             self.__deleteRow(row)
             return
         try:
-            plotCb: CustomQCheckBox = self.recordedData[scanIdx]['plot_cb']
+            plotCb: CustomQCheckBox = self.recordedData[(scanIdx, which_detector)]['plot_cb']
             if not plotCb.isEnabled():
                 return
         except Exception:
@@ -483,17 +357,17 @@ class DataTableWidget(QTableWidget):
         if self.__delete_item_confirm: # actually delete?
             log.info('\n\nGOING TO DELETE %d... '%(scanIdx), end = '')
             try:
-                del self.recordedData[scanIdx]
+                del self.recordedData[(scanIdx, which_detector)]
             except Exception:
                 pass
             try:
-                del self.recordedMetaData[scanIdx]
+                del self.recordedMetaData[(scanIdx, which_detector)]
             except Exception:
                 pass
             self.__deleteRow(row)
             log.debug('DONE\n')
         self.__delete_item_confirm = False
-        self.updatePlots()
+        self.updatePlots(which_detector)
 
     def __deleteRow(self, row: int):
         self.selectedItem = None
@@ -577,19 +451,21 @@ class DataTableWidget(QTableWidget):
     def __deleteItem(self, row: int):
         # TODO: This assume that the row# == global_scan_id. This is not always the case.
         
+        which_detector = self.parent.UIE_mgw_table_qtw.currentIndex() - 1
+
         if row < 0:
             return
         try:
             scanId = self.rowMap.index(row)
         except ValueError:
             log.error('Row %d invalid, len(rows) = %d?'%(row, len(self.rowMap)))
-        if scanId in self.recordedData.keys():
-            del self.recordedData[scanId]
-            if scanId in self.recordedMetaData:
-                del self.recordedMetaData[scanId]
+        if (scanId, which_detector) in self.recordedData.keys():
+            del self.recordedData[(scanId, which_detector)]
+            if (scanId, which_detector) in self.recordedMetaData:
+                del self.recordedMetaData[(scanId, which_detector)]
             del self.rowMap[row]
         self.updateTableDisplay()
-        self.updatePlots()
+        self.updatePlots(which_detector)
         pass
 
     def keyPressEvent(self, event):

@@ -49,6 +49,7 @@ QProgressBar = qpbar
 """
 
 import faulthandler
+import math
 faulthandler.enable()
 
 # OS and SYS Imports
@@ -685,7 +686,11 @@ class MMC_Main(QMainWindow):
         self.previous_position = -9999
         self.immobile_count = 0
 
-        self.ref_data = None
+        # The data we are using as a reference post-operation (if applicable).
+        # e.g., the result of sample_scan/ref_scan
+        self.operated_ref_data = None
+        self.reference_active = False
+        self.is_advanced_ref = False
 
         self.autosave_data_bool = False
         self.pop_out_table = False
@@ -820,6 +825,9 @@ class MMC_Main(QMainWindow):
         self.ref0_data = None
         self.ref1_data = None
         self.ref2_data = None
+
+        self.ref_det_idx = 0
+        self.sample_det_idx = 0
 
         self.UIE_mgw_setref_qpb.clicked.connect(self.set_ref)
         self.UIE_mgw_setr1_qpb.clicked.connect(self.set_ref1)
@@ -1862,11 +1870,12 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_setr2_qpb.setText(f"D{dn}S{metadata['scan_id']}")
 
     def reset_ref(self):
+        self.reference_active = False
         self.unregister_ref_data()
 
         self.UIE_mgw_setref_qpb.setText('Set Reference')
-        self.UIE_mgw_setr1_qpb.setText('Set R1')
-        self.UIE_mgw_setr2_qpb.setText('Set R2')
+        self.UIE_mgw_setr1_qpb.setText('Set S0')
+        self.UIE_mgw_setr2_qpb.setText('Set R0')
 
     def toggle_ref(self):
         if self.UIE_mgw_ref_advanced_qrb.isChecked():
@@ -1881,8 +1890,17 @@ class MMC_Main(QMainWindow):
     # [%] = (S_i / (R_i * (S_0 / R_0))) * 100.0
     def enact_ref(self):
         advanced_ref = self.UIE_mgw_ref_advanced_qrb.isChecked()
+        self.is_advanced_ref = advanced_ref
+        self.reference_active = True
 
         if advanced_ref:
+            if self.UIE_mgw_sample_det_qcb.currentIndex() == self.UIE_mgw_ref_det_qcb.currentIndex():
+                msg = 'Cannot use the same detector for reference and sample.'
+                self.QMessageBoxWarning('Cannot Enact Reference', msg)
+                return
+
+            self.sample_det_idx = self.UIE_mgw_sample_det_qcb.currentIndex()
+            self.ref_det_idx = self.UIE_mgw_ref_det_qcb.currentIndex()
 
             if self.ref1_data is None or self.ref2_data is None:
                 msg = 'Cannot enact advanced reference without two reference datasets.'
@@ -1921,6 +1939,39 @@ class MMC_Main(QMainWindow):
             
             self.register_ref_data(self.ref0_data)
 
+    # This is the data that will be used to operate on all other scans.
+    # The way this will works is as follows:
+    #   - All scans will be displayed in the results tab. They will be marked w/ detector and scan #s.
+    #   - If ref_data is None, then nothing will be done to the data. 
+    #   - If ref_data is not None, then the data will be adjusted based on the reference data.
+    # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
+    def register_ref_data(self, ref_data, advanced = False):
+        self.operated_ref_data = ref_data
+        # self.graph_result.ref_data = ref_data
+        # self.table_result.ref_data = ref_data
+
+        # if self.UIE_mgw_ref_advanced_qrb.isChecked():
+        #     self.table_result.advanced_ref = True
+        #     self.table_result.reference_operation = 1 # Only ever division.
+        # else:
+        #     self.table_result.reference_operation = self.UIE_mgw_setop_qcb.currentIndex()
+
+        self.table_result.updatePlots(-1)
+
+        # self.graph_result.update_plots(ref_data)
+        # TODO: Figure out how to update the reference / result plot.
+
+    # THIS IS THE LATEST SCAN DATA FROM THE REFERENCE DETECTOR
+    def push_latest_ref_data(self, latest_ref_data):
+        self.latest_ref_data = latest_ref_data
+
+    # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
+    def unregister_ref_data(self):
+        self.operated_ref_data = None
+        # self.graph_result.ref_data = None
+        # self.graph_result.update_plots()
+        # self.table_result.ref_data = None
+        self.table_result.updatePlots(-1)
 
     def save_data_cb(self):
         if self.UIE_mgw_table_qtw.currentIndex() == 0:
@@ -2166,41 +2217,6 @@ class MMC_Main(QMainWindow):
     def pop_out_plot_toggled(self, state):
         self.pop_out_plot = state
 
-    # This is the data that will be used to operate on all other scans.
-    # The way this will works is as follows:
-    #   - All scans will be displayed in the results tab. They will be marked w/ detector and scan #s.
-    #   - If ref_data is None, then nothing will be done to the data. 
-    #   - If ref_data is not None, then the data will be adjusted based on the reference data.
-    # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
-    def register_ref_data(self, ref_data, advanced = False):
-        self.ref_data = ref_data
-        # self.graph_result.ref_data = ref_data
-        self.table_result.ref_data = ref_data
-
-        if self.UIE_mgw_ref_advanced_qrb.isChecked():
-            self.table_result.advanced_ref = True
-            self.table_result.reference_operation = 1 # Only ever division.
-        else:
-            self.table_result.reference_operation = self.UIE_mgw_setop_qcb.currentIndex()
-
-        self.table_result.updatePlots(-1)
-
-
-        # self.graph_result.update_plots(ref_data)
-        # TODO: Figure out how to update the reference / result plot.
-
-    # THIS IS THE LATEST SCAN DATA FROM THE REFERENCE DETECTOR
-    def push_latest_ref_data(self, latest_ref_data):
-        self.latest_ref_data = latest_ref_data
-
-    # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
-    def unregister_ref_data(self):
-        self.ref_data = None
-        # self.graph_result.ref_data = None
-        # self.graph_result.update_plots()
-        self.table_result.ref_data = None
-        self.table_result.updatePlots(-1)
-
     def update_plots(self, det_idx: int, data: list, is_result: bool = False):
         # if self.plotCanvas is None:
         #     return
@@ -2208,9 +2224,7 @@ class MMC_Main(QMainWindow):
 
         if self.graph_list is None or len(self.graph_list) == 0:
             return
-
-
-
+        
         if is_result:
             self.graph_result.update_plots(data)
         else:
@@ -2235,19 +2249,92 @@ class MMC_Main(QMainWindow):
         if scans_global_scan_id != self.global_scan_id:
             log.error('Global scan ID mismatch %d != %d'%(scans_global_scan_id, self.global_scan_id))
         
-        self.table_result.insertData(det_idx, self.global_scan_id, None, None, metadata)
+        if self.reference_active and (self.global_scan_id, self.sample_det_idx) not in self.table_result.recordedData:
+            self.table_result.insertData(self.sample_det_idx, self.global_scan_id, None, None, metadata)
+
         self.table_list[det_idx].insertData(det_idx, self.global_scan_id, None, None, metadata)
         
     # This function is called via a signal emission from scan.py.
     # The data is actually stored in datatable.py's recordedData.
     def scan_data_update(self, which_detector: int, scan_idx: int, det_idx: int, xdata: float, ydata: float):
-        # TODO: Adjust data based on reference if one is being used.   
-
         log.debug(f'Data received from detector #{det_idx}: {xdata}; {ydata}')
 
-        # This is where we handle all detectors.
-        self.table_result.insertDataAt(det_idx, scan_idx, xdata, ydata)
+        # Ok, so we need to perform self.operated_ref_data * Sample/Reference 
+        # The issue is that we have no way of knowing if the Sample or Reference detection was made first.
+        # We want to shove the result into the table_result table.
+        # So we want them to both have the same length but also be longer than 0.
+        # We actually don't really care whether in this call we are ref or samp det.
+
+        # First, let's just get the raw data put where it needs to go.
         self.table_list[det_idx].insertDataAt(det_idx, scan_idx, xdata, ydata)
+
+        if self.reference_active:
+            # Get the corresponding self.operated_ref_data element iff the 'x' matches.
+            this_len = len(self.table_list[det_idx].recordedData[(scan_idx, det_idx)]['x'])
+            this_x = self.table_list[det_idx].recordedData[(scan_idx, det_idx)]['x'][this_len - 1]
+            operated_ref_x = self.operated_ref_data['x'][this_len - 1]
+
+            if not math.isclose(this_x, operated_ref_x):
+                log.error(f"Cannot perform referencing because x-values {this_x} and {operated_ref_x} are not close.")
+                return
+            
+            operated_ref_y = self.operated_ref_data['y'][this_len - 1]
+
+            if self.is_advanced_ref:
+                # Then let's get the lengths of the recorded data.
+                samp_len = len(self.table_list[self.sample_det_idx].recordedData[(scan_idx, self.sample_det_idx)]['x'])
+                ref_len = len(self.table_list[self.ref_det_idx].recordedData[(scan_idx, self.ref_det_idx)]['x'])
+
+                # ~ Case: Sample First ~
+                #
+                # S R
+                # 0 0 -> Check: fails.
+                # Process sample data.
+                # 1 0 -> Check: fails.
+                # Process ref. data.
+                # 1 1 -> Check: passes!
+                # Perform ResultTable.push(S/R) 
+                #
+                #
+                # ~ Case: Ref. First ~
+                #
+                # S R
+                # 0 0 -> Check: fails.
+                # Process ref. data.
+                # 0 1 -> Check: fails.
+                # Process sample data.
+                # 1 1 -> Check: passes!
+                # Perform ResultTable.push(S/R) 
+
+                if (samp_len == ref_len) and (samp_len > 0):
+                    # Get the latest values from the sample and reference scans.
+                    numerator = self.table_list[self.sample_det_idx].recordedData[(scan_idx, self.sample_det_idx)]['y'][-1]
+                    denominator = self.table_list[self.ref_det_idx].recordedData[(scan_idx, self.ref_det_idx)]['y'][-1]
+                    quotient = numerator/denominator
+
+                    result = operated_ref_y * quotient
+
+                    self.table_result.insertDataAt(self.sample_det_idx, scan_idx, xdata, result)
+
+            elif not self.is_advanced_ref:
+                if self.UIE_mgw_setop_qcb.currentIndex() == 0:
+                    result = operated_ref_y * ydata
+                
+                elif self.UIE_mgw_setop_qcb.currentIndex() == 1:
+                    result = operated_ref_y / ydata
+                
+                elif self.UIE_mgw_setop_qcb.currentIndex() == 2:
+                    result = operated_ref_y + ydata
+                
+                elif self.UIE_mgw_setop_qcb.currentIndex() == 3:
+                    result = operated_ref_y - ydata
+
+                self.table_result.insertDataAt(det_idx, scan_idx, xdata, result)
+
+
+        # This is where we handle all detectors.
+        # self.table_result.insertDataAt(det_idx, scan_idx, xdata, ydata)
+        # self.table_list[det_idx].insertDataAt(det_idx, scan_idx, xdata, ydata)
         log.info("Data from detector #%d received."%(det_idx))
 
     def scan_data_complete(self, which_detector: int, scan_idx: int, scan_class: str):
