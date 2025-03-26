@@ -269,6 +269,7 @@ class Scan(QThread):
 
         # while self.scanId == self.other.table_list[0].scanId: # spin until that happens
         #     continue``
+        task_i = 0
         for idx, dpos in enumerate(scanrange):
             log.debug('STARTING SCAN LOOP SECTION')
 
@@ -326,10 +327,19 @@ class Scan(QThread):
             i=0
             log.debug("Beginning loop.")
             for i, detector in enumerate(active_detectors):
+                task_i += 1
                 mes = detector.detect()
                 log.debug(mes)
 
-                self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(active_detectors)))
+                # idx: index of which step in the scan
+                # nidx: total num of steps
+
+                # self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(active_detectors)))
+                log.debug(f"Emitting progress signal: {((idx + i) / (nidx * len(active_detectors))) * 100.0}")
+                # self.SIGNAL_progress.emit( ((idx + i) / (nidx * len(active_detectors))) * 100.0 )
+                self.SIGNAL_progress.emit( (task_i / (nidx * len(active_detectors))) * 100.0 )
+                # First half is wrong 2nd half is fine
+                # It should be 
                 
                 log.debug("Appending data.")
                 if (i != 0) and (ctrl_axis == ScanAxis.SAMPLE) and (scan_type == SampleScanType.THETA2THETA):

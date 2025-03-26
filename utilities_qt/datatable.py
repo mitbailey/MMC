@@ -87,6 +87,7 @@ class DataTableWidget(QTableWidget):
         self.is_result = False
         # self.reference_operation = 0
         # self.advanced_ref = False
+        self.row_to_id_det_map = dict()
 
     def insertData(self, det_idx: int, global_scan_id: int, xdata: np.ndarray | None, ydata: np.ndarray | None, metadata: dict,  btn_disabled: bool = True, name_editable: bool = True) -> int: # returns the scan ID
         
@@ -214,6 +215,9 @@ class DataTableWidget(QTableWidget):
                     xmax = round(self.recordedData[(scan_idx, key_det_idx)]['x'].max(), 4)
                 except Exception:
                     pass
+                
+                # Here we create a mapping between rows and scan IDs/detectors.
+                self.row_to_id_det_map[row_idx] = (scan_idx, key_det_idx)
 
                 self.setItem(row_idx, 1, QTableWidgetItem(str(xmin)))
 
@@ -290,6 +294,7 @@ class DataTableWidget(QTableWidget):
             if self.selectedItem is None:
                 log.error('self.selectedItem is None!')
                 return (None, None)
+            
             row = self.selectedItem
 
             if row >= len(self.rowMap):
@@ -307,7 +312,7 @@ class DataTableWidget(QTableWidget):
 
         else:
             data = None
-            log.error(f'No data found for scan ID {scanIdx}')
+            log.error(f'No data found for scan ID {scanIdx} from detector {which_detector}.')
 
         if (scanIdx, which_detector) in self.recordedMetaData:
             metadata = self.recordedMetaData[(scanIdx, which_detector)]
