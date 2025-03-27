@@ -941,6 +941,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_ref_reset_qpb.clicked.connect(self.reset_ref)
         self.UIE_mgw_ref_enact_qpb.clicked.connect(self.enact_ref)
 
+        self.UIE_mgw_ref_reset_qpb.setDisabled(True)
+
         self.UIE_mgw_ref_advanced_qrb.toggled.connect(self.toggle_ref)
 
         # UIE_mgw_table_qf: QFrame = self.findChild(QFrame, "table_frame")
@@ -2157,6 +2159,9 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_setr1_qpb.setText('Set S0')
         self.UIE_mgw_setr2_qpb.setText('Set R0')
 
+        self.UIE_mgw_ref_reset_qpb.setDisabled(True)
+        self.UIE_mgw_ref_enact_qpb.setDisabled(False)
+
     def toggle_ref(self):
         if self.UIE_mgw_ref_advanced_qrb.isChecked():
             self.UIE_mgw_simple_opbox_qgb.hide()
@@ -2164,6 +2169,8 @@ class MMC_Main(QMainWindow):
         else:
             self.UIE_mgw_simple_opbox_qgb.show()
             self.UIE_mgw_advanced_opbox_qgb.hide()
+
+        
 
     # The reference value
     # The reference equation is:
@@ -2220,6 +2227,9 @@ class MMC_Main(QMainWindow):
                 return
 
             self.register_ref_data(self.ref0_data)
+
+        self.UIE_mgw_ref_enact_qpb.setDisabled(True)
+        self.UIE_mgw_ref_reset_qpb.setDisabled(False)
 
     # This is the data that will be used to operate on all other scans.
     # The way this will works is as follows:
