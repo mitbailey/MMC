@@ -111,5 +111,11 @@ def generate_virtual_ports(num):
         virt_dev_list.append('VIRTUAL_%d - For testing purposes.'%(i))
     return virt_dev_list
 
-def find_all_ports():
-    return find_com_ports() + find_apt_ports() + generate_virtual_ports(5)
+def find_all_ports(virtualize):
+    try:
+        if generate_virtual_ports:
+            return find_com_ports() + find_apt_ports() + generate_virtual_ports(5)
+        else:
+            return find_com_ports() + find_apt_ports()
+    except Exception as e:
+        exit("Error finding ports: %s"%(e))

@@ -395,8 +395,7 @@ class MMC_Main(QMainWindow):
             self.dmw = QDialog(self)  # pass parent window
             uic.loadUi(ui_file, self.dmw)
 
-            self.dmw.setWindowTitle('%s (%sv%s) %s' % (
-                version.__long_name__, version.__short_name__, version.__version__, self.git_hash))
+            self.dmw.setWindowTitle('%s (%s-%s)'%(version.__long_name__, version.__version__, self.git_hash))
             self.dmw_list = ''
 
             self.UIEL_dmw_detector_qhbl = []
@@ -774,17 +773,14 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_machine_conf_qpb: QPushButton = None
 
         self.UIE_mcw_steps_per_nm_qdsb: QDoubleSpinBox = None
-
+        
         if ALLOW_DUMMY_MODE:
             if dummy:
-                self.setWindowTitle('%s (Debug Mode) (%sv%s) %s' % (
-                    version.__long_name__, version.__short_name__, version.__version__, self.git_hash))
+                self.setWindowTitle('%s (%s-%s-DB)'%(version.__long_name__, version.__version__, self.git_hash))
             else:
-                self.setWindowTitle('%s (Hardware Mode) (%sv%s) %s' % (
-                    version.__long_name__, version.__short_name__, version.__version__, self.git_hash))
+                self.setWindowTitle('%s (%s-%s-HW)'%(version.__long_name__, version.__version__, self.git_hash))
         else:
-            self.setWindowTitle('%s (%sv%s) %s' % (
-                version.__long_name__, version.__short_name__, version.__version__, self.git_hash))
+            self.setWindowTitle('%s (%s-%s)'%(version.__long_name__, version.__version__, self.git_hash))
 
         self.is_conv_set = False  # Use this flag to set conversion
 
@@ -2071,7 +2067,7 @@ class MMC_Main(QMainWindow):
         del self.UIEL_mgw_fw_rules_qvbl[index]
 
     def devman_list_devices(self, first_time: bool = False):
-        self.dev_list = mw.find_all_ports()
+        self.dev_list = mw.find_all_ports(ALLOW_DUMMY_MODE)
 
         dev_list_str = ''
         for dev in self.dev_list:
@@ -3177,8 +3173,7 @@ class MMC_Main(QMainWindow):
             self.machine_conf_win = QDialog(self)  # pass parent window
             uic.loadUi(ui_file, self.machine_conf_win)
 
-            self.machine_conf_win.setWindowTitle('Monochromator Configuration (%sv%s) %s' % (
-                version.__short_name__, version.__version__, self.git_hash))
+            self.machine_conf_win.setWindowTitle('Configuration')
 
             tabWidget = self.machine_conf_win.findChild(
                 QTabWidget, "tabWidget")

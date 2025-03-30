@@ -134,8 +134,8 @@ class DevFinder:
         s.close()
         return '(Unknown)'
 
-def find_all_ports():
-    return ports_finder.find_all_ports()
+def find_all_ports(virtualize):
+    return ports_finder.find_all_ports(virtualize)
 
 # MotionController
 # Genericizes the type of motor controller.
