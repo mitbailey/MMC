@@ -87,6 +87,7 @@ import hashlib
 import faulthandler
 import math
 import typing
+import subprocess
 from typing import Callable
 from typing_extensions import Self
 faulthandler.enable()
@@ -105,7 +106,6 @@ elif __file__:
     appDir = os.path.dirname(__file__)
 
 # PyQt Imports
-
 
 # More Standard Imports
 
@@ -258,6 +258,8 @@ class MMC_Main(QMainWindow):
         self.detection_delay = 0.0
         self.per_detection_averages = 1
 
+        self.git_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+
         # application.setQuitOnLastWindowClosed(False)
 
         self.selected_config_save_path = os.path.expanduser(
@@ -393,8 +395,8 @@ class MMC_Main(QMainWindow):
             self.dmw = QDialog(self)  # pass parent window
             uic.loadUi(ui_file, self.dmw)
 
-            self.dmw.setWindowTitle('%s (%sv%s)' % (
-                version.__long_name__, version.__short_name__, version.__version__))
+            self.dmw.setWindowTitle('%s (%sv%s) %s' % (
+                version.__long_name__, version.__short_name__, version.__version__, self.git_hash))
             self.dmw_list = ''
 
             self.UIEL_dmw_detector_qhbl = []
@@ -775,14 +777,14 @@ class MMC_Main(QMainWindow):
 
         if ALLOW_DUMMY_MODE:
             if dummy:
-                self.setWindowTitle('%s (Debug Mode) (%sv%s)' % (
-                    version.__long_name__, version.__short_name__, version.__version__))
+                self.setWindowTitle('%s (Debug Mode) (%sv%s) %s' % (
+                    version.__long_name__, version.__short_name__, version.__version__, self.git_hash))
             else:
-                self.setWindowTitle('%s (Hardware Mode) (%sv%s)' % (
-                    version.__long_name__, version.__short_name__, version.__version__))
+                self.setWindowTitle('%s (Hardware Mode) (%sv%s) %s' % (
+                    version.__long_name__, version.__short_name__, version.__version__, self.git_hash))
         else:
-            self.setWindowTitle('%s (%sv%s)' % (
-                version.__long_name__, version.__short_name__, version.__version__))
+            self.setWindowTitle('%s (%sv%s) %s' % (
+                version.__long_name__, version.__short_name__, version.__version__, self.git_hash))
 
         self.is_conv_set = False  # Use this flag to set conversion
 
@@ -3175,8 +3177,8 @@ class MMC_Main(QMainWindow):
             self.machine_conf_win = QDialog(self)  # pass parent window
             uic.loadUi(ui_file, self.machine_conf_win)
 
-            self.machine_conf_win.setWindowTitle('Monochromator Configuration (%sv%s)' % (
-                version.__short_name__, version.__version__))
+            self.machine_conf_win.setWindowTitle('Monochromator Configuration (%sv%s) %s' % (
+                version.__short_name__, version.__version__, self.git_hash))
 
             tabWidget = self.machine_conf_win.findChild(
                 QTabWidget, "tabWidget")
