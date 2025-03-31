@@ -342,7 +342,7 @@ class Scan(QThread):
                 # self.SIGNAL_progress.emit( ((idx + i) / (nidx * len(active_detectors))) * 100.0 )
                 log.debug(f"Emitting progress signal: {((task_i) / (nidx * len(active_detectors))) * 100.0}")
                 log.debug(f"Progress signal components: task_i: {task_i}, nidx: {nidx}, len(active_detectors): {len(active_detectors)}")
-                self.SIGNAL_progress.emit( (task_i / (nidx * len(active_detectors))) * 100.0 )
+                self.SIGNAL_progress.emit( int((task_i / (nidx * len(active_detectors))) * 100.0) )
                 # First half is wrong 2nd half is fine
                 # It should be 
                 

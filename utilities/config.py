@@ -199,7 +199,7 @@ def save_config(path: str, mes_sign: int = 1, autosave_data: bool = True, data_s
                               'srOffset': sr_offset,
                               'saOffset': sa_offset,
                               'drOffset': dr_offset}
-    log.error('drOffset:', dr_offset)
+    log.debug('drOffset:', dr_offset)
     save_config['STEP CONVERSIONS'] = {'mdSp': md_sp,
                                        'fwSp': fw_sp,
                                        'srSp': sr_sp,
