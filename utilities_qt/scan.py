@@ -175,42 +175,45 @@ class Scan(QThread):
             # prep_pos = int((0 + self.other.zero_ofst))
 
             prep_pos = 0
-            try:
-                log.info('107: Moving to', prep_pos)
+        else:
+            prep_pos = start * 0.85
 
-                log.debug('ctrl_axis: %s'%(ctrl_axis))
-                log.debug('scan_type: %s'%(scan_type))
+        try:
+            log.info('107: Moving to', prep_pos)
 
-                if ctrl_axis == ScanAxis.MAIN:
-                    log.info('ctrl_axis == ScanAxis.MAIN')
-                    self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
-                    log.info('Complete move command.')
-                elif ctrl_axis == ScanAxis.SAMPLE:
-                    log.info('ctrl_axis == ScanAxis.SAMPLE')
-                    if scan_type == SampleScanType.ROTATION:
-                        log.info('scan_type == SampleScanType.ROTATION')
-                        self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
-                    elif scan_type == SampleScanType.TRANSLATION:
-                        log.info('scan_type == SampleScanType.TRANSLATION')
-                        self.other.motion_controllers.sample_translation_axis.move_to(prep_pos, True)
-                    elif scan_type == SampleScanType.THETA2THETA:
-                        log.info('scan_type == SampleScanType.THETA2THETA')
-                        self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
-                        self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos * 2, True)
-                    else:
-                        log.error(f'Invalid scan type for control axis: sample ({ctrl_axis}; {scan_type}).')
-                elif ctrl_axis == ScanAxis.DETECTOR:
-                    log.info('ctrl_axis == ScanAxis.DETECTOR')
-                    self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos, True)
+            log.debug('ctrl_axis: %s'%(ctrl_axis))
+            log.debug('scan_type: %s'%(scan_type))
+
+            if ctrl_axis == ScanAxis.MAIN:
+                log.info('ctrl_axis == ScanAxis.MAIN')
+                self.other.motion_controllers.main_drive_axis.move_to(prep_pos, True)
+                log.info('Complete move command.')
+            elif ctrl_axis == ScanAxis.SAMPLE:
+                log.info('ctrl_axis == ScanAxis.SAMPLE')
+                if scan_type == SampleScanType.ROTATION:
+                    log.info('scan_type == SampleScanType.ROTATION')
+                    self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
+                elif scan_type == SampleScanType.TRANSLATION:
+                    log.info('scan_type == SampleScanType.TRANSLATION')
+                    self.other.motion_controllers.sample_translation_axis.move_to(prep_pos, True)
+                elif scan_type == SampleScanType.THETA2THETA:
+                    log.info('scan_type == SampleScanType.THETA2THETA')
+                    self.other.motion_controllers.sample_rotation_axis.move_to(prep_pos, True)
+                    self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos * 2, True)
                 else:
-                    log.error(f'Invalid control axis ({ctrl_axis}; {scan_type}).')
+                    log.error(f'Invalid scan type for control axis: sample ({ctrl_axis}; {scan_type}).')
+            elif ctrl_axis == ScanAxis.DETECTOR:
+                log.info('ctrl_axis == ScanAxis.DETECTOR')
+                self.other.motion_controllers.detector_rotation_axis.move_to(prep_pos, True)
+            else:
+                log.error(f'Invalid control axis ({ctrl_axis}; {scan_type}).')
 
-                log.info('109: Done with', prep_pos)
-            except Exception as e:
-                log.error('Exception: Move Failure - Axis failed to move: %s'%(e))
-                self.SIGNAL_error.emit('Move Failure', 'Axis failed to move: %s'%(e))
-                self.SIGNAL_complete.emit()
-                return
+            log.info('109: Done with', prep_pos)
+        except Exception as e:
+            log.error('Exception: Move Failure - Axis failed to move: %s'%(e))
+            self.SIGNAL_error.emit('Move Failure', 'Axis failed to move: %s'%(e))
+            self.SIGNAL_complete.emit()
+            return
             
         log.info('Holding for 1 second.')
 
