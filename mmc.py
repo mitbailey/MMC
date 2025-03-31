@@ -3758,7 +3758,8 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_fw_mancon_move_pos_qpb.setEnabled(is_zero)
         self.UIE_mgw_fw_mancon_home_qpb.setEnabled(is_zero)
 
-        self.UIE_mgw_pframe_2_qf.setVisible(is_zero)
+        self.UIE_mgw_pframe_2_qf.setVisible(is_zero and SHOW_FILTER_WHEEL)
+
 
         return self.filter_axis_index
 

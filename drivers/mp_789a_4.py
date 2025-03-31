@@ -36,6 +36,7 @@ from .stagedevice import StageDevice
 class MP_789A_4(StageDevice):
     WR_DLY = 0.05
     HSM = 4
+    MAX_VEL = 60000
 
     def backend(self)->str:
         return 'MP_789A_4'
@@ -161,6 +162,9 @@ class MP_789A_4(StageDevice):
         # Halt the device before beginning the homing process.
         self.stop()
 
+        # Set the movement speed for homing.
+        self._enact_speed_factor(self._home_speed_mult)
+
         # Set the `_is_homing` flag to disallow simultaneous homing attempts.
         log.info('Beginning home.')
         self._homing = True
@@ -200,6 +204,8 @@ class MP_789A_4(StageDevice):
                 if ('0' in rx or '2' in rx) and ('+' not in rx and '-' not in rx): # Not-on-a-limit-switch status is 0 when stationary, 2 when in motion.
                     break
                 elif ('64' in rx or '128' in rx) and ('+' not in rx and '-' not in rx): # If we have hit either of the extreme limit switches and stopped.
+                    # Reset the movement speed.
+                    self._enact_speed_factor(self._move_speed_mult)
                     log.error('Hit edge limit switch when homing. Does this device have a home sensor?')
                     raise RuntimeError('Hit edge limit switch when homing. Does this device have a home sensor?')
                 time.sleep(MP_789A_4.WR_DLY * 7)
@@ -259,7 +265,8 @@ class MP_789A_4(StageDevice):
                     break
                 elif ('64' in rx or '128' in rx) and ('+' not in rx and '-' not in rx): # If we have hit either of the extreme limit switches and stopped.
                     # TODO: Some 789s don't have a limit switch. In this case, we will need to home using the lower limit switch... ?
-
+                    # Reset the movement speed.
+                    self._enact_speed_factor(self._move_speed_mult)
                     log.error('Hit edge limit switches twice when homing. Does this device have a home sensor?')
                     raise RuntimeError('Hit edge limit switches twice when homing. Does this device have a home sensor?')
                 time.sleep(MP_789A_4.WR_DLY * 7)
@@ -304,6 +311,8 @@ class MP_789A_4(StageDevice):
             time.sleep(MP_789A_4.WR_DLY) 
             pass
         else:
+            # Reset the movement speed.
+            self._enact_speed_factor(self._move_speed_mult)
             log.error('Unknown position to home from.', rx)
             raise RuntimeError('Unknown position to home from (%s).'%(rx))
 
@@ -331,6 +340,10 @@ class MP_789A_4(StageDevice):
         # Reset position and homing status.
         self._position = 0
         self._homing = False
+
+        # Reset the movement speed.
+        self._enact_speed_factor(self._move_speed_mult)
+
         return True
 
     def get_position(self):
@@ -592,6 +605,19 @@ class MP_789A_4(StageDevice):
     def set_move_speed_mult(self, speed):
         log.info(f'Setting move speed multiplier to {speed}.')
         self._move_speed_mult = speed
+
+        self._enact_speed_factor(self._move_speed_mult)
+
+    def _enact_speed_factor(self, speed_factor):
+        vel_int = int(speed_factor * MP_789A_4.MAX_VEL)
+
+        if vel_int > MP_789A_4.MAX_VEL:
+            vel_int = MP_789A_4.MAX_VEL
+        elif vel_int < 0:
+            vel_int = 0
+
+        msg = f'V{str(vel_int)}'
+        rx = self.s.xfer([msg.encode('utf-8')]).decode('utf-8')
 
     def short_name(self):
         """ Returns the short name of the device.

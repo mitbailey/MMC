@@ -335,8 +335,10 @@ class Scan(QThread):
                 # nidx: total num of steps
 
                 # self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(active_detectors)))
-                log.debug(f"Emitting progress signal: {((idx + i) / (nidx * len(active_detectors))) * 100.0}")
+                # log.debug(f"Emitting progress signal: {((idx + i) / (nidx * len(active_detectors))) * 100.0}")
                 # self.SIGNAL_progress.emit( ((idx + i) / (nidx * len(active_detectors))) * 100.0 )
+                log.debug(f"Emitting progress signal: {((task_i) / (nidx * len(active_detectors))) * 100.0}")
+                log.debug(f"Progress signal components: task_i: {task_i}, nidx: {nidx}, len(active_detectors): {len(active_detectors)}")
                 self.SIGNAL_progress.emit( (task_i / (nidx * len(active_detectors))) * 100.0 )
                 # First half is wrong 2nd half is fine
                 # It should be 
@@ -485,7 +487,7 @@ class QueueExecutor(QThread):
                         log.debug('QueueExecutor - Waiting for scan to finish.')
                         sleep(0.1)
                 else:
-                    log.error('QueueExecutor - Unknown scan type: %s'%(args[1]))
+                    log.error('QueueExecutor - Unknown Command: Unknown command argument: %s'%(args[1]))
                     self.SIGNAL_error.emit('Unknown Command', 'Unknown command argument: %s'%(args[1]))
                     self.SIGNAL_complete.emit()
                     return
