@@ -1588,7 +1588,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = None
 
-        self.update_offsets()
+        # self.update_offsets()
 
         # This is where we disable the scroll function for all spin and combo boxes, because its dumb.
         uiel = self.findChildren(QDoubleSpinBox)
