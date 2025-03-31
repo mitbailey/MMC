@@ -168,6 +168,10 @@ class Scan(QThread):
             self.SIGNAL_complete.emit()
             return
 
+        # Partial zeroing manuever.
+        self.SIGNAL_status_update.emit("ZEROING")
+        prep_pos = start * 0.85
+
         # Only perform zeroing manuever if we are the KST-x01.
         if 'KST' in short_name: # only do zeroing if its a KST-x01.
             # MOVES TO ZERO PRIOR TO BEGINNING A SCAN
@@ -175,8 +179,6 @@ class Scan(QThread):
             # prep_pos = int((0 + self.other.zero_ofst))
 
             prep_pos = 0
-        else:
-            prep_pos = start * 0.85
 
         try:
             log.info('107: Moving to', prep_pos)
