@@ -181,7 +181,6 @@ class MplCanvas(FigureCanvasQTAgg):
         if not self._parent.scanRunning:
             self.axes.cla()
             self.axes.set_xlabel(self.xlabel)
-            # self.axes.set_ylabel('Photo Current (pA)')
             self.axes.set_ylabel(self.ylabel)
             self.axes.grid()
             self.draw()
@@ -192,11 +191,8 @@ class MplCanvas(FigureCanvasQTAgg):
     def update_plots(self:Self, data: list):
         self.axes.cla()
         self.axes.set_xlabel(self.xlabel)
-        # self.axes.set_ylabel('Photo Current (pA)')
         self.axes.set_ylabel(self.ylabel)
-        # log.debug('data:', data)
         for row in data:
-            # log.debug('row:', row)
             c = self.colors[row[-1] % len(self.colors)]
             log.warn(f"Plotting: {row[0]} ; {row[1]}")
             if len(row[0]) != len(row[1]):
@@ -260,8 +256,6 @@ class MMC_Main(QMainWindow):
 
         self.git_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
 
-        # application.setQuitOnLastWindowClosed(False)
-
         self.selected_config_save_path = os.path.expanduser(
             '~/Documents') + '/mcpherson_mmc/s_d.csv'
 
@@ -287,13 +281,6 @@ class MMC_Main(QMainWindow):
         uic.loadUi(uiresource, self)
 
         self.setWindowIcon(QtGui.QIcon(exeDir + '/res/faviconV2.png'))
-        # app_icon = QtGui.QIcon()
-        # app_icon.addFile(exeDir + '/res/MMCS_Icon_16.png', QtCore.QSize(16,16))
-        # app_icon.addFile(exeDir + '/res/MMCS_Icon_24.png', QtCore.QSize(24,24))
-        # app_icon.addFile(exeDir + '/res/MMCS_Icon_32.png', QtCore.QSize(32,32))
-        # app_icon.addFile(exeDir + '/res/MMCS_Icon_48.png', QtCore.QSize(48,48))
-        # app_icon.addFile(exeDir + '/res/MMCS_Icon_256.png', QtCore.QSize(256,256))
-        # self.setWindowIcon(app_icon)
 
         self.SIGNAL_device_manager_ready.connect(self.connect_devices)
         self.SIGNAL_devices_connection_check.connect(
@@ -312,7 +299,7 @@ class MMC_Main(QMainWindow):
 
         # Load Configuration File
         self.moving = False
-        # self.axes_info_prev_moving = False
+        
         self.movement_sensitive_buttons_disabled = False
 
         # Default measurement sign.
@@ -520,8 +507,6 @@ class MMC_Main(QMainWindow):
         else:
             log.info('Canceling program exit.')
 
-    # UIE_dmw_num_detectors_qsb
-    # UIE_dmw_num_motion_controllers_qsb
     def d_add_fn(self):
         self.UIE_dmw_num_detectors_qsb.setValue(
             self.UIE_dmw_num_detectors_qsb.value() + 1)
@@ -738,8 +723,6 @@ class MMC_Main(QMainWindow):
         if not os.path.exists(self.data_save_directory):
             os.makedirs(self.data_save_directory)
 
-        # self.plotCanvas = None
-
         self.num_scans = 0
         self.previous_position = -9999
         self.immobile_count = 0
@@ -831,7 +814,7 @@ class MMC_Main(QMainWindow):
             QDoubleSpinBox, "pos_set_spinbox")  # Manual Control 'Position:' Spin Box
         self.UIE_mgw_move_to_position_qpb: QPushButton = self.findChild(
             QPushButton, "move_pos_button")
-        # self.UIE_mgw_plot_frame_qw: QWidget = self.findChild(QWidget, "data_graph")
+        
         self.UIE_mgw_xmin_in_qle: QLineEdit = self.findChild(
             QLineEdit, "xmin_in")
         self.UIE_mgw_ymin_in_qle: QLineEdit = self.findChild(
@@ -840,7 +823,7 @@ class MMC_Main(QMainWindow):
             QLineEdit, "xmax_in")
         self.UIE_mgw_ymax_in_qle: QLineEdit = self.findChild(
             QLineEdit, "ymax_in")
-        # self.UIE_mgw_plot_autorange_qckbx: QCheckBox = self.findChild(QCheckBox, "autorange_checkbox")
+        
         self.UIE_mgw_plot_clear_plots_qpb: QPushButton = self.findChild(
             QPushButton, "clear_plots_button")
 
@@ -943,7 +926,6 @@ class MMC_Main(QMainWindow):
 
         self.UIE_mgw_ref_advanced_qrb.toggled.connect(self.toggle_ref)
 
-        # UIE_mgw_table_qf: QFrame = self.findChild(QFrame, "table_frame")
         self.UIE_mgw_open_queue_file_qpb: QPushButton = self.findChild(
             QPushButton, 'open_queue_file_button')
         self.UIE_mgw_open_queue_file_qpb.clicked.connect(self.load_queue_file)
@@ -954,7 +936,6 @@ class MMC_Main(QMainWindow):
 
         self.UIE_mgw_table_qtw: QTabWidget = self.findChild(
             QTabWidget, "table_tabs")
-        # self.UIE_mgw_table_qtw.addTab(QWidget(), 'Data Table')
 
         self.UIE_mgw_mda_load_spinner_ql: QLabel = self.findChild(
             QLabel, "mda_load_spinner")
@@ -1269,7 +1250,6 @@ class MMC_Main(QMainWindow):
         if not dummy:
             self.homing_started = True
             self.scan_status_update("HOMING")
-            # self.motion_controllers.main_drive_axis.home() # Handled individually by driver.
         self.current_position = -1900
 
         # # #
@@ -1340,7 +1320,7 @@ class MMC_Main(QMainWindow):
 
             log.debug('QGraphicsView:', self.UIE_mgw_graph_qtw.widget(
                 i+1).findChildren(QGraphicsView))
-            # log.warn('QObject:', self.UIE_mgw_graph_qtw.widget(i+1).findChildren(QObject))
+            
             log.debug('QWidget:', self.UIE_mgw_graph_qtw.widget(
                 i+1).findChildren(QWidget))
 
@@ -1349,7 +1329,6 @@ class MMC_Main(QMainWindow):
             self.graph_list.append(plotCanvas)
 
         # Hmm, maybe make a different button for each graph?
-        # self.UIE_mgw_plot_clear_plots_qpb.clicked.connect(self.plotCanvas.clear_plot_fcn)
         self.UIE_mgw_plot_clear_plots_qpb.clicked.connect(
             self.clear_all_graphs)
 
@@ -1587,8 +1566,6 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_sa_offset_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_st_offset_qdsb: QDoubleSpinBox = None
         self.UIE_mcw_dr_offset_qdsb: QDoubleSpinBox = None
-
-        # self.update_offsets()
 
         # This is where we disable the scroll function for all spin and combo boxes, because its dumb.
         uiel = self.findChildren(QDoubleSpinBox)
@@ -1871,14 +1848,12 @@ class MMC_Main(QMainWindow):
         self.update_num_motion_controllers_ui(force=True)
 
         for i in range(self.num_detectors):
-            # print(i)
             self.UIEL_dmw_detector_qcb[i].setCurrentIndex(
                 devman_config['detectorIndices'][i])
             self.UIEL_dmw_detector_model_qcb[i].setCurrentIndex(
                 devman_config['detectorModelIndices'][i])
 
         for i in range(self.num_motion_controllers):
-            # print(i)
             self.UIEL_dmw_mtn_ctrl_qcb[i].setCurrentIndex(
                 devman_config['controllerIndices'][i])
             self.UIEL_dmw_mtn_ctrl_model_qcb[i].setCurrentIndex(
@@ -2125,8 +2100,6 @@ class MMC_Main(QMainWindow):
             log.debug(metadata)
             self.UIE_mgw_setref_qpb.setText(f"D{dn}S{metadata['scan_id']}")
 
-    # advanced_ref = self.UIE_mgw_ref_advanced_qrb.isChecked()
-
     def set_ref1(self):
         dn = self._check_table_tab_valid()
 
@@ -2168,8 +2141,6 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_simple_opbox_qgb.show()
             self.UIE_mgw_advanced_opbox_qgb.hide()
 
-        
-
     # The reference value
     # The reference equation is:
     # [%] = (S_i / (R_i * (S_0 / R_0))) * 100.0
@@ -2202,23 +2173,19 @@ class MMC_Main(QMainWindow):
             res1 = np.divide(ref1y, ref2y)
 
             # {'id': global_scan_id, 'name': '', 'x': xdata, 'y': ydata, 'plotted': True, 'plot_cb': CustomQCheckBox(global_scan_id)}
-            # Fine, I'll do it myself.
+            # Fine, I'll do it myself. Manually copy each field since Python sends references everywhere.
             data = {
                 'id': self.ref1_data['id'],
-                # 'det': self.ref_det_idx,
                 'name': '',
                 'x': np.copy(self.ref1_data['x']),
                 'y': np.copy(res1),
                 'plotted': self.ref1_data['plotted'],
                 'plot_cb': self.ref1_data['plot_cb']
             }
-            # data = self.ref1_data
-            # data['y'] = res1
 
             self.register_ref_data(data, advanced_ref)
 
         else:  # Simple ref
-
             if self.ref0_data is None:
                 self.QMessageBoxWarning(
                     'Cannot Enact Reference', 'Reference data is missing.')
@@ -2237,18 +2204,9 @@ class MMC_Main(QMainWindow):
     # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
     def register_ref_data(self, ref_data, advanced=False):
         self.operated_ref_data = ref_data
-        # self.graph_result.ref_data = ref_data
-        # self.table_result.ref_data = ref_data
-
-        # if self.UIE_mgw_ref_advanced_qrb.isChecked():
-        #     self.table_result.advanced_ref = True
-        #     self.table_result.reference_operation = 1 # Only ever division.
-        # else:
-        #     self.table_result.reference_operation = self.UIE_mgw_setop_qcb.currentIndex()
 
         self.table_result.updatePlots(-1)
 
-        # self.graph_result.update_plots(ref_data)
         # TODO: Figure out how to update the reference / result plot.
 
     # THIS IS THE LATEST SCAN DATA FROM THE REFERENCE DETECTOR
@@ -2258,32 +2216,19 @@ class MMC_Main(QMainWindow):
     # THIS IS CALLED FROM WITHIN A DATATABLE OBJECT WHOSE REF CHECKBOX HAS BEEN CLICKED.
     def unregister_ref_data(self):
         self.operated_ref_data = None
-        # self.graph_result.ref_data = None
-        # self.graph_result.update_plots()
-        # self.table_result.ref_data = None
         self.table_result.updatePlots(-1)
 
     def save_data_cb(self):
         if self.UIE_mgw_table_qtw.currentIndex() == 0:
-            # log.warn('No table selected.')
-            # # show message box
-            # self.QMessageBoxWarning(
-            #     'Cannot Save', 'Cannot save data entry from Result tab. Please select a detector table entry.')
-            # return
             table = self.table_result
         else:
             table = self.table_list[self.UIE_mgw_table_qtw.currentIndex() - 1]
         
         (scan_id, det_id) = table.row_to_id_det_map[table.selectedItem]
 
-        # return self.save_data_auto(table, self.UIE_mgw_table_qtw.currentIndex() - 1, button=True)
         return self.save_data_auto(table, det_id, scanIdx=scan_id, button=True)
 
     def save_data_auto(self, table, which_detector, scanIdx=None, button=False):
-        # for i, table in enumerate(self.table_list):
-        # if self.table_list[i] is None:
-        #     return
-
         # TODO: Figure out which table were on currently.
 
         if scanIdx is None:
@@ -2324,7 +2269,6 @@ class MMC_Main(QMainWindow):
             log.error(
                 'save_data_auto was called, but not from a button press, and yet autosave_next_dir and autosave_next_dir are both False...')
         if button:
-            # log.debug('Autosave data bool is False.')
             log.debug('Save data button was pushed.')
             savFileName, _ = QFileDialog.getSaveFileName(self, "Save CSV", directory=os.path.expanduser(
                 '~/Documents') + '/mcpherson_mmc/%s_det-%d_%d.csv' % (tstamp.strftime('%Y%m%d%H%M%S'), which_detector, scan_id), filter='*.csv')
@@ -2364,7 +2308,6 @@ class MMC_Main(QMainWindow):
 
     def delete_data_cb(self):
         # TODO: Move delete button within the tabs and have one per tab.
-        # for i in range(self.UIE_mgw_table_qtw.count()):
         for table in self.table_list:
             table.delDataCb()
         return
@@ -2536,10 +2479,6 @@ class MMC_Main(QMainWindow):
         self.pop_out_plot = state
 
     def update_plots(self, det_idx: int, data: list, is_result: bool = False):
-        # if self.plotCanvas is None:
-        #     return
-        # self.plotCanvas.update_plots(data)
-
         if self.graph_list is None or len(self.graph_list) == 0:
             return
 
@@ -2559,7 +2498,7 @@ class MMC_Main(QMainWindow):
     def scan_complete(self):
         log.debug('Setting scanRunning to False.')
         self.scanRunning = False
-        # self.disable_movement_sensitive_buttons(False)
+        
         self.UIE_mgw_scan_qpb.setText('Begin Scan')
         self.UIE_mgw_scan_status_ql.setText(
             '<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
@@ -2720,8 +2659,6 @@ class MMC_Main(QMainWindow):
                 self.autosave_next_scan = False
 
         for table in self.table_list:
-            # table.markInsertFinished(which_detector, scan_idx)
-            # table.updateTableDisplay(which_detector, self.global_scan_id)
             if self.scan_repeats.value() > 0:
                 if scan_class == 'main':
                     self.scan_repeats.setValue(self.scan_repeats.value() - 1)
@@ -2744,26 +2681,11 @@ class MMC_Main(QMainWindow):
 
         log.debug('Updating axes info...')
 
-        # print((self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) or (mda_homing or fwa_homing or sra_homing or saa_homing or sta_homing or dra_homing))
-
         if (self.scanRunning) or (mda_moving or fwa_moving or sra_moving or saa_moving or sta_moving or dra_moving) or (mda_homing or fwa_homing or sra_homing or saa_homing or sta_homing or dra_homing):  # and not (self.axes_info_prev_moving)
             log.info('One or more axes are moving.')
             log.debug(
                 f'scanRunning: {self.scanRunning}; mda_moving: {mda_moving}; fwa_moving: {fwa_moving}; sra_moving: {sra_moving}; saa_moving: {saa_moving}; sta_moving: {sta_moving}; dra_moving: {dra_moving}')
-            # log.info('Something is moving...')
-            # log.debug('scanRunning:', self.scanRunning)
-            # log.debug('mda_moving:', mda_moving)
-            # log.debug('fwa_moving:', fwa_moving)
-            # log.debug('sra_moving:', sra_moving)
-            # log.debug('saa_moving:', saa_moving)
-            # log.debug('sta_moving:', sta_moving)
-            # log.debug('dra_moving:', dra_moving)
-            # log.debug('mda_homing:', mda_homing)
-            # log.debug('fwa_homing:', fwa_homing)
-            # log.debug('sra_homing:', sra_homing)
-            # log.debug('saa_homing:', saa_homing)
-            # log.debug('sta_homing:', sta_homing)
-            # log.debug('dra_homing:', dra_homing)
+            
             # UIE_mgw_move_to_position_qpb is used to see if /all/ the buttons are disabled, since it would only be disabled if this function disabled it.
             self.disable_movement_sensitive_buttons(True)
         else:
@@ -2781,7 +2703,7 @@ class MMC_Main(QMainWindow):
 
         self.UIE_mgw_currpos_nm_disp_ql.setText(
             '%3.4f' % (((self.current_position))))
-        # self.UIE_mgw_mca_pos_ql.setText('%3.4f'%(mda_pos))
+       
         self.UIE_mgw_fwa_pos_ql.setText('%3.4f' % (fwa_pos))
         self.UIE_mgw_sra_pos_ql.setText('%3.4f' % (sra_pos))
         self.UIE_mgw_saa_pos_ql.setText('%3.4f' % (saa_pos))
@@ -2793,7 +2715,7 @@ class MMC_Main(QMainWindow):
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
-            # self.scan.argstart(scan.ScanAxis.MAIN)
+            
             self.scan.ctrl_axis = scan.ScanAxis.MAIN
             self.scan.start()
             log.debug('scan_button_press function end.')
@@ -2802,19 +2724,18 @@ class MMC_Main(QMainWindow):
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
-            # self.scan.argstart(scan.ScanAxis.SAMPLE)
+            
             self.scan.ctrl_axis = scan.ScanAxis.SAMPLE
             self.scan.start()
-            # self.sm_scan.start()
 
     def scan_dm_button_pressed(self):
         if not self.scanRunning:
             self.scanRunning = True
             self.disable_movement_sensitive_buttons(True)
-            # self.scan.argstart(scan.ScanAxis.DETECTOR)
+            
             self.scan.ctrl_axis = scan.ScanAxis.DETECTOR
             self.scan.start()
-            # self.dm_scan.start()
+            
 
     def stop_master_button_pressed(self):
         log.info('Master stop button pressed.')
@@ -2850,10 +2771,8 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_mda_load_spinner_ql.setVisible(False)
             self.anim_mgw_mda_load_spinner_running = False
         elif run and self.anim_mgw_mda_load_spinner_running:
-            # log.warn('Animation already running.')
             pass
         elif not run and not self.anim_mgw_mda_load_spinner_running:
-            # log.warn('Animation already stopped.')
             pass
         else:
             log.error('Unknown animation state.')
@@ -2868,10 +2787,8 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_fwa_load_spinner_ql.setVisible(False)
             self.anim_mgw_fwa_load_spinner_running = False
         elif run and self.anim_mgw_fwa_load_spinner_running:
-            # log.warn('Animation already running.')
             pass
         elif not run and not self.anim_mgw_fwa_load_spinner_running:
-            # log.warn('Animation already stopped.')
             pass
         else:
             log.error('Unknown animation state.')
@@ -2886,10 +2803,8 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_saa_load_spinner_ql.setVisible(False)
             self.anim_mgw_saa_load_spinner_running = False
         elif run and self.anim_mgw_saa_load_spinner_running:
-            # log.warn('Animation already running.')
             pass
         elif not run and not self.anim_mgw_saa_load_spinner_running:
-            # log.warn('Animation already stopped.')
             pass
         else:
             log.error('Unknown animation state.')
@@ -2904,10 +2819,8 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_sra_load_spinner_ql.setVisible(False)
             self.anim_mgw_sra_load_spinner_running = False
         elif run and self.anim_mgw_sra_load_spinner_running:
-            # log.warn('Animation already running.')
             pass
         elif not run and not self.anim_mgw_sra_load_spinner_running:
-            # log.warn('Animation already stopped.')
             pass
         else:
             log.error('Unknown animation state.')
@@ -2922,10 +2835,8 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_sta_load_spinner_ql.setVisible(False)
             self.anim_mgw_sta_load_spinner_running = False
         elif run and self.anim_mgw_sta_load_spinner_running:
-            # log.warn('Animation already running.')
             pass
         elif not run and not self.anim_mgw_sta_load_spinner_running:
-            # log.warn('Animation already stopped.')
             pass
         else:
             log.error('Unknown animation state.')
@@ -2940,10 +2851,8 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_dra_load_spinner_ql.setVisible(False)
             self.anim_mgw_dra_load_spinner_running = False
         elif run and self.anim_mgw_dra_load_spinner_running:
-            # log.warn('Animation already running.')
             pass
         elif not run and not self.anim_mgw_dra_load_spinner_running:
-            # log.warn('Animation already stopped.')
             pass
         else:
             log.error('Unknown animation state.')
@@ -2967,7 +2876,6 @@ class MMC_Main(QMainWindow):
         log.info("Move to position button pressed, moving to %d nm" %
                  (self.manual_position))
         pos = self.UIE_mgw_pos_qdsb.value()
-        # pos = int((self.UIE_mgw_pos_qdsb.value() + self.zero_ofst))
 
         try:
             self.motion_controllers.main_drive_axis.move_to(pos, False)
@@ -3096,13 +3004,11 @@ class MMC_Main(QMainWindow):
     def start_changed(self):
         log.info("Start changed to: %s mm" % (self.UIE_mgw_start_qdsb.value()))
         self.startpos = (self.UIE_mgw_start_qdsb.value())
-        # self.startpos = (self.UIE_mgw_start_qdsb.value() + self.zero_ofst)
         log.debug(self.startpos)
 
     def stop_changed(self):
         log.info("Stop changed to: %s mm" % (self.UIE_mgw_stop_qdsb.value()))
         self.stoppos = (self.UIE_mgw_stop_qdsb.value())
-        # self.stoppos = (self.UIE_mgw_stop_qdsb.value() + self.zero_ofst)
         log.debug(self.stoppos)
 
     def step_changed(self):
@@ -3114,7 +3020,6 @@ class MMC_Main(QMainWindow):
         log.info("Manual position changed to: %s mm" %
                  (self.UIE_mgw_pos_qdsb.value()))
         self.manual_position = (self.UIE_mgw_pos_qdsb.value())
-        # self.manual_position = (self.UIE_mgw_pos_qdsb.value() + self.zero_ofst)
 
     def update_model_index(self):
         self.model_index = self.UIE_mcw_model_qcb.currentIndex()
@@ -3227,7 +3132,6 @@ class MMC_Main(QMainWindow):
             self.UIE_mcw_model_qcb: QComboBox = self.machine_conf_win.findChild(
                 QComboBox, 'models')
             self.UIE_mcw_model_qcb.addItems(McPherson.MONO_MODELS)
-            # self.UIE_mcw_model_qcb.currentIndexChanged.connect(self.update_model_index)
 
             self.UIE_mcw_grating_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(
                 QDoubleSpinBox, 'grating_density')
@@ -3243,7 +3147,6 @@ class MMC_Main(QMainWindow):
 
             self.UIE_mcw_machine_conf_qpb = self.machine_conf_win.findChild(
                 QPushButton, 'update_conf_btn')
-            # self.UIE_mcw_machine_conf_qpb.clicked.connect(self.apply_machine_conf)
 
             self.UIE_mcw_steps_per_nm_ql = self.machine_conf_win.findChild(
                 QLabel, 'steps_per_nm')
@@ -3258,15 +3161,12 @@ class MMC_Main(QMainWindow):
                 QDoubleSpinBox, 'steps_per_nm_override')
             self.UIE_mcw_override_steps_per_nm_qckbx = self.machine_conf_win.findChild(
                 QCheckBox, 'override_steps_per_nm')
-            # self.UIE_mcw_override_steps_per_nm_qckbx.stateChanged.connect(self.update_override_button)
             self.UIE_mcw_enact_override_qpb = self.machine_conf_win.findChild(
                 QPushButton, 'enact_override')
             self.UIE_mcw_enact_override_qpb.setEnabled(False)
-            # self.UIE_mcw_enact_override_qpb.clicked.connect(self.override_steps_per_nm)
 
             self.UIE_mcw_accept_qpb = self.machine_conf_win.findChild(
                 QPushButton, 'mcw_accept')
-            # self.UIE_mcw_accept_qpb.clicked.connect(self.accept_mcw)
 
             # Get axes combos.
             self.UIE_mcw_main_drive_axis_qcb: QComboBox = self.machine_conf_win.findChild(
@@ -3384,8 +3284,6 @@ class MMC_Main(QMainWindow):
         self.UIE_mcw_max_pos_in_qdsb.setValue(self.max_pos)
         self.UIE_mcw_min_pos_in_qdsb.setValue(self.min_pos)
 
-        # if steps_per_nm is None:
-        #     steps_per_nm = 0.0
         try:
             steps_per_nm = self.motion_controllers.main_drive_axis.get_steps_per_value()
         except Exception as e:
