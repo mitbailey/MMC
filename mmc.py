@@ -2102,6 +2102,8 @@ class MMC_Main(QMainWindow):
         if metadata is not None:
             log.debug(metadata)
             self.UIE_mgw_setref_qpb.setText(f"D{dn}S{metadata['scan_id']}")
+        else:
+            self.UIE_mgw_setref_qpb.setText("ERR")
 
     def set_ref1(self):
         """ Sets the data for the first reference scan (advanced sample scan), pulling from the selected scan.
@@ -2116,6 +2118,8 @@ class MMC_Main(QMainWindow):
         if metadata is not None:
             log.debug(metadata)
             self.UIE_mgw_setr1_qpb.setText(f"D{dn}S{metadata['scan_id']}")
+        else:
+            self.UIE_mgw_setr1_qpb.setText("ERR")
 
     def set_ref2(self):
         """ Sets the data for the second reference scan (advanced reference scan), pulling from the selected scan.
@@ -2130,6 +2134,8 @@ class MMC_Main(QMainWindow):
         if metadata is not None:
             log.debug(metadata)
             self.UIE_mgw_setr2_qpb.setText(f"D{dn}S{metadata['scan_id']}")
+        else:
+            self.UIE_mgw_setr2_qpb.setText("ERR")
 
     def reset_ref(self):
         """ Resets the reference data to None and disables referencing.
@@ -2605,9 +2611,11 @@ class MMC_Main(QMainWindow):
                         scan_idx, self.sample_det_idx)]['y'][-1]
                     denominator = self.table_list[self.ref_det_idx].recordedData[(
                         scan_idx, self.ref_det_idx)]['y'][-1]
-                    quotient = numerator/denominator
+                    # quotient = numerator/denominator
 
-                    result = operated_ref_y * quotient
+                    # result = operated_ref_y * quotient
+
+                    result = numerator / (denominator * operated_ref_y)
 
                     self.table_result.insertDataAt(
                         self.sample_det_idx, scan_idx, xdata, result)
