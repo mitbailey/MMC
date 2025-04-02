@@ -250,7 +250,7 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>-55</y>
+                      <y>0</y>
                       <width>824</width>
                       <height>1191</height>
                      </rect>
@@ -4648,7 +4648,7 @@
          <number>0</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_32" stretch="0,0,1">
+         <layout class="QHBoxLayout" name="horizontalLayout_32" stretch="0,0,1,0">
           <property name="leftMargin">
            <number>0</number>
           </property>
@@ -4718,6 +4718,19 @@
             </property>
             <property name="value">
              <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="scan_time">
+            <property name="minimumSize">
+             <size>
+              <width>50</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
             </property>
            </widget>
           </item>

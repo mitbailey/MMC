@@ -58,7 +58,7 @@ class SampleScanType(Enum):
 
 class Scan(QThread):
     SIGNAL_status_update = pyqtSignal(str)
-    SIGNAL_progress = pyqtSignal(int)
+    SIGNAL_progress = pyqtSignal(int, float)
     SIGNAL_complete = pyqtSignal()
 
     SIGNAL_data_begin = pyqtSignal(int, int, int, dict) # scan index, which detector, redundant
@@ -274,6 +274,8 @@ class Scan(QThread):
 
         # while self.scanId == self.other.table_list[0].scanId: # spin until that happens
         #     continue``
+
+        start = time.time()
         task_i = 0
         for idx, dpos in enumerate(scanrange):
             log.debug('STARTING SCAN LOOP SECTION')
@@ -344,7 +346,10 @@ class Scan(QThread):
                 # self.SIGNAL_progress.emit( ((idx + i) / (nidx * len(active_detectors))) * 100.0 )
                 log.debug(f"Emitting progress signal: {((task_i) / (nidx * len(active_detectors))) * 100.0}")
                 log.debug(f"Progress signal components: task_i: {task_i}, nidx: {nidx}, len(active_detectors): {len(active_detectors)}")
-                self.SIGNAL_progress.emit( int((task_i / (nidx * len(active_detectors))) * 100.0) )
+                elapsed_time = time.time() - start
+                percent_done = (task_i / (nidx * len(active_detectors)))
+                remaining_time = elapsed_time / percent_done - elapsed_time
+                self.SIGNAL_progress.emit( int((task_i / (nidx * len(active_detectors))) * 100.0), remaining_time )
                 # First half is wrong 2nd half is fine
                 # It should be 
                 

@@ -803,6 +803,10 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_currpos_nm_disp_ql = self.findChild(QLabel, "currpos_nm")
         self.UIE_mgw_scan_status_ql = self.findChild(QLabel, "status_label")
         self.UIE_mgw_scan_qpbar = self.findChild(QProgressBar, "progressbar")
+        self.UIE_mgw_scan_time_ql = self.findChild(QLabel, "scan_time")
+        self.scan_remaining_timer = QtCore.QTimer(self)        
+        self.scan_time_left = 0.0
+
         self.UIE_mgw_save_config_qpb: QPushButton = self.findChild(
             QPushButton, 'save_config_button')
         self.UIE_mgw_spectral_ops_qpb: QPushButton = self.findChild(
@@ -2515,7 +2519,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_scan_status_ql.setText(
             '<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>' % (status))
 
-    def scan_progress(self, curr_percent):
+    def scan_progress(self, curr_percent, secs_remaining):
         """ Updates the progress bar to reflect the current scan progress.
         
         Called from a signal in scan.py. 
@@ -2525,11 +2529,46 @@ class MMC_Main(QMainWindow):
         """
 
         self.UIE_mgw_scan_qpbar.setValue(curr_percent)
+
+        # New average = old average * (n-1)/n + new value /n
+
+        MIN_TIME = 10.0
+
+        if secs_remaining < MIN_TIME:
+            self.scan_time_left = 0.0
+        else:
+            n = 10.0
+            self.scan_time_left = self.scan_time_left * (n - 1.0) / n + secs_remaining / n
+
         log.debug('scan_progress:', curr_percent)
+
+    def update_scan_timer_stage1(self):
+        try:
+            self.scan_remaining_timer.timeout.connect(self.update_scan_timer_stage2)
+            self.scan_remaining_timer.start(10)
+        except Exception as e:
+            log.error(f"Failed to start scan timer: {e}")
+
+    def update_scan_timer_stage2(self):
+        try:
+            self.scan_time_left -= 0.01
+
+            MIN_TIME = 10.0
+
+            if self.scan_time_left < MIN_TIME:
+                self.scan_time_left = 0.0
+                self.UIE_mgw_scan_time_ql.setText(f"")
+            else:
+                self.UIE_mgw_scan_time_ql.setText(f"{self.scan_time_left:.1f} s")
+        except Exception as e:
+            log.error(f"Failed to update scan timer: {e}")
 
     def scan_complete(self):
         log.debug('Setting scanRunning to False.')
         self.scanRunning = False
+
+        self.scan_remaining_timer.stop()
+        self.UIE_mgw_scan_time_ql.setText(f"")
         
         self.UIE_mgw_scan_qpb.setText('Begin Scan')
         self.UIE_mgw_scan_status_ql.setText(
@@ -2537,6 +2576,10 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_scan_qpbar.reset()
 
     def scan_data_begin(self, which_detector: int, det_idx: int, scans_global_scan_id: int, metadata: dict):
+        self.scan_remaining_timer.stop()
+
+        self.update_scan_timer_stage1()
+
         if scans_global_scan_id != self.global_scan_id:
             log.error('Global scan ID mismatch %d != %d' %
                       (scans_global_scan_id, self.global_scan_id))
@@ -2622,16 +2665,16 @@ class MMC_Main(QMainWindow):
 
             elif not self.is_advanced_ref:
                 if self.UIE_mgw_setop_qcb.currentIndex() == 0:
-                    result = operated_ref_y * ydata
+                    result = ydata * operated_ref_y
 
                 elif self.UIE_mgw_setop_qcb.currentIndex() == 1:
-                    result = operated_ref_y / ydata
+                    result = ydata / operated_ref_y
 
                 elif self.UIE_mgw_setop_qcb.currentIndex() == 2:
-                    result = operated_ref_y + ydata
+                    result = ydata + operated_ref_y
 
                 elif self.UIE_mgw_setop_qcb.currentIndex() == 3:
-                    result = operated_ref_y - ydata
+                    result = ydata - operated_ref_y
 
                 self.table_result.insertDataAt(
                     det_idx, scan_idx, xdata, result)
