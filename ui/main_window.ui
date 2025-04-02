@@ -20,7 +20,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_6" stretch="1,0,0">
+   <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,0,0">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0">
       <property name="spacing">
@@ -250,9 +250,9 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>0</y>
-                      <width>771</width>
-                      <height>1277</height>
+                      <y>-55</y>
+                      <width>824</width>
+                      <height>1191</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -800,7 +800,7 @@
                                 <double>0.010000000000000</double>
                                </property>
                                <property name="value">
-                                <double>0.100000000000000</double>
+                                <double>1.000000000000000</double>
                                </property>
                               </widget>
                              </item>
@@ -2992,6 +2992,9 @@
                          <italic>true</italic>
                         </font>
                        </property>
+                       <property name="toolTip">
+                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Save a Scan&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Select a scan from the data table and then press this button to save the scan to a file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       </property>
                        <property name="text">
                         <string>Save</string>
                        </property>
@@ -3011,6 +3014,9 @@
                          <pointsize>14</pointsize>
                          <italic>true</italic>
                         </font>
+                       </property>
+                       <property name="toolTip">
+                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Save a Scan&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Select a scan from the data table and then press this button to permanently delete the scan. This action cannot be undone.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                        </property>
                        <property name="text">
                         <string>Delete</string>
@@ -3037,6 +3043,9 @@
                          <width>55</width>
                          <height>16777215</height>
                         </size>
+                       </property>
+                       <property name="toolTip">
+                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Spectral Math / Referencing&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Expands to show the Spectral Math area. This area is used to set and unset reference scans as well as use them to perform math on future scans.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                        </property>
                        <property name="text">
                         <string>∑ ⮟</string>
@@ -3323,6 +3332,9 @@
                                 </item>
                                 <item row="0" column="6">
                                  <widget class="QPushButton" name="sec_order_ref_setr2">
+                                  <property name="toolTip">
+                                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Set Reference Scan&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Select a scan from the data table and then press this button to set it as the reference scan.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                  </property>
                                   <property name="text">
                                    <string>Set R0</string>
                                   </property>
@@ -3342,6 +3354,9 @@
                                 </item>
                                 <item row="0" column="4">
                                  <widget class="QPushButton" name="sec_order_ref_setr1">
+                                  <property name="toolTip">
+                                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Set Sample Scan&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Select a scan from the data table and then press this button to set it as the sample scan.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                  </property>
                                   <property name="text">
                                    <string>Set S0</string>
                                   </property>
@@ -3381,6 +3396,9 @@
                              </item>
                              <item>
                               <widget class="QPushButton" name="ref_enact">
+                               <property name="toolTip">
+                                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Enacts the Equation&lt;/span&gt;&lt;/p&gt;&lt;p&gt;All future scans will be operated on as per the equation to the left. The result will appear in the Results data table and graph tabs.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                               </property>
                                <property name="text">
                                 <string>Enact</string>
                                </property>
@@ -3401,7 +3419,7 @@
                  <item>
                   <widget class="QTabWidget" name="table_tabs">
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="tab_2">
                     <attribute name="title">
@@ -3843,7 +3861,7 @@
                 </font>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="tab_3">
                 <attribute name="title">
@@ -4717,7 +4735,7 @@
      <x>0</x>
      <y>0</y>
      <width>1398</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

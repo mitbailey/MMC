@@ -789,7 +789,7 @@ class MMC_Main(QMainWindow):
             QDoubleSpinBox, "end_set_spinbox")
 
         if dummy:
-            self.UIE_mgw_stop_qdsb.setValue(0.2)
+            self.UIE_mgw_stop_qdsb.setValue(10.0)
 
         # self.UIE_mgw_mca_pos_ql = self.findChild(QLabel, "mca_pos")
         self.UIE_mgw_fwa_pos_ql = self.findChild(QLabel, "fwa_pos")
@@ -2084,6 +2084,9 @@ class MMC_Main(QMainWindow):
         return self.UIE_mgw_table_qtw.currentIndex()
 
     def set_ref(self):
+        """ Sets the data for the reference scan for the basic referencing - pulls from the selected scan.
+        """
+
         log.info('set_ref called.')
 
         dn = self._check_table_tab_valid()
@@ -2101,6 +2104,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_setref_qpb.setText(f"D{dn}S{metadata['scan_id']}")
 
     def set_ref1(self):
+        """ Sets the data for the first reference scan (advanced sample scan), pulling from the selected scan.
+        """
+
         dn = self._check_table_tab_valid()
 
         table = self.table_list[self.UIE_mgw_table_qtw.currentIndex() - 1]
@@ -2112,6 +2118,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_setr1_qpb.setText(f"D{dn}S{metadata['scan_id']}")
 
     def set_ref2(self):
+        """ Sets the data for the second reference scan (advanced reference scan), pulling from the selected scan.
+        """
+
         dn = self._check_table_tab_valid()
 
         table = self.table_list[self.UIE_mgw_table_qtw.currentIndex() - 1]
@@ -2123,6 +2132,9 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_setr2_qpb.setText(f"D{dn}S{metadata['scan_id']}")
 
     def reset_ref(self):
+        """ Resets the reference data to None and disables referencing.
+        """
+
         self.reference_active = False
         self.unregister_ref_data()
 
@@ -2134,6 +2146,9 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_ref_enact_qpb.setDisabled(False)
 
     def toggle_ref(self):
+        """ Swaps between showing the simple and advanced referencing system.
+        """
+
         if self.UIE_mgw_ref_advanced_qrb.isChecked():
             self.UIE_mgw_simple_opbox_qgb.hide()
             self.UIE_mgw_advanced_opbox_qgb.show()
@@ -2145,6 +2160,9 @@ class MMC_Main(QMainWindow):
     # The reference equation is:
     # [%] = (S_i / (R_i * (S_0 / R_0))) * 100.0
     def enact_ref(self):
+        """ Sets up the data necessary to perform spectral math.
+        """
+
         advanced_ref = self.UIE_mgw_ref_advanced_qrb.isChecked()
         self.is_advanced_ref = advanced_ref
         self.reference_active = True
@@ -2492,6 +2510,14 @@ class MMC_Main(QMainWindow):
             '<html><head/><body><p><span style=" font-weight:600;">%s</span></p></body></html>' % (status))
 
     def scan_progress(self, curr_percent):
+        """ Updates the progress bar to reflect the current scan progress.
+        
+        Called from a signal in scan.py. 
+
+        Args:
+            curr_percent (_type_): _description_
+        """
+
         self.UIE_mgw_scan_qpbar.setValue(curr_percent)
         log.debug('scan_progress:', curr_percent)
 
