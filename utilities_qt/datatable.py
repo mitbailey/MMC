@@ -347,7 +347,7 @@ class DataTableWidget(QTableWidget):
             log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
             return
         if (scanIdx, which_detector) not in self.recordedData.keys():
-            log.error('%d is not in recorded data! :O ... '%(scanIdx), self.recordedData.keys())
+            log.error(f'{scanIdx} is not in recorded data: {self.recordedData.keys()}')
             self.__deleteRow(row)
             return
         try:
