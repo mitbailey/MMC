@@ -25,6 +25,7 @@
 class McPherson:
     MONO_MODELS = [
         'Monarch',
+        'Monarch (w/ 789)',
 
         '272',
         
@@ -81,6 +82,7 @@ class McPherson:
 
     MONO_GEO_CONST = {
         'Monarch': (1200*(5000/8889)),
+        'Monarch (w/ 789)': (1200*(5000/8889)),
 
         '272': None,
         
@@ -137,6 +139,7 @@ class McPherson:
 
     MONO_STEPS_PER_REV = {
         'Monarch': 49152,
+        'Monarch (w/ 789)': 5353.1,
 
         '272': 18000,
         
