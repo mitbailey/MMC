@@ -462,9 +462,9 @@ class MP_792:
         self._enact_speed_factor(self._move_speed_mult_l[axis], axis)
 
     def _enact_speed_factor(self, speed_factor, axis: int):
-        log.debug('_enact_speed_factor: (pre)', vel_int)
-
         vel_int = int(speed_factor * MP_792.MAX_VEL)
+
+        log.debug('_enact_speed_factor: (pre)', vel_int)
 
         if vel_int > MP_792.MAX_VEL:
             vel_int = MP_792.MAX_VEL

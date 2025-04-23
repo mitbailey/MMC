@@ -611,9 +611,9 @@ class MP_789A_4(StageDevice):
         self._enact_speed_factor(self._move_speed_mult)
 
     def _enact_speed_factor(self, speed_factor):
-        log.debug('_enact_speed_factor: (pre)', vel_int)
-
         vel_int = int(speed_factor * MP_789A_4.MAX_VEL)
+
+        log.debug('_enact_speed_factor: (pre)', vel_int)
 
         if vel_int > MP_789A_4.MAX_VEL:
             vel_int = MP_789A_4.MAX_VEL
