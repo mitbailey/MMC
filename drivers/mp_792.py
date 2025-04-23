@@ -37,6 +37,10 @@ class MP_792:
     AXES = [b'A0', b'A8', b'A16', b'A24']
     WR_DLY = 0.05
 
+    MAX_VEL = 60000
+    DEF_VEL = 60000
+    MIN_VEL = 0
+
     def __init__(self, port: serial.Serial, axes: int = 4):
         """ MP_792 constructor.
 
@@ -196,6 +200,9 @@ class MP_792:
         self._is_homing[axis] = True
         self._is_moving_l[axis] = True # we set the movement, movement_status_thread will unset
 
+        # Set the movement speed for homing.
+        self._enact_speed_factor(self._home_speed_mult_l[axis], axis)
+
         if axis == 2:
             spd = 5000
             log.debug(f'Speed would have been {spd} but is being multiplied by {self._home_speed_mult_l[axis]}.')
@@ -246,6 +253,8 @@ class MP_792:
                 self.s.xfer([self.set_axis_cmd(axis), b'@'], custom_delay=MP_792.WR_DLY)
                 
                 self._is_homing[axis] = False
+                # Reset the movement speed.
+                self._enact_speed_factor(self._move_speed_mult[axis], axis)
                 return False
 
             time.sleep(MP_792.WR_DLY * 5)
@@ -268,6 +277,10 @@ class MP_792:
 
         self._position[axis] = 0
         self._is_homing[axis] = False
+
+        # Reset the movement speed.
+        self._enact_speed_factor(self._move_speed_mult[axis], axis)
+
         return True
 
     def get_position(self, axis: int):
@@ -445,6 +458,27 @@ class MP_792:
     def set_move_speed_mult(self, speed, axis: int):
         log.info(f'Setting move speed multiplier for axis {axis} to {speed}.')
         self._move_speed_mult_l[axis] = speed
+
+        self._enact_speed_factor(self._move_speed_mult_l[axis], axis)
+
+    def _enact_speed_factor(self, speed_factor, axis: int):
+        log.debug('_enact_speed_factor: (pre)', vel_int)
+
+        vel_int = int(speed_factor * MP_792.MAX_VEL)
+
+        if vel_int > MP_792.MAX_VEL:
+            vel_int = MP_792.MAX_VEL
+        elif vel_int < MP_792.MIN_VEL:
+            vel_int = MP_792.MIN_VEL
+
+        msg = f'V{str(vel_int)}'
+        rx = self.s.xfer([self.set_axis_cmd(axis), msg.encode('utf-8')], custom_delay=MP_792.WR_DLY).decode('utf-8')
+
+        log.debug('_enact_speed_factor: (post)', vel_int)
+
+    def _reset_speed_factor(self, speed_factor, axis: int):
+        msg = f'V{str(MP_792.DEF_VEL)}'
+        rx = self.s.xfer([self.set_axis_cmd(axis), msg.encode('utf-8')], custom_delay=MP_792.WR_DLY).decode('utf-8')
 
     def short_name(self):
         return self.s_name

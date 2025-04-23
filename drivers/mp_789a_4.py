@@ -37,6 +37,8 @@ class MP_789A_4(StageDevice):
     WR_DLY = 0.05
     HSM = 4
     MAX_VEL = 60000
+    DEF_VEL = 60000
+    MIN_VEL = 0
 
     def backend(self)->str:
         return 'MP_789A_4'
@@ -609,14 +611,22 @@ class MP_789A_4(StageDevice):
         self._enact_speed_factor(self._move_speed_mult)
 
     def _enact_speed_factor(self, speed_factor):
+        log.debug('_enact_speed_factor: (pre)', vel_int)
+
         vel_int = int(speed_factor * MP_789A_4.MAX_VEL)
 
         if vel_int > MP_789A_4.MAX_VEL:
             vel_int = MP_789A_4.MAX_VEL
-        elif vel_int < 0:
-            vel_int = 0
+        elif vel_int < MP_789A_4.MIN_VEL:
+            vel_int = MP_789A_4.MIN_VEL
 
         msg = f'V{str(vel_int)}'
+        rx = self.s.xfer([msg.encode('utf-8')]).decode('utf-8')
+
+        log.debug('_enact_speed_factor: (post)', vel_int)
+
+    def _reset_speed_factor(self):
+        msg = f'V{str(MP_789A_4.DEF_VEL)}'
         rx = self.s.xfer([msg.encode('utf-8')]).decode('utf-8')
 
     def short_name(self):
