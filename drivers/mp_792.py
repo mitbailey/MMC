@@ -254,7 +254,7 @@ class MP_792:
                 
                 self._is_homing[axis] = False
                 # Reset the movement speed.
-                self._enact_speed_factor(self._move_speed_mult[axis], axis)
+                self._enact_speed_factor(self._move_speed_mult_l[axis], axis)
                 return False
 
             time.sleep(MP_792.WR_DLY * 5)
@@ -279,7 +279,7 @@ class MP_792:
         self._is_homing[axis] = False
 
         # Reset the movement speed.
-        self._enact_speed_factor(self._move_speed_mult[axis], axis)
+        self._enact_speed_factor(self._move_speed_mult_l[axis], axis)
 
         return True
 
