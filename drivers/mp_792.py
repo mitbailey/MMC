@@ -246,7 +246,8 @@ class MP_792:
             if not moving and '128' in limstat:
                 log.info('Moving has completed - homing successful.')
                 break
-            elif (not moving and '128' not in limstat) or (current_time - start_time > HOME_TIME):
+            # elif (not moving and '128' not in limstat) or (current_time - start_time > HOME_TIME):
+            elif (not moving and '128' not in limstat):
                 log.warn('Moving has completed - homing failed.')
 
                 log.error('Homing failed.')
