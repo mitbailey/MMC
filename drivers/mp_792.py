@@ -224,6 +224,8 @@ class MP_792:
 
         start_time = time.time()
         success = True
+        # Set movement to true again just in case.
+        self._is_moving_l[axis] = True
         while True:
             current_time = time.time()
 
