@@ -3176,21 +3176,28 @@ class MMC_Main(QMainWindow):
                 if dev is not None:
                     # '%s: %s'%(dev.port_name(), dev.long_name())
 
+                    mult_max = 1.0
+                    mult_min = 0.0
+                    def_val = 1.0
+                    decimals = 8
+
                     hlayout1 = QHBoxLayout()
                     hlayout1.addWidget(
                         QLabel(f'{dev.port_name()}: {dev.long_name()}'))
                     hlayout2 = QHBoxLayout()
                     hlayout2.addWidget(QLabel('Move:'))
                     spinbox_move = QDoubleSpinBox()
-                    spinbox_move.setMinimum(0.0)
-                    spinbox_move.setMaximum(2.0)
-                    spinbox_move.setValue(1.0)
+                    spinbox_move.setMinimum(mult_min)
+                    spinbox_move.setMaximum(mult_max)
+                    spinbox_move.setValue(def_val)
+                    spinbox_move.setDecimals(decimals)
                     hlayout2.addWidget(spinbox_move)
                     hlayout2.addWidget(QLabel('Home:'))
                     spinbox_home = QDoubleSpinBox()
-                    spinbox_home.setMinimum(0.0)
-                    spinbox_home.setMaximum(2.0)
-                    spinbox_home.setValue(1.0)
+                    spinbox_home.setMinimum(mult_min)
+                    spinbox_home.setMaximum(mult_max)
+                    spinbox_home.setValue(def_val)
+                    spinbox_home.setDecimals(decimals)
                     hlayout2.addWidget(spinbox_home)
                     vlayout.addLayout(hlayout1)
                     vlayout.addLayout(hlayout2)

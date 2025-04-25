@@ -194,14 +194,14 @@ class MP_792:
             log.warn(f'Device is busy: an axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
             return False
 
+        # Set the movement speed for homing.
+        self._enact_speed_factor(self._home_speed_mult_l[axis], axis)
+
         HOME_TIME = 5*60 # 5 minutes - homing will timeout after 5 minutes
 
         log.info('Beginning home for 792 axis %d.'%(axis))
         self._is_homing[axis] = True
         self._is_moving_l[axis] = True # we set the movement, movement_status_thread will unset
-
-        # Set the movement speed for homing.
-        self._enact_speed_factor(self._home_speed_mult_l[axis], axis)
 
         if axis == 2:
             spd = 5000
