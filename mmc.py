@@ -1661,11 +1661,18 @@ class MMC_Main(QMainWindow):
         if self.motion_controllers.detector_rotation_axis is not None:
             dr_sp = self.motion_controllers.detector_rotation_axis.get_steps_per_value()
 
+        list_of_move_mults = []
+        list_of_home_mults = []
+        for i in range(len(self.UIEL_mcw_move_speed_mults_qbsb)):
+            list_of_move_mults.append(self.UIEL_mcw_move_speed_mults_qbsb[i].value())
+        for i in range(len(self.UIEL_mcw_home_speed_mults_qbsb)):
+            list_of_home_mults.append(self.UIEL_mcw_home_speed_mults_qbsb[i].value())
+
         log.debug('Saving the following config settings...', path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name,
-                  self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.sma_max_pos, self.sma_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.sa_offset, self.dr_offset, md_sp, fw_sp, sr_sp, sa_sp, st_sp, dr_sp)
+                  self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.sma_max_pos, self.sma_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.sa_offset, self.dr_offset, md_sp, fw_sp, sr_sp, sa_sp, st_sp, dr_sp, list_of_move_mults, list_of_home_mults)
 
         save_config(path, self.mes_sign, self.autosave_data_bool, self.data_save_directory, self.model_index, self.grating_density, self.zero_ofst, self.max_pos, self.min_pos, self.main_axis_index, self.filter_axis_index, self.rsamp_axis_index, self.asamp_axis_index, self.tsamp_axis_index, self.detector_axis_index, self.main_axis_dev_name, self.filter_axis_dev_name, self.rsamp_axis_dev_name,
-                    self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.sma_max_pos, self.sma_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.sa_offset, self.dr_offset, md_sp, fw_sp, sr_sp, sa_sp, st_sp, dr_sp)
+                    self.asamp_axis_dev_name, self.tsamp_axis_dev_name, self.detector_axis_dev_name, len(self.mtn_ctrls), self.fw_max_pos, self.fw_min_pos, self.smr_max_pos, self.smr_min_pos, self.sma_max_pos, self.sma_min_pos, self.smt_max_pos, self.smt_min_pos, self.dr_max_pos, self.dr_min_pos, self.fw_offset, self.st_offset, self.sr_offset, self.sa_offset, self.dr_offset, md_sp, fw_sp, sr_sp, sa_sp, st_sp, dr_sp, list_of_move_mults, list_of_home_mults)
 
     def load_config(self, path: str, is_import: bool):
         # Replaces default grating equation values with the values found in the config.ini file.
@@ -1811,6 +1818,30 @@ class MMC_Main(QMainWindow):
         else:
             log.info(
                 f'Detector Rotation Axis is None; cannot set steps per value to {self.dr_sp}.')
+            
+        move_mults = load_dict['moveMults']
+        home_mults = load_dict['homeMults']
+
+        s = 0
+        for i, dev in enumerate(self.mtn_ctrls):
+            try:
+                if dev is not None:
+                    log.info('Device %d: %s' % (i-s, dev.short_name()))
+                    log.info(
+                        f'Setting home speed multiplier to {home_mults[i-s]}')
+                    dev.set_home_speed_mult(
+                        home_mults[i-s])
+                    log.info(
+                        f'Setting move speed multiplier to {move_mults[i-s]}')
+                    dev.set_move_speed_mult(
+                        move_mults[i-s])
+                else:
+                    log.info('Device %d: None' % (i-s))
+                    s += 1
+            except Exception as e:
+                log.error(
+                    f'Failed to set home/move speed multiplier for device {i-s}: {e}')
+                continue
 
     def save_config_devman(self, path: str):
         pass

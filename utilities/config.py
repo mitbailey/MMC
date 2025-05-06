@@ -151,7 +151,7 @@ def reset_config(path: str):
         log.error('For some reason the log file failed to be created.')
 
 # TODO: Change this to taking a dictionary or something, this many arguments is ridiculous.
-def save_config(path: str, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 1200.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, asamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'Loaded Config Name Empty', filter_axis_dev_name: str = 'Loaded Config Name Empty', rsamp_axis_dev_name: str = 'Loaded Config Name Empty', asamp_axis_dev_name: str = 'Loaded Config Name Empty', tsamp_axis_dev_name: str = 'Loaded Config Name Empty', detector_axis_dev_name: str = 'Loaded Config Name Empty', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, sma_max_pos: float = 9999.0, sma_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0, fw_offset: float = 0.0, st_offset: float = 0.0, sr_offset: float = 0.0, sa_offset: float = 0.0, dr_offset: float = 0.0, md_sp: float = 0.0, fw_sp: float = 0.0, sr_sp: float = 0.0, sa_sp: float = 0.0, st_sp: float = 0.0, dr_sp: float = 0.0) -> bool:
+def save_config(path: str, mes_sign: int = 1, autosave_data: bool = True, data_save_directory: str = './data/', model_index: int = 0, current_grating_density: float = 1200.0, zero_ofst: float = 1, max_pos: float = 600.0, min_pos: float = -40.0, main_axis_index: int = 1, filter_axis_index: int = 0, rsamp_axis_index: int = 0, asamp_axis_index: int = 0, tsamp_axis_index: int = 0, detector_axis_index: int = 0, main_axis_dev_name: str = 'Loaded Config Name Empty', filter_axis_dev_name: str = 'Loaded Config Name Empty', rsamp_axis_dev_name: str = 'Loaded Config Name Empty', asamp_axis_dev_name: str = 'Loaded Config Name Empty', tsamp_axis_dev_name: str = 'Loaded Config Name Empty', detector_axis_dev_name: str = 'Loaded Config Name Empty', num_axes: int = 0, fw_max_pos: float = 9999.0, fw_min_pos: float = -9999.0, smr_max_pos: float = 9999.0, smr_min_pos: float = -9999.0, sma_max_pos: float = 9999.0, sma_min_pos: float = -9999.0, smt_max_pos: float = 9999.0, smt_min_pos: float = -9999.0, dr_max_pos: float = 9999.0, dr_min_pos: float = -9999.0, fw_offset: float = 0.0, st_offset: float = 0.0, sr_offset: float = 0.0, sa_offset: float = 0.0, dr_offset: float = 0.0, md_sp: float = 0.0, fw_sp: float = 0.0, sr_sp: float = 0.0, sa_sp: float = 0.0, st_sp: float = 0.0, dr_sp: float = 0.0, list_of_move_mults: list = [], list_of_home_mults: list = []) -> bool:
 
     log.debug(path, mes_sign, autosave_data, data_save_directory, model_index, current_grating_density, zero_ofst, max_pos, min_pos, main_axis_index, filter_axis_index, rsamp_axis_index, asamp_axis_index, tsamp_axis_index, detector_axis_index, main_axis_dev_name, filter_axis_dev_name, rsamp_axis_dev_name, asamp_axis_dev_name, tsamp_axis_dev_name, detector_axis_dev_name, num_axes, fw_max_pos, fw_min_pos, smr_max_pos, smr_min_pos, sma_max_pos, sma_min_pos, smt_max_pos, smt_min_pos, dr_max_pos, dr_min_pos, fw_offset, st_offset, sr_offset, sa_offset, dr_offset, md_sp, fw_sp, sr_sp, sa_sp, st_sp, dr_sp)
     
@@ -206,6 +206,8 @@ def save_config(path: str, mes_sign: int = 1, autosave_data: bool = True, data_s
                                        'saSp': sa_sp,
                                        'stSp': st_sp,
                                        'drSp': dr_sp}
+    save_config['MOVE MULTIPLIERS'] = {'moveMults': ' '.join([str(e) for e in list_of_move_mults])}
+    save_config['HOME MULTIPLIERS'] = {'homeMults': ' '.join([str(e) for e in list_of_home_mults])}
     
     with open(path, 'w') as confFile:
         save_config.write(confFile)
@@ -328,6 +330,9 @@ def load_config(path: str, is_import: bool) -> dict:
             st_sp = float(config['STEP CONVERSIONS']['stSp'])
             dr_sp = float(config['STEP CONVERSIONS']['drSp'])
 
+            home_mults = list(map(float, (config['HOME MULTIPLIERS']['homeMults']).split()))
+            move_mults = list(map(float, (config['MOVE MULTIPLIERS']['moveMults']).split()))
+
             break
 
     ret_dict = {
@@ -372,7 +377,9 @@ def load_config(path: str, is_import: bool) -> dict:
         'srSp': sr_sp,
         'saSp': sa_sp,
         'stSp': st_sp,
-        'drSp': dr_sp
+        'drSp': dr_sp,
+        'homeMults': home_mults,
+        'moveMults': move_mults
     }
 
     log.debug(ret_dict)
