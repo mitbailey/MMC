@@ -252,9 +252,9 @@ def load_config(path: str, is_import: bool) -> dict:
                 zero_ofst = float(config['INSTRUMENT']['zeroOffset'])
             except Exception as e:
                 log.error('Invalid incidence angle, %s'%(e))
-            if not -90 < zero_ofst < 90:
-                log.error('Invalid incidence angle %f'%(zero_ofst))
-                zero_ofst = 0
+            # if not -90 < zero_ofst < 90:
+            #     log.error('Invalid incidence angle %f'%(zero_ofst))
+            #     zero_ofst = 0
 
             max_pos = float(config['INSTRUMENT']['maxPosition'])
             min_pos = float(config['INSTRUMENT']['minPosition'])
