@@ -460,7 +460,10 @@ class MotionController:
         return retval
     
     def stop(self):
-        self._motor_ctrl.stop()
+        if self._multi_axis:
+            self._motor_ctrl.stop(self._axis)
+        else:
+            self._motor_ctrl.stop()
 
         self._moving = False
 
