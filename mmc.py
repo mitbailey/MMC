@@ -358,6 +358,10 @@ class MMC_Main(QMainWindow):
         self.st_sp = 0.0
         self.dr_sp = 0.0
 
+        self.movement_mults_load_success = False
+        self.home_mults = []
+        self.move_mults = []
+
         self.load_config(appDir, False)
 
         self.manual_position = 0  # 0 nm
@@ -1819,29 +1823,36 @@ class MMC_Main(QMainWindow):
             log.info(
                 f'Detector Rotation Axis is None; cannot set steps per value to {self.dr_sp}.')
             
-        move_mults = load_dict['moveMults']
-        home_mults = load_dict['homeMults']
+        self.movement_mults_load_success = False
+        self.move_mults = load_dict['moveMults']
+        self.home_mults = load_dict['homeMults']
 
-        s = 0
-        for i, dev in enumerate(self.mtn_ctrls):
-            try:
-                if dev is not None:
-                    log.info('Device %d: %s' % (i-s, dev.short_name()))
-                    log.info(
-                        f'Setting home speed multiplier to {home_mults[i-s]}')
-                    dev.set_home_speed_mult(
-                        home_mults[i-s])
-                    log.info(
-                        f'Setting move speed multiplier to {move_mults[i-s]}')
-                    dev.set_move_speed_mult(
-                        move_mults[i-s])
-                else:
-                    log.info('Device %d: None' % (i-s))
-                    s += 1
-            except Exception as e:
-                log.error(
-                    f'Failed to set home/move speed multiplier for device {i-s}: {e}')
-                continue
+        if (len(self.move_mults) == len(self.home_mults)) and len(self.move_mults) == len(self.mtn_ctrls):
+            s = 0
+            for i, dev in enumerate(self.mtn_ctrls):
+                try:
+                    if dev is not None:
+                        log.info('Device %d: %s' % (i-s, dev.short_name()))
+                        log.info(
+                            f'Setting home speed multiplier to {self.home_mults[i-s]}')
+                        dev.set_home_speed_mult(
+                            self.home_mults[i-s])
+                        log.info(
+                            f'Setting move speed multiplier to {self.move_mults[i-s]}')
+                        dev.set_move_speed_mult(
+                            self.move_mults[i-s])
+                    else:
+                        log.info('Device %d: None' % (i-s))
+                        s += 1
+                except Exception as e:
+                    log.error(
+                        f'Failed to set home/move speed multiplier for device {i-s}: {e}')
+                    continue
+            log.info('Movement multiplier values enacted.')
+            self.movement_mults_load_success = True
+        else:
+            log.error("Failed to enact movement multiplier values when loading config because home and move multiplier array lengths do not match or, more likely, the number of motion controllers has changed since the config was saved.")
+            log.error(f"moveMults: {self.move_mults}; homeMults: {self.home_mults}; numMotionControllers: {len(self.mtn_ctrls)}")
 
     def save_config_devman(self, path: str):
         pass
@@ -3235,6 +3246,13 @@ class MMC_Main(QMainWindow):
 
                     self.UIEL_mcw_move_speed_mults_qbsb.append(spinbox_move)
                     self.UIEL_mcw_home_speed_mults_qbsb.append(spinbox_home)
+
+            if (len(self.UIEL_mcw_move_speed_mults_qbsb) == self.move_mults) and (self.movement_mults_load_success):
+                for i in range(self.move_mults):
+                    self.UIEL_mcw_move_speed_mults_qbsb[i].setValue(
+                        self.move_mults[i][0])
+                    self.UIEL_mcw_home_speed_mults_qbsb[i].setValue(
+                        self.home_mults[i][1])
 
             self.UIE_mcw_scan_start_delay_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(
                 QDoubleSpinBox, 'scan_start_delay')

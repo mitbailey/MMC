@@ -112,7 +112,7 @@ class MP_789A_4(StageDevice):
         self.movement_status_tid.start()
 
         # Home the 789A-4.
-        self.home()
+        # self.home()
 
     def movement_status_thread(self):
         # This thread runs in the background.

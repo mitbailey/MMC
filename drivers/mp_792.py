@@ -126,7 +126,7 @@ class MP_792:
                 log.info('Axis %d is alive.'%(i))
                 self.axis_alive[i] = True
                 
-                self.home(i)
+                # self.home(i)
 
         log.info('McPherson 792 initialization complete.')
 
