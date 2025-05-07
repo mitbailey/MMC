@@ -3247,7 +3247,7 @@ class MMC_Main(QMainWindow):
                     self.UIEL_mcw_move_speed_mults_qbsb.append(spinbox_move)
                     self.UIEL_mcw_home_speed_mults_qbsb.append(spinbox_home)
 
-            if (len(self.UIEL_mcw_move_speed_mults_qbsb) == self.move_mults) and (self.movement_mults_load_success):
+            if (len(self.UIEL_mcw_move_speed_mults_qbsb) == self.move_mults):
                 for i in range(self.move_mults):
                     self.UIEL_mcw_move_speed_mults_qbsb[i].setValue(
                         self.move_mults[i][0])
