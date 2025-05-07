@@ -22,6 +22,17 @@
 #
 #
 
+""" TODO
+- 'Unsafe' mode with memory - remembers the position we were last at and loads in from there.
+    - Likely, we should just always do this.
+    - We should also have a "you must home this axis" prior to use warning / requirement.
+    - The 'unsafe' mode will simply disable this requirement.
+    - Maybe a "Has been homed at least once this session" flag on every axis
+    - If the flag is "false", then a popup message appears
+    - User can ignore warning and run once, ignore this and all home warnings, cancel action.
+    - If the setup is different it will nuke the saved positions.
+"""
+
 """ 
 UI Element Naming Scheme
 ------------------------

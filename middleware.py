@@ -332,29 +332,28 @@ class MotionController:
         Args:
             blocking (bool, optional): Whether to block or not; will spawn a thread if blocking is False. Defaults to False.
         """
-        log.debug('HOME CP MW 1')
+        
         log.trace('Homing %s.'%(self.short_name()))
         if self._homing:
             raise Exception("Already homing!")
         self._homing = True
-        log.debug('HOME CP MW 2')
+        
         if blocking:
             log.info('Starting blocking home.')
-            log.debug('HOME CP MW 3')
+            
             self._home()
-            log.debug('HOME CP MW 4')
+            
         else:
             log.info('Starting non-blocking home thread.')
-            log.debug('HOME CP MW 5')
+            
             self._homing_thread_active = True
-            log.debug('HOME CP MW 6')
+            
             home_th = threading.Thread(target=self._home)
-            log.debug('HOME CP MW 7')
+        
             home_th.start()
-            log.debug('HOME CP MW 8')
+        
             log.info('Non-blocking home thread started.')
 
-        log.debug('HOME CP MW 9')
         log.info('Middleware home() returning.')
         return
 
