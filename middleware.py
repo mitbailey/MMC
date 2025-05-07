@@ -348,7 +348,7 @@ class MotionController:
             log.debug('HOME CP MW 5')
             self._homing_thread_active = True
             log.debug('HOME CP MW 6')
-            home_th = threading.Thread(target=self._home())
+            home_th = threading.Thread(target=self._home)
             log.debug('HOME CP MW 7')
             home_th.start()
             log.debug('HOME CP MW 8')
