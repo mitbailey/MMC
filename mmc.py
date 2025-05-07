@@ -3247,12 +3247,14 @@ class MMC_Main(QMainWindow):
                     self.UIEL_mcw_move_speed_mults_qbsb.append(spinbox_move)
                     self.UIEL_mcw_home_speed_mults_qbsb.append(spinbox_home)
 
-            if (len(self.UIEL_mcw_move_speed_mults_qbsb) == self.move_mults):
-                for i in range(self.move_mults):
+            if (len(self.UIEL_mcw_move_speed_mults_qbsb) == len(self.move_mults)):
+                for i in range(len(self.move_mults)):
                     self.UIEL_mcw_move_speed_mults_qbsb[i].setValue(
-                        self.move_mults[i][0])
+                        self.move_mults[i])
                     self.UIEL_mcw_home_speed_mults_qbsb[i].setValue(
-                        self.home_mults[i][1])
+                        self.home_mults[i])
+            else:
+                log.error(f'Number of speed mults does not match number of axes: {len(self.UIEL_mcw_move_speed_mults_qbsb)} != {len(self.move_mults)} because {self.UIEL_mcw_move_speed_mults_qbsb} and {self.move_mults}.')
 
             self.UIE_mcw_scan_start_delay_qdsb: QDoubleSpinBox = self.machine_conf_win.findChild(
                 QDoubleSpinBox, 'scan_start_delay')
