@@ -337,8 +337,10 @@ class MotionController:
             raise Exception("Already homing!")
         self._homing = True
         if blocking:
+            log.info('Starting blocking home.')
             self._home()
         else:
+            log.info('Starting non-blocking home thread.')
             self._homing_thread_active = True
             home_th = threading.Thread(target=self._home())
             home_th.start()
