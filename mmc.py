@@ -2458,6 +2458,8 @@ class MMC_Main(QMainWindow):
             self.QMessageBoxWarning('Homing Failed', e)
             pass
 
+        log.info('Manual home returning.')
+
     def manual_home_smr(self):
         if self.motion_controllers.sample_rotation_axis is None:
             log.error(

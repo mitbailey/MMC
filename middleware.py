@@ -344,7 +344,9 @@ class MotionController:
             self._homing_thread_active = True
             home_th = threading.Thread(target=self._home())
             home_th.start()
+            log.info('Non-blocking home thread started.')
 
+        log.info('Middleware home() returning.')
         return
 
     def _home(self) -> None:
