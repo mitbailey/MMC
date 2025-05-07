@@ -2440,23 +2440,31 @@ class MMC_Main(QMainWindow):
             self.manual_home_dmr()
 
     def manual_home(self):
+        log.debug('HOME CP 1')
         if self.motion_controllers.main_drive_axis is None:
             log.error('Main drive axis is not set to any motion control channel.')
             self.QMessageBoxCritical(
                 'Error', 'Main drive axis is not set to any motion control channel.')
             return
-
+        log.debug('HOME CP 2')
         self.anim_mgw_mda_load_spinner_start(True)
+        log.debug('HOME CP 3')
 
         log.info('Manual home pressed!')
         self.scan_status_update("HOMING")
+        log.debug('HOME CP 4')
         self.homing_started = True
+        log.debug('HOME CP 5')
         self.disable_movement_sensitive_buttons(True)
+        log.debug('HOME CP 6')
         try:
+            log.debug('HOME CP 7')
             self.motion_controllers.main_drive_axis.home()
+            log.debug('HOME CP 8')
         except Exception as e:
             self.QMessageBoxWarning('Homing Failed', e)
             pass
+        log.debug('HOME CP 9')
 
         log.info('Manual home returning.')
 
