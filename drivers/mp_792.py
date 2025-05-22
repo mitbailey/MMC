@@ -386,6 +386,8 @@ class MP_792:
             log.warn(f'Device is busy: an axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
             return
         
+        self._enact_speed_factor(self._move_speed_mult_l[axis], axis)
+        
         # Reset the stop queued such that we dont immediately stop from an old stop request.
         # Otherwise, this enables us to cancel backlash, etc, when stops are desired.
         self.stop_queued_l[axis] = 0
@@ -423,6 +425,8 @@ class MP_792:
         if any(self._is_homing) or any(self._is_moving_l) or (any(self._backlash_lock_l) and not backlash_bypass):
             log.warn(f'Device is busy: another axis is already homing ({self._is_homing}) or moving ({self._is_moving_l}) or locked for backlash ({self._backlash_lock_l}).')
             return False
+
+        self._enact_speed_factor(self._move_speed_mult_l[axis], axis)
 
         self._is_moving_l[axis] = True
 
