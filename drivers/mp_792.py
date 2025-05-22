@@ -465,6 +465,8 @@ class MP_792:
         self._enact_speed_factor(self._move_speed_mult_l[axis], axis)
 
     def _enact_speed_factor(self, speed_factor, axis: int):
+        log.debug(f'All 792 speed factors: Axis 0: {self._home_speed_mult_l[0]}, Axis 1: {self._home_speed_mult_l[1]}, Axis 2: {self._home_speed_mult_l[2]}, Axis 3: {self._home_speed_mult_l[3]}')
+
         vel_int = int(speed_factor * MP_792.MAX_VEL)
 
         log.debug('_enact_speed_factor: (pre)', vel_int)
