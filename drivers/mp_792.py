@@ -593,6 +593,9 @@ class MP_792_DUMMY:
     def move_to(self, position: int, axis: int, backlash: int):
         # self.set_axis(axis)
 
+        # Set the movement speed for moving.
+        self._enact_speed_factor(self._move_speed_mult_l[axis], axis)
+
         steps = position - self._position[axis]
 
         if (steps < 0) and (backlash > 0):
@@ -603,6 +606,9 @@ class MP_792_DUMMY:
 
     def move_relative(self, steps: int, axis: int):
         # self.set_axis(axis)
+
+        # Set the movement speed for moving.
+        self._enact_speed_factor(self._move_speed_mult_l[axis], axis)
 
         self._position[axis] += steps
 

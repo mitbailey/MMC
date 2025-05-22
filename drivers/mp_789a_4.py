@@ -478,6 +478,9 @@ class MP_789A_4(StageDevice):
         # self.moving_poll_mutex.acquire()
         self._moving = True
 
+        # Set the movement speed for moving.
+        self._enact_speed_factor(self._move_speed_mult)
+
         try:
 
             self.stop_queued = 0
@@ -549,6 +552,9 @@ class MP_789A_4(StageDevice):
 
         log.debug('func: move_relative')
         log.info('Being told to move %d steps.'%(steps))
+
+        # Set the movement speed for moving.
+        self._enact_speed_factor(self._move_speed_mult)
 
         # Query limit switch status.
         # self.s.write(b']')
