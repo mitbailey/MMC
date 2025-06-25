@@ -2311,9 +2311,11 @@ class MMC_Main(QMainWindow):
         else:
             table = self.table_list[self.UIE_mgw_table_qtw.currentIndex() - 1]
         
-        (scan_id, det_id) = table.row_to_id_det_map[table.selectedItem]
+        log.error(f'table.selectedItem: {table.selectedItem}')
 
-        return self.save_data_auto(table, det_id, scanIdx=scan_id, button=True)
+        for item in table.selectedItem:
+            (scan_id, det_id) = table.row_to_id_det_map[item]
+            self.save_data_auto(table, det_id, scanIdx=scan_id, button=True)
 
     def save_data_auto(self, table, which_detector, scanIdx=None, button=False):
         # TODO: Figure out which table were on currently.

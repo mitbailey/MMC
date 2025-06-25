@@ -295,7 +295,7 @@ class DataTableWidget(QTableWidget):
                 log.error('self.selectedItem is None!')
                 return (None, None)
             
-            row = self.selectedItem
+            row = self.selectedItem[0]
 
             if row >= len(self.rowMap):
                 log.error(f'Trying to save row {row}, rowMap length {len(self.rowMap)}!', self.rowMap)
@@ -337,7 +337,7 @@ class DataTableWidget(QTableWidget):
 
         if self.selectedItem is None:
             return
-        row = self.selectedItem
+        row = self.selectedItem[0]
         if row >= len(self.rowMap):
             log.debug('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
             return
@@ -477,7 +477,7 @@ class DataTableWidget(QTableWidget):
         key = event.key()
         if key == Qt.Key_Delete and self.selectedItem is not None:
             # delete data
-            row = self.selectedItem
+            row = self.selectedItem[0]
             log.info('Delete:', row)
             self.__deleteItem(row)
         else:
@@ -493,19 +493,31 @@ class DataTableWidget(QTableWidget):
             deselset.append(ix.row())
         log.debug('')
 
-        log.debug('Deselected Cell Location(s):', end='')
+        log.debug('Selected Cell Location(s):', end='')
         for ix in selected.indexes():
             log.debug('({0}, {1}) '.format(ix.row(), ix.column()), end='')
             selset.append(ix.row())
         log.debug('')
         
-        selset = list(set(selset))
-        deselset = list(set(deselset))
+        # selset = list(set(selset))
+        # deselset = list(set(deselset))
 
-        log.debug(selset)
+        selset = set(selset)
+        deselset = set(deselset)
 
-        if len(selset) == 1:
-            self.selectedItem = selset[0]
+        log.debug('Selected:', selset)
+        log.debug('Unselected:', deselset)
+        log.debug('self.selectedItem:', self.selectedItem)
+
+        if self.selectedItem is None:
+            self.selectedItem = list(selset)
         else:
-            self.selectedItem = None
+            self.selectedItem = list(set(self.selectedItem).union(selset) - deselset)
+
+        log.debug('Currently selected items:', self.selectedItem)
+
+        # if len(selset) == 1:
+        #     self.selectedItem = selset[0]
+        # else:
+        #     self.selectedItem = None
         
