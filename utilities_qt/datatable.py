@@ -228,8 +228,12 @@ class DataTableWidget(QTableWidget):
                 except Exception:
                     self.setItem(row_idx, 3, QTableWidgetItem(str(0)))
                 if name_editable:
-
-                    self.setCellWidget(row_idx, 4, self.recordedData[(scan_idx, key_det_idx)]['plot_cb'])
+                    try:
+                        self.setCellWidget(row_idx, 4, self.recordedData[(scan_idx, key_det_idx)]['plot_cb'])
+                    except Exception as e:
+                        log.error('Exception:', e)
+                        log.error('Tried to find "plot_cb" in ', self.recordedData[(scan_idx, key_det_idx)])
+                        raise e
 
             self.newItem = False
 
@@ -291,7 +295,7 @@ class DataTableWidget(QTableWidget):
         log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}')
 
         if scanIdx is None:
-            if self.selectedItem is None:
+            if self.selectedItem is None or len(self.selectedItem) == 0:
                 log.error('self.selectedItem is None!')
                 return (None, None)
             
@@ -335,8 +339,11 @@ class DataTableWidget(QTableWidget):
 
         which_detector = self.parent.UIE_mgw_table_qtw.currentIndex() - 1
 
-        if self.selectedItem is None:
+        if self.selectedItem is None or len(self.selectedItem) == 0:
             return
+        
+        # for selected_item in self.selectedItem:
+        # row = selected_item
         row = self.selectedItem[0]
         if row >= len(self.rowMap):
             log.debug('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
@@ -346,8 +353,10 @@ class DataTableWidget(QTableWidget):
         except Exception:
             log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
             return
+        log.debug(f'Acquired scanIdx: {scanIdx}, which_detector: {which_detector}')
+        scanIdx = scanIdx[0]  # scanIdx is a tuple (scan_id, detector_id)
         if (scanIdx, which_detector) not in self.recordedData.keys():
-            log.error(f'{scanIdx} is not in recorded data: {self.recordedData.keys()}')
+            log.error(f'({scanIdx}, {which_detector}) is not in recorded data: {self.recordedData.keys()}')
             self.__deleteRow(row)
             return
         try:
@@ -358,17 +367,20 @@ class DataTableWidget(QTableWidget):
             log.error('Could not recover plotCb for %d! :O ... '%(scanIdx, self.recordedData.keys()))
         self.__delete_item_confirm = False
         # spawn confirmation window here
-        self.__showDelConfirmWin(row, scanIdx)
+        self.__showDelConfirmWin(row, scanIdx, which_detector)
         if self.__delete_item_confirm: # actually delete?
             log.info('\n\nGOING TO DELETE %d... '%(scanIdx), end = '')
             try:
+                log.debug("Trying to delete key", (scanIdx, which_detector), "from recordedData")
                 del self.recordedData[(scanIdx, which_detector)]
+                if (scanIdx, which_detector) in self.recordedData:
+                    log.error("Failed to delete key", (scanIdx, which_detector), "from recordedData")
             except Exception:
-                pass
+                log.error("ERROR! Could not delete scan ID [(%d, %d)] from recordedData!"%(scanIdx, which_detector))
             try:
                 del self.recordedMetaData[(scanIdx, which_detector)]
             except Exception:
-                pass
+                log.error("ERROR! Could not delete scan ID [(%d, %d)] from recordedMetaData!"%(scanIdx, which_detector))
             self.__deleteRow(row)
             log.debug('DONE\n')
         self.__delete_item_confirm = False
