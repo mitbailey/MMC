@@ -251,8 +251,8 @@
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>824</width>
-                      <height>1191</height>
+                      <width>820</width>
+                      <height>1277</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -4748,7 +4748,7 @@
      <x>0</x>
      <y>0</y>
      <width>1398</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -4887,7 +4887,7 @@
   </action>
   <action name="autosave_dir_prompt">
    <property name="text">
-    <string>Change Auto-log Directory</string>
+    <string>Change Autosave Directory</string>
    </property>
   </action>
   <action name="invert_mes">

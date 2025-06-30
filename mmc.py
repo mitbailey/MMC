@@ -2554,8 +2554,14 @@ class MMC_Main(QMainWindow):
             self.QMessageBoxWarning('Homing Failed', e)
 
     def autosave_dir_triggered(self):
+        prev_dir = self.data_save_directory
         self.data_save_directory = QFileDialog.getExistingDirectory(
             self, 'Auto logging files location', self.data_save_directory, options=QFileDialog.ShowDirsOnly)
+        if self.data_save_directory == '':
+            log.debug('No directory selected for autosave.')
+            self.data_save_directory = prev_dir
+        else:
+            self.data_save_directory = self.data_save_directory + '\\'
 
     def invert_mes_toggled(self, state):
         if not self.scanRunning:
