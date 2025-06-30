@@ -1452,11 +1452,6 @@ class MMC_Main(QMainWindow):
         else:
             self.UIE_mgw_invert_mes_qa.setChecked(False)
 
-        if self.autosave_data_bool:
-            self.UIE_mgw_autosave_data_qa.setChecked(True)
-        else:
-            self.UIE_mgw_autosave_data_qa.setChecked(False)
-
         self.update_movement_limits_gui()
 
         self.table_result.updatePlots(0)
@@ -1605,6 +1600,13 @@ class MMC_Main(QMainWindow):
 
         self.load_config(appDir, False)
 
+        if self.autosave_data_bool:
+            log.debug(f'Autosave data is enabled because: {self.autosave_data_bool}. Setting QA to checked.')
+            self.UIE_mgw_autosave_data_qa.setChecked(True)
+        else:
+            log.debug(f'Autosave data is disabled because: {self.autosave_data_bool}. Setting QA to unchecked.')
+            self.UIE_mgw_autosave_data_qa.setChecked(False)
+
         self.main_gui_booted = True
         self.show()
         self.dmw.close()
@@ -1712,6 +1714,7 @@ class MMC_Main(QMainWindow):
         self.mes_sign = load_dict['measurementSign']
 
         self.autosave_data_bool = load_dict['autosaveData']
+        log.debug('load_dict[autosaveData]:', load_dict['autosaveData'])
         self.data_save_directory = load_dict['dataSaveDirectory']
         self.model_index = load_dict["modelIndex"]
         self.grating_density = load_dict["gratingDensity"]
@@ -2363,6 +2366,12 @@ class MMC_Main(QMainWindow):
                 '~/Documents') + '/mcpherson_mmc/%s_det-%d_%d.csv' % (tstamp.strftime('%Y%m%d%H%M%S'), which_detector, scan_id), filter='*.csv')
         fileInfo = QFileInfo(savFileName)
 
+        # If we don't actually want to autosave, its time to get out of this function.
+        if self.autosave_next_dir is None and not self.autosave_data_bool:
+            return
+        
+        log.debug(f"Proceeding with data file saving because self.autosave_next_dir is {self.autosave_next_dir} and self.autosave_data_bool is {self.autosave_data_bool}.")
+
         try:
             ofile = open(fileInfo.absoluteFilePath(), 'w', encoding='utf-8')
         except Exception:
@@ -2573,9 +2582,13 @@ class MMC_Main(QMainWindow):
 
     def autosave_data_toggled(self, state):
         if not self.scanRunning:
+            log.debug(f'autosave_data_bool was    {self.autosave_data_bool}')
             self.autosave_data_bool = state
-        else:
             self.UIE_mgw_autosave_data_qa.setChecked(self.autosave_data_bool)
+            log.debug(f'autosave_data_bool set to {self.autosave_data_bool}')
+        else:
+            log.error('Cannot change autosave data setting while a scan is running.')
+            # self.UIE_mgw_autosave_data_qa.setChecked(self.autosave_data_bool)
 
     def pop_out_table_toggled(self, state):
         self.pop_out_table = state
