@@ -159,7 +159,11 @@ class DataTableWidget(QTableWidget):
     def plotsClearedCb(self):
         for key in self.recordedData.keys():
             self.recordedData[key]['plotted'] = False
-            self.recordedData[key]['plot_cb'].setChecked(False)
+            if self.recordedData[key]['plot_cb'] is not None:
+                try:
+                    self.recordedData[key]['plot_cb'].setChecked(False)
+                except Exception as e:
+                    log.warn('Could not set plot checkbox for scan ID %d, as its probably been deleted: %s'%(key[0], e))
 
     def updateTableDisplay(self, det_idx: int, global_scan_id: int = None, name_editable: bool = True):
         if global_scan_id is not None and isinstance(global_scan_id, int):
@@ -377,10 +381,16 @@ class DataTableWidget(QTableWidget):
                     log.error("Failed to delete key", (scanIdx, which_detector), "from recordedData")
             except Exception:
                 log.error("ERROR! Could not delete scan ID [(%d, %d)] from recordedData!"%(scanIdx, which_detector))
+                log.error("Recorded Data Keys:", self.recordedData.keys())
+                for key in self.recordedData.keys():
+                    log.error(f'Attempted to use type {type((scanIdx, which_detector))} of types {type(scanIdx)}, {type(which_detector)} to remove a key of type {type(key)} of types {type(key[0])}, {type(key[1])}.')
             try:
                 del self.recordedMetaData[(scanIdx, which_detector)]
             except Exception:
                 log.error("ERROR! Could not delete scan ID [(%d, %d)] from recordedMetaData!"%(scanIdx, which_detector))
+                log.error("Recorded Meta Data Keys:", self.recordedMetaData.keys())
+                for key in self.recordedMetaData.keys():
+                    log.error(f'Attempted to use type {type((scanIdx, which_detector))} to remove a key of type {type(key)}')
             self.__deleteRow(row)
             log.debug('DONE\n')
         self.__delete_item_confirm = False
