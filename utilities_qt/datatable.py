@@ -339,62 +339,107 @@ class DataTableWidget(QTableWidget):
 
 
     def delDataCb(self):
-        log.debug('Delete called')
+        log.debug('Delete called for:', self.selectedItem)
+
+        if self.selectedItem is None:
+            return
 
         which_detector = self.parent.UIE_mgw_table_qtw.currentIndex() - 1
 
-        if self.selectedItem is None or len(self.selectedItem) == 0:
-            return
-        
-        # for selected_item in self.selectedItem:
-        # row = selected_item
-        row = self.selectedItem[0]
-        if row >= len(self.rowMap):
-            log.debug('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
-            return
-        try:
-            scanIdx = self.rowMap[row]
-        except Exception:
-            log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
-            return
-        log.debug(f'Acquired scanIdx: {scanIdx}, which_detector: {which_detector}')
-        scanIdx = scanIdx[0]  # scanIdx is a tuple (scan_id, detector_id)
-        if (scanIdx, which_detector) not in self.recordedData.keys():
-            log.error(f'({scanIdx}, {which_detector}) is not in recorded data: {self.recordedData.keys()}')
-            self.__deleteRow(row)
-            return
-        try:
-            plotCb: CustomQCheckBox = self.recordedData[(scanIdx, which_detector)]['plot_cb']
-            if not plotCb.isEnabled():
+        if type(self.selectedItem) is int:
+            log.error('Selected item is an int instead of a list. This is unexpected.')
+            if self.selectedItem is None:
                 return
-        except Exception:
-            log.error('Could not recover plotCb for %d! :O ... '%(scanIdx, self.recordedData.keys()))
-        self.__delete_item_confirm = False
-        # spawn confirmation window here
-        self.__showDelConfirmWin(row, scanIdx, which_detector)
-        if self.__delete_item_confirm: # actually delete?
-            log.info('\n\nGOING TO DELETE %d... '%(scanIdx), end = '')
+            row = self.selectedItem
+            if row >= len(self.rowMap):
+                log.debug('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
+                return
             try:
-                log.debug("Trying to delete key", (scanIdx, which_detector), "from recordedData")
-                del self.recordedData[(scanIdx, which_detector)]
-                if (scanIdx, which_detector) in self.recordedData:
-                    log.error("Failed to delete key", (scanIdx, which_detector), "from recordedData")
+                scanIdx = self.rowMap[row]
             except Exception:
-                log.error("ERROR! Could not delete scan ID [(%d, %d)] from recordedData!"%(scanIdx, which_detector))
-                log.error("Recorded Data Keys:", self.recordedData.keys())
-                for key in self.recordedData.keys():
-                    log.error(f'Attempted to use type {type((scanIdx, which_detector))} of types {type(scanIdx)}, {type(which_detector)} to remove a key of type {type(key)} of types {type(key[0])}, {type(key[1])}.')
+                log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
+                return
+            
+            log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}')
+
+            if (scanIdx, which_detector) not in self.recordedData.keys():
+                log.error(f'{scanIdx} is not in recorded data: {self.recordedData.keys()}')
+                self.__deleteRow(row)
+                return
             try:
-                del self.recordedMetaData[(scanIdx, which_detector)]
+                plotCb: CustomQCheckBox = self.recordedData[(scanIdx, which_detector)]['plot_cb']
+                if not plotCb.isEnabled():
+                    return
             except Exception:
-                log.error("ERROR! Could not delete scan ID [(%d, %d)] from recordedMetaData!"%(scanIdx, which_detector))
-                log.error("Recorded Meta Data Keys:", self.recordedMetaData.keys())
-                for key in self.recordedMetaData.keys():
-                    log.error(f'Attempted to use type {type((scanIdx, which_detector))} to remove a key of type {type(key)}')
-            self.__deleteRow(row)
-            log.debug('DONE\n')
-        self.__delete_item_confirm = False
-        self.updatePlots(which_detector)
+                log.error('Could not recover plotCb for %d! :O ... '%(scanIdx, self.recordedData.keys()))
+            self.__delete_item_confirm = False
+            # spawn confirmation window here
+            self.__showDelConfirmWin(row, scanIdx)
+            if self.__delete_item_confirm: # actually delete?
+                log.info('\n\nGOING TO DELETE %d... '%(scanIdx), end = '')
+                try:
+                    del self.recordedData[(scanIdx, which_detector)]
+                except Exception:
+                    pass
+                try:
+                    del self.recordedMetaData[(scanIdx, which_detector)]
+                except Exception:
+                    pass
+                self.__deleteRow(row)
+                log.debug('DONE\n')
+            self.__delete_item_confirm = False
+            self.updatePlots(which_detector)
+        elif type(self.selectedItem) is list:
+            for selectedItem in self.selectedItem:
+                if selectedItem is None:
+                    return
+                row = selectedItem
+                if row >= len(self.rowMap):
+                    log.debug('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
+                    return
+                try:
+                    scanIdx = self.rowMap[row]
+                except Exception:
+                    log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
+                    return
+                
+                log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}')
+
+                key = (scanIdx[0], which_detector)
+                log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}; key: {key}')
+
+                if key not in self.recordedData.keys():
+                    log.error(f'{key} is not in recorded data: {self.recordedData.keys()}')
+                    self.__deleteRow(row)
+                    return
+                try:
+                    plotCb: CustomQCheckBox = self.recordedData[key]['plot_cb']
+                    if not plotCb.isEnabled():
+                        return
+                except Exception as e:
+                    log.error(f'Exception at {key}: {e}')
+                self.__delete_item_confirm = False
+                # spawn confirmation window here
+                self.__showDelConfirmWin(row, key[0], key[1])
+                if self.__delete_item_confirm: # actually delete?
+                    log.info(f'Going to delete {key}... ', end = '')
+                    try:
+                        del self.recordedData[key]
+                    except Exception:
+                        pass
+                    try:
+                        del self.recordedMetaData[key]
+                    except Exception:
+                        pass
+                    self.__deleteRow(row)
+                    log.debug('DONE\n')
+                self.__delete_item_confirm = False
+                self.updatePlots(which_detector)
+        else:
+            log.error('Selected item is not an int or list, but is type: ', type(self.selectedItem))
+            self.parent.QMessageBoxCritical(
+                'Error', 'Selection is not of type int (single) nor list (multiple). Please select a scan to delete data from.')
+            return
 
     def __deleteRow(self, row: int):
         self.selectedItem = None
@@ -506,40 +551,53 @@ class DataTableWidget(QTableWidget):
             super(DataTableWidget, self).keyPressEvent(event) # propagate elsewhere
 
     def __tableSelectAction(self, selected: QItemSelection, deselected: QItemSelection):
-        selset = []
-        deselset = []
+        just_selected = []
+        just_deselected = []
 
-        log.debug('Deselected Cell Location(s):', end='')
+        # Gather the location which have been deselected.
+        log.debug('Deselected cell location(s):', end='')
         for ix in deselected.indexes():
             log.debug('({0}, {1}) '.format(ix.row(), ix.column()), end='')
-            deselset.append(ix.row())
+            just_deselected.append(ix.row())
         log.debug('')
 
-        log.debug('Selected Cell Location(s):', end='')
+        # Gather the location which have been selected.
+        log.debug('Selected cell location(s):', end='')
         for ix in selected.indexes():
             log.debug('({0}, {1}) '.format(ix.row(), ix.column()), end='')
-            selset.append(ix.row())
+            just_selected.append(ix.row())
         log.debug('')
         
-        # selset = list(set(selset))
-        # deselset = list(set(deselset))
+        # Make each list unique by turning it into a set and then back into a list.
+        just_selected = list(set(just_selected))
+        just_deselected = list(set(just_deselected))
 
-        selset = set(selset)
-        deselset = set(deselset)
-
-        log.debug('Selected:', selset)
-        log.debug('Unselected:', deselset)
-        log.debug('self.selectedItem:', self.selectedItem)
+        log.debug('just_selected:', just_selected)
+        log.debug('just_deselected:', just_deselected)
 
         if self.selectedItem is None:
-            self.selectedItem = list(selset)
+            # We just havent selected anything yet - first selection.
+            currently_selected = just_selected
         else:
-            self.selectedItem = list(set(self.selectedItem).union(selset) - deselset)
+            currently_selected = set(self.selectedItem) - set(just_deselected)
+            currently_selected = currently_selected.union(set(just_selected))
+            currently_selected = list(currently_selected)
+        
+        log.debug('currently_selected:', currently_selected)
 
-        log.debug('Currently selected items:', self.selectedItem)
+        log.debug(just_selected)
+
+        self.selectedItem = currently_selected
+
+        log.debug('self.selectedItem:', self.selectedItem)
+        log.debug('type(self.selectedItem):', type(self.selectedItem))
+        if len(self.selectedItem) > 0:
+            log.debug('type(self.selectedItem[0]:', type(self.selectedItem[0]))
+
 
         # if len(selset) == 1:
         #     self.selectedItem = selset[0]
         # else:
-        #     self.selectedItem = None
+        #     # self.selectedItem = None
+        #     self.selectedItem = selset
         

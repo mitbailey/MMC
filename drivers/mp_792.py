@@ -631,6 +631,27 @@ class MP_792_DUMMY:
         log.info(f'Setting move speed multiplier for axis {axis} to {speed}.')
         self._move_speed_mult_l[axis] = speed
 
+    def _enact_speed_factor(self, speed_factor, axis: int):
+        log.debug(f'All 792 speed factors: Axis 0: {self._home_speed_mult_l[0]}, Axis 1: {self._home_speed_mult_l[1]}, Axis 2: {self._home_speed_mult_l[2]}, Axis 3: {self._home_speed_mult_l[3]}')
+
+        vel_int = int(speed_factor * MP_792.MAX_VEL)
+
+        log.debug('_enact_speed_factor: (pre)', vel_int)
+
+        if vel_int > MP_792.MAX_VEL:
+            vel_int = MP_792.MAX_VEL
+        elif vel_int < MP_792.MIN_VEL:
+            vel_int = MP_792.MIN_VEL
+
+        msg = f'V{str(vel_int)}'
+        # rx = self.s.xfer([self.set_axis_cmd(axis), msg.encode('utf-8')], custom_delay=MP_792.WR_DLY).decode('utf-8')
+
+        log.debug('_enact_speed_factor: (post)', vel_int)
+
+    def _reset_speed_factor(self, speed_factor, axis: int):
+        msg = f'V{str(MP_792.DEF_VEL)}'
+        # rx = self.s.xfer([self.set_axis_cmd(axis), msg.encode('utf-8')], custom_delay=MP_792.WR_DLY).decode('utf-8')
+
     def short_name(self):
         return self.s_name
 
