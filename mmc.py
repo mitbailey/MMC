@@ -23,6 +23,7 @@
 #
 
 """ TODO
+- Verify that running n scans, deleting <n-1 but >1 scans, where none of the scans are scan 0 or scan n, then saving all scans works without issue on the RESULTS tab.
 - 'Unsafe' mode with memory - remembers the position we were last at and loads in from there.
     - Likely, we should just always do this.
     - We should also have a "you must home this axis" prior to use warning / requirement.
@@ -2317,7 +2318,9 @@ class MMC_Main(QMainWindow):
         log.error(f'table.selectedItem: {table.selectedItem}')
 
         for item in table.selectedItem:
-            (scan_id, det_id) = table.row_to_id_det_map[item]
+            log.debug(f'Saving data for item: {item} in {table.selectedItem}')
+            (scan_id, det_id) = table.rowMap[item]
+            # (scan_id, det_id) = table.row_to_id_det_map[item]
             self.save_data_auto(table, det_id, scanIdx=scan_id, button=True)
 
     def save_data_auto(self, table, which_detector, scanIdx=None, button=False):

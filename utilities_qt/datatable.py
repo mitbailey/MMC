@@ -403,10 +403,15 @@ class DataTableWidget(QTableWidget):
                     log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
                     return
                 
+                # (scan_id, det_id) = self.row_to_id_det_map[scanIdx[0]]
                 log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}')
 
                 key = (scanIdx[0], which_detector)
                 log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}; key: {key}')
+                log.debug(f'rowMap: {self.rowMap}')
+
+                # key = (scan_id, det_id)
+                # log.debug(f'new key: {key}')
 
                 if key not in self.recordedData.keys():
                     log.error(f'{key} is not in recorded data: {self.recordedData.keys()}')
@@ -434,12 +439,19 @@ class DataTableWidget(QTableWidget):
                     self.__deleteRow(row)
                     log.debug('DONE\n')
                 self.__delete_item_confirm = False
+
+                # Now we need to update the mapping.
+                # self.row_to_id_det_map[row_idx] = (scan_idx, key_det_idx)
+
+
                 self.updatePlots(which_detector)
         else:
             log.error('Selected item is not an int or list, but is type: ', type(self.selectedItem))
             self.parent.QMessageBoxCritical(
                 'Error', 'Selection is not of type int (single) nor list (multiple). Please select a scan to delete data from.')
             return
+        
+        self.updateTableDisplay(which_detector)
 
     def __deleteRow(self, row: int):
         self.selectedItem = None
