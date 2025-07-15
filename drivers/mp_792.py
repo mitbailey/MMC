@@ -568,7 +568,7 @@ class MP_792_DUMMY:
         return self._position[axis]
     
     # Triple-redundant serial stop command.
-    def stop(self):
+    def stop(self, axis: int):
         # self.s.write(b'@\r')
         log.info('Stopping.')
         time.sleep(MP_792_DUMMY.WR_DLY)
