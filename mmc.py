@@ -790,16 +790,11 @@ class MMC_Main(QMainWindow):
         self.is_conv_set = False  # Use this flag to set conversion
 
         # GUI initialization, gets the UI elements from the .ui file.
-        self.UIE_mgw_scan_qpb: QPushButton = self.findChild(
-            QPushButton, "begin_scan_button")  # Scanning Control 'Begin Scan' Button
-        pixmapi = getattr(QStyle, 'SP_ArrowForward')
-        icon = self.style().standardIcon(pixmapi)
-        self.UIE_mgw_scan_qpb.setIcon(icon)
-        self.UIE_mgw_stop_scan_qpb: QPushButton = self.findChild(
-            QPushButton, "stop_scan_button")
-        pixmapi = getattr(QStyle, 'SP_BrowserStop')
-        icon = self.style().standardIcon(pixmapi)
-        self.UIE_mgw_stop_scan_qpb.setIcon(icon)
+        self.UIE_mgw_scan_qpb: QPushButton = self.findChild(QPushButton, "begin_scan_button")  # Scanning Control 'Begin Scan' Button
+        
+        self.UIE_mgw_scan_top_qpb: QPushButton = self.findChild(QPushButton, "begin_scan_top")
+
+        self.UIE_mgw_stop_scan_qpb: QPushButton = self.findChild(QPushButton, "stop_scan_button")
         self.UIE_mgw_stop_scan_qpb.setEnabled(False)
         self.UIE_mgw_save_data_qckbx: QCheckBox = self.findChild(
             QCheckBox, "save_data_checkbox")  # Scanning Control 'Save Data' Checkbox
@@ -1367,6 +1362,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_save_config_qpb.clicked.connect(
             self.show_window_machine_config)
         self.UIE_mgw_scan_qpb.clicked.connect(self.scan_button_pressed)
+        self.UIE_mgw_scan_top_qpb.clicked.connect(self.scan_button_pressed)
         self.UIE_mgw_stop_scan_qpb.clicked.connect(
             self.stop_master_button_pressed)
 
@@ -1523,6 +1519,7 @@ class MMC_Main(QMainWindow):
 
         movement_sensitive_list = []
         movement_sensitive_list.append(self.UIE_mgw_scan_qpb)
+        movement_sensitive_list.append(self.UIE_mgw_scan_top_qpb)
         movement_sensitive_list.append(self.UIE_mgw_save_data_qckbx)
         movement_sensitive_list.append(self.UIE_mgw_dir_box_qle)
         movement_sensitive_list.append(self.UIE_mgw_start_qdsb)
@@ -2434,6 +2431,8 @@ class MMC_Main(QMainWindow):
             self.UIE_mgw_move_to_position_qpb.setDisabled(disable)
         if self.UIE_mgw_scan_qpb is not None:
             self.UIE_mgw_scan_qpb.setDisabled(disable)
+        if self.UIE_mgw_scan_top_qpb is not None:
+            self.UIE_mgw_scan_top_qpb.setDisabled(disable)
 
         # The stop scan button should always be set based on if a scan is running.
         if self.scanRunning:
@@ -2663,7 +2662,7 @@ class MMC_Main(QMainWindow):
         self.scan_remaining_timer.stop()
         self.UIE_mgw_scan_time_ql.setText(f"")
         
-        self.UIE_mgw_scan_qpb.setText('Begin Scan')
+        # self.UIE_mgw_scan_qpb.setText('Begin Scan')
         self.UIE_mgw_scan_status_ql.setText(
             '<html><head/><body><p><span style=" font-weight:600;">IDLE</span></p></body></html>')
         self.UIE_mgw_scan_qpbar.reset()
@@ -3789,6 +3788,7 @@ class MMC_Main(QMainWindow):
         self.UIE_mgw_move_to_position_qpb.setEnabled(is_zero)
         self.UIE_mgw_home_qpb.setEnabled(is_zero)
         self.UIE_mgw_scan_qpb.setEnabled(is_zero)
+        self.UIE_mgw_scan_top_qpb.setEnabled(is_zero)
 
         self.UIE_mgw_pframe_1_qf.setVisible(is_zero)
 

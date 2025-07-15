@@ -251,8 +251,8 @@
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>820</width>
-                      <height>1277</height>
+                      <width>824</width>
+                      <height>1194</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -852,7 +852,7 @@
                                 </size>
                                </property>
                                <property name="text">
-                                <string>Begin</string>
+                                <string>➪ Begin</string>
                                </property>
                               </widget>
                              </item>
@@ -862,6 +862,12 @@
                                 <size>
                                  <width>130</width>
                                  <height>0</height>
+                                </size>
+                               </property>
+                               <property name="maximumSize">
+                                <size>
+                                 <width>16777215</width>
+                                 <height>16777215</height>
                                 </size>
                                </property>
                                <property name="text">
@@ -2282,7 +2288,7 @@
                                 </size>
                                </property>
                                <property name="text">
-                                <string>Begin</string>
+                                <string>➪ Begin</string>
                                </property>
                               </widget>
                              </item>
@@ -2841,7 +2847,7 @@
                                 </size>
                                </property>
                                <property name="text">
-                                <string>Begin</string>
+                                <string>➪ Begin</string>
                                </property>
                               </widget>
                              </item>
@@ -3619,6 +3625,41 @@
                  </property>
                  <property name="text">
                   <string>🏠</string>
+                 </property>
+                 <property name="flat">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="begin_scan_top">
+                 <property name="enabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>40</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>20</pointsize>
+                   <weight>75</weight>
+                   <bold>true</bold>
+                  </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Begin Monochromator Scan&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Begins a scan on the monochromator axis.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>➪</string>
                  </property>
                  <property name="flat">
                   <bool>false</bool>
@@ -4748,7 +4789,7 @@
      <x>0</x>
      <y>0</y>
      <width>1398</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
