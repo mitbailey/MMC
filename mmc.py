@@ -2346,6 +2346,7 @@ class MMC_Main(QMainWindow):
             log.error(f'Metadata is None: could not retrieve metadata for scanIdx, which_detector: {scanIdx}, {which_detector}')
             tstamp = dt.datetime.now()
             scan_id = 100
+            # TODO - This shouldn't happen but is happening on the results tab. This needs to be fixed - why isn't metadata saving properly?
             # return
 
         if self.autosave_next_dir is not None:
