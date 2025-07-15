@@ -325,6 +325,7 @@ class DataTableWidget(QTableWidget):
         if (scanIdx, which_detector) in self.recordedMetaData:
             metadata = self.recordedMetaData[(scanIdx, which_detector)]
         else:
+            log.error(f'No metadata found for scan ID {scanIdx} from detector {which_detector}.')
             metadata = None
 
         if data is None:
@@ -336,8 +337,7 @@ class DataTableWidget(QTableWidget):
         else:
             log.info('Normal return from saveDataCb()')
             return (data, metadata)
-
-
+        
     def delDataCb(self):
         log.debug('Delete called for:', self.selectedItem)
 

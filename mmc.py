@@ -2343,8 +2343,10 @@ class MMC_Main(QMainWindow):
                 tstamp = dt.datetime.now()
                 scan_id = 100
         else:
-            log.error('Metadata is None.')
-            return
+            log.error(f'Metadata is None: could not retrieve metadata for scanIdx, which_detector: {scanIdx}, {which_detector}')
+            tstamp = dt.datetime.now()
+            scan_id = 100
+            # return
 
         if self.autosave_next_dir is not None:
             log.debug('Autosave next directory is not None.')
