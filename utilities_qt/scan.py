@@ -105,14 +105,13 @@ class Scan(QThread):
         log.debug('which detector: %d'%(which_detector))
         log.debug('qcb index: %d'%(self.other.UIE_mgw_enabled_detectors_qcb.currentIndex()))
 
-    # def run(self):
-        # print('\n\n\n')
         self.other.disable_movement_sensitive_buttons(True)
         log.debug(self.other)
         log.info("Save to file? " + str(self.other.autosave_data_bool))
         self.SIGNAL_status_update.emit("PREPARING")
         sav_files = []
         tnow = dt.datetime.now()
+        
         if (self.other.autosave_data_bool):
             log.info('Autosaving')
             filetime = tnow.strftime('%Y%m%d%H%M%S')
@@ -145,14 +144,15 @@ class Scan(QThread):
                     f.close()
             self.SIGNAL_complete.emit()
             return
+        
         scanrange = np.arange(start, stop + step, step)
         log.info("Scan Range: %s"%(scanrange))
         nidx = len(scanrange)
 
         scan_type = SampleScanType(self.other.UIE_mgw_sm_scan_type_qcb.currentIndex())
 
-
         short_name = ''
+
         try:
             if ctrl_axis == ScanAxis.MAIN:
                 short_name = self.other.motion_controllers.main_drive_axis.short_name()
@@ -259,7 +259,7 @@ class Scan(QThread):
             log.error(f'Invalid control axis ({ctrl_axis}; {scan_type}).')
 
         try:
-            time.sleep(self.parent.scan_start_delay)
+            time.sleep(self.other.scan_start_delay)
         except Exception as e:
             log.error('Exception: Scan Start Delay - Failed to sleep: %s'%(e))
 
@@ -341,9 +341,6 @@ class Scan(QThread):
                 # idx: index of which step in the scan
                 # nidx: total num of steps
 
-                # self.SIGNAL_progress.emit(round(((idx + 1) * 100 / nidx)/len(active_detectors)))
-                # log.debug(f"Emitting progress signal: {((idx + i) / (nidx * len(active_detectors))) * 100.0}")
-                # self.SIGNAL_progress.emit( ((idx + i) / (nidx * len(active_detectors))) * 100.0 )
                 log.debug(f"Emitting progress signal: {((task_i) / (nidx * len(active_detectors))) * 100.0}")
                 log.debug(f"Progress signal components: task_i: {task_i}, nidx: {nidx}, len(active_detectors): {len(active_detectors)}")
                 elapsed_time = time.time() - start

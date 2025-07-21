@@ -342,15 +342,77 @@ class DataTableWidget(QTableWidget):
         log.debug('Delete called for:', self.selectedItem)
 
         if self.selectedItem is None:
+            log.debug('self.selectedItem is None, returning.')
+            return
+        
+        if type(self.selectedItem) is int:
+            log.error('Selected item is an int instead of a list. This is unexpected.')
+            return
+        elif type(self.selectedItem) is not list:
+            log.error('Selected item is not an int or list, but is type: ', type(self.selectedItem))
+            self.parent.QMessageBoxCritical(
+                'Error', 'Selection is not of type int (single) nor list (multiple). Please select a scan to delete data from.')
             return
 
         which_detector = self.parent.UIE_mgw_table_qtw.currentIndex() - 1
 
-        if type(self.selectedItem) is int:
-            log.error('Selected item is an int instead of a list. This is unexpected.')
-            if self.selectedItem is None:
+        # Handle the case where we have selected items in the results tab, where which_detector will be -1.
+        if which_detector == -1:
+            # We are deleting from the results tab.
+            for which_detector_pseudo in range(self.parent.num_detectors):
+                for selectedItem in self.selectedItem:
+                    if selectedItem is None:
+                        continue
+                    
+                    row = selectedItem
+                    if row >= len(self.rowMap):
+                        log.debug('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
+                        continue
+                    try:
+                        scanIdx = self.rowMap[row]
+                    except Exception:
+                        log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
+                        continue
+                    
+                    log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector_pseudo}')
+
+                    key = (scanIdx[0], which_detector_pseudo)
+                    log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector_pseudo}; key: {key}')
+                    log.debug(f'rowMap: {self.rowMap}')
+
+                    if key not in self.recordedData.keys():
+                        log.error(f'{key} is not in recorded data: {self.recordedData.keys()}')
+                        self.__deleteRow(row)
+                        continue
+                    try:
+                        plotCb: CustomQCheckBox = self.recordedData[key]['plot_cb']
+                        if not plotCb.isEnabled():
+                            continue
+                    except Exception as e:
+                        log.error(f'Exception at {key}: {e}')
+                    self.__delete_item_confirm = False
+                    # spawn confirmation window here
+                    self.__showDelConfirmWin(row, key[0], key[1])
+                    if self.__delete_item_confirm: # actually delete?
+                        log.info(f'Going to delete {key}... ', end = '')
+                        try:
+                            del self.recordedData[key]
+                        except Exception:
+                            pass
+                        try:
+                            del self.recordedMetaData[key]
+                        except Exception:
+                            pass
+                        self.__deleteRow(row)
+                        log.debug('DONE\n')
+                    self.__delete_item_confirm = False
+
+                    self.updatePlots(which_detector_pseudo)
+
+        for selectedItem in self.selectedItem:
+            if selectedItem is None:
                 return
-            row = self.selectedItem
+            row = selectedItem
             if row >= len(self.rowMap):
                 log.debug('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
                 return
@@ -360,96 +422,48 @@ class DataTableWidget(QTableWidget):
                 log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
                 return
             
+            # (scan_id, det_id) = self.row_to_id_det_map[scanIdx[0]]
             log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}')
 
-            if (scanIdx, which_detector) not in self.recordedData.keys():
-                log.error(f'{scanIdx} is not in recorded data: {self.recordedData.keys()}')
+            key = (scanIdx[0], which_detector)
+            log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}; key: {key}')
+            log.debug(f'rowMap: {self.rowMap}')
+
+            # key = (scan_id, det_id)
+            # log.debug(f'new key: {key}')
+
+            if key not in self.recordedData.keys():
+                log.error(f'{key} is not in recorded data: {self.recordedData.keys()}')
                 self.__deleteRow(row)
                 return
             try:
-                plotCb: CustomQCheckBox = self.recordedData[(scanIdx, which_detector)]['plot_cb']
+                plotCb: CustomQCheckBox = self.recordedData[key]['plot_cb']
                 if not plotCb.isEnabled():
                     return
-            except Exception:
-                log.error('Could not recover plotCb for %d! :O ... '%(scanIdx, self.recordedData.keys()))
+            except Exception as e:
+                log.error(f'Exception at {key}: {e}')
             self.__delete_item_confirm = False
             # spawn confirmation window here
-            self.__showDelConfirmWin(row, scanIdx)
+            self.__showDelConfirmWin(row, key[0], key[1])
             if self.__delete_item_confirm: # actually delete?
-                log.info('\n\nGOING TO DELETE %d... '%(scanIdx), end = '')
+                log.info(f'Going to delete {key}... ', end = '')
                 try:
-                    del self.recordedData[(scanIdx, which_detector)]
+                    del self.recordedData[key]
                 except Exception:
                     pass
                 try:
-                    del self.recordedMetaData[(scanIdx, which_detector)]
+                    del self.recordedMetaData[key]
                 except Exception:
                     pass
                 self.__deleteRow(row)
                 log.debug('DONE\n')
             self.__delete_item_confirm = False
+
+            # Now we need to update the mapping.
+            # self.row_to_id_det_map[row_idx] = (scan_idx, key_det_idx)
+
+
             self.updatePlots(which_detector)
-        elif type(self.selectedItem) is list:
-            for selectedItem in self.selectedItem:
-                if selectedItem is None:
-                    return
-                row = selectedItem
-                if row >= len(self.rowMap):
-                    log.debug('Trying to delete row %d, rowMap length %d!'%(row, len(self.rowMap)), self.rowMap)
-                    return
-                try:
-                    scanIdx = self.rowMap[row]
-                except Exception:
-                    log.error('No scanIdx corresponding to rowMap :O ...', row, self.rowMap)
-                    return
-                
-                # (scan_id, det_id) = self.row_to_id_det_map[scanIdx[0]]
-                log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}')
-
-                key = (scanIdx[0], which_detector)
-                log.debug(f'scanIdx: {scanIdx}, which_detector: {which_detector}; key: {key}')
-                log.debug(f'rowMap: {self.rowMap}')
-
-                # key = (scan_id, det_id)
-                # log.debug(f'new key: {key}')
-
-                if key not in self.recordedData.keys():
-                    log.error(f'{key} is not in recorded data: {self.recordedData.keys()}')
-                    self.__deleteRow(row)
-                    return
-                try:
-                    plotCb: CustomQCheckBox = self.recordedData[key]['plot_cb']
-                    if not plotCb.isEnabled():
-                        return
-                except Exception as e:
-                    log.error(f'Exception at {key}: {e}')
-                self.__delete_item_confirm = False
-                # spawn confirmation window here
-                self.__showDelConfirmWin(row, key[0], key[1])
-                if self.__delete_item_confirm: # actually delete?
-                    log.info(f'Going to delete {key}... ', end = '')
-                    try:
-                        del self.recordedData[key]
-                    except Exception:
-                        pass
-                    try:
-                        del self.recordedMetaData[key]
-                    except Exception:
-                        pass
-                    self.__deleteRow(row)
-                    log.debug('DONE\n')
-                self.__delete_item_confirm = False
-
-                # Now we need to update the mapping.
-                # self.row_to_id_det_map[row_idx] = (scan_idx, key_det_idx)
-
-
-                self.updatePlots(which_detector)
-        else:
-            log.error('Selected item is not an int or list, but is type: ', type(self.selectedItem))
-            self.parent.QMessageBoxCritical(
-                'Error', 'Selection is not of type int (single) nor list (multiple). Please select a scan to delete data from.')
-            return
         
         self.updateTableDisplay(which_detector)
 

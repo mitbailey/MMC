@@ -104,8 +104,6 @@ from typing import Callable
 from typing_extensions import Self
 faulthandler.enable()
 
-# OS and SYS Imports
-
 # Obtains the executable directory (as exeDir) and the application directory (as appDir) for future use.
 try:
     exeDir = sys._MEIPASS
@@ -117,21 +115,13 @@ if getattr(sys, 'frozen', False):
 elif __file__:
     appDir = os.path.dirname(__file__)
 
-# PyQt Imports
-
-# More Standard Imports
-
 matplotlib.use('Qt5Agg')
-
-# Custom Imports
-
 
 try:
     import middleware as mw
 except Exception as e:
     log.error(str(e))
     raise e
-
 
 QtWidgets.QApplication.setAttribute(
     QtCore.Qt.AA_EnableHighDpiScaling, True)  # enable highdpi scaling
@@ -156,15 +146,11 @@ ALLOW_DUMMY_MODE = os.path.isfile('enable.dev')
 # Classes.
 
 # Sets up the navigation toolbar for the graph.
-
-
 class NavigationToolbar(NavigationToolbar2QT):
     def edit_parameters(self):
         super(NavigationToolbar, self).edit_parameters()
 
 # Sets up the canvas for the graph.
-
-
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self:Self, parent=None, width:float=5, height:float=4, dpi:int=100, xlabel:str='Position (nm or deg)', ylabel:str='Magnitude (pA or V)'):
 
@@ -206,7 +192,7 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes.set_ylabel(self.ylabel)
         for row in data:
             c = self.colors[row[-1] % len(self.colors)]
-            log.warn(f"Plotting: {row[0]} ; {row[1]}")
+            log.debug(f"Plotting: {row[0]} ; {row[1]}")
             if len(row[0]) != len(row[1]):
                 log.error('X and Y data lengths do not match!')
                 continue
@@ -227,8 +213,6 @@ class MplCanvas(FigureCanvasQTAgg):
         self.draw()
 
 # The main MMC program and GUI class.
-
-
 class MMC_Main(QMainWindow):
     # STARTUP PROCEDURE
     # Begins by starting the Device Manager window.
@@ -492,7 +476,6 @@ class MMC_Main(QMainWindow):
 
             self.dmw.show()
 
-        # UIE_dmw_load_spinner_ql
         self.anim_dmw_load_spinner = QtGui.QMovie(exeDir + '/res/131.gif')
         self.UIE_dmw_load_spinner_ql.setMovie(self.anim_dmw_load_spinner)
 
@@ -504,7 +487,7 @@ class MMC_Main(QMainWindow):
             self.device_timer.timeout.connect(self.devman_list_devices)
 
             # Devices are checked for every this many milliseconds.
-            # TODO: Is this causing the lag when a KST201 is connected? Fix this if so. It may need a longer timeout than 1000 ms.
+            # This does not seem to be the source of the lag when connecting a KST201. Unknown why that occurs. Likely best to avoid that device.
             self.device_timer.start(10000)
 
         if log.logging_to_file():
@@ -1839,7 +1822,8 @@ class MMC_Main(QMainWindow):
         self.move_mults = load_dict['moveMults']
         self.home_mults = load_dict['homeMults']
 
-        if (len(self.move_mults) == len(self.home_mults)) and len(self.move_mults) == len(self.mtn_ctrls):
+        # if (len(self.move_mults) == len(self.home_mults)) and len(self.move_mults) == len(self.mtn_ctrls):
+        if (len(self.move_mults) == len(self.home_mults)) and len(self.move_mults) == sum(dev is not None for dev in self.mtn_ctrls):
             s = 0
             for i, dev in enumerate(self.mtn_ctrls):
                 try:
@@ -1863,8 +1847,15 @@ class MMC_Main(QMainWindow):
             log.info('Movement multiplier values enacted.')
             self.movement_mults_load_success = True
         else:
-            log.error("Failed to enact movement multiplier values when loading config because home and move multiplier array lengths do not match or, more likely, the number of motion controllers has changed since the config was saved.")
-            log.error(f"moveMults: {self.move_mults}; homeMults: {self.home_mults}; numMotionControllers: {len(self.mtn_ctrls)}")
+            if len(self.mtn_ctrls) == 0:
+                # Most likely this is before we have finished the device manager setup, so we will demote the urgency to debug.
+                log.debug("Failed to enact movement multiplier values when loading config because home and move multiplier array lengths do not match or, more likely, the number of motion controllers has changed since the config was saved. In this instance, since len(self.mtn_ctrls) == 0, we are probably still in the device manager.")
+                log.debug(f"moveMults: {self.move_mults}; homeMults: {self.home_mults}; numMotionControllers: {sum(dev is not None for dev in self.mtn_ctrls)}")
+                log.debug(f"{self.mtn_ctrls}")
+            else:
+                log.error("Failed to enact movement multiplier values when loading config because home and move multiplier array lengths do not match or, more likely, the number of motion controllers has changed since the config was saved.")
+                log.error(f"moveMults: {self.move_mults}; homeMults: {self.home_mults}; numMotionControllers: {sum(dev is not None for dev in self.mtn_ctrls)}")
+                log.error(f"{self.mtn_ctrls}")
 
     def save_config_devman(self, path: str):
         pass
@@ -2295,8 +2286,6 @@ class MMC_Main(QMainWindow):
 
         self.table_result.updatePlots(-1)
 
-        # TODO: Figure out how to update the reference / result plot.
-
     # THIS IS THE LATEST SCAN DATA FROM THE REFERENCE DETECTOR
     def push_latest_ref_data(self, latest_ref_data):
         self.latest_ref_data = latest_ref_data
@@ -2321,8 +2310,6 @@ class MMC_Main(QMainWindow):
             self.save_data_auto(table, det_id, scanIdx=scan_id, button=True)
 
     def save_data_auto(self, table, which_detector, scanIdx=None, button=False):
-        # TODO: Figure out which table were on currently.
-
         if scanIdx is None:
             log.debug(f'scanIdx is None')
             data, metadata = table.saveDataCb()
@@ -2408,14 +2395,14 @@ class MMC_Main(QMainWindow):
         ofile.close()
 
     def delete_data_cb(self):
-        # TODO: Move delete button within the tabs and have one per tab.
+        self.table_result.delDataCb()
         for table in self.table_list:
             table.delDataCb()
         return
 
     def open_manual_hyperlink(self):
         webbrowser.open(
-            'https://github.com/mitbailey/MMC/blob/master/documentation/user_manual.pdf')
+            'https://github.com/mitbailey/MMC/blob/master/documentation/UserManual_Rev2_MMCS.pdf')
 
     def open_source_hyperlink(self):
         webbrowser.open('https://github.com/mitbailey/MMC')
