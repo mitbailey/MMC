@@ -1,18 +1,32 @@
 # McPherson Monochromator Controller Software
 
+IMPORTANT! You MUST read through the entire Getting Started section.
+
 PyQt-based GUI program to control monochromators, detectors, and related hardware. 
 
-# Pre-Requisites
+# Getting Started
+Simple usage. For advanced cases, see Advanced Usage.
 
+## Requirements
+- Windows 10/11
+
+## Dependencies
 - ThorLabs' Kinesis drivers package
     - Kinesis 64-bit Software for 64-bit Windows: https://www.thorlabs.com/software_pages/ViewSoftwarePage.cfm?Code=Motion_Control&viewtab=0 
     - Installed in C:/Program Files/Thorlabs/Kinesis (as is default).
     - The Kinesis software MUST be run at least once prior to starting MMCS.
-- Windows 10 (may work on other Windows versions, but untested).
 
+## Usage
 
-If running directly via source code you will also need Python 3.9.7.
+The executable is available within the MMCS zip archive included with each release. Download and extract the archive to access and run MMCS.exe. See the [releases page](https://github.com/mitbailey/MMC/releases) for details. 
 
+Before first run (one-time only):
+- Unblock `Python.runtime.dll`:
+    - 1). Enter the software's folder.
+    - 2). Locate the file `Python.runtime.dll`.
+    - 3). Right click the file; click "Properties".
+    - 4). Check the "Unblock" checkbox near the bottom.
+    - 5). Click "Apply"; click "OK".
 
 # Compatible Hardware
 ## Motion Controllers
@@ -24,17 +38,6 @@ If running directly via source code you will also need Python 3.9.7.
 - Stanford Research Systems SR810 Lock-In Amplifier
 - Stanford Research Systems SR860 Lock-In Amplifier
 - Keithley Instruments KI6485 Picoammeter (RS-232)
-
-## In Progress
-- McPherson 747
-- ThorLabs KST201 K-Cube
-
-### **_NOTICE FOR KCUBE USERS_**: 
-**The following one-time steps should be taken to enable proper KST201 homing and solve KST101/KST201 maximum range movement issues:**  
-1). Connect the KST201 to your PC.  
-2). Run the ThorLabs Kinesis GUI software.  
-3). Move and Home the KST201.  
-The MMC Software can now be used as usual.  
 
 # Troubleshooting
 ### Issue 1:   
@@ -53,7 +56,7 @@ Some systems may require administrative privileges to run the program. Right cli
 Solution 1C:
 Ensure that the ThorLabs Kinesis Software is installed as discussed in Pre-Requisites.
 
-# Usage
+# Advanced Usage
 ## via Executable
 The executable is available within the MMCS zip archive included with each release. Download and extract the archive to access and run MMCS.exe. See the [releases page](https://github.com/mitbailey/MMC/releases) for details.  
 
@@ -107,15 +110,3 @@ Outputs MMC/dist/mmc.exe
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-# NiceLib Conversion for Thorlabs Kinesis Stepper Motor Driver
-(_From mitbailey/driver_converter/runnable/README.MD_)
-1. Required packages: Thorlabs Kinesis (installed in C:\Program Files..), NiceLib, CFFI
-2. To build the CFFI symbol table: `python _build_kst.py`
-3. Mid level wrapper: `python _thorlabs_kst_wrap_basic.py`
-
-## Hierarchy
-GUI <-> Middleware <-> Drivers <-> Hardware
-- The GUI calls Middleware functions and is the layer the user directly interacts with. The GUI simply knows that it exists above some Monochromator with some type of Motion Controller(s) and detector(s).
-- The middleware allows the GUI to be agnostic to specific hardware and hardware implementations, providing the GUI layer with consistent functions to interface with across all forms of motion control and detection. The Middleware determines which drivers must be used.
-- The drivers interact directly with the motion controller and detector and are specific to their model / type.

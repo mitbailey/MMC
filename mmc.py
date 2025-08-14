@@ -2402,7 +2402,7 @@ class MMC_Main(QMainWindow):
 
     def open_manual_hyperlink(self):
         webbrowser.open(
-            'https://github.com/mitbailey/MMC/blob/master/documentation/UserManual_Rev2_MMCS.pdf')
+            'https://github.com/mitbailey/MMC/blob/master/documentation/manual.pdf')
 
     def open_source_hyperlink(self):
         webbrowser.open('https://github.com/mitbailey/MMC')
