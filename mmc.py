@@ -256,7 +256,7 @@ class MMC_Main(QMainWindow):
             log.error('Not a Git repo: Unable to get git hash: %s' % (str(e)))
             log.warn('Not a Git repo: Did you download the source code from GitHub as a zip file?')
             log.warn('Not a Git repo: To maintain the proper version hash, please use `git clone [URL]` instead.')
-            self.git_hash = 'No Hash'
+            self.git_hash = 'R'
 
         self.selected_config_save_path = os.path.expanduser(
             '~/Documents') + '/mcpherson_mmc/s_d.csv'

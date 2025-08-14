@@ -50,6 +50,9 @@ To do this:
 Solution 1B:  
 Some systems may require administrative privileges to run the program. Right click `MMCS.exe` and press "Run as Administrator."
 
+Solution 1C:
+Ensure that the ThorLabs Kinesis Software is installed as discussed in Pre-Requisites.
+
 # Usage
 ## via Executable
 The executable is available within the MMCS zip archive included with each release. Download and extract the archive to access and run MMCS.exe. See the [releases page](https://github.com/mitbailey/MMC/releases) for details.  
