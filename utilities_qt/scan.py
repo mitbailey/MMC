@@ -138,14 +138,26 @@ class Scan(QThread):
         log.info("Start | Stop | Step")
         log.info(start, stop, step)
 
-        if step == 0 or start == stop:
+        if step == 0:# or start == stop:
             for f in sav_files:
                 if (f is not None):
                     f.close()
             self.SIGNAL_complete.emit()
             return
         
-        scanrange = np.arange(start, stop + step, step)
+        temporal = False
+        if start == stop:
+            temporal = True
+            temporal_loc = start
+            # Do a temporal scan, i.e. don't move in wavelength.
+            # scanrange = np.full(step, start)
+            scanrange = np.arange(0, step, 1)
+            # scanrange = np.arange(start, stop + 10, 1)
+
+            log.info(f"Scan Range (temporal) using {start}, {stop + 10}, {1}")
+        else:
+            scanrange = np.arange(start, stop + step, step)
+            log.info(f"Scan Range (spatial) using {start}, {stop + step}, {step}")
         log.info("Scan Range: %s"%(scanrange))
         nidx = len(scanrange)
 
@@ -280,6 +292,9 @@ class Scan(QThread):
         for idx, dpos in enumerate(scanrange):
             log.debug('STARTING SCAN LOOP SECTION')
 
+            if temporal:
+                dpos = temporal_loc
+
             if not self.other.scanRunning:
                 log.error('scanRunning False, stop button may have been pressed (A). Scan stopped before it started.')
                 break
@@ -352,11 +367,20 @@ class Scan(QThread):
                 
                 log.debug("Appending data.")
                 if (i != 0) and (ctrl_axis == ScanAxis.SAMPLE) and (scan_type == SampleScanType.THETA2THETA):
-                    log.debug(f"Appending detector position {det_pos}")
-                    self._xdata[i].append((((det_pos))))
+
+                    if temporal:
+                        log.debug(f"Appending detector position {idx}")
+                        self._xdata[i].append((((idx))))
+                    else:
+                        log.debug(f"Appending detector position {det_pos}")
+                        self._xdata[i].append((((det_pos))))
                 else:
-                    log.debug(f"Appending position {pos}")
-                    self._xdata[i].append((((pos))))
+                    if temporal:
+                        log.debug(f"Appending position {idx}")
+                        self._xdata[i].append((((idx))))
+                    else:
+                        log.debug(f"Appending position {pos}")
+                        self._xdata[i].append((((pos))))
                 self._ydata[i].append(self.other.mes_sign * mes)
                 log.debug(f'_ydata[i][-1]: {self._ydata[i][-1]}')
                 
